@@ -1,0 +1,85 @@
+# Phoenix Human GRCh38 pipeline
+{# Check for the required config variables #}
+{% set dataFiles = dataFiles %}
+{% set constants = constants %}
+
+# The config variables includes an array of dataFiles. Here we
+# need to group the data files into read groups, and then group 
+# read_groups into samples. This will make it easier to add tasks
+# later in the pipeline. The resulting samples dict will look
+# like this:
+ 
+# sampleMergeKey/sampleName:
+#   glPrep: RNA
+#   glType: RNA
+#       ... 
+#   read_groups: 
+#     C140KACXX_7_TAGCTT:
+#       glPrep: RNA
+#       glType: RNA
+#           ...
+#       data_files: 
+#         - 
+#           fastqPath: .../MMRF_1157_1_BM_CD138pos_T2_TSMRU_K03096_C140KACXX_TAGCTT_L007_R1_001.fastq.gz
+#           fastqCode: R1
+#           glPrep: RNA
+#           glType: RNA
+#               ...
+#         - 
+#           fastqPath: .../MMRF_1157_1_BM_CD138pos_T2_TSMRU_K03096_C140KACXX_TAGCTT_L007_R2_001.fastq.gz
+#           fastqCode: R2
+#           glPrep: RNA
+#           glType: RNA
+#               ...
+
+{% set samples = {} %}
+{% for file in dataFiles %}
+    {% if 'sampleMergeKey' in file %}
+        {% set sample_name = file.sampleMergeKey %}
+    {% else %}
+        {% set sample_name = file.sampleName %}
+    {% endif %}
+    {% if sample_name not in samples %}
+        {% do samples.update({sample_name: {}}) %}
+        {% do samples[sample_name].update(file) %}
+    {% endif %}
+{% endfor %}
+
+{% for rgid, data_files in dataFiles | groupby('rgid') %}
+    {% set rg = data_files|first %}
+    {% if 'sampleMergeKey' in rg %}
+        {% set sample_name = rg.sampleMergeKey %}
+    {% else %}
+        {% set sample_name = rg.sampleName %}
+    {% endif %}
+    {% if not 'read_groups' in samples[sample_name] %}
+        {% do samples[sample_name].update({'read_groups': {}}) %}
+    {% endif %}
+    {% do samples[sample_name]['read_groups'].update({rgid: {}}) %}
+    {% do samples[sample_name]['read_groups'][rgid].update(rg) %}
+    {% do samples[sample_name]['read_groups'][rgid].update({'data_files': data_files}) %}
+{% endfor %}
+
+
+# Start of module imports
+{% from 'genome_alignment/main.jst' import genome_alignment with context %}
+{% from 'exome_alignment/main.jst' import exome_alignment with context %}
+{% from 'germline_variant_calling/main.jst' import germline_variant_calling with context %}
+{% from 'somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
+{% from 'rna_quant/main.jst' import rna_quant with context %}
+
+
+# Start of module calls
+{{ genome_alignment(samples) }}
+{{ exome_alignment(samples) }}
+{{ rna_quant(samples) }}
+{{ germline_variant_calling(samples) }}
+{{ somatic_variant_calling(samples) }}
+
+
+#{# Where to put this?
+# methods: Fastqs for {{ rgid }} were aligned with {{ constants.tools.bwa_0_7_12.verbose }}. 
+#     The resulting data was streamed into {{ constants.tools.samtools_1_7.verbose }} fixmate 
+#     and sort to generate a temporary aligned read group bam.
+#}
+

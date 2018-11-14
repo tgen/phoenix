@@ -1,0 +1,38 @@
+# Run Salmon RNA Quantification
+
+{% macro salmon(sample_name, sample) %}
+
+{% set r1fqlist = [] %}
+{% set r2fqlist = [] %}
+{% for rgid, rg in sample.read_groups.items() %}
+    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
+        {% do r1fqlist.append(fq) %}
+    {% endfor %}
+    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
+        {% do r2fqlist.append(fq) %}
+    {% endfor %}
+{% endfor %}
+
+- name: salmon_quant_cdna_{{ sample_name }}
+  methods: >
+    Transcript quantification for {{ sample_name }} was performed with
+    {{ constants.tools.salmon_0_6_0.verbose }} using the cDNA index.
+  output: results/RNA/{{ sample_name }}
+  cpus: 16
+  cmd: |
+    #!/bin/bash
+
+    set -ue
+    module load {{ constants.tools.salmon_0_6_0.module }}
+
+    salmon quant \
+      --index "{{ constants.phoenix.reference_index_prefix }}" \
+      --libType IU \
+      -1 {{ r1fqlist|map(attribute='fastqPath')|join(',') }}  \
+      -2 {{ r2fqlist|map(attribute='fastqPath')|join(',') }} \
+      --threads 16 \
+      --biasCorrect \
+      --geneMap {{ constants.phoenix.gtf }} \
+      --output "results/RNA/{{ sample_name }}/"
+
+{% endmacro %}

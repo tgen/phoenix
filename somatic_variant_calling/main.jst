@@ -1,0 +1,38 @@
+# Call variants between pairs of sequencing data
+# WARNING - This pairs together all tumor and constitutional samples (of the same glType)
+# without comparing any sample identifiers. This means multiple individuals in the same 
+# project will be incorrectly paired together for somatic variant calling.
+
+# Have to add normal_name and tumor_name to the pairs objects instead of using normal.sampleName
+# because the samples are grouped and aligned by sampleName or sampleMergeKey. 
+
+{% from 'somatic_variant_calling/mutect2.jst' import mutect2 with context %}
+{% from 'somatic_variant_calling/strelka2.jst' import strelka2 with context %}
+
+
+{% macro somatic_variant_calling(samples) %}
+
+{% if pairs is defined %}
+    # Pairs were already defined
+{% else %}
+    {% set pairs = {} %}
+    {% for tumor_name, tumor in samples.items() if tumor.glType|lower == 'exome' and tumor.subGroup|lower == 'tumor' %}
+        {% for normal_name, normal in samples.items() if normal.glType|lower == 'exome' and normal.subGroup|lower == 'constitutional' %}
+            {% set pair_name = normal_name + '-' + tumor_name %}
+            {% do pairs.update({pair_name: {'name': pair_name,'normal_name': normal_name, 'normal': normal, 'tumor_name': tumor_name, 'tumor': tumor}}) %}
+        {% endfor %}
+    {% endfor %}
+    {% for tumor_name, tumor in samples.items() if tumor.glType|lower == 'genome' and tumor.subGroup|lower == 'tumor' %}
+        {% for normal_name, normal in samples.items() if normal.glType|lower == 'genome' and normal.subGroup|lower == 'constitutional' %}
+            {% set pair_name = normal_name + '-' + tumor_name %}
+            {% do pairs.update({pair_name: {'name': pair_name, 'normal_name': normal_name, 'normal': normal, 'tumor_name': tumor_name, 'tumor': tumor}}) %}
+        {% endfor %}
+    {% endfor %}
+{% endif %}
+
+{% for pair_name, pair in pairs.items() %}
+    {{- mutect2(pair) }}
+    {{- strelka2(pair) }}
+{% endfor %}
+
+{% endmacro %}

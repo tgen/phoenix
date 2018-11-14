@@ -1,0 +1,35 @@
+# This macro adds tasks for running bam qc on the bam
+{% macro bam_qc(sample_name, sample) %}
+- name: idxstats_{{ sample_name }}
+  methods: Quality control metrics for {{ sample_name }} (BWA) were
+    generated with {{ constants.tools.samtools_1_7.verbose }} idxstats.
+  input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  cmd: |
+    #!/bin/bash
+    set -ue
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    samtools index "results/{{ sample_name }}/{{ sample_name }}.bwa.bam"
+    samtools idxstats \
+      "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" >\
+      "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam.idxstats"
+
+
+- name: collectmultiplemetrics_bwa_{{ sample_name }}
+  cpus: 8
+  input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  cmd: |
+    set -ue
+    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    
+    gatk CollectMultipleMetrics \
+      -I "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      -O "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      -R "{{ constants.phoenix.reference_fasta_path }}" \
+      --PROGRAM CollectAlignmentSummaryMetrics \
+      --PROGRAM CollectBaseDistributionByCycle \
+      --PROGRAM CollectInsertSizeMetrics \
+      --PROGRAM MeanQualityByCycle \
+      --PROGRAM QualityScoreDistribution
+
+{% endmacro %}

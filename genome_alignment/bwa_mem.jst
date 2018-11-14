@@ -1,0 +1,45 @@
+# This macro creates tasks to align paired-end fastq data with 
+# bwa mem. The aligned bams will be written out to temp/rgid.bwa.bam
+{% macro bwa_mem(rgid, rgline, r1fastq, r2fastq) %}
+- name: bwa_mem_{{ rgid }}
+  output: temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam
+  cpus: 16
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p temp/fastqs/
+    rsync_from_isilon {{ r1fastq.fastqPath }} {{ r2fastq.fastqPath }} temp/fastqs/ --max-workers 3
+
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools sort. Here, we purge any
+    # existing temp files before making the directory again.
+    rm -r "temp/bwa_mem_{{ rgid }}/" || true
+    mkdir -p "temp/bwa_mem_{{ rgid }}/"
+
+    bwa mem \
+      -Y \
+      -K 1000000 \
+      -M \
+      -t14 \
+      -R "{{ rgline }}" \
+      "{{ constants.phoenix.reference_index_prefix }}" \
+      "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
+      "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
+    samtools fixmate \
+      -@ 5 \
+      -m \
+      - \
+      - |\
+    samtools sort \
+      -l 5 \
+      -m 1G \
+      -@ 10 \
+      -T "temp/bwa_mem_{{ rgid }}" \
+      -O BAM \
+      - \
+      -o "temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam"
+
+{% endmacro %}

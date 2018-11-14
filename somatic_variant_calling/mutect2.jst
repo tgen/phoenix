@@ -1,0 +1,47 @@
+{% macro mutect2(pair, aligner='bwa') %}
+{% for batch in constants.phoenix.intervals_batched %}
+- name: mutect2_{{ pair.name }}_{{ aligner }}_chunk{{ loop.index }}
+  input:
+    - results/{{ pair.normal.glType }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
+    - results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
+  cpus: 4
+  cmd: |
+    set -eu
+    module load {{ constants.tools.gatk_4_0_1_2.module }}
+
+    mkdir -p temp/{{ pair.name }}_mutect2_chunks/
+
+    gatk Mutect2 \
+      --TMP_DIR temp/ \
+      -R {{ constants.phoenix.reference_fasta_path }} \
+      -I "results/{{ pair.normal.glType }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
+      -normal "{{ pair.normal.rgsm }}" \
+      -I "results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
+      -tumor "{{ pair.tumor.rgsm }}" \
+      {% for interval in batch %}
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      -O "temp/{{ pair.name }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf"
+
+{% endfor %}
+
+
+- name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
+  description: Merges the Mutect stepwise vcfs into a final vcf
+  after: mutect2_{{ pair.name }}_{{ aligner }}_chunk.*
+  output: results/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf
+  cpus: 2
+  cmd: |
+    set -eu
+    module load {{ constants.tools.gatk_4_0_1_2.module }}
+
+    mkdir -p "results/{{ pair.name }}_{{ aligner }}/mutect2/"
+
+    gatk MergeVcfs \
+      {% for b in constants.phoenix.intervals_batched %}
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.vcf" \
+      {% endfor %}
+      --OUTPUT "results/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf"
+
+
+{% endmacro %}

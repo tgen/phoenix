@@ -1,0 +1,22 @@
+# Germline variant calling 
+{% from 'germline_variant_calling/gatk_haplotypecaller.jst' import haplotypecaller with context %}
+{% from 'germline_variant_calling/gatk_genotypegvcf.jst' import genotypegvcf with context %}
+{% from 'germline_variant_calling/freebayes.jst' import freebayes with context %}
+{% from 'germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
+
+# TODO duplicate these for exome and genome?
+{% macro germline_variant_calling(samples) %}
+{% for sample_name, sample in samples.items() if sample.glType|lower in ('genome', 'exome') %}
+    {{- haplotypecaller(sample_name, sample, aligner='bwa') }}
+
+    {% if tasks.Exome_freebayes_freebayes_1_2_0 %}
+        {{- genotypegvcf(sample_name, sample, aligner='bwa') }}
+        {{- freebayes(sample_name, sample, aligner='bwa') }}
+    {% endif %}
+
+    {% if sample.subGroup|lower == 'constitutional' %}
+        {{- ichorcna(sample_name, sample, aligner='bwa') }}
+    {% endif %}
+    
+{% endfor %}
+{% endmacro %}

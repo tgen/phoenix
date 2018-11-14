@@ -1,0 +1,41 @@
+# Call variants on a gVCF with GATK
+{% macro genotypegvcf(sample_name, sample, aligner='bwa') %}
+{% for batch in constants.phoenix.intervals_batched %}
+- name: genotypegvcf_{{ aligner }}_{{ sample_name }}_{{ loop.index }}
+  input: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf
+  cpus: 4
+  cmd: |
+    set -eu
+    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    mkdir -p "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/"
+
+    gatk GenotypeGVCFs \
+      --java-options "-Xmx4g"
+      -R {{ constants.phoenix.reference_fasta_path }} \
+      -V "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf" \
+      {% for interval in batch %}
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      -O "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz"
+
+{% endfor %}
+
+- name: genotypegvcf_merge_{{ aligner }}_{{ sample_name }}
+  after: genotypegvcf_{{ aligner }}_{{ sample_name }}_.*
+  output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf
+  cpus: 4
+  cmd: |
+    #!/bin/bash
+    set -eu
+    module load {{ constants.tools.gatk_4_0_1_2.module }}
+
+    gatk MergeVcfs \
+      {% for batch in constants.phoenix.intervals_batched %}
+      --INPUT "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
+      {% endfor %}
+      --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf"
+
+    rm -r "temp/{{ sample_name }}_{{ aligner }}_hc_gvcf_chunks/"
+
+{% endmacro %}
+
