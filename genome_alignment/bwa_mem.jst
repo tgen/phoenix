@@ -3,6 +3,7 @@
 {% macro bwa_mem(rgid, rgline, r1fastq, r2fastq) %}
 - name: bwa_mem_{{ rgid }}
   output: temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam
+  walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -eu

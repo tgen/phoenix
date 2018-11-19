@@ -5,6 +5,7 @@
     - results/{{ pair.normal.glType }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
     - results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
   cpus: 4
+  walltime: "24:00:00"
   cmd: |
     set -eu
     module load {{ constants.tools.gatk_4_0_1_2.module }}
@@ -31,6 +32,7 @@
   after: mutect2_{{ pair.name }}_{{ aligner }}_chunk.*
   output: results/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf
   cpus: 2
+  walltime: "24:00:00"
   cmd: |
     set -eu
     module load {{ constants.tools.gatk_4_0_1_2.module }}

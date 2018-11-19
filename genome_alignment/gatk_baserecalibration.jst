@@ -5,6 +5,7 @@
 {% for batch in constants.phoenix.intervals_batched %}
 - name: baserecalibration_table_bwa_{{ sample_name }}_chunk{{ loop.index }}
   after: mark_duplicates_bwa_{{ sample_name }}
+  walltime: "24:00:00"
   cpus: 4
   cmd: |
     #!/bin/bash
@@ -26,6 +27,7 @@
 
 - name: gather_bqsr_reports_bwa_{{ sample_name }}
   after: baserecalibration_table_bwa_{{ sample_name }}_chunk.*
+  walltime: "24:00:00"
   cpus: 4
   cmd: | 
     #!/bin/bash 
@@ -47,6 +49,7 @@
   after: gather_bqsr_reports_bwa_{{ sample_name }}
   output: 
     - results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  walltime: "24:00:00"
   cpus: 8
   cmd: |
     #!/bin/bash

@@ -3,6 +3,7 @@
 {% for batch in constants.phoenix.intervals_batched %}
 - name: freebayes_{{ sample_name }}_{{ aligner }}_{{ loop.index }}
   input: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  walltime: "24:00:00"
   cpu: 4
   cmd: |
     set -ue
@@ -29,6 +30,7 @@
 - name: freebayes_merge_{{ sample_name }}_{{ aligner }}
   after: freebayes_{{ sample_name }}_{{ aligner }}_.*
   output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf
+  walltime: "24:00:00"
   cpus: 4
   cmd: |
     set -eu

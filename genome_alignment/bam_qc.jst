@@ -4,6 +4,8 @@
   methods: Quality control metrics for {{ sample_name }} (BWA) were
     generated with {{ constants.tools.samtools_1_7.verbose }} idxstats.
   input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  walltime: "24:00:00"
+  cpus: 1
   cmd: |
     #!/bin/bash
     set -ue
@@ -16,6 +18,7 @@
 
 
 - name: collectmultiplemetrics_bwa_{{ sample_name }}
+  walltime: "24:00:00"
   cpus: 8
   input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
   cmd: |

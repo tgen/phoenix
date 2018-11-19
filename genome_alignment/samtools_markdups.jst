@@ -10,6 +10,7 @@
   {% for rgid in sample.read_groups %}
     - temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam
   {% endfor %}
+  walltime: "24:00:00"
   cpus: 4
   cmd: |
     #!/bin/bash
@@ -30,6 +31,7 @@
   after: merge_rg_bams_bwa_{{ sample_name }}
   methods: Duplicate reads for {{ sample_name }} (BWA) were marked with 
     {{ constants.tools.samtools_1_7.verbose }} markdup. 
+  walltime: "24:00:00"
   cpus: 8
   cmd: |
     #!/bin/bash
@@ -62,6 +64,7 @@
   {% endfor %}
   methods: Duplicate reads for {{ sample_name }} (BWA) were marked with 
     {{ constants.tools.samtools_1_7.verbose }} markdup. 
+  walltime: "24:00:00"
   cpus: 8
   cmd: |
     #!/bin/bash

@@ -2,6 +2,7 @@
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample_name }}
   input: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
   output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam.wig
+  walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -uev
@@ -21,6 +22,7 @@
   input: 
     - results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
     - results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam.wig
+  walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -ue

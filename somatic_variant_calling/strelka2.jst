@@ -12,6 +12,7 @@
     - results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
   output: results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/manta/
   cpus: 28
+  walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.manta_1_4.module }}
@@ -45,6 +46,7 @@
     - results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
   output: results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/strelka2/
   cpus: 28
+  walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.strelka_2_9_2.module }}
