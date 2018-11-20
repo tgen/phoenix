@@ -8,7 +8,7 @@
 
 - duplicate variant calling steps these for exome and genome?
 
-
+# Fake update
 
 # Call variants on a single sample with HaplotypeCaller to produce a GVCF
 task HaplotypeCaller {
