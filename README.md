@@ -35,3 +35,6 @@ cohorts.
 
 - duplicate variant calling steps these for exome and genome?
 
+- GATK tools have bug which trims everything from contig name following a final `:`. Is this still
+an issue? Are we excluding data by using their intervals for paralellizing tasks?
+
