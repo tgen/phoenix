@@ -22,7 +22,8 @@
 {% endfor %}
 
 - name: genotypegvcf_merge_{{ aligner }}_{{ sample_name }}
-  after: genotypegvcf_{{ aligner }}_{{ sample_name }}_.*
+  after: 
+    re: genotypegvcf_{{ aligner }}_{{ sample_name }}_.*
   output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf
   walltime: "24:00:00"
   cpus: 4

@@ -28,7 +28,8 @@
 
 
 - name: haplotypecaller_gvcf_merge_{{ sample_name }}_{{ aligner }}
-  after: haplotypecaller_gvcf_{{ sample_name }}_{{ aligner }}_.*
+  after: 
+    re: haplotypecaller_gvcf_{{ sample_name }}_{{ aligner }}_.*
   output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf
   walltime: "24:00:00"
   cpus: 4

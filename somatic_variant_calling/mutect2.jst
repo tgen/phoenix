@@ -29,7 +29,8 @@
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   description: Merges the Mutect stepwise vcfs into a final vcf
-  after: mutect2_{{ pair.name }}_{{ aligner }}_chunk.*
+  after: 
+    re: mutect2_{{ pair.name }}_{{ aligner }}_chunk.*
   output: results/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf
   cpus: 2
   walltime: "24:00:00"
