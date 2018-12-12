@@ -9,7 +9,7 @@
 {% for sample_name, sample in samples.items() if sample.glType|lower in ('genome', 'exome') %}
     {{- haplotypecaller(sample_name, sample, aligner='bwa') }}
 
-    {% if tasks.Exome_freebayes_freebayes_1_2_0 %}
+    {% if tasks.Exome_freebayes_freebayes_1_2_0 is defined and tasks.Exome_freebayes_freebayes_1_2_0 %}
         {{- genotypegvcf(sample_name, sample, aligner='bwa') }}
         {{- freebayes(sample_name, sample, aligner='bwa') }}
     {% endif %}
