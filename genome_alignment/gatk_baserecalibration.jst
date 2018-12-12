@@ -26,7 +26,8 @@
 {% endfor %}
 
 - name: gather_bqsr_reports_bwa_{{ sample_name }}
-  after: baserecalibration_table_bwa_{{ sample_name }}_chunk.*
+  after: 
+    re: baserecalibration_table_bwa_{{ sample_name }}_chunk.*
   walltime: "24:00:00"
   cpus: 4
   cmd: | 
@@ -56,7 +57,7 @@
     set -euv
     module load {{ constants.tools.gatk_4_0_1_2.module }}
 
-    mkdir -p "results/{{ sample_name }}/"
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
 
     gatk ApplyBQSR \
       --java-options "-Xms3000m" \

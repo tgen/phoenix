@@ -59,7 +59,7 @@
       {% if exome %}
       --exome \
       {% endif %}
-      --config <(cat 'isWriteRealignedBam = 1')
+      --config <(cat 'isWriteRealignedBam = 1') \
       --normalBam "results/{{ pair.normal.glType }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
       --tumorBam "results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
       --ref "{{ constants.phoenix.reference_fasta_path }}" \
