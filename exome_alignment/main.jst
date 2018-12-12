@@ -14,6 +14,7 @@
 {% from 'genome_alignment/bwa_mem.jst' import bwa_mem with context %}
 {% from 'genome_alignment/samtools_markdups.jst' import markdups with context %}
 {% from 'genome_alignment/gatk_baserecalibration.jst' import baserecalibration with context %}
+{% from 'genome_alignment/gatk_baserecalibration.jst' import nobaserecalibration with context %}
 {% from 'exome_alignment/bam_qc_exome.jst' import bamqc_exome with context %}
 
 
@@ -28,14 +29,20 @@
         {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
         {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
         {% set rgline = '@RG\\tID:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format( 
-          rg.rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, rg.rgks) %}
+          rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
+        {% set bwa_bam_path = 'temp/bwa_mem_' + rgid + '/' + rgid + '.bwa.bam' %}
 
-        {{- bwa_mem(rgid, rgline, r1fastq, r2fastq,) }}
-        
+        {{- bwa_mem(rgid, rgline, r1fastq, r2fastq, bwa_bam_path) }}
     {% endfor %}
 
     {{- markdups(sample_name, sample) }}
-    {{- baserecalibration(sample_name, sample) }}
+
+    {% if tasks.Exome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Exome_base_recalibration_gatk_4_0_1_2 %}
+        {{- nobaserecalibration(sample_name, sample) }}
+    {% else %}
+        {{- baserecalibration(sample_name, sample) }}
+    {% endif %}
+
     {{- bamqc_exome(sample_name, sample) }}
     
 {% endfor %}

@@ -1,8 +1,8 @@
 # This macro creates tasks to align paired-end fastq data with 
 # bwa mem. The aligned bams will be written out to temp/rgid.bwa.bam
-{% macro bwa_mem(rgid, rgline, r1fastq, r2fastq) %}
+{% macro bwa_mem(rgid, rgline, r1fastq, r2fastq, outpath) %}
 - name: bwa_mem_{{ rgid }}
-  output: temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam
+  output: {{ outpath }}
   walltime: "24:00:00"
   cpus: 16
   cmd: |
@@ -41,6 +41,6 @@
       -T "temp/bwa_mem_{{ rgid }}" \
       -O BAM \
       - \
-      -o "temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam"
+      -o "{{ outpath }}"
 
 {% endmacro %}

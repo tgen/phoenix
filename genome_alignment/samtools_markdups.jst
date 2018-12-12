@@ -1,7 +1,16 @@
 # This macro creates tasks that merge the bwa bams for each 
-# sample. Then runs samtools markdups on the merged bam. 
-# The results are written out to temp/sample_name.bwa.bam and
-# temp/sample_name.md.bwa.bam
+# sample, then runs samtools markdups on the merged bam. 
+# If there is only one read group for the sample, merge is
+# skipped. 
+#
+# Params:
+# sample_name: The name of the sample, this determines the output
+#   file names.
+# sample: The sample object with a read_groups property
+#
+# Results:
+# The results are written out to "temp/<sample_name>.bwa.bam" (merged)
+# and "temp/<sample_name>.md.bwa.bam" (mark dups done)
 {% macro markdups(sample_name, sample) %}
 
 {% if sample.read_groups | length > 1 %}
