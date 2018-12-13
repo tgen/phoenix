@@ -31,20 +31,20 @@
   description: Merges the Mutect stepwise vcfs into a final vcf
   after: 
     re: mutect2_{{ pair.name }}_{{ aligner }}_chunk.*
-  output: results/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf
+  output: results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf
   cpus: 2
   walltime: "24:00:00"
   cmd: |
     set -eu
     module load {{ constants.tools.gatk_4_0_1_2.module }}
 
-    mkdir -p "results/{{ pair.name }}_{{ aligner }}/mutect2/"
+    mkdir -p "results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/"
 
     gatk MergeVcfs \
       {% for b in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.vcf" \
       {% endfor %}
-      --OUTPUT "results/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf"
+      --OUTPUT "results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf"
 
 
 {% endmacro %}
