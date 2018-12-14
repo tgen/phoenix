@@ -10,7 +10,7 @@
     set -eu
     module load {{ constants.tools.gatk_4_0_1_2.module }}
 
-    mkdir -p temp/{{ pair.name }}_mutect2_chunks/
+    mkdir -p temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/
 
     gatk Mutect2 \
       --TMP_DIR temp/ \
@@ -22,7 +22,7 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      -O "temp/{{ pair.name }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf"
+      -O "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf"
 
 {% endfor %}
 
@@ -42,7 +42,7 @@
 
     gatk MergeVcfs \
       {% for b in constants.phoenix.intervals_batched %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.vcf" \
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf" \
       {% endfor %}
       --OUTPUT "results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf"
 

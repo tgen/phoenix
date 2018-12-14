@@ -14,15 +14,16 @@
 {% macro markdups(sample_name, sample) %}
 
 {% if sample.read_groups | length > 1 %}
-- name: merge_rg_bams_bwa_{{ sample_name }}
+- name: samtools_merge_rg_bams_{{ sample_name }}_bwa
+  tags: [samtools, merge, {{ sample_name }}]
   input: 
   {% for rgid in sample.read_groups %}
     - temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam
   {% endfor %}
+  output: temp/{{ sample_name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 4
   cmd: |
-    #!/bin/bash
     set -ue
     module load {{ constants.tools.samtools_1_7.module }}
 
@@ -36,19 +37,36 @@
     rm -r "temp/bwa_mem_{{ rgid }}"
     {% endfor %}
 
-- name: mark_duplicates_bwa_{{ sample_name }}
-  after: merge_rg_bams_bwa_{{ sample_name }}
+{% else %}
+- name: no_merging_needed_{{ sample_name }}_bwa
+  output: temp/{{ sample_name }}.bwa.bam
+  walltime: "24:00:00"
+  cpus: 1
+  cmd: |
+    set -ue
+
+    # If there's only one RG for the sample, we can save time
+    # by just moving that bam to the merged bam path.
+    {% set rgid = sample.read_groups[0] %}
+    mv \
+      "temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam" \
+      "temp/{{ sample_name }}.bwa.bam"
+
+{% endif %}
+
+- name: samtools_markdup_bwa_{{ sample_name }}_bwa
+  tags: [samtools, markdup, {{ sample_name }}]
+  input: temp/{{ sample_name }}.bwa.bam
   methods: Duplicate reads for {{ sample_name }} (BWA) were marked with 
     {{ constants.tools.samtools_1_7.verbose }} markdup. 
   walltime: "24:00:00"
   cpus: 8
   cmd: |
-    #!/bin/bash
     set -eu
     module load {{ constants.tools.samtools_1_7.module }}
 
-    # If this task was interrupted previously, temp files may exist 
-    # that will cause errors with samtools markdup. Here, we purge any 
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     TMPDIR1="temp/markdup_bwa_{{ sample_name }}/"
     rm -r "${TMPDIR1}" || true
@@ -65,40 +83,4 @@
 
     rm -r "${TMPDIR1}"
 
-{% else %}
-- name: mark_duplicates_bwa_{{ sample_name }}
-  input: 
-  {% for rgid in sample.read_groups %}
-    - temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam
-  {% endfor %}
-  methods: Duplicate reads for {{ sample_name }} (BWA) were marked with 
-    {{ constants.tools.samtools_1_7.verbose }} markdup. 
-  walltime: "24:00:00"
-  cpus: 8
-  cmd: |
-    #!/bin/bash
-    set -eu
-    module load {{ constants.tools.samtools_1_7.module }}
-
-    # If this task was interrupted previously, temp files may exist 
-    # that will cause errors with samtools markdup. Here, we purge any 
-    # existing temp files before making the directory again.
-    TMPDIR1="temp/markdup_bwa_{{ sample_name }}/"
-    rm -r "${TMPDIR1}" || true
-    mkdir -p "${TMPDIR1}"
-    
-    samtools markdup \
-      -S \
-      -s \
-      -T "${TMPDIR1}" \
-      {% for rgid in sample.read_groups %}
-      "temp/bwa_mem_{{ rgid }}/{{ rgid }}.bwa.bam" \
-      {% endfor %}
-      "temp/{{ sample_name }}.md.bwa.bam"
-
-    samtools index "temp/{{ sample_name }}.md.bwa.bam"
-
-    rm -r "${TMPDIR1}"
-
-{% endif %}
 {% endmacro %}
