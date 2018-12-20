@@ -69,9 +69,15 @@
 {% from 'rna_quant/main.jst' import rna_quant with context %}
 
 # 
-{% from 'chunk.jst' import chunk with context %}
+{% from 'chunk.jst' import chunk_alignment, alignment with context %}
 {% for sample_name, sample in samples.items() if sample.glType|lower in ['genome', 'exome'] %}
-{{ chunk(sample_name, sample) }}
+
+{% if chunking %}
+  {{- chunk_alignment(sample_name, sample) }}
+{% else %}
+  {{- alignment(sample_name, sample) }}
+{% endif %}
+
 {% endfor %}
 #{# Where to put this?
 # methods: Fastqs for {{ rgid }} were aligned with {{ constants.tools.bwa_0_7_12.verbose }}. 
