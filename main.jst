@@ -68,15 +68,11 @@
 {% from 'somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
 {% from 'rna_quant/main.jst' import rna_quant with context %}
 
-
-# Start of module calls
-{{ genome_alignment(samples) }}
-{{ exome_alignment(samples) }}
-{{ rna_quant(samples) }}
-{{ germline_variant_calling(samples) }}
-{{ somatic_variant_calling(samples) }}
-
-
+# 
+{% from 'chunk.jst' import chunk with context %}
+{% for sample_name, sample in samples.items() if sample.glType|lower in ['genome', 'exome'] %}
+{{ chunk(sample_name, sample) }}
+{% endfor %}
 #{# Where to put this?
 # methods: Fastqs for {{ rgid }} were aligned with {{ constants.tools.bwa_0_7_12.verbose }}. 
 #     The resulting data was streamed into {{ constants.tools.samtools_1_7.verbose }} fixmate 

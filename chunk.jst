@@ -1,0 +1,126 @@
+{% macro chunk(sample_name, sample) %}
+{% for rgid, rg in sample.read_groups.items() %}
+
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+{% set rgline = '@RG\\tID:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format( 
+    rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
+
+- name: copy_fastqs_{{ r1fastq.fastqPath|basename }}
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    mkdir -p temp/fastqs/
+
+    rsync_from_isilon {{ r1fastq.fastqPath }} temp/fastqs/
+
+
+- name: copy_fastqs_{{ r2fastq.fastqPath|basename }}
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    mkdir -p temp/fastqs/
+
+    rsync_from_isilon {{ r2fastq.fastqPath }} temp/fastqs/
+
+{% set r1fastq_chunks_dir = 'temp/split_fastqs/' + (r1fastq.fastqPath|basename) %}
+{% set r2fastq_chunks_dir = 'temp/split_fastqs/' + (r2fastq.fastqPath|basename) %}
+{% set reads_per_chunk = 30000 %}
+{% set n_lines = (reads_per_chunk * 4)|int %}
+{% set n_chunks = (r1fastq.numberOfReads / reads_per_chunk)|int %}
+
+- name: split_fastq_{{ r1fastq.fastqPath|basename }}
+  after: copy_fastqs_{{ r1fastq.fastqPath|basename }}
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+    set -o pipefail
+
+    FASTQ_TEMP_PATH="temp/fastqs/{{ r1fastq.fastqPath|basename }}"
+    rm -r "{{ r1fastq_chunks_dir }}" || true
+    mkdir -p "{{ r1fastq_chunks_dir }}"
+
+    zcat "${FASTQ_TEMP_PATH}" | split -d --suffix-length 3 -l {{ n_lines }} - "{{ r1fastq_chunks_dir }}/"
+    
+
+- name: split_fastq_{{ r2fastq.fastqPath|basename }}
+  after: copy_fastqs_{{ r2fastq.fastqPath|basename }}
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+    set -o pipefail
+
+    FASTQ_TEMP_PATH="temp/fastqs/{{ r2fastq.fastqPath|basename }}"
+    rm -r "{{ r2fastq_chunks_dir }}/" || true
+    mkdir -p "{{ r2fastq_chunks_dir }}"
+
+    zcat "${FASTQ_TEMP_PATH}" | split -d --suffix-length 3 -l {{ n_lines }} - "{{ r2fastq_chunks_dir }}/"
+    
+
+{% for i in range(n_chunks) %}
+{% set chunk_suffix = '%03d' % i %}
+- name: bwa_mem_{{ sample_name }}_{{ rgid }}_{{ chunk_suffix }}
+  after: 
+    - split_fastq_{{ r1fastq.fastqPath|basename }}
+    - split_fastq_{{ r2fastq.fastqPath|basename }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -euv
+    set -o pipefail
+
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "temp/{{ rgid }}/"
+
+    bwa mem \
+      -Y \
+      -K 1000000 \
+      -M \
+      -t14 \
+      -R "{{ rgline }}" \
+      "{{ constants.phoenix.reference_index_prefix }}" \
+      "{{ r1fastq_chunks_dir }}/{{ chunk_suffix }}" \
+      "{{ r2fastq_chunks_dir }}/{{ chunk_suffix }}" |\
+    samtools fixmate \
+      -@ 5 \
+      -m \
+      - \
+      - |\
+    samtools sort \
+      -l 5 \
+      -m 1G \
+      -@ 10 \
+      -O BAM \
+      - \
+      -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+
+{% endfor %}
+{% endfor %}
+
+- name: merge_bam_chunks_{{ sample_name }}
+  after:
+    re: bwa_mem_{{ sample_name }}_.*
+  walltime: "24:00:00"
+  cpus: 4
+  cmd: |
+    set -ue
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    samtools merge -f "temp/{{ sample_name }}.bwa.bam" \
+    {% for rgid in sample.read_groups %}
+      "temp/{{ rgid }}/"* \
+    {% endfor %}
+
+    # Cleanup the tempfiles
+    {% for rgid in sample.read_groups %}
+    rm -r "temp/{{ rgid }}/"
+    {% endfor %}
+
+{% endmacro %}
