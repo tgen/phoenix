@@ -10,7 +10,7 @@
 #   recalibrate temp/sample.md.bwa.bam > results/genome/sample/sample.bwa.bam
 #   qc results/genome/sample/sample.bwa.bam > results/genome/sample/qc/sample.bwa.bam...
 #
-{% from 'genome_alignment/bwa_mem.jst' import bwa_mem with context %}
+{% from 'genome_alignment/alignment.jst' import alignment, chunk_alignment with context %}
 {% from 'genome_alignment/samtools_markdups.jst' import markdups with context %}
 {% from 'genome_alignment/gatk_baserecalibration.jst' import baserecalibration with context %}
 {% from 'genome_alignment/gatk_baserecalibration.jst' import nobaserecalibration with context %}
@@ -20,20 +20,12 @@
 {% macro genome_alignment(samples) %}
 
 {% for sample_name, sample in samples.items() if sample.glType|lower == 'genome' %}
-    {% for rgid, rg in sample.read_groups.items() %}
-        {% if rg.data_files|length != 2 %}
-            {{ raise('This module only supports paired end data with two fastqs') }}
-        {% endif %}
-
-        {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
-        {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-        {% set rgline = '@RG\\tID:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format( 
-          rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
-        {% set bwa_bam_path = 'temp/bwa_mem_' + rgid + '/' + rgid + '.bwa.bam' %}
-
-        {{- bwa_mem(rgid, rgline, r1fastq, r2fastq, bwa_bam_path) }}
-
-    {% endfor %}
+    {% set first_rg = sample.read_groups|first %}
+    {% if chunking and first_rg.numberOfReads is defined %}
+      {{- chunk_alignment(sample_name, sample) }}
+    {% else %}
+      {{- alignment(sample_name, sample) }}
+    {% endif %}
 
     {{- markdups(sample_name, sample) }}
 
@@ -44,7 +36,6 @@
     {% endif %}
 
     {{- bam_qc(sample_name, sample) }}
-    
 {% endfor %}
 
 {% endmacro %}

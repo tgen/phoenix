@@ -3,8 +3,8 @@
 # results/<sample.glType>/<sample_name>/<sample_name>.bwa.bam
 {% macro baserecalibration(sample_name, sample) %}
 {% for batch in constants.phoenix.intervals_batched %}
-- name: baserecalibration_table_bwa_{{ sample_name }}_chunk{{ loop.index }}
-  after: samtools_markdup_bwa_{{ sample_name }}_bwa
+- name: baserecalibration_table_bwa_{{ sample_name }}_{{ loop.index }}
+  input: temp/{{ sample_name }}.md.bwa.bam
   walltime: "24:00:00"
   cpus: 4
   cmd: |
@@ -27,7 +27,7 @@
 
 - name: gather_bqsr_reports_bwa_{{ sample_name }}
   after: 
-    re: baserecalibration_table_bwa_{{ sample_name }}_chunk.*
+    re: baserecalibration_table_bwa_{{ sample_name }}_.*
   walltime: "24:00:00"
   cpus: 4
   cmd: | 
@@ -67,6 +67,7 @@
       -O "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
 
 {% endmacro %}
+
 
 # Moves the markduplicates bam without doing baserecalibration
 {% macro nobaserecalibration(sample_name, sample) %}
