@@ -8,7 +8,6 @@
   walltime: "24:00:00"
   cpus: 4
   cmd: |
-    #!/bin/bash
     set -euv
     module load {{ constants.tools.gatk_4_0_1_2.module }}
 
@@ -30,8 +29,7 @@
     re: baserecalibration_table_bwa_{{ sample_name }}_.*
   walltime: "24:00:00"
   cpus: 4
-  cmd: | 
-    #!/bin/bash 
+  cmd: |
     set -eu
     module load {{ constants.tools.gatk_4_0_1_2.module }}
 
@@ -53,7 +51,6 @@
   walltime: "24:00:00"
   cpus: 8
   cmd: |
-    #!/bin/bash
     set -euv
     module load {{ constants.tools.gatk_4_0_1_2.module }}
 
@@ -72,7 +69,7 @@
 # Moves the markduplicates bam without doing baserecalibration
 {% macro nobaserecalibration(sample_name, sample) %}
 - name: no_baserecalibration_bwa_{{ sample_name }}
-  after: samtools_markdup_bwa_{{ sample_name }}_bwa
+  input: temp/{{ sample_name }}.md.bwa.bam
   output: 
     - results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
   walltime: "24:00:00"

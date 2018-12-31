@@ -20,7 +20,7 @@
 {% macro genome_alignment(samples) %}
 
 {% for sample_name, sample in samples.items() if sample.glType|lower == 'genome' %}
-    {% set first_rg = sample.read_groups|first %}
+    {% set first_rg = sample.read_groups.values()|first %}
     {% if chunking and first_rg.numberOfReads is defined %}
       {{- chunk_alignment(sample_name, sample) }}
     {% else %}
