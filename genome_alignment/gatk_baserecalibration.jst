@@ -52,7 +52,7 @@
   cpus: 8
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_1_2.module }} {{ constants.tools.samtools_1_7.module }}
 
     mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
 
@@ -62,6 +62,8 @@
       --input "temp/{{ sample_name }}.md.bwa.bam" \
       --bqsr-recal-file "temp/{{ sample_name }}.bwa.recal_data.table" \
       -O "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
+
+    samtools index results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
 
 {% endmacro %}
 
