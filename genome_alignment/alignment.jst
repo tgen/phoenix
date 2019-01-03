@@ -112,7 +112,7 @@
 #   ? -X--fastqs--> sample_name.bwa.bam
 #     ? ?
 #
-{% macro chunk_alignment(sample_name, sample, reads_per_chunk=48000000) %}
+{% macro chunk_alignment(sample_name, sample, reads_per_chunk) %}
 {% for rgid, rg in sample.read_groups.items() %}
 
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
@@ -133,7 +133,7 @@
 
 
 {% set n_lines = (reads_per_chunk * 4)|int %}
-{% set n_chunks = (r1fastq.numberOfReads / reads_per_chunk)|round(0, method='ceil')|int %}
+{% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
 
 {% for fastq in [r1fastq, r2fastq] %}
