@@ -9,7 +9,7 @@
   cpus: 4
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk \
       --java-options "-Xms3000m" \
@@ -31,7 +31,7 @@
   cpus: 4
   cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk \
       --java-options "-Xms3000m" \
@@ -43,7 +43,7 @@
 
 
 - name: apply_base_recalibration_bwa_{{ sample_name }}
-  methods: Reads for {{ sample_name }} were processed with {{ constants.tools.gatk_4_0_1_2.verbose }} 
+  methods: Reads for {{ sample_name }} were processed with {{ constants.tools.gatk_4_0_7_0.verbose }}
     BaseRecalibrator to correct systematic errors in base quality scores. 
   after: gather_bqsr_reports_bwa_{{ sample_name }}
   output: 
@@ -52,7 +52,7 @@
   cpus: 8
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_1_2.module }} {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }} {{ constants.tools.samtools_1_7.module }}
 
     mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
 

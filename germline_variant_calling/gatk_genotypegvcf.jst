@@ -7,7 +7,7 @@
   cpus: 4
   cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
     mkdir -p "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/"
 
     gatk GenotypeGVCFs \
@@ -30,7 +30,7 @@
   cmd: |
     #!/bin/bash
     set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk MergeVcfs \
       {% for batch in constants.phoenix.intervals_batched %}
