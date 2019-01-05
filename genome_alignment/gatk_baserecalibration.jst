@@ -52,7 +52,8 @@
   cpus: 8
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_7_0.module }} {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.samtools_1_7.module }}
 
     mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
 

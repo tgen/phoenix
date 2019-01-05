@@ -13,14 +13,14 @@
   walltime: "24:00:00"
   cpus: 1
   cmd: |
-    set -ue
+    set -uev
     module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk CollectHsMetrics \
-      I="results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
-      O="results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam.hs_metrics.txt" \
-      R={{ constants.phoenix.reference_fasta_path }} \
-      BAIT_INTERVALS={{ constants.capture_kits[capture_kit_code].probes }} \
-      TARGET_INTERVALS={{ constants.capture_kits[capture_kit_code].targets }}
+      --INPUT "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      --OUTPUT "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam.hs_metrics.txt" \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta_path }} \
+      --BAIT_INTERVALS {{ constants.capture_kits[capture_kit_code].probes }} \
+      --TARGET_INTERVALS {{ constants.capture_kits[capture_kit_code].targets }}
 
 {% endmacro %}

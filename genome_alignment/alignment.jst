@@ -5,6 +5,13 @@
 #     ? ?
 #
 {% macro alignment(sample_name, sample) %}
+- name: start_alignment_{{ sample_name }}
+  cmd: null
+  methods: Fastqs for {{ sample_name }} were aligned with
+    {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
+    into {{ constants.tools.samtools_1_7.verbose }} fixmate and sort to
+    generate a temporary aligned read group bam.
+
 {% for rgid, rg in sample.read_groups.items() %}
 {% if rg.data_files|length != 2 %}
     {{ raise('This module only supports paired end data with two fastqs') }}
@@ -16,6 +23,7 @@
   rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
 
 - name: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  after: start_alignment_{{ sample_name }}
   tags: [rsync, {{ sample_name }}, {{ rgid }}]
   cpus: 1
   walltime: "1:00:00"
@@ -105,6 +113,7 @@
 {% endif %}
 {% endmacro %}
 
+
 # Aligns fastqs for a sample. Samples may have multiple read groups, and each
 # read group may be split into several chunks during alignment.
 #
@@ -113,8 +122,14 @@
 #     ? ?
 #
 {% macro chunk_alignment(sample_name, sample, reads_per_chunk) %}
-{% for rgid, rg in sample.read_groups.items() %}
+- name: start_alignment_{{ sample_name }}
+  cmd: null
+  methods: Fastqs for {{ sample_name }} were aligned with
+    {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
+    into {{ constants.tools.samtools_1_7.verbose }} fixmate and sort to
+    generate a temporary aligned read group bam.
 
+{% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 {% set rgline = '@RG\\tID:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format( 
@@ -164,7 +179,6 @@
     fi
 
 {% endfor %}
-
 
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
