@@ -1,7 +1,4 @@
 # Phoenix Human GRCh38 pipeline
-{# Check for the required config variables #}
-{% set dataFiles = dataFiles %}
-{% set constants = constants %}
 
 # The config variables includes an array of dataFiles. Here we
 # need to group the data files into read groups, and then group 
@@ -60,7 +57,6 @@
     {% do samples[sample_name]['read_groups'][rgid].update({'data_files': data_files}) %}
 {% endfor %}
 
-
 # Start of module imports
 {% from 'genome_alignment/main.jst' import genome_alignment with context %}
 {% from 'exome_alignment/main.jst' import exome_alignment with context %}
@@ -68,18 +64,9 @@
 {% from 'somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
 {% from 'rna_quant/main.jst' import rna_quant with context %}
 
-
 # Start of module calls
 {{ genome_alignment(samples) }}
 {{ exome_alignment(samples) }}
 {{ rna_quant(samples) }}
 {{ germline_variant_calling(samples) }}
 {{ somatic_variant_calling(samples) }}
-
-
-#{# Where to put this?
-# methods: Fastqs for {{ rgid }} were aligned with {{ constants.tools.bwa_0_7_12.verbose }}. 
-#     The resulting data was streamed into {{ constants.tools.samtools_1_7.verbose }} fixmate 
-#     and sort to generate a temporary aligned read group bam.
-#}
-

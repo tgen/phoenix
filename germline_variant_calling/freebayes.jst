@@ -6,8 +6,8 @@
   walltime: "24:00:00"
   cpu: 4
   cmd: |
-    set -ue
-    module load {{ constants.tools.freebayes_1_2_0.module }}
+    set -uev
+    module load {{ constants.tools.freebayes_1_2.module }}
 
     mkdir -p "temp/{{ sample_name }}_{{ aligner }}_freebayes/"
 
@@ -24,7 +24,9 @@
       -t "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.bed" \
       --ploidy 2 \
       --min-repeat-entropy 1 \
-      > "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf.gz"
+      > "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf"
+
+
 {% endfor %}
 
 
@@ -35,12 +37,12 @@
   walltime: "24:00:00"
   cpus: 4
   cmd: |
-    set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    set -euv
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk MergeVcfs \
       {% for batch in constants.phoenix.intervals_batched %}
-      --INPUT "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf.gz" \
+      --INPUT "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
       {% endfor %}
       --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf"
 
