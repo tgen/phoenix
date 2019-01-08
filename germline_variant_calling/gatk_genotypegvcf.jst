@@ -16,7 +16,7 @@
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --variant "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf" \
+      --variant "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf.gz" \
       --output "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz"
 
 {% endfor %}
@@ -36,7 +36,7 @@
       {% for batch in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
       {% endfor %}
-      --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf"
+      --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf.gz"
 
     rm -r "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/"
 
