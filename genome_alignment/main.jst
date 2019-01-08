@@ -5,38 +5,41 @@
 # for sample in samples if glType == Genome
 #   for read group in sample.read_groups
 #       bwa rg.fq1 rg.fq2 > temp/rgid.bwa.bam
-#   merge {rg for rg in sample.read_groups} > temp/sample.bwa.bam
+#   merge {sample.read_groups} > temp/sample.bwa.bam
 #   markdups temp/sample.bwa.bam > temp/sample.md.bwa.bam
 #   recalibrate temp/sample.md.bwa.bam > results/genome/sample/sample.bwa.bam
 #   qc results/genome/sample/sample.bwa.bam > results/genome/sample/qc/sample.bwa.bam...
 #
-{% from 'genome_alignment/bwa_mem.jst' import bwa_mem with context %}
+{% from 'genome_alignment/alignment.jst' import alignment, chunk_alignment with context %}
 {% from 'genome_alignment/samtools_markdups.jst' import markdups with context %}
 {% from 'genome_alignment/gatk_baserecalibration.jst' import baserecalibration with context %}
+{% from 'genome_alignment/gatk_baserecalibration.jst' import nobaserecalibration with context %}
 {% from 'genome_alignment/bam_qc.jst' import bam_qc with context %}
 
 
 {% macro genome_alignment(samples) %}
 
 {% for sample_name, sample in samples.items() if sample.glType|lower == 'genome' %}
-    {% for rgid, rg in sample.read_groups.items() %}
-        {% if rg.data_files|length != 2 %}
-            {{ raise('This module only supports paired end data with two fastqs') }}
-        {% endif %}
-
-        {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
-        {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-        {% set rgline = '@RG\\tID:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format( 
-          rg.rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, rg.rgks) %}
-
-        {{- bwa_mem(rgid, rgline, r1fastq, r2fastq) }}
-
-    {% endfor %}
+    {% set first_rg = sample.read_groups.values()|first %}
+    {% if chunking and first_rg.numberOfReads is defined %}
+      {% if reads_per_chunk is defined %}
+        {{- chunk_alignment(sample_name, sample, reads_per_chunk) }}
+      {% else %}
+        {{- chunk_alignment(sample_name, sample, 48000000) }}
+      {% endif %}
+    {% else %}
+      {{- alignment(sample_name, sample) }}
+    {% endif %}
 
     {{- markdups(sample_name, sample) }}
-    {{- baserecalibration(sample_name, sample) }}
+
+    {% if tasks.Genome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Genome_base_recalibration_gatk_4_0_1_2 %}
+        {{- nobaserecalibration(sample_name, sample) }}
+    {% else %}
+        {{- baserecalibration(sample_name, sample) }}
+    {% endif %}
+
     {{- bam_qc(sample_name, sample) }}
-    
 {% endfor %}
 
 {% endmacro %}

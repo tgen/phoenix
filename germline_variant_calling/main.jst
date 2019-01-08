@@ -4,12 +4,12 @@
 {% from 'germline_variant_calling/freebayes.jst' import freebayes with context %}
 {% from 'germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
 
-# TODO duplicate these for exome and genome?
+
 {% macro germline_variant_calling(samples) %}
-{% for sample_name, sample in samples.items() if sample.glType|lower in ('genome', 'exome') %}
+{% for sample_name, sample in samples.items() if sample.glType|lower == 'exome' %}
     {{- haplotypecaller(sample_name, sample, aligner='bwa') }}
 
-    {% if tasks.Exome_freebayes_freebayes_1_2_0 %}
+    {% if tasks.Exome_freebayes_freebayes_1_2_0 is defined and tasks.Exome_freebayes_freebayes_1_2_0 %}
         {{- genotypegvcf(sample_name, sample, aligner='bwa') }}
         {{- freebayes(sample_name, sample, aligner='bwa') }}
     {% endif %}
@@ -17,6 +17,23 @@
     {% if sample.subGroup|lower == 'constitutional' %}
         {{- ichorcna(sample_name, sample, aligner='bwa') }}
     {% endif %}
-    
 {% endfor %}
+
+
+# This whole block is duplicated just because of the option to toggle freebayes
+# genotyping on a genome OR exome level. I would argue that were adding features
+# that nobody has asked for yet.
+{% for sample_name, sample in samples.items() if sample.glType|lower == 'genome' %}
+    {{- haplotypecaller(sample_name, sample, aligner='bwa') }}
+
+    {% if tasks.Genome_freebayes_freebayes_1_2_0 is defined and tasks.Genome_freebayes_freebayes_1_2_0 %}
+        {{- genotypegvcf(sample_name, sample, aligner='bwa') }}
+        {{- freebayes(sample_name, sample, aligner='bwa') }}
+    {% endif %}
+
+    {% if sample.subGroup|lower == 'constitutional' %}
+        {{- ichorcna(sample_name, sample, aligner='bwa') }}
+    {% endif %}
+{% endfor %}
+
 {% endmacro %}

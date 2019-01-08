@@ -3,14 +3,13 @@
 # results/<sample.glType>/<sample_name>/<sample_name>.bwa.bam
 {% macro baserecalibration(sample_name, sample) %}
 {% for batch in constants.phoenix.intervals_batched %}
-- name: baserecalibration_table_bwa_{{ sample_name }}_chunk{{ loop.index }}
-  after: mark_duplicates_bwa_{{ sample_name }}
+- name: baserecalibration_table_bwa_{{ sample_name }}_{{ loop.index }}
+  input: temp/{{ sample_name }}.md.bwa.bam
   walltime: "24:00:00"
   cpus: 4
   cmd: |
-    #!/bin/bash
     set -euv
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk \
       --java-options "-Xms3000m" \
@@ -27,13 +26,12 @@
 
 - name: gather_bqsr_reports_bwa_{{ sample_name }}
   after: 
-    re: baserecalibration_table_bwa_{{ sample_name }}_chunk.*
+    re: baserecalibration_table_bwa_{{ sample_name }}_.*
   walltime: "24:00:00"
   cpus: 4
-  cmd: | 
-    #!/bin/bash 
+  cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk \
       --java-options "-Xms3000m" \
@@ -45,7 +43,7 @@
 
 
 - name: apply_base_recalibration_bwa_{{ sample_name }}
-  methods: Reads for {{ sample_name }} were processed with {{ constants.tools.gatk_4_0_1_2.verbose }} 
+  methods: Reads for {{ sample_name }} were processed with {{ constants.tools.gatk_4_0_7_0.verbose }}
     BaseRecalibrator to correct systematic errors in base quality scores. 
   after: gather_bqsr_reports_bwa_{{ sample_name }}
   output: 
@@ -53,9 +51,9 @@
   walltime: "24:00:00"
   cpus: 8
   cmd: |
-    #!/bin/bash
     set -euv
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.samtools_1_7.module }}
 
     mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
 
@@ -65,5 +63,27 @@
       --input "temp/{{ sample_name }}.md.bwa.bam" \
       --bqsr-recal-file "temp/{{ sample_name }}.bwa.recal_data.table" \
       -O "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
+
+    samtools index results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+
+{% endmacro %}
+
+
+# Moves the markduplicates bam without doing baserecalibration
+{% macro nobaserecalibration(sample_name, sample) %}
+- name: no_baserecalibration_bwa_{{ sample_name }}
+  input: temp/{{ sample_name }}.md.bwa.bam
+  output: 
+    - results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  walltime: "24:00:00"
+  cpus: 1
+  cmd: |
+    set -ue 
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
+    mv "temp/{{ sample_name }}.md.bwa.bam" "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
+
+    samtools index results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
 
 {% endmacro %}

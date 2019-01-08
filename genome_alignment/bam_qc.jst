@@ -11,7 +11,7 @@
     set -ue
     module load {{ constants.tools.samtools_1_7.module }}
 
-    samtools index "results/{{ sample_name }}/{{ sample_name }}.bwa.bam"
+    samtools index "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
     samtools idxstats \
       "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" >\
       "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam.idxstats"
@@ -23,7 +23,7 @@
   input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
   cmd: |
     set -ue
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
     
     gatk CollectMultipleMetrics \
       -I "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
