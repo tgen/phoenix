@@ -8,9 +8,9 @@
   walltime: "24:00:00"
   cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
-    mkdir -p temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
 
     gatk Mutect2 \
       --TMP_DIR temp/ \
@@ -36,7 +36,7 @@
   walltime: "24:00:00"
   cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     mkdir -p "results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/"
 
@@ -46,5 +46,6 @@
       {% endfor %}
       --OUTPUT "results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf"
 
+    rm -r "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
 
 {% endmacro %}

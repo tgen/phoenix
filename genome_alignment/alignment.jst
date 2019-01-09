@@ -1,0 +1,242 @@
+# Aligns fastqs for a sample. Samples may have multiple read groups.
+#
+#     ? ?
+#   ? -X--fastqs--> sample_name.bwa.bam
+#     ? ?
+#
+{% macro alignment(sample_name, sample) %}
+- name: start_alignment_{{ sample_name }}
+  cmd: null
+  methods: Fastqs for {{ sample_name }} were aligned with
+    {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
+    into {{ constants.tools.samtools_1_7.verbose }} fixmate and sort to
+    generate a temporary aligned read group bam.
+
+{% for rgid, rg in sample.read_groups.items() %}
+{% if rg.data_files|length != 2 %}
+    {{ raise('This module only supports paired end data with two fastqs') }}
+{% endif %}
+
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+{% set rgline = '@RG\\tID:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
+  rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
+
+- name: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  after: start_alignment_{{ sample_name }}
+  tags: [rsync, {{ sample_name }}, {{ rgid }}]
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    mkdir -p temp/fastqs/
+
+    rsync_from_isilon "{{ r1fastq.fastqPath }}" "temp/fastqs/"
+    rsync_from_isilon "{{ r2fastq.fastqPath }}" "temp/fastqs/"
+
+
+- name: bwa_mem_{{ sample_name }}_{{ rgid }}
+  tags: [bwa, samtools, {{ sample_name }}, {{ rgid }}]
+  after: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  walltime: "8:00:00"
+  cpus: 16
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "temp/{{ rgid }}/"
+
+    bwa mem \
+      -Y \
+      -K 1000000 \
+      -M \
+      -t14 \
+      -R "{{ rgline }}" \
+      "{{ constants.phoenix.reference_index_prefix }}" \
+      "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
+      "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
+    samtools fixmate \
+      -@ 5 \
+      -m \
+      - \
+      - |\
+    samtools sort \
+      -l 5 \
+      -m 1G \
+      -@ 10 \
+      -O BAM \
+      - \
+      -o "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
+
+{% endfor %}
+
+{% if sample.read_groups | length > 1 %}
+- name: samtools_merge_rg_bams_bwa_{{ sample_name }}
+  tags: [samtools, merge, {{ sample_name }}]
+  after:
+    re: bwa_mem_{{ sample_name }}_.*
+  output: temp/{{ sample_name }}.bwa.bam
+  walltime: "24:00:00"
+  cpus: 4
+  cmd: |
+    set -ue
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    samtools merge -f "temp/{{ sample_name }}.bwa.bam" \
+    {% for rgid in sample.read_groups %}
+      "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
+    {% endfor %}
+
+    # Cleanup the tempfiles
+    {% for rgid in sample.read_groups %}
+    rm -r "temp/{{ rgid }}/"
+    {% endfor %}
+
+{% else %}
+{# If there's only one RG for the sample, we can save time #}
+{# by just moving that bam to the merged bam path. #}
+{% set rgid = sample.read_groups[0] %}
+- name: no_merging_needed_{{ sample_name }}_bwa
+  output: temp/{{ sample_name }}.bwa.bam
+  walltime: "1:00:00"
+  cpus: 1
+  cmd: |
+    set -ue
+
+    mv \
+      "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
+      "temp/{{ sample_name }}.bwa.bam"
+
+{% endif %}
+{% endmacro %}
+
+
+# Aligns fastqs for a sample. Samples may have multiple read groups, and each
+# read group may be split into several chunks during alignment.
+#
+#     ? ?
+#   ? -X--fastqs--> sample_name.bwa.bam
+#     ? ?
+#
+{% macro chunk_alignment(sample_name, sample, reads_per_chunk) %}
+- name: start_alignment_{{ sample_name }}
+  cmd: null
+  methods: Fastqs for {{ sample_name }} were aligned with
+    {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
+    into {{ constants.tools.samtools_1_7.verbose }} fixmate and sort to
+    generate a temporary aligned read group bam.
+
+{% for rgid, rg in sample.read_groups.items() %}
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+{% set rgline = '@RG\\tID:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format( 
+    rgid, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
+
+- name: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    mkdir -p temp/fastqs/
+
+    rsync_from_isilon {{ r1fastq.fastqPath }} temp/fastqs/
+    rsync_from_isilon {{ r2fastq.fastqPath }} temp/fastqs/
+
+
+{% set n_lines = (reads_per_chunk * 4)|int %}
+{% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
+{% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
+
+{% for fastq in [r1fastq, r2fastq] %}
+- name: split_fastq_{{ fastq.fastqPath|basename }}
+  after: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+    set -o pipefail
+
+    rm -r "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/" || true
+    mkdir -p "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/"
+
+    zcat "temp/fastqs/{{ fastq.fastqPath|basename }}" |\
+      split \
+        -d \
+        --suffix-length 2 \
+        -l {{ n_lines }} \
+        - \
+        "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/"
+
+    N_CREATED=$(ls "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/" | wc -l)
+
+    if [[ ${N_CREATED} -ne {{ n_chunks }} ]]; then
+      echo "Chunks created does not match expected value"
+      exit 1
+    fi
+
+{% endfor %}
+
+{% for i in range(n_chunks) %}
+{% set chunk_suffix = '%02d' % i %}
+- name: bwa_mem_{{ sample_name }}_{{ rgid }}_{{ chunk_suffix }}
+  after: 
+    - split_fastq_{{ r1fastq.fastqPath|basename }}
+    - split_fastq_{{ r2fastq.fastqPath|basename }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -euv
+    set -o pipefail
+
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_7.module }}
+
+    bwa mem \
+      -Y \
+      -K 1000000 \
+      -M \
+      -t14 \
+      -R "{{ rgline }}" \
+      "{{ constants.phoenix.reference_index_prefix }}" \
+      "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
+      "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
+    samtools fixmate \
+      -@ 5 \
+      -m \
+      - \
+      - |\
+    samtools sort \
+      -l 5 \
+      -m 1G \
+      -@ 10 \
+      -O BAM \
+      - \
+      -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+
+{% endfor %}
+{% endfor %}
+
+- name: merge_bam_chunks_{{ sample_name }}
+  after:
+    re: bwa_mem_{{ sample_name }}_.*
+  output: temp/{{ sample_name }}.bwa.bam
+  walltime: "24:00:00"
+  cpus: 4
+  cmd: |
+    set -ue
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    samtools merge -f "temp/{{ sample_name }}.bwa.bam" \
+    {% for rgid in sample.read_groups %}
+      "temp/{{ rgid }}/"*.bwa.bam \
+    {% endfor %}
+
+    # Cleanup the tempfiles
+    {% for rgid in sample.read_groups %}
+    rm -r "temp/{{ rgid }}/"
+    {% endfor %}
+
+{% endmacro %}

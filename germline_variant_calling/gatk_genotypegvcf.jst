@@ -6,18 +6,18 @@
   walltime: "24:00:00"
   cpus: 4
   cmd: |
-    set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    set -euv
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
     mkdir -p "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/"
 
     gatk GenotypeGVCFs \
-      --java-options "-Xmx4g"
-      -R {{ constants.phoenix.reference_fasta_path }} \
-      -V "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf" \
+      --java-options "-Xmx4g" \
+      --reference {{ constants.phoenix.reference_fasta_path }} \
       {% for interval in batch %}
-      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      -O "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz"
+      --variant "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf.gz" \
+      --output "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz"
 
 {% endfor %}
 
@@ -29,16 +29,16 @@
   cpus: 4
   cmd: |
     #!/bin/bash
-    set -eu
-    module load {{ constants.tools.gatk_4_0_1_2.module }}
+    set -euv
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk MergeVcfs \
       {% for batch in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
       {% endfor %}
-      --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf"
+      --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf.gz"
 
-    rm -r "temp/{{ sample_name }}_{{ aligner }}_hc_gvcf_chunks/"
+    rm -r "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/"
 
 {% endmacro %}
 
