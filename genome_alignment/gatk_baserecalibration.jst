@@ -5,7 +5,7 @@
 {% for batch in constants.phoenix.intervals_batched %}
 - name: baserecalibration_table_bwa_{{ sample_name }}_{{ loop.index }}
   input: temp/{{ sample_name }}.md.bwa.bam
-  walltime: "24:00:00"
+  walltime: "4:00:00"
   cpus: 4
   cmd: |
     set -euv
@@ -27,10 +27,10 @@
 - name: gather_bqsr_reports_bwa_{{ sample_name }}
   after: 
     re: baserecalibration_table_bwa_{{ sample_name }}_.*
-  walltime: "24:00:00"
+  walltime: "4:00:00"
   cpus: 4
   cmd: |
-    set -eu
+    set -euv
     module load {{ constants.tools.gatk_4_0_7_0.module }}
 
     gatk \
@@ -42,29 +42,50 @@
       --output "temp/{{ sample_name }}.bwa.recal_data.table"
 
 
-- name: apply_base_recalibration_bwa_{{ sample_name }}
+{% for batch in constants.phoenix.intervals_batched %}
+- name: apply_base_recalibration_bwa_{{ sample_name }}_{{ loop.index }}
   methods: Reads for {{ sample_name }} were processed with {{ constants.tools.gatk_4_0_7_0.verbose }}
     BaseRecalibrator to correct systematic errors in base quality scores. 
   after: gather_bqsr_reports_bwa_{{ sample_name }}
-  output: 
-    - results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
-  walltime: "24:00:00"
+  walltime: "4:00:00"
   cpus: 8
   cmd: |
     set -euv
     module load {{ constants.tools.gatk_4_0_7_0.module }}
-    module load {{ constants.tools.samtools_1_7.module }}
-
-    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
 
     gatk ApplyBQSR \
       --java-options "-Xms3000m" \
       --reference "{{ constants.phoenix.reference_fasta_path }}" \
       --input "temp/{{ sample_name }}.md.bwa.bam" \
       --bqsr-recal-file "temp/{{ sample_name }}.bwa.recal_data.table" \
-      -O "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
+      {% for interval in batch %}
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      -O "temp/{{ sample_name }}.recal_chunk{{ loop.index }}.bwa.bam"
 
-    samtools index results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+{% endfor %}
+
+- name: merge_bqsr_bam_chunks_{{ sample_name }}
+  after:
+    re: apply_base_recalibration_bwa_{{ sample_name }}_.*
+  output:
+    - results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  walltime: "4:00:00"
+  cpus: 4
+  cmd: |
+    set -uex
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"
+
+    samtools merge \
+      -f "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      "temp/{{ sample_name }}.recal_chunk"*.bwa.bam \
+
+    samtools index "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
+
+    # Cleanup the tempfiles
+    rm "temp/{{ sample_name }}.recal_chunk"*.bwa.bam \
 
 {% endmacro %}
 
@@ -78,7 +99,7 @@
   walltime: "24:00:00"
   cpus: 1
   cmd: |
-    set -ue 
+    set -uev
     module load {{ constants.tools.samtools_1_7.module }}
 
     mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/"

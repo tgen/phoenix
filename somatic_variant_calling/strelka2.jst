@@ -42,6 +42,11 @@
     # Execute on the local machine with 28 parallel jobs
     "results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/manta/runWorkflow.py" -m local -j 28
     rm "${MANTA_CONFIG}"
+
+    # Compress the workspace files after the run completes successfully
+    tar -cz --remove-files \
+      -f "results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/manta/workspace.tar.gz" \
+      "results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/manta/workspace/"
  
 
 - name: strelka2_{{ aligner }}_{{ pair.name }}
@@ -84,5 +89,10 @@
     # Execute on the local machine with 28 parallel jobs
     "results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/strelka2/runWorkflow.py" -m local -j 28
     rm "${STRELKA_CONFIG}"
+
+    # Compress the workspace files after the run completes successfully
+    tar -cz --remove-files \
+      -f "results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/strelka2/workspace.tar.gz" \
+      "results/{{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/strelka2/workspace/"
 
 {% endmacro %}

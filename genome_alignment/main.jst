@@ -15,6 +15,7 @@
 {% from 'genome_alignment/gatk_baserecalibration.jst' import baserecalibration with context %}
 {% from 'genome_alignment/gatk_baserecalibration.jst' import nobaserecalibration with context %}
 {% from 'genome_alignment/bam_qc.jst' import bam_qc with context %}
+{% from 'genome_alignment/cram.jst' import cram with context %}
 
 
 {% macro genome_alignment(samples) %}
@@ -39,6 +40,7 @@
         {{- baserecalibration(sample_name, sample) }}
     {% endif %}
 
+    {{- cram(sample_name, sample) }}
     {{- bam_qc(sample_name, sample) }}
 {% endfor %}
 

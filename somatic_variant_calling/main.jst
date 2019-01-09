@@ -33,6 +33,7 @@
 {% for pair_name, pair in pairs.items() %}
     {{- mutect2(pair) }}
     {{- strelka2(pair) }}
+    {{- lancet(pair) }}
 {% endfor %}
 
 {% endmacro %}
