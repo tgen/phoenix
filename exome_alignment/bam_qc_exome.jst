@@ -1,5 +1,5 @@
 # Adds QC tasks for the sample bams
-{% from 'genome_alignment/bam_qc.jst' import bam_qc with context %}
+{% from 'bam_qc.jst' import bam_qc with context %}
 
 
 {% macro bamqc_exome(sample_name, sample) %}
@@ -10,17 +10,19 @@
 
 - name: collecthsmetrics_bwa_{{ sample_name }}
   input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
-  walltime: "24:00:00"
-  cpus: 1
+  walltime: "4:00:00"
+  cpus: 2
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_0_7_0.module }}
 
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/stats/"
+
     gatk CollectHsMetrics \
       --INPUT "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
-      --OUTPUT "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam.hs_metrics.txt" \
-      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta_path }} \
-      --BAIT_INTERVALS {{ constants.capture_kits[capture_kit_code].probes }} \
-      --TARGET_INTERVALS {{ constants.capture_kits[capture_kit_code].targets }}
+      --OUTPUT "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam.hs_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --BAIT_INTERVALS "{{ constants.capture_kits[capture_kit_code].probes }}" \
+      --TARGET_INTERVALS "{{ constants.capture_kits[capture_kit_code].targets }}"
 
 {% endmacro %}

@@ -14,7 +14,7 @@
 {% from 'genome_alignment/samtools_markdups.jst' import markdups with context %}
 {% from 'genome_alignment/gatk_baserecalibration.jst' import baserecalibration with context %}
 {% from 'genome_alignment/gatk_baserecalibration.jst' import nobaserecalibration with context %}
-{% from 'genome_alignment/bam_qc.jst' import bam_qc with context %}
+{% from 'genome_alignment/bam_qc_genome.jst' import bamqc_genome with context %}
 {% from 'genome_alignment/cram.jst' import cram with context %}
 
 
@@ -41,7 +41,7 @@
     {% endif %}
 
     {{- cram(sample_name, sample) }}
-    {{- bam_qc(sample_name, sample) }}
+    {{- bamqc_genome(sample_name, sample) }}
 {% endfor %}
 
 {% endmacro %}

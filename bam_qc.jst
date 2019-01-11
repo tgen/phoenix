@@ -4,35 +4,57 @@
   methods: Quality control metrics for {{ sample_name }} (BWA) were
     generated with {{ constants.tools.samtools_1_7.verbose }} idxstats.
   input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
-  walltime: "24:00:00"
+  walltime: "4:00:00"
   cpus: 1
   cmd: |
     #!/bin/bash
-    set -ue
+    set -uev
     module load {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/stats/"
 
     samtools index "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam"
     samtools idxstats \
       "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" >\
-      "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam.idxstats"
+      "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam.idxstats"
 
 
 - name: collectmultiplemetrics_bwa_{{ sample_name }}
-  walltime: "24:00:00"
-  cpus: 8
+  walltime: "4:00:00"
+  cpus: 2
   input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
   cmd: |
-    set -ue
+    set -uev
     module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/stats/"
     
     gatk CollectMultipleMetrics \
       -I "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
-      -O "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      -O "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam" \
       -R "{{ constants.phoenix.reference_fasta_path }}" \
       --PROGRAM CollectAlignmentSummaryMetrics \
       --PROGRAM CollectBaseDistributionByCycle \
       --PROGRAM CollectInsertSizeMetrics \
       --PROGRAM MeanQualityByCycle \
-      --PROGRAM QualityScoreDistribution
+      --PROGRAM QualityScoreDistribution \
+      --PROGRAM CollectGcBiasMetrics \
+      --PROGRAM CollectSequencingArtifactMetrics \
+      --PROGRAM CollectQualityYieldMetrics
+
+
+- name: convertsequencingarrtifacttooxog_{{ sample_name }}
+  after: collectmultiplemetrics_bwa_{{ sample_name }}
+  walltime: "4:00:00"
+  cpus: 2
+  input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    gatk ConvertSequencingArtifactToOxoG \
+      -I "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam" \
+      -R "{{ constants.phoenix.reference_fasta_path }}"
+
 
 {% endmacro %}

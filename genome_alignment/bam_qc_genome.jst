@@ -1,0 +1,63 @@
+# Adds QC tasks for the sample bams
+{% from 'bam_qc.jst' import bam_qc with context %}
+
+
+{% macro bamqc_genome(sample_name, sample) %}
+{{ bam_qc(sample_name, sample) }}
+
+{% set library_code = sample.assayCode[0:2] %}
+{% set capture_kit_code = sample.assayCode[2:5] %}
+
+- name: collectwgsmetrics_bwa_{{ sample_name }}
+  input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  walltime: "4:00:00"
+  cpus: 2
+  mem: 16000
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/stats/"
+
+    gatk CollectWgsMetrics \
+      --INPUT "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      --OUTPUT "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam.wgs_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
+
+
+- name: collectwgsmetricswithnonzerocoverage_bwa_{{ sample_name }}
+  input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  walltime: "4:00:00"
+  cpus: 2
+  mem: 16000
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/stats/"
+
+    gatk CollectWgsMetricsWithNonZeroCoverage \
+      --INPUT "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      --OUTPUT "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam.wgs_wnzc_metrics.txt" \
+      --CHART_OUTPUT "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam.wgs_wnzc_metrics.pdf" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
+
+
+- name: collectrawwgsmetrics_bwa_{{ sample_name }}
+  input: results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam
+  walltime: "4:00:00"
+  cpus: 2
+  mem: 16000
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "results/{{ sample.glType}}/{{ sample_name }}/stats/"
+
+    gatk CollectRawWgsMetrics \
+      --INPUT "results/{{ sample.glType}}/{{ sample_name }}/{{ sample_name }}.bwa.bam" \
+      --OUTPUT "results/{{ sample.glType}}/{{ sample_name }}/stats/{{ sample_name }}.bwa.bam.wgs_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --INCLUDE_BQ_HISTOGRAM true
+
+{% endmacro %}
