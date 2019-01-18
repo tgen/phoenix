@@ -1,12 +1,14 @@
 {% macro ichorcna(sample_name, sample, aligner='bwa') %}
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample_name }}
-  input: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
-  output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam.wig
+  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  output: {{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig
   walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -uev
     module load {{ constants.tools.hmmcopy_utils_1_0.module }}
+
+    mkdir -p "{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/"
 
     readCounter \
       --window 1000000 \
@@ -14,23 +16,25 @@
       --chromosome "chr1,chr2,chr3,chr4,chr5,chr6,chr7,chr8,chr9,chr10,\
     chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,\
     chr22,chrX,chrY" \
-      "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
-      > "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam.wig"
+      "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
+      > "{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig"
 
 
 - name: ichor_cna_{{ aligner }}_{{ sample_name }}
   input: 
-    - results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
-    - results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam.wig
+    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+    - {{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig
   walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -ue
-    module load {{ constants.tools.ichorcna_0_1_1.module }}
+    module load {{ constants.tools.ichorcna_0_1_0.module }}
+
+    RUNDIR="{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}/"
 
     # Purge any existing results files prior to starting
-    rm -r "results/{{ sample.glType }}/{{ sample_name }}/ichorCNA/" || true
-    mkdir -p "results/{{ sample.glType }}/{{ sample_name }}/ichorCNA/"
+    rm -r "${RUNDIR}" || true
+    mkdir -p "${RUNDIR}"
 
     # ichorCNA includes some pre-built references in the source code, this command 
     # finds these files dynamically with R system.find before starting
@@ -38,10 +42,10 @@
 
     # The ichorCNA launcher script does not currently get installed with
     # the rest of the package, so this path is hard coded in constants.yaml
-    Rscript "{{ constants.tools.ichorcna_0_1_1.launcher }}" \
-      --id "{{ sample_name}}" \
-      --WIG "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam.wig" \
-      --outDir "results/{{ sample.glType }}/{{ sample_name }}/ichorCNA/" \
+    Rscript "{{ constants.tools.ichorcna_0_1_0.launcher }}" \
+      --id "{{ sample_name}}.{{ aligner }}" \
+      --WIG "{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig" \
+      --outDir "${RUNDIR}" \
       --includeHOMD False \
       --estimateNormal True \
       --estimatePloidy True \

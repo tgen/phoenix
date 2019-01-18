@@ -1,5 +1,4 @@
 # Run Salmon RNA Quantification
-
 {% macro salmon(sample_name, sample) %}
 
 {% set r1fqlist = [] %}
@@ -17,7 +16,7 @@
   methods: >
     Transcript quantification for {{ sample_name }} was performed with
     {{ constants.tools.salmon_0_6_0.verbose }} using the cDNA index.
-  output: results/RNA/{{ sample_name }}
+  output: RNA/{{ sample_name }}
   cpus: 16
   walltime: "24:00:00"
   cmd: |
@@ -34,6 +33,6 @@
       --threads 16 \
       --biasCorrect \
       --geneMap {{ constants.phoenix.gtf }} \
-      --output "results/RNA/{{ sample_name }}/"
+      --output "RNA/{{ sample_name }}/"
 
 {% endmacro %}

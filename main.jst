@@ -29,6 +29,9 @@
 #           glType: RNA
 #               ...
 
+{# Setting debug to True retains many of the intermediate files #}
+{% if not debug is defined %}{% set debug = False %}{% endif %}
+
 {% set samples = {} %}
 {% for file in dataFiles %}
     {% if 'sampleMergeKey' in file %}
@@ -58,15 +61,13 @@
 {% endfor %}
 
 # Start of module imports
-{% from 'genome_alignment/main.jst' import genome_alignment with context %}
-{% from 'exome_alignment/main.jst' import exome_alignment with context %}
-{% from 'germline_variant_calling/main.jst' import germline_variant_calling with context %}
-{% from 'somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
-{% from 'rna_quant/main.jst' import rna_quant with context %}
+{% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
+{% from 'modules/germline_variant_calling/main.jst' import germline_variant_calling with context %}
+{% from 'modules/somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
+{% from 'modules/rna_quant/main.jst' import rna_quant with context %}
 
 # Start of module calls
-{{ genome_alignment(samples) }}
-{{ exome_alignment(samples) }}
+{{ dna_alignment(samples) }}
 {{ rna_quant(samples) }}
 {{ germline_variant_calling(samples) }}
 {{ somatic_variant_calling(samples) }}

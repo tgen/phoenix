@@ -1,0 +1,120 @@
+# This macro adds tasks for running GATK BaseRecalibrator on the output
+# from markdups.
+{% macro baserecalibration(sample_name, sample, aligner='bwa') %}
+{% for batch in constants.phoenix.intervals_batched %}
+- name: baserecalibration_table_{{ sample_name }}_{{ aligner }}_{{ loop.index }}
+  tags: [gatk, BaseRecalibrator, {{ sample_name }}]
+  input: temp/{{ sample_name }}.{{ aligner }}.md.bam
+  walltime: "4:00:00"
+  cpus: 4
+  cmd: |
+    set -euv
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    gatk \
+      --java-options "-Xms3000m" \
+      BaseRecalibrator \
+      --reference "{{ constants.phoenix.reference_fasta_path }}" \
+      --known-sites "{{ constants.phoenix.reference_snps }}" \
+      {% for interval in batch %}
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      --input "temp/{{ sample_name }}.{{ aligner }}.md.bam" \
+      --output "temp/{{ sample_name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table"
+
+{% endfor %}
+
+- name: gather_bqsr_reports_{{ sample_name }}_{{ aligner }}
+  tags: [gatk, GatherBQSRReports, {{ sample_name }}]
+  after: 
+    re: baserecalibration_table_{{ sample_name }}_{{ aligner }}_.*
+  walltime: "4:00:00"
+  cpus: 4
+  cmd: |
+    set -euv
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    gatk \
+      --java-options "-Xms3000m" \
+      GatherBQSRReports \
+      {% for b in constants.phoenix.intervals_batched %}
+      --input "temp/{{ sample_name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table" \
+      {% endfor %}
+      --output "temp/{{ sample_name }}.{{ aligner }}.recal_data.table"
+
+
+{% for batch in constants.phoenix.intervals_batched %}
+- name: apply_base_recalibration_{{ sample_name }}_{{ aligner }}_{{ loop.index }}
+  tags: [gatk, ApplyBQSR, {{ sample_name }}]
+  methods: Reads for {{ sample_name }} were processed with
+    {{ constants.tools.gatk_4_0_7_0.verbose }} BaseRecalibrator to correct
+    systematic errors in base quality scores.
+  after: gather_bqsr_reports_{{ sample_name }}_{{ aligner }}
+  walltime: "4:00:00"
+  cpus: 8
+  cmd: |
+    set -euv
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    gatk ApplyBQSR \
+      --java-options "-Xms3000m" \
+      --reference "{{ constants.phoenix.reference_fasta_path }}" \
+      --input "temp/{{ sample_name }}.{{ aligner }}.md.bam" \
+      --bqsr-recal-file "temp/{{ sample_name }}.{{ aligner }}.recal_data.table" \
+      {% for interval in batch %}
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      -O "temp/{{ sample_name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
+
+{% endfor %}
+
+- name: merge_bqsr_bam_chunks_{{ sample_name }}_{{ aligner }}
+  tags: [samtools, merge, {{ sample_name }}]
+  after:
+    re: apply_base_recalibration_{{ sample_name }}_{{ aligner }}_.*
+  output: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  walltime: "4:00:00"
+  cpus: 4
+  cmd: |
+    set -uex
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/"
+
+    samtools merge \
+      -f "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
+      {% for b in constants.phoenix.intervals_batched %}
+      "temp/{{ sample_name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
+      {% endfor %}
+
+    samtools index "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam"
+
+    {% if not debug %}
+    # Cleanup the tempfiles
+    {% for b in constants.phoenix.intervals_batched %}
+    rm "temp/{{ sample_name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
+    {% endfor %}
+    {% endif %}
+
+{% endmacro %}
+
+
+# Moves the markduplicates bam without doing baserecalibration
+{% macro nobaserecalibration(sample_name, sample) %}
+- name: no_baserecalibration_{{ sample_name }}_{{ aligner }}
+  input: temp/{{ sample_name }}.{{ aligner }}.md.bam
+  output: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  walltime: "24:00:00"
+  cpus: 1
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/"
+    mv \
+      "temp/{{ sample_name }}.{{ aligner }}.md.bam" \
+      "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam"
+
+    samtools index "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam"
+
+{% endmacro %}

@@ -2,7 +2,7 @@
 {% macro genotypegvcf(sample_name, sample, aligner='bwa') %}
 {% for batch in constants.phoenix.intervals_batched %}
 - name: genotypegvcf_{{ aligner }}_{{ sample_name }}_{{ loop.index }}
-  input: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf
+  input: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}.{{ aligner }}.hc.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   cmd: |
@@ -16,7 +16,7 @@
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --variant "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.g.vcf.gz" \
+      --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}.{{ aligner }}.hc.g.vcf.gz" \
       --output "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz"
 
 {% endfor %}
@@ -24,7 +24,7 @@
 - name: genotypegvcf_merge_{{ aligner }}_{{ sample_name }}
   after: 
     re: genotypegvcf_{{ aligner }}_{{ sample_name }}_.*
-  output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf
+  output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}.{{ aligner }}.hc.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   cmd: |
@@ -36,9 +36,11 @@
       {% for batch in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
       {% endfor %}
-      --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf.gz"
+      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}.{{ aligner }}.hc.vcf.gz"
 
+    {% if not debug %}
     rm -r "temp/{{ sample_name }}_{{ aligner }}_hc_vcf_chunks/"
+    {% endif %}
 
 {% endmacro %}
 

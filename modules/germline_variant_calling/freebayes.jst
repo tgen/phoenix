@@ -2,9 +2,10 @@
 {% macro freebayes(sample_name, sample, aligner='bwa') %}
 {% for batch in constants.phoenix.intervals_batched %}
 - name: freebayes_{{ sample_name }}_{{ aligner }}_{{ loop.index }}
-  input: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
   walltime: "24:00:00"
-  cpu: 4
+  cpus: 4
+  mem: 16000
   cmd: |
     set -uev
     module load {{ constants.tools.freebayes_1_2.module }}
@@ -19,13 +20,12 @@
     EOF
 
     freebayes \
-      -b "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
+      -b "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
       -f "{{ constants.phoenix.reference_fasta_path }}" \
-      -t "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.bed" \
+      -t "temp/{{ sample_name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed" \
       --ploidy 2 \
       --min-repeat-entropy 1 \
-      > "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf"
-
+      > "temp/{{ sample_name }}_{{ aligner }}_freebayes/{{ loop.index }}.vcf"
 
 {% endfor %}
 
@@ -33,20 +33,25 @@
 - name: freebayes_merge_{{ sample_name }}_{{ aligner }}
   after: 
     re: freebayes_{{ sample_name }}_{{ aligner }}_.*
-  output: results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf
+  output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}.{{ aligner }}.freebayes.vcf
   walltime: "24:00:00"
   cpus: 4
+  mem: 16000
   cmd: |
     set -euv
     module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/"
 
     gatk MergeVcfs \
       {% for batch in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
       {% endfor %}
-      --OUTPUT "results/{{ sample.glType }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf"
+      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}.{{ aligner }}.freebayes.vcf"
 
+    {% if not debug %}
     rm -r "temp/{{ sample_name }}_{{ aligner }}_freebayes/"
+    {% endif %}
 
 
 {% endmacro %}

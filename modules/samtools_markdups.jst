@@ -1,0 +1,47 @@
+# This macro creates tasks that run samtools markdups on the merged bam.
+{% macro markdups(sample_name, sample, aligner='bwa') %}
+- name: samtools_markdup_{{ sample_name }}_{{ aligner }}
+  tags: [samtools, markdup, {{ sample_name }}]
+  methods: Duplicate reads for {{ sample_name }} were marked with
+    {{ constants.tools.samtools_1_7.verbose }} markdup.
+  input: temp/{{ sample_name }}.{{ aligner }}.bam
+  output: temp/{{ sample_name }}.{{ aligner }}.md.bam
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -eu
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools markdup. Here, we purge any
+    # existing temp files before making the directory again.
+    rm -r "temp/markdup_{{ sample_name }}_{{ aligner }}/" || true
+    mkdir -p "temp/markdup_{{ sample_name }}_{{ aligner }}/"
+
+    samtools markdup \
+      -S \
+      -s \
+      -T "temp/markdup_{{ sample_name }}_{{ aligner }}/" \
+      "temp/{{ sample_name }}.{{ aligner }}.bam" \
+      "temp/{{ sample_name }}.md.{{ aligner }}.bam"
+
+    samtools index "temp/{{ sample_name }}.{{ aligner }}.md.bam"
+
+    rm -r "temp/markdup_{{ sample_name }}_{{ aligner }}/"
+
+{% endmacro %}
+
+# Stand-in for markdups that just moves the aligner output bam to the md path
+{% macro nomarkdups(sample_name, sample, aligner='bwa') %}
+- name: samtools_markdup_{{ sample_name }}_{{ aligner }}
+  tags: [samtools, markdup, {{ sample_name }}]
+  input: temp/{{ sample_name }}.{{ aligner }}.bam
+  output: temp/{{ sample_name }}.{{ aligner }}.md.bam
+  walltime: "1:00:00"
+  cpus: 1
+  cmd: |
+    set -eu
+
+    mv "temp/{{ sample_name }}.{{ aligner }}.bam" "temp/{{ sample_name }}.{{ aligner }}.md.bam"
+
+{% endmacro %}

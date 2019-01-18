@@ -1,5 +1,5 @@
 # Quantify RNA sequecing data
-{% from 'rna_quant/salmon.jst' import salmon with context %}
+{% from 'modules/rna_quant/salmon.jst' import salmon with context %}
 
 {% macro rna_quant(samples) %}
 {% for sample_name, sample in samples.items() if sample.glType|lower == 'rna' %}

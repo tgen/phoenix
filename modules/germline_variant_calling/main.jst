@@ -1,8 +1,8 @@
 # Germline variant calling 
-{% from 'germline_variant_calling/gatk_haplotypecaller.jst' import haplotypecaller with context %}
-{% from 'germline_variant_calling/gatk_genotypegvcf.jst' import genotypegvcf with context %}
-{% from 'germline_variant_calling/freebayes.jst' import freebayes with context %}
-{% from 'germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
+{% from 'modules/germline_variant_calling/gatk_haplotypecaller.jst' import haplotypecaller with context %}
+{% from 'modules/germline_variant_calling/gatk_genotypegvcf.jst' import genotypegvcf with context %}
+{% from 'modules/germline_variant_calling/freebayes.jst' import freebayes with context %}
+{% from 'modules/germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
 
 
 {% macro germline_variant_calling(samples) %}

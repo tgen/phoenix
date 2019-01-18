@@ -1,0 +1,45 @@
+# DNA Alignment with BWA MEM
+# Take DNA fastq data files to aligned bams with qc data
+
+{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem, bwa_mem_chunked with context %}
+{% from 'modules/samtools_markdups.jst' import markdups with context %}
+{% from 'modules/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
+{% from 'modules/cram.jst' import make_cram with context %}
+{% from 'modules/bam_qc.jst' import bam_qc with context %}
+
+
+{% macro dna_alignment(samples) %}
+  {% set chunking = chunking | default(True) %}
+  {% set reads_per_chunk = reads_per_chunk | default(48000000) %}
+
+  {% for sample_name, sample in samples.items() if sample.glType|lower in ['genome', 'exome'] %}
+    {% set first_rg = sample.read_groups.values()|first %}
+    {% if chunking and first_rg.numberOfReads is defined %}
+      {{- bwa_mem_chunked(sample_name, sample, reads_per_chunk) }}
+    {% else %}
+      {{- bwa_mem(sample_name, sample) }}
+    {% endif %}
+
+    {{- markdups(sample_name, sample) }}
+
+    {% if sample.glType|lower == 'genome' %}
+      {% if tasks.Genome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Genome_base_recalibration_gatk_4_0_1_2 %}
+        {{- nobaserecalibration(sample_name, sample) }}
+      {% else %}
+        {{- baserecalibration(sample_name, sample) }}
+      {% endif %}
+    {% elif sample.glType|lower == 'exome' %}
+      {% if tasks.Exome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Exome_base_recalibration_gatk_4_0_1_2 %}
+          {{- nobaserecalibration(sample_name, sample) }}
+      {% else %}
+          {{- baserecalibration(sample_name, sample) }}
+      {% endif %}
+
+    {% endif %}
+
+    {{- make_cram(sample_name, sample) }}
+    {{- bam_qc(sample_name, sample, aligner='bwa') }}
+
+  {% endfor %}
+{% endmacro %}
+

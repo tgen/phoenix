@@ -1,9 +1,9 @@
 {% macro mutect2(pair, aligner='bwa') %}
 {% for batch in constants.phoenix.intervals_batched %}
-- name: mutect2_{{ pair.name }}_{{ aligner }}_chunk{{ loop.index }}
+- name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   input:
-    - results/{{ pair.normal.glType }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
-    - results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
+    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
+    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
   cpus: 4
   walltime: "24:00:00"
   cmd: |
@@ -15,9 +15,9 @@
     gatk Mutect2 \
       --TMP_DIR temp/ \
       -R {{ constants.phoenix.reference_fasta_path }} \
-      -I "results/{{ pair.normal.glType }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
+      -I "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
       -normal "{{ pair.normal.rgsm }}" \
-      -I "results/{{ pair.tumor.glType }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
+      -I "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
       -tumor "{{ pair.tumor.rgsm }}" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
@@ -28,24 +28,28 @@
 
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
-  description: Merges the Mutect stepwise vcfs into a final vcf
+  methods: Somatic variant calls for {{ pair.name }} were called with
+    {{ constants.tools.gatk_4_0_7_0.verbose }} Mutect2 in parallel chunks and
+    then merged together with MergeVcfs.
   after: 
-    re: mutect2_{{ pair.name }}_{{ aligner }}_chunk.*
-  output: results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf
+    re: mutect2_{{ pair.name }}_{{ aligner }}_.*
+  output: {{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf
   cpus: 2
   walltime: "24:00:00"
   cmd: |
     set -eu
     module load {{ constants.tools.gatk_4_0_7_0.module }}
 
-    mkdir -p "results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/"
+    mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/{{ pair.name }}/mutect2/"
 
     gatk MergeVcfs \
       {% for b in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf" \
       {% endfor %}
-      --OUTPUT "results/{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/mutect2/{{ pair.name }}.vcf"
+      --OUTPUT "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf"
 
+    {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
+    {% endif %}
 
 {% endmacro %}

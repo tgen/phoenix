@@ -1,0 +1,173 @@
+# This macro adds tasks for running BAM qc steps with samtools and gatk.
+# Currently supports any sample but with special tasks added when the sample
+# glTypes is 'genome' or 'exome'
+{% macro bam_qc(sample_name, sample, aligner='bwa') %}
+{% set bam_path = "{gltype}/alignment/{aligner}/{sample_name}/{sample_name}.{aligner}.bam" %}
+{% set bam_path = bam_path.format(gltype=sample.glType, sample_name=sample_name, aligner=aligner) %}
+{% set stats_dir = "{gltype}/alignment/{aligner}/{sample_name}/stats/" %}
+{% set stats_dir = stats_dir.format(gltype=sample.glType, sample_name=sample_name, aligner=aligner) %}
+
+
+- name: samtools_stats_{{ sample_name }}_{{ aligner }}
+  tags: [samtools, stats, {{ sample_name }}]
+  methods: Quality control metrics for {{ sample_name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_7.verbose }} stats.
+  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  walltime: "4:00:00"
+  cpus: 1
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    samtools stats \
+      --remove-dups \
+      "{{ bam_path }}" >\
+      "{{ stats_dir }}/{{ bam_path|basename }}.bamstats"
+
+
+- name: samtools_idxstats_{{ sample_name }}_{{ aligner }}
+  tags: [samtools, idxstats, {{ sample_name }}]
+  methods: Index stats for {{ sample_name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_7.verbose }} idxstats.
+  input: {{ bam_path }}
+  walltime: "4:00:00"
+  cpus: 1
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_7.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    samtools index "{{ bam_path }}"
+    samtools idxstats \
+      "{{ bam_path }}" >\
+      "{{ stats_dir }}/{{ bam_path|basename }}.idxstats"
+
+
+
+- name: gatk_collectmultiplemetrics_{{ sample_name }}_{{ aligner }}
+  tags: [gatk, picard, collectmultiplemetrics, {{ sample_name}}]
+  methods: Alignment metrics, base distribution, insert size, quality,
+    and other metrics for {{ sample_name }} ({{ aligner }}) were
+    gathered with {{ constants.tools.gatk_4_0_7_0.verbose }}
+    CollectMultipleMetrics.
+  input: {{ bam_path }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+    
+    gatk CollectMultipleMetrics \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --PROGRAM CollectAlignmentSummaryMetrics \
+      --PROGRAM CollectBaseDistributionByCycle \
+      --PROGRAM CollectInsertSizeMetrics \
+      --PROGRAM MeanQualityByCycle \
+      --PROGRAM QualityScoreDistribution \
+      --PROGRAM CollectGcBiasMetrics \
+      --PROGRAM CollectSequencingArtifactMetrics \
+      --PROGRAM CollectQualityYieldMetrics
+
+
+- name: gatk_convertsequencingarrtifacttooxog_{{ sample_name }}_{{ aligner }}
+  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample_name}}]
+  input: {{ bam_path }}
+  after: gatk_collectmultiplemetrics_{{ sample_name }}_{{ aligner }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    gatk ConvertSequencingArtifactToOxoG \
+      -I "{{ stats_dir }}/{{ bam_path|basename }}" \
+      -R "{{ constants.phoenix.reference_fasta_path }}"
+
+
+{% if sample.glType|lower == 'genome' %}
+- name: gatk_collectwgsmetrics_{{ sample_name }}_{{ aligner }}
+  tags: [gatk, picard, collectwgsmetrics, {{ sample_name}}]
+  input: {{ bam_path }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectWgsMetrics \
+      --USE_FAST_ALGORITHM true \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
+
+
+- name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample_name }}_{{ aligner }}
+  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample_name}}]
+  input: {{ bam_path }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectWgsMetricsWithNonZeroCoverage \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.txt" \
+      --CHART_OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.pdf" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
+
+
+- name: gatk_collectrawwgsmetrics_{{ sample_name }}_{{ aligner }}
+  tags: [gatk, picard, collectrawwgsmetrics, {{ sample_name}}]
+  input: {{ bam_path }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectRawWgsMetrics \
+      --USE_FAST_ALGORITHM true \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_raw_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --INCLUDE_BQ_HISTOGRAM true
+
+
+{% elif sample.glType|lower == 'exome' %}
+{% set library_code = sample.assayCode[0:2] %}
+{% set capture_kit_code = sample.assayCode[2:5] %}
+
+- name: gatk_collecthsmetrics_{{ sample_name }}_{{ aligner }}
+  tags: [gatk, picard, collecthsmetrics, {{ sample_name}}]
+  input: {{ bam_path }}
+  walltime: "8:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectHsMetrics \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --BAIT_INTERVALS "{{ constants.capture_kits[capture_kit_code].probes }}" \
+      --TARGET_INTERVALS "{{ constants.capture_kits[capture_kit_code].targets }}"
+
+{% endif %}
+{% endmacro %}
