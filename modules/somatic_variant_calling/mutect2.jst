@@ -40,7 +40,7 @@
     set -eu
     module load {{ constants.tools.gatk_4_0_7_0.module }}
 
-    mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/{{ pair.name }}/mutect2/"
+    mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/"
 
     gatk MergeVcfs \
       {% for b in constants.phoenix.intervals_batched %}

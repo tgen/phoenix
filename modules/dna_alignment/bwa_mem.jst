@@ -44,7 +44,7 @@
   walltime: "8:00:00"
   cpus: 16
   cmd: |
-    set -eu
+    set -euv
     set -o pipefail
 
     module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_7.module }}
@@ -84,7 +84,7 @@
   walltime: "24:00:00"
   cpus: 4
   cmd: |
-    set -ue
+    set -uev
     module load {{ constants.tools.samtools_1_7.module }}
 
     samtools merge -f "temp/{{ sample_name }}.bwa.bam" \
@@ -109,7 +109,7 @@
   walltime: "1:00:00"
   cpus: 1
   cmd: |
-    set -ue
+    set -uev
 
     mv \
       "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
@@ -229,11 +229,11 @@
   walltime: "24:00:00"
   cpus: 4
   cmd: |
-    set -ue
+    set -uev
     module load {{ constants.tools.samtools_1_7.module }}
 
     samtools merge \
-      - c \
+      -c \
       -f "temp/{{ sample_name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
       "temp/{{ rgid }}/"*.bwa.bam \

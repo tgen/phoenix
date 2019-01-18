@@ -12,7 +12,7 @@
     set -uev
 
     module load {{ constants.tools.lancet_1_0_7.module }}
-    mkdir -p "{{ pair.tumor.glType }}/{{ pair.name }}_{{ aligner }}/lancet/"
+    mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/"
 
     # Do we need to batch this process with intervals: --bed target_1.bed?
     lancet \

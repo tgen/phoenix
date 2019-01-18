@@ -100,7 +100,7 @@
 
 
 # Moves the markduplicates bam without doing baserecalibration
-{% macro nobaserecalibration(sample_name, sample) %}
+{% macro nobaserecalibration(sample_name, sample, aligner='bwa') %}
 - name: no_baserecalibration_{{ sample_name }}_{{ aligner }}
   input: temp/{{ sample_name }}.{{ aligner }}.md.bam
   output: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam

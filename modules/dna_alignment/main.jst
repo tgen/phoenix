@@ -24,15 +24,15 @@
 
     {% if sample.glType|lower == 'genome' %}
       {% if tasks.Genome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Genome_base_recalibration_gatk_4_0_1_2 %}
-        {{- nobaserecalibration(sample_name, sample) }}
+        {{- nobaserecalibration(sample_name, sample, aligner='bwa') }}
       {% else %}
-        {{- baserecalibration(sample_name, sample) }}
+        {{- baserecalibration(sample_name, sample, aligner='bwa') }}
       {% endif %}
     {% elif sample.glType|lower == 'exome' %}
       {% if tasks.Exome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Exome_base_recalibration_gatk_4_0_1_2 %}
-          {{- nobaserecalibration(sample_name, sample) }}
+          {{- nobaserecalibration(sample_name, sample, aligner='bwa') }}
       {% else %}
-          {{- baserecalibration(sample_name, sample) }}
+          {{- baserecalibration(sample_name, sample, aligner='bwa') }}
       {% endif %}
 
     {% endif %}

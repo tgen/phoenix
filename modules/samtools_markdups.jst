@@ -9,7 +9,7 @@
   walltime: "24:00:00"
   cpus: 16
   cmd: |
-    set -eu
+    set -euv
     module load {{ constants.tools.samtools_1_7.module }}
 
     # If this task was interrupted previously, temp files may exist
@@ -23,7 +23,7 @@
       -s \
       -T "temp/markdup_{{ sample_name }}_{{ aligner }}/" \
       "temp/{{ sample_name }}.{{ aligner }}.bam" \
-      "temp/{{ sample_name }}.md.{{ aligner }}.bam"
+      "temp/{{ sample_name }}.{{ aligner }}.md.bam"
 
     samtools index "temp/{{ sample_name }}.{{ aligner }}.md.bam"
 
@@ -40,7 +40,7 @@
   walltime: "1:00:00"
   cpus: 1
   cmd: |
-    set -eu
+    set -euv
 
     mv "temp/{{ sample_name }}.{{ aligner }}.bam" "temp/{{ sample_name }}.{{ aligner }}.md.bam"
 
