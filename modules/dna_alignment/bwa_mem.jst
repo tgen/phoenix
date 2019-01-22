@@ -10,9 +10,9 @@
   cmd: null
   methods: Fastqs for {{ sample_name }} were aligned with
     {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
-    into {{ constants.tools.samtools_1_7.verbose }} fixmate and sort to
+    into {{ constants.tools.samtools_1_9.verbose }} fixmate and sort to
     generate a temporary aligned read group bam. Finally, all the bam chunks
-    were merged together with {{ constants.tools.samtools_1_7.verbose }} merge.
+    were merged together with {{ constants.tools.samtools_1_9.verbose }} merge.
 
 {% for rgid, rg in sample.read_groups.items() %}
 {% if rg.data_files|length != 2 %}
@@ -47,7 +47,7 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "temp/{{ rgid }}/"
 
@@ -85,7 +85,7 @@
   cpus: 4
   cmd: |
     set -uev
-    module load {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     samtools merge -f "temp/{{ sample_name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
@@ -127,9 +127,9 @@
   methods: Fastqs for {{ sample_name }} were split into chunks no larger
     than {{ reads_per_chunk}}, then aligned with
     {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
-    into {{ constants.tools.samtools_1_7.verbose }} fixmate and sort to
+    into {{ constants.tools.samtools_1_9.verbose }} fixmate and sort to
     generate a temporary aligned read group bam. Finally, all the bam chunks
-    were merged together with {{ constants.tools.samtools_1_7.verbose }} merge.
+    were merged together with {{ constants.tools.samtools_1_9.verbose }} merge.
 
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
@@ -195,7 +195,7 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_9.module }}
 
     bwa mem \
       -Y \

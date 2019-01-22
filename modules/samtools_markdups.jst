@@ -3,14 +3,14 @@
 - name: samtools_markdup_{{ sample_name }}_{{ aligner }}
   tags: [samtools, markdup, {{ sample_name }}]
   methods: Duplicate reads for {{ sample_name }} were marked with
-    {{ constants.tools.samtools_1_7.verbose }} markdup.
+    {{ constants.tools.samtools_1_9.verbose }} markdup.
   input: temp/{{ sample_name }}.{{ aligner }}.bam
   output: temp/{{ sample_name }}.{{ aligner }}.md.bam
   walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -euv
-    module load {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
@@ -22,7 +22,7 @@
       -S \
       -s \
       -T "temp/markdup_{{ sample_name }}_{{ aligner }}/" \
-      "temp/{{ sample_name }}.{{ aligner }}.bam" \
+      <(samtools view -h "temp/{{ sample_name }}.{{ aligner }}.bam") \
       "temp/{{ sample_name }}.{{ aligner }}.md.bam"
 
     samtools index "temp/{{ sample_name }}.{{ aligner }}.md.bam"

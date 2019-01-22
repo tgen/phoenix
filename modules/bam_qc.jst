@@ -7,43 +7,64 @@
 {% set stats_dir = "{gltype}/alignment/{aligner}/{sample_name}/stats/" %}
 {% set stats_dir = stats_dir.format(gltype=sample.glType, sample_name=sample_name, aligner=aligner) %}
 
-
 - name: samtools_stats_{{ sample_name }}_{{ aligner }}
   tags: [samtools, stats, {{ sample_name }}]
   methods: Quality control metrics for {{ sample_name }} ({{ aligner }}) were
-    generated with {{ constants.tools.samtools_1_7.verbose }} stats.
+    generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
   walltime: "4:00:00"
-  cpus: 1
+  cpus: 2
   cmd: |
     set -uev
-    module load {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ stats_dir }}"
 
     samtools stats \
+      --threads 2 \
       --remove-dups \
+      --remove-overlaps \
+      --ref-seq "{{ constants.phoenix.reference_fasta_path }}" \
       "{{ bam_path }}" >\
-      "{{ stats_dir }}/{{ bam_path|basename }}.bamstats"
+      "{{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt"
+
+
+- name: samtools_flagstat_{{ sample_name }}_{{ aligner }}
+  tags: [samtools, flagstat, {{ sample_name }}]
+  methods: Quality control metrics for {{ sample_name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
+  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  walltime: "4:00:00"
+  cpus: 8
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    samtools flagstat \
+      --threads 8 \
+      "{{ bam_path }}" >\
+      "{{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt"
 
 
 - name: samtools_idxstats_{{ sample_name }}_{{ aligner }}
   tags: [samtools, idxstats, {{ sample_name }}]
   methods: Index stats for {{ sample_name }} ({{ aligner }}) were
-    generated with {{ constants.tools.samtools_1_7.verbose }} idxstats.
+    generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
   input: {{ bam_path }}
   walltime: "4:00:00"
   cpus: 1
   cmd: |
     set -uev
-    module load {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ stats_dir }}"
 
     samtools index "{{ bam_path }}"
     samtools idxstats \
       "{{ bam_path }}" >\
-      "{{ stats_dir }}/{{ bam_path|basename }}.idxstats"
+      "{{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt"
 
 
 

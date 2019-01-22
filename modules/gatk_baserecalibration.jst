@@ -77,7 +77,7 @@
   cpus: 4
   cmd: |
     set -uex
-    module load {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/"
 
@@ -108,7 +108,7 @@
   cpus: 1
   cmd: |
     set -uev
-    module load {{ constants.tools.samtools_1_7.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/"
     mv \
