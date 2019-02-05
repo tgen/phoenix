@@ -41,13 +41,13 @@
     set -euv
     module load {{ constants.tools.gatk_4_0_7_0.module }}
 
-    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/"
+    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}/"
 
     gatk MergeVcfs \
       {% for batch in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
       {% endfor %}
-      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}.{{ aligner }}.freebayes.vcf"
+      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ sample_name }}_{{ aligner }}_freebayes/"

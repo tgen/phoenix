@@ -21,12 +21,12 @@
     samtools markdup \
       -S \
       -s \
+      --threads 8 \
       -T "temp/markdup_{{ sample_name }}_{{ aligner }}/" \
-      <(samtools view -h "temp/{{ sample_name }}.{{ aligner }}.bam") \
+      <(samtools view --threads 8 -h "temp/{{ sample_name }}.{{ aligner }}.bam") \
       "temp/{{ sample_name }}.{{ aligner }}.md.bam"
 
     samtools index "temp/{{ sample_name }}.{{ aligner }}.md.bam"
-
     rm -r "temp/markdup_{{ sample_name }}_{{ aligner }}/"
 
 {% endmacro %}

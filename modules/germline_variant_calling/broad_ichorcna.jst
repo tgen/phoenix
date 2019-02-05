@@ -1,14 +1,14 @@
 {% macro ichorcna(sample_name, sample, aligner='bwa') %}
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample_name }}
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
-  output: {{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig
+  output: {{ sample.glType }}/copy_number_analysis/ichorCNA/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.wig
   walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -uev
     module load {{ constants.tools.hmmcopy_utils_1_0.module }}
 
-    mkdir -p "{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/"
+    mkdir -p "{{ sample.glType }}/copy_number_analysis/ichorCNA/{{ sample_name }}/"
 
     readCounter \
       --window 1000000 \
@@ -17,20 +17,20 @@
     chr11,chr12,chr13,chr14,chr15,chr16,chr17,chr18,chr19,chr20,chr21,\
     chr22,chrX,chrY" \
       "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
-      > "{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig"
+      > "{{ sample.glType }}/copy_number_analysis/ichorCNA/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.wig"
 
 
 - name: ichor_cna_{{ aligner }}_{{ sample_name }}
   input: 
     - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
-    - {{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig
+    - {{ sample.glType }}/copy_number_analysis/ichorCNA/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.wig
   walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -ue
     module load {{ constants.tools.ichorcna_0_1_0.module }}
 
-    RUNDIR="{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}/"
+    RUNDIR="{{ sample.glType }}/copy_number_analysis/ichorCNA/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.ichor_rundir/"
 
     # Purge any existing results files prior to starting
     rm -r "${RUNDIR}" || true
@@ -44,7 +44,7 @@
     # the rest of the package, so this path is hard coded in constants.yaml
     Rscript "{{ constants.tools.ichorcna_0_1_0.launcher }}" \
       --id "{{ sample_name}}.{{ aligner }}" \
-      --WIG "{{ sample.glType }}/copy_number_analysis/{{ sample_name }}/ichorCNA/{{ sample_name }}.{{ aligner }}.wig" \
+      --WIG "{{ sample.glType }}/copy_number_analysis/ichorCNA/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.wig" \
       --outDir "${RUNDIR}" \
       --includeHOMD False \
       --estimateNormal True \

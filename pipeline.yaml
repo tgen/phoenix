@@ -1,0 +1,5 @@
+name: phoenix
+main: main.jst
+description: Human GRCh38 genomics suite
+version: 1.1.0
+

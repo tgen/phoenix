@@ -21,12 +21,13 @@
 
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-{% set rgline = '@RG\\tID:{}\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
+{% set rgline = '@RG\\tID:{}\\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
   rgid, rg.rglb, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
 
 - name: copy_fastqs_{{ sample_name }}_{{ rgid }}
   after: start_bwa_mem_{{ sample_name }}
   tags: [rsync, {{ sample_name }}, {{ rgid }}]
+  retry: 2
   cpus: 1
   walltime: "1:00:00"
   cmd: |
@@ -134,11 +135,12 @@
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-{% set rgline = '@RG\\tID:{}\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
+{% set rgline = '@RG\\tID:{}\\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
     rgid, rg.rglb, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
 
 - name: copy_fastqs_{{ sample_name }}_{{ rgid }}
   after: start_bwa_mem_{{ sample_name }}
+  retry: 2
   cpus: 1
   walltime: "1:00:00"
   cmd: |
@@ -158,7 +160,7 @@
 - name: split_fastq_{{ fastq.fastqPath|basename }}
   after: copy_fastqs_{{ sample_name }}_{{ rgid }}
   cpus: 1
-  walltime: "1:00:00"
+  walltime: "4:00:00"
   cmd: |
     set -uev
     set -o pipefail
@@ -197,6 +199,12 @@
 
     module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_9.module }}
 
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools sort. Here, we purge any
+    # existing temp files before making the directory again.
+    rm -r "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
+    mkdir -p "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
+
     bwa mem \
       -Y \
       -K 1000000 \
@@ -212,6 +220,7 @@
       - \
       - |\
     samtools sort \
+      -T "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" \
       -l 5 \
       -m 1G \
       -@ 10 \

@@ -22,7 +22,7 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      -O "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf"
+      -O "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz"
 
 {% endfor %}
 
@@ -33,7 +33,7 @@
     then merged together with MergeVcfs.
   after: 
     re: mutect2_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf
+  output: {{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf.gz
   cpus: 2
   walltime: "24:00:00"
   cmd: |
@@ -44,9 +44,9 @@
 
     gatk MergeVcfs \
       {% for b in constants.phoenix.intervals_batched %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf" \
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz" \
       {% endfor %}
-      --OUTPUT "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf"
+      --OUTPUT "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
