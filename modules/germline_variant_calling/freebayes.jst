@@ -54,4 +54,21 @@
     {% endif %}
 
 
+- name: snpeff_freebayes_{{ sample_name }}_{{ aligner }}
+  tags: [snpeff, annotation, {{ sample_name }}]
+  input: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf.gz
+  walltime: "8:00:00"
+  cmd: |
+    set -euv
+
+    module load {{ constants.tools.snpeff_x_y_z.module }}
+
+    snpEff eff \
+        -noLog \
+        -s "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.snpEff.stats.txt" \
+        {{ constants.phoenix.snpeff_db_name }} \
+        {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf.gz \
+        > {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.ann.hc.vcf.gz
+
+
 {% endmacro %}

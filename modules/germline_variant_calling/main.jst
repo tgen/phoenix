@@ -3,6 +3,7 @@
 {% from 'modules/germline_variant_calling/gatk_genotypegvcf.jst' import genotypegvcf with context %}
 {% from 'modules/germline_variant_calling/freebayes.jst' import freebayes with context %}
 {% from 'modules/germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
+{% from 'modules/germline_variant_calling/manta.jst' import manta_constitutional with context %}
 
 
 {% macro germline_variant_calling(samples) %}
@@ -16,13 +17,11 @@
 
     {% if sample.subGroup|lower == 'constitutional' %}
         {{- ichorcna(sample_name, sample, aligner='bwa') }}
+        {{- manta_constitutional(sample_name, sample, exome=True, aligner='bwa') }}
     {% endif %}
 {% endfor %}
 
 
-# This whole block is duplicated just because of the option to toggle freebayes
-# genotyping on a genome OR exome level. I would argue that were adding features
-# that nobody has asked for yet.
 {% for sample_name, sample in samples.items() if sample.glType|lower == 'genome' %}
     {{- haplotypecaller(sample_name, sample, aligner='bwa') }}
 
@@ -33,6 +32,7 @@
 
     {% if sample.subGroup|lower == 'constitutional' %}
         {{- ichorcna(sample_name, sample, aligner='bwa') }}
+        {{- manta_constitutional(sample_name, sample, exome=False, aligner='bwa') }}
     {% endif %}
 {% endfor %}
 

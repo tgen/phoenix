@@ -31,9 +31,9 @@
     configManta.py \
       {% if exome %}
       --exome \
+      --generateEvidenceBam \
       {% endif %}
       --config "${RUNDIR}/config.ini" \
-      --generateEvidenceBam \
       --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
       --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \

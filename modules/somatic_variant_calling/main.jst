@@ -30,9 +30,15 @@
     {% endfor %}
 {% endif %}
 
-{% for pair_name, pair in pairs.items() %}
+{% for pair_name, pair in pairs.items() if pair.normal.glType == 'genome' %}
     {{- mutect2(pair, aligner='bwa') }}
-    {{- strelka2(pair, aligner='bwa') }}
+    {{- strelka2(pair, exome=False, aligner='bwa') }}
+    {{- lancet(pair, aligner='bwa') }}
+{% endfor %}
+
+{% for pair_name, pair in pairs.items() if pair.normal.glType == 'exome' %}
+    {{- mutect2(pair, aligner='bwa') }}
+    {{- strelka2(pair, exome=True, aligner='bwa') }}
     {{- lancet(pair, aligner='bwa') }}
 {% endfor %}
 

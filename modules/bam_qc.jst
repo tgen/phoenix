@@ -87,6 +87,7 @@
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --PROGRAM CollectAlignmentSummaryMetrics \
       --PROGRAM CollectBaseDistributionByCycle \
       --PROGRAM CollectInsertSizeMetrics \
@@ -184,6 +185,7 @@
     mkdir -p "{{ stats_dir }}"
 
     gatk CollectHsMetrics \
+      --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
@@ -191,4 +193,32 @@
       --TARGET_INTERVALS "{{ constants.capture_kits[capture_kit_code].targets }}"
 
 {% endif %}
+
+{% if sample.subGroup|lower == 'constitutional' %}
+- name: verifybamid2_{{ sample_name }}
+  tags: [qc, verifybamid2, {{ sample_name }}]
+  input: {{ bam_path }}
+  cpus: 1
+  mem: 4000M
+  walltime: "4:00:00"
+  cmd: |
+    set -uev
+    module load {{ constants.tools.verifybamid2_1_0_5.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    # Some resources are included in the VerifyBamID home dir
+    VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
+
+    VerifyBamID \
+      --NumThread 4 \
+      --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.UD" \
+      --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.mu" \
+      --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.bed" \
+      --Reference "{{ constants.phoenix.reference_fasta_path }}" \
+      --BamFile "{{ bam_path }}" \
+      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
+
+{% endif %}  
+
 {% endmacro %}
