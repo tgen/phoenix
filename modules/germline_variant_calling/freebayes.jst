@@ -1,3 +1,4 @@
+{% from 'modules/snpeff.jst' import snpeff with context %}
 
 {% macro freebayes(sample_name, sample, aligner='bwa') %}
 {% for batch in constants.phoenix.intervals_batched %}
@@ -33,7 +34,7 @@
 - name: freebayes_merge_{{ sample_name }}_{{ aligner }}
   after: 
     re: freebayes_{{ sample_name }}_{{ aligner }}_.*
-  output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}.{{ aligner }}.freebayes.vcf
+  output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16000
@@ -54,21 +55,6 @@
     {% endif %}
 
 
-- name: snpeff_freebayes_{{ sample_name }}_{{ aligner }}
-  tags: [snpeff, annotation, {{ sample_name }}]
-  input: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf.gz
-  walltime: "8:00:00"
-  cmd: |
-    set -euv
-
-    module load {{ constants.tools.snpeff_4_3t.module }}
-
-    snpEff eff \
-        -noLog \
-        -s "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.snpEff.stats.txt" \
-        {{ constants.phoenix.snpeff_db_name }} \
-        {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.hc.vcf.gz \
-        > {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.ann.hc.vcf.gz
-
+{{- snpeff(sample_name, sample, aligner, "constitutional_variant_calls", "freebayes", "freebayes") }}
 
 {% endmacro %}

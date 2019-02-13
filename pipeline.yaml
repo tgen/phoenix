@@ -7,7 +7,8 @@ constants:
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
-    snpeff_db_name: hg38
+    snpeff_data_dir: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/snpEff/data/
+    snpeff_db_name: GRCh38.86
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/Homo_sapiens.GRCh38.94.gtf.gz
     reference_index_prefix: "/home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta.64"
     reference_fasta_path: "/home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta"
