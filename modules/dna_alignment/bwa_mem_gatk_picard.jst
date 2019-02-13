@@ -1,0 +1,220 @@
+# Aligns fastqs for a sample using BWA MEM. Samples may have multiple read
+# groups.
+#
+#     ? ?
+#   ? -----fastqs--> temp/<sample_name>.bwa.bam
+#     ? ?
+#
+{% macro bwa_mem_gatk_picard(sample_name, sample) %}
+- name: start_bwa_mem_{{ sample_name }}
+  cmd: null
+  methods: Fastqs for {{ sample_name }} were aligned with
+    {{ constants.tools.bwa_0_7_12.verbose }}. TODO
+
+{% for rgid, rg in sample.read_groups.items() %}
+{% if rg.data_files|length != 2 %}
+    {{ raise('This module only supports paired-end data with two fastqs per rg') }}
+{% endif %}
+
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+{% set rgline = '@RG\\tID:{}\\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
+  rgid, rg.rglb, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
+
+- name: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  after: start_bwa_mem_{{ sample_name }}
+  tags: [rsync, {{ sample_name }}, {{ rgid }}]
+  retry: 2
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    mkdir -p temp/fastqs/
+
+    rsync_from_isilon "{{ r1fastq.fastqPath }}" "temp/fastqs/"
+    rsync_from_isilon "{{ r2fastq.fastqPath }}" "temp/fastqs/"
+
+
+- name: bwa_mem_gatk_fixmate_{{ sample_name }}_{{ rgid }}
+  tags: [bwa, gatk, picard, {{ sample_name }}, {{ rgid }}]
+  after: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  walltime: "24:00:00"
+  cpus: 10
+  cmd: |
+    set -euv
+    set -o pipefail
+
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "temp/{{ rgid }}/"
+
+    bwa mem \
+      -v 2 \
+      -Y \
+      -K 1000000 \
+      -M \
+      -t8 \
+      -R "{{ rgline }}" \
+      "{{ constants.phoenix.reference_index_prefix }}" \
+      "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
+      "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
+    gatk FixMateInformation \
+      --SORT_ORDER coordinate \
+      --INPUT /dev/stdin \
+      --OUTPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
+
+{% endfor %}
+
+- name: gatk_picard_markduplicates_{{ sample_name }}
+  tags: [gatk, picard, markduplicates, {{ sample_name }}]
+  after:
+    re: bwa_mem_gatk_fixmate_{{ sample_name }}_.*
+  output: temp/{{ sample_name }}.bwa.md.bam
+  walltime: "24:00:00"
+  cpus: 4
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample_name }}/stats/"
+
+    gatk MarkDuplicates \
+      --CREATE_INDEX true \
+      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 100 \
+    {% for rgid in sample.read_groups %}
+      --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
+    {% endfor %}
+      --METRICS_FILE "{{ sample.glType }}/alignment/bwa/{{ sample_name }}/stats/{{ sample_name }}.mdmetrics.txt" \
+      --OUTPUT "temp/{{ sample_name }}.bwa.md.bam"
+
+{% endmacro %}
+
+
+# This macro splits large fastqs into chunks prior to aligning. The inputs
+# and outputs are the same as above.
+{% macro bwa_mem_gatk_picard_chunked(sample_name, sample, reads_per_chunk) %}
+- name: start_bwa_mem_{{ sample_name }}
+  cmd: null
+  methods: Fastqs for {{ sample_name }} were split into chunks no larger
+    than {{ reads_per_chunk}}, TODO
+
+{% for rgid, rg in sample.read_groups.items() %}
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+{% set rgline = '@RG\\tID:{}\\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
+    rgid, rg.rglb, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
+
+- name: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  after: start_bwa_mem_{{ sample_name }}
+  retry: 2
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    mkdir -p temp/fastqs/
+
+    rsync_from_isilon {{ r1fastq.fastqPath }} temp/fastqs/
+    rsync_from_isilon {{ r2fastq.fastqPath }} temp/fastqs/
+
+
+{% set n_lines = (reads_per_chunk * 4)|int %}
+{% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
+{% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
+
+{% for fastq in [r1fastq, r2fastq] %}
+- name: split_fastq_{{ fastq.fastqPath|basename }}
+  after: copy_fastqs_{{ sample_name }}_{{ rgid }}
+  cpus: 1
+  walltime: "4:00:00"
+  cmd: |
+    set -uev
+    set -o pipefail
+
+    rm -r "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/" || true
+    mkdir -p "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/"
+
+    zcat "temp/fastqs/{{ fastq.fastqPath|basename }}" |\
+      split \
+        -d \
+        --suffix-length 2 \
+        -l {{ n_lines }} \
+        - \
+        "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/"
+
+    N_CREATED=$(ls "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/" | wc -l)
+
+    if [[ ${N_CREATED} -ne {{ n_chunks }} ]]; then
+      echo "Chunks created does not match expected value"
+      exit 1
+    fi
+
+{% endfor %}
+
+{% for i in range(n_chunks) %}
+{% set chunk_suffix = '%02d' % i %}
+- name: bwa_mem_gatk_fixmate_{{ sample_name }}_{{ rgid }}_{{ chunk_suffix }}
+  after: 
+    - split_fastq_{{ r1fastq.fastqPath|basename }}
+    - split_fastq_{{ r2fastq.fastqPath|basename }}
+  walltime: "24:00:00"
+  cpus: 10
+  cmd: |
+    set -euv
+    set -o pipefail
+
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_9.module }}
+
+    bwa mem \
+      -v 2 \
+      -Y \
+      -K 1000000 \
+      -M \
+      -t8 \
+      -R "{{ rgline }}" \
+      "{{ constants.phoenix.reference_index_prefix }}" \
+      "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
+      "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
+    gatk FixMateInformation \
+      --SORT_ORDER coordinate \
+      --INPUT /dev/stdin \
+      --OUTPUT "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+
+{% endfor %}
+{% endfor %}
+
+- name: gatk_picard_markduplicates_{{ sample_name }}
+  tags: [gatk, picard, markduplicates, {{ sample_name }}]
+  after:
+    re: bwa_mem_gatk_fixmate_{{ sample_name }}_.*
+  output: temp/{{ sample_name }}.bwa.md.bam
+  walltime: "24:00:00"
+  cpus: 4
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_0_7_0.module }}
+
+    mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample_name }}/stats/"
+
+    gatk MarkDuplicates \
+      --CREATE_INDEX true \
+      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 100 \
+    {% for rgid in sample.read_groups %}
+    {% for i in range(n_chunks) %}
+    {% set chunk_suffix = '%02d' % i %}
+      --INPUT "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
+    {% endfor %}
+    {% endfor %}
+      --METRICS_FILE "{{ sample.glType }}/alignment/bwa/{{ sample_name }}/stats/{{ sample_name }}.mdmetrics.txt" \
+      --OUTPUT "temp/{{ sample_name }}.bwa.md.bam"
+
+     # Cleanup the tempfiles
+    {% if not debug %}
+    {% for rgid in sample.read_groups %}
+    rm -r "temp/{{ rgid }}/"
+    {% endfor %}
+    {% endif %}
+
+
+{% endmacro %}

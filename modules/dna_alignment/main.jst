@@ -1,7 +1,7 @@
 # DNA Alignment with BWA MEM
 # Take DNA fastq data files to aligned bams with qc data
-
-{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem, bwa_mem_chunked with context %}
+{% from 'modules/dna_alignment/bwa_mem_samtools.jst' import bwa_mem_samtools, bwa_mem_samtools_chunked with context %}
+{% from 'modules/dna_alignment/bwa_mem_gatk_picard.jst' import bwa_mem_gatk_picard, bwa_mem_gatk_picard_chunked with context %}
 {% from 'modules/samtools_markdups.jst' import markdups with context %}
 {% from 'modules/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
 {% from 'modules/cram.jst' import make_cram with context %}
@@ -14,13 +14,21 @@
 
   {% for sample_name, sample in samples.items() if sample.glType|lower in ['genome', 'exome'] %}
     {% set first_rg = sample.read_groups.values()|first %}
-    {% if chunking and first_rg.numberOfReads is defined %}
-      {{- bwa_mem_chunked(sample_name, sample, reads_per_chunk) }}
+    {% if alignment_gatk_picard %}
+      {% if chunking and first_rg.numberOfReads is defined and first_rg.numberOfReads > reads_per_chunk %}
+        {{- bwa_mem_gatk_picard_chunked(sample_name, sample, reads_per_chunk) }}
+      {% else %}
+        {{- bwa_mem_gatk_picard(sample_name, sample) }}
+      {% endif %}
     {% else %}
-      {{- bwa_mem(sample_name, sample) }}
-    {% endif %}
+      {% if chunking and first_rg.numberOfReads is defined and first_rg.numberOfReads > reads_per_chunk %}
+        {{- bwa_mem_samtools_chunked(sample_name, sample, reads_per_chunk) }}
+      {% else %}
+        {{- bwa_mem_samtools(sample_name, sample) }}
+      {% endif %}
 
-    {{- markdups(sample_name, sample) }}
+      {{- markdups(sample_name, sample) }}
+    {% endif %}
 
     {% if sample.glType|lower == 'genome' %}
       {% if tasks.Genome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Genome_base_recalibration_gatk_4_0_1_2 %}
@@ -42,4 +50,3 @@
 
   {% endfor %}
 {% endmacro %}
-

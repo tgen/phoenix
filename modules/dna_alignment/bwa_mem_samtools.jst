@@ -5,7 +5,7 @@
 #   ? -----fastqs--> temp/<sample_name>.bwa.bam
 #     ? ?
 #
-{% macro bwa_mem(sample_name, sample) %}
+{% macro bwa_mem_samtools(sample_name, sample) %}
 - name: start_bwa_mem_{{ sample_name }}
   cmd: null
   methods: Fastqs for {{ sample_name }} were aligned with
@@ -16,7 +16,7 @@
 
 {% for rgid, rg in sample.read_groups.items() %}
 {% if rg.data_files|length != 2 %}
-    {{ raise('This module only supports paired end data with two fastqs per rg') }}
+    {{ raise('This module only supports paired-end data with two fastqs per rg') }}
 {% endif %}
 
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
@@ -43,7 +43,7 @@
   tags: [bwa, samtools, {{ sample_name }}, {{ rgid }}]
   after: copy_fastqs_{{ sample_name }}_{{ rgid }}
   walltime: "8:00:00"
-  cpus: 16
+  cpus: 10
   cmd: |
     set -euv
     set -o pipefail
@@ -53,10 +53,11 @@
     mkdir -p "temp/{{ rgid }}/"
 
     bwa mem \
+      -v 2 \
       -Y \
       -K 1000000 \
       -M \
-      -t14 \
+      -t8 \
       -R "{{ rgline }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
@@ -122,7 +123,7 @@
 
 # This macro splits large fastqs into chunks prior to aligning. The inputs
 # and outputs are the same as above.
-{% macro bwa_mem_chunked(sample_name, sample, reads_per_chunk) %}
+{% macro bwa_mem_samtools_chunked(sample_name, sample, reads_per_chunk) %}
 - name: start_bwa_mem_{{ sample_name }}
   cmd: null
   methods: Fastqs for {{ sample_name }} were split into chunks no larger
@@ -192,7 +193,7 @@
     - split_fastq_{{ r1fastq.fastqPath|basename }}
     - split_fastq_{{ r2fastq.fastqPath|basename }}
   walltime: "24:00:00"
-  cpus: 16
+  cpus: 10
   cmd: |
     set -euv
     set -o pipefail
@@ -206,10 +207,11 @@
     mkdir -p "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
 
     bwa mem \
+      -v 2 \
       -Y \
       -K 1000000 \
       -M \
-      -t14 \
+      -t8 \
       -R "{{ rgline }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
