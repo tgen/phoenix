@@ -6,7 +6,7 @@
   input:
     - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
   output: {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample_name }}/results_{{ aligner }}
-  cpus: 28
+  cpus: 39
   walltime: "24:00:00"
   cmd: |
     set -euv
@@ -33,7 +33,7 @@
       --runDir "${RUNDIR}"
 
     # Execute on the local machine with 28 parallel jobs
-    "${RUNDIR}/runWorkflow.py" -m local -j 28
+    "${RUNDIR}/runWorkflow.py" -m local -j 39
 
     # Move the final results out of the rundir
     mv \

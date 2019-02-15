@@ -122,6 +122,7 @@
 {% set n_lines = (reads_per_chunk * 4)|int %}
 {% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
+{% do sample['read_groups'][rgid].update({'n_chunks': n_chunks}) %}
 
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|basename }}
@@ -164,20 +165,19 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.gatk_4_0_7_0.module }}
 
     bwa mem \
       -v 2 \
       -Y \
       -K 1000000 \
-      -M \
       -t8 \
       -R "{{ rgline }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
     gatk FixMateInformation \
-      --SORT_ORDER coordinate \
+      --SORT_ORDER unsorted \
       --INPUT /dev/stdin \
       --OUTPUT "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
 
@@ -198,10 +198,12 @@
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample_name }}/stats/"
 
     gatk MarkDuplicates \
+      --CLEAD_DT \
+      --ADD_PG_TAG_TO_READS false \
       --CREATE_INDEX true \
-      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 100 \
-    {% for rgid in sample.read_groups %}
-    {% for i in range(n_chunks) %}
+      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
+    {% for rgid, rg in sample.read_groups.items() %}
+    {% for i in range(rg['n_chunks']) %}
     {% set chunk_suffix = '%02d' % i %}
       --INPUT "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
     {% endfor %}

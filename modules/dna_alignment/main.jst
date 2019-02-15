@@ -14,7 +14,7 @@
 
   {% for sample_name, sample in samples.items() if sample.glType|lower in ['genome', 'exome'] %}
     {% set first_rg = sample.read_groups.values()|first %}
-    {% if alignment_gatk_picard %}
+    {% if alignment_gatk_picard is defined and alignment_gatk_picard %}
       {% if chunking and first_rg.numberOfReads is defined and first_rg.numberOfReads > reads_per_chunk %}
         {{- bwa_mem_gatk_picard_chunked(sample_name, sample, reads_per_chunk) }}
       {% else %}
