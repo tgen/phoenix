@@ -7,7 +7,7 @@
   input: temp/{{ sample_name }}.{{ aligner }}.bam
   output: temp/{{ sample_name }}.{{ aligner }}.md.bam
   walltime: "24:00:00"
-  cpus: 4
+  cpus: 8
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
@@ -22,9 +22,9 @@
     samtools markdup \
       -S \
       -s \
-      --threads 2 \
+      --threads 4 \
       -T "temp/markdup_{{ sample_name }}_{{ aligner }}/" \
-      <(samtools view --threads 2 -h "temp/{{ sample_name }}.{{ aligner }}.bam") \
+      <(samtools view --threads 4 -h "temp/{{ sample_name }}.{{ aligner }}.bam") \
       "temp/{{ sample_name }}.{{ aligner }}.md.bam" \
       2> "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample_name }}/stats/{{ sample_name }}.markdup.txt"
 
