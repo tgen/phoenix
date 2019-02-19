@@ -29,7 +29,7 @@
         {{- bwa_mem_gatk_picard(sample) }}
       {% endif %}
     {% elif alignment_style == 'ashion' %}
-      {{ raise('Not implemented yet..' }}
+      {{ raise('Not implemented yet..') }}
     {% else %}
       {{ raise('Unknown dnaAlignmentStyle: {}'.format(dnaAlignmentStyle)) }}
     {% endif %}
@@ -46,7 +46,6 @@
       {% else %}
           {{- nobaserecalibration(sample, aligner='bwa') }}
       {% endif %}
-
     {% endif %}
 
     {{- make_cram(sample, aligner='bwa') }}

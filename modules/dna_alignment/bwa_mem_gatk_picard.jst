@@ -22,8 +22,6 @@
 
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-{% set rgline = '@RG\\tID:{}\\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
-  rgid, rg.rglb, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
 
 - name: copy_fastqs_{{ sample.name }}_{{ rgid }}
   after: start_bwa_mem_{{ sample.name }}
@@ -58,10 +56,10 @@
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
-    gatk FixMateInformation \
-      --SORT_ORDER coordinate \
-      --INPUT /dev/stdin \
-      --OUTPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
+    samtools view \
+      -b \
+      - \
+      > "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
 
 {% endfor %}
 
@@ -78,9 +76,16 @@
 
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 
+    {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
+    {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
+      {% set distance = 2500 %}
+    {% else %}
+      {% set distance = 100 %}
+    {% endif %}
+
     gatk MarkDuplicates \
       --CREATE_INDEX false \
-      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 100 \
+      --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} \
     {% for rgid in sample.read_groups %}
       --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
     {% endfor %}
