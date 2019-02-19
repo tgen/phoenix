@@ -80,7 +80,7 @@
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample_name }}/stats/"
 
     gatk MarkDuplicates \
-      --CREATE_INDEX true \
+      --CREATE_INDEX false \
       --OPTICAL_DUPLICATE_PIXEL_DISTANCE 100 \
     {% for rgid in sample.read_groups %}
       --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
@@ -200,7 +200,7 @@
     gatk MarkDuplicates \
       --CLEAD_DT \
       --ADD_PG_TAG_TO_READS false \
-      --CREATE_INDEX true \
+      --CREATE_INDEX false \
       --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
     {% for rgid, rg in sample.read_groups.items() %}
     {% for i in range(rg['n_chunks']) %}
