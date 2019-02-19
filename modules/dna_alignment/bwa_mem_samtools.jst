@@ -133,6 +133,7 @@
     {% if sample.read_groups | length > 1 %}
 
     samtools merge \
+      -c \
       -f "temp/{{ sample_name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
       "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
