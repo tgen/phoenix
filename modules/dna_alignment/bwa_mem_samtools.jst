@@ -53,7 +53,7 @@
 - name: start_bwa_mem_{{ sample.name }}
   cmd: null
   methods: Fastqs for {{ sample.name }} were aligned with
-    {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
+    {{ constants.tools.bwa_0_7_17.verbose }}. The resulting data was streamed
     into {{ constants.tools.samtools_1_9.verbose }} fixmate and sort to
     generate a temporary aligned read group bam. Finally, all the bam chunks
     were merged together with {{ constants.tools.samtools_1_9.verbose }} merge.
@@ -92,7 +92,7 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "temp/{{ rgid }}/"
 
@@ -161,7 +161,7 @@
   cmd: null
   methods: Fastqs for {{ sample.name }} were split into chunks no larger
     than {{ reads_per_chunk}}, then aligned with
-    {{ constants.tools.bwa_0_7_12.verbose }}. The resulting data was streamed
+    {{ constants.tools.bwa_0_7_17.verbose }}. The resulting data was streamed
     into {{ constants.tools.samtools_1_9.verbose }} fixmate and sort to
     generate a temporary aligned read group bam. Finally, all the bam chunks
     were merged together with {{ constants.tools.samtools_1_9.verbose }} merge.
@@ -231,7 +231,7 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
 
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools sort. Here, we purge any

@@ -9,7 +9,7 @@
 - name: start_bwa_mem_{{ sample.name }}
   cmd: null
   methods: Fastqs for {{ sample.name }} were aligned with
-    {{ constants.tools.bwa_0_7_12.verbose }}. TODO
+    {{ constants.tools.bwa_0_7_17.verbose }}. TODO
 
 {% for rgid, rg in sample.read_groups.items() %}
 {% if rg.data_files|length != 2 %}
@@ -45,7 +45,7 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.gatk_4_0_7_0.module }}
 
     mkdir -p "temp/{{ rgid }}/"
 
@@ -165,7 +165,7 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_12.module }} {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.gatk_4_0_7_0.module }}
 
     bwa mem \
       -v 2 \
