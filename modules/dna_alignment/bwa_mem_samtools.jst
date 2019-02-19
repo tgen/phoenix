@@ -7,7 +7,8 @@
 #
 
 # This alignment command prefix is shared by all modules using bwa
-{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}"}
+{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
+{% from 'modules/dna_alignment/read_group_line.jst' import read_group_line %}
 
 # Markdups task is used by chunking and non-chunking alignments
 {% macro samtools_markdup(sample) %}
@@ -65,8 +66,6 @@
 
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-{% set rgline = '@RG\\tID:{}\\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
-  rgid, rg.rglb, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
 
 - name: copy_fastqs_{{ sample.name }}_{{ rgid }}
   after: start_bwa_mem_{{ sample.name }}
@@ -96,8 +95,8 @@
 
     mkdir -p "temp/{{ rgid }}/"
 
-    {{ bwa_mem() }}
-      -R "{{ rgline }}" \
+    {{ bwa_mem() }} \
+      -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
@@ -169,8 +168,6 @@
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-{% set rgline = '@RG\\tID:{}\\tLB:{}\\tPU:{}\\tSM:{}\\tPL:{}\\tCN:{}\\tPM:{}\\tKS:{}'.format(
-    rgid, rg.rglb, rg.rgpu, rg.rgsm, rg.rgpl, rg.rgcn, rg.rgpm, (rg.rgks or 'unknown')) %}
 
 - name: copy_fastqs_{{ sample.name }}_{{ rgid }}
   after: start_bwa_mem_{{ sample.name }}
@@ -239,8 +236,8 @@
     rm -r "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
     mkdir -p "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
 
-    {{ bwa_mem() }}
-      -R "{{ rgline }}" \
+    {{ bwa_mem() }} \
+      -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\

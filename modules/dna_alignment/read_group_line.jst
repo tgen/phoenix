@@ -1,1 +1,15 @@
-{% macro read_group_line(sample) %}{% endmacro %}
+{% macro read_group_line(rg) %}
+{% set tags = [
+  'ID:' + rg.rgid,
+  'LB:' + rg.rglb,
+  'PU:' + rg.rgpu,
+  'SM:' + rg.rgsm,
+  'PL:' + rg.rgpl,
+  'CN:' + rg.rgcn|default('tgen'),
+  'PM:' + rg.rgpm,
+  'KS:' + rg.rgks|default('unknown')
+] %}
+{% set tags = '\\t'.join(tags) %}
+{% set rgline = '@RG\\t' + tags %}
+{{ rgline }}
+{%- endmacro %}
