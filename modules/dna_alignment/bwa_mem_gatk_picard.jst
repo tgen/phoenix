@@ -9,6 +9,22 @@
 {% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
 {% from 'modules/dna_alignment/read_group_line.jst' import read_group_line %}
 
+# Shared MarkDuplicates command for split and non-split alignment
+{% macro markduplicates(sample) %}
+{% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
+{% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
+  {% set distance = 2500 %}
+{% else %}
+  {% set distance = 100 %}
+{% endif %}
+gatk MarkDuplicates \
+  --ASSUME_SORT_ORDER queryname \
+  --CLEAR_DT false \
+  --ADD_PG_TAG_TO_READS false \
+  --CREATE_INDEX false \
+  --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} 
+{%- endmacro %}
+
 {% macro bwa_mem_gatk_picard(sample) %}
 - name: start_bwa_mem_{{ sample.name }}
   cmd: null
@@ -51,13 +67,13 @@
 
     mkdir -p "temp/{{ rgid }}/"
 
-   {{ bwa_mem() }} \
+   {{ bwa_mem() -}} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
     samtools view \
-      -b \
+      -o BAM \
       - \
       > "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
 
@@ -76,16 +92,7 @@
 
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 
-    {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
-    {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
-      {% set distance = 2500 %}
-    {% else %}
-      {% set distance = 100 %}
-    {% endif %}
-
-    gatk MarkDuplicates \
-      --CREATE_INDEX false \
-      --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} \
+    {{ markduplicates(sample) -}} \
     {% for rgid in sample.read_groups %}
       --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
     {% endfor %}
@@ -169,15 +176,15 @@
 
     module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.gatk_4_0_7_0.module }}
 
-    {{ bwa_mem() }} \
+    {{ bwa_mem() -}} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
-    gatk FixMateInformation \
-      --SORT_ORDER unsorted \
-      --INPUT /dev/stdin \
-      --OUTPUT "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+    samtools view \
+      -o BAM \
+      - \
+      > "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
 
 {% endfor %}
 {% endfor %}
@@ -195,11 +202,7 @@
 
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 
-    gatk MarkDuplicates \
-      --CLEAD_DT \
-      --ADD_PG_TAG_TO_READS false \
-      --CREATE_INDEX false \
-      --OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
+    {{ markduplicates(sample) -}} \
     {% for rgid, rg in sample.read_groups.items() %}
     {% for i in range(rg['n_chunks']) %}
     {% set chunk_suffix = '%02d' % i %}
