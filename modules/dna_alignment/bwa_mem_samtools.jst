@@ -6,7 +6,10 @@
 #     ? ?
 #
 
-# Markdups used by chunking and non-chunking alignments
+# This alignment command prefix is shared by all modules using bwa
+{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}"}
+
+# Markdups task is used by chunking and non-chunking alignments
 {% macro samtools_markdup(sample, sample_name) %}
 - name: samtools_markdup_{{ sample_name }}_bwa
   tags: [samtools, markdup, {{ sample_name }}]
@@ -45,7 +48,7 @@
 
 {% endmacro %}
 
-
+# Single alignment task per read group, no chunking
 {% macro bwa_mem_samtools(sample_name, sample) %}
 - name: start_bwa_mem_{{ sample_name }}
   cmd: null
@@ -93,12 +96,7 @@
 
     mkdir -p "temp/{{ rgid }}/"
 
-    bwa mem \
-      -v 2 \
-      -Y \
-      -K 1000000 \
-      -M \
-      -t8 \
+    {{ bwa_mem() }}
       -R "{{ rgline }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
@@ -111,7 +109,7 @@
     samtools sort \
       -l 5 \
       -m 1G \
-      -@ 10 \
+      -@ 9 \
       -O BAM \
       - \
       -o "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
@@ -246,12 +244,7 @@
     rm -r "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
     mkdir -p "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
 
-    bwa mem \
-      -v 2 \
-      -Y \
-      -K 1000000 \
-      -M \
-      -t8 \
+    {{ bwa_mem() }}
       -R "{{ rgline }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
@@ -265,7 +258,7 @@
       -T "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" \
       -l 5 \
       -m 1G \
-      -@ 10 \
+      -@ 9 \
       -O BAM \
       - \
       -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
