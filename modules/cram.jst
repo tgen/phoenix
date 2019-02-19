@@ -1,12 +1,12 @@
 # This macro adds tasks for generating a cram of the final bam
-{% macro make_cram(sample_name, sample, aligner='bwa') %}
+{% macro make_cram(sample, aligner='bwa') %}
 
-{% set bam_path = "{gltype}/alignment/{aligner}/{sample_name}/{sample_name}.{aligner}.bam" %}
-{% set bam_path = bam_path.format(gltype=sample.glType, sample_name=sample_name, aligner=aligner) %}
-{% set cram_path = "{gltype}/alignment/{aligner}/{sample_name}/{sample_name}.{aligner}.cram" %}
-{% set cram_path = cram_path.format(gltype=sample.glType, sample_name=sample_name, aligner=aligner) %}
+{% set bam_path = "{gltype}/alignment/{aligner}/{name}/{name}.{aligner}.bam" %}
+{% set bam_path = bam_path.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
+{% set cram_path = "{gltype}/alignment/{aligner}/{name}/{name}.{aligner}.cram" %}
+{% set cram_path = cram_path.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
 
-- name: cram_{{ sample_name }}_{{ aligner }}
+- name: cram_{{ sample.name }}_{{ aligner }}
   input: {{ bam_path }}
   output: {{ cram_path }}
   walltime: "8:00:00"

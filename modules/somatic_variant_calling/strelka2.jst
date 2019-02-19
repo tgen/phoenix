@@ -8,8 +8,8 @@
     Structural variants (SVs) and indels for {{ pair.name }} ({{ aligner }}) were called with 
     {{ constants.tools.manta_1_4.verbose }}.
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
+    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   output: {{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}
   cpus: 28
   walltime: "24:00:00"
@@ -34,8 +34,8 @@
       --generateEvidenceBam \
       {% endif %}
       --config "${RUNDIR}/config.ini" \
-      --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
-      --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
+      --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
+      --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
 
@@ -58,8 +58,8 @@
     Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
     {{ constants.tools.strelka_2_9_2.verbose }}.
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
+    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
     - {{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}
   output: {{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/strelka2/
   cpus: 28
@@ -84,8 +84,8 @@
       --exome \
       {% endif %}
       --config "${RUNDIR}/config.ini" \
-      --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
-      --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
+      --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
+      --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --indelCandidates "{{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
       --ref "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"

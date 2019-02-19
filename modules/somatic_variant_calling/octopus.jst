@@ -14,5 +14,5 @@ octopus \
   --normal-sample ${NORMAL_BAM_NAME} \
   --regions ${CHROM} \
   --bamout "... .realigned" \
-  -o "temp/{{ sample_name }}_{{ aligner }}_hc_gvcf_chunks/{{ loop.index }}.vcf.gz" \
+  -o "temp/{{ sample.name }}_{{ aligner }}_hc_gvcf_chunks/{{ loop.index }}.vcf.gz" \
  

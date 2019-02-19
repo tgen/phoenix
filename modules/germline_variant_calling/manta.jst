@@ -1,18 +1,18 @@
-{% macro manta_constitutional(sample_name, sample, exome=False, aligner='bwa') %}
-- name: manta_constitutional_{{ sample_name }}_{{ aligner }}
+{% macro manta_constitutional(sample, exome=False, aligner='bwa') %}
+- name: manta_constitutional_{{ sample.name }}_{{ aligner }}
   methods: > 
-    Structural variants (SVs) and indels for {{ sample_name }} ({{ aligner }}) were called with 
+    Structural variants (SVs) and indels for {{ sample.name }} ({{ aligner }}) were called with 
     {{ constants.tools.manta_1_4.verbose }}.
   input:
-    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
-  output: {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample_name }}/results_{{ aligner }}
+    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/results_{{ aligner }}
   cpus: 39
   walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.manta_1_4.module }}
 
-    RUNDIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample_name }}/{{ sample_name }}.{{ aligner }}"
+    RUNDIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}"
 
     # Purge any existing run files prior to starting
     rm -r "${RUNDIR}" || true
@@ -28,7 +28,7 @@
       --exome \
       --generateEvidenceBam \
       {% endif %}
-      --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
+      --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
 
@@ -38,11 +38,11 @@
     # Move the final results out of the rundir
     mv \
       "${RUNDIR}/results" \
-      "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample_name }}/results_{{ aligner }}"
+      "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/results_{{ aligner }}"
 
     # Compress the rest of the files for reference later
     tar -cz --remove-files \
-      -f "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.tar.gz" \
+      -f "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.tar.gz" \
       "${RUNDIR}"
 
 {% endmacro %}

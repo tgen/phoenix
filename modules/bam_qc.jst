@@ -1,17 +1,17 @@
 # This macro adds tasks for running BAM qc steps with samtools and gatk.
 # Currently supports any sample but with special tasks added when the sample
 # glTypes is 'genome' or 'exome'
-{% macro bam_qc(sample_name, sample, aligner='bwa') %}
-{% set bam_path = "{gltype}/alignment/{aligner}/{sample_name}/{sample_name}.{aligner}.bam" %}
-{% set bam_path = bam_path.format(gltype=sample.glType, sample_name=sample_name, aligner=aligner) %}
-{% set stats_dir = "{gltype}/alignment/{aligner}/{sample_name}/stats/" %}
-{% set stats_dir = stats_dir.format(gltype=sample.glType, sample_name=sample_name, aligner=aligner) %}
+{% macro bam_qc(sample, aligner='bwa') %}
+{% set bam_path = "{gltype}/alignment/{aligner}/{name}/{name}.{aligner}.bam" %}
+{% set bam_path = bam_path.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
+{% set stats_dir = "{gltype}/alignment/{aligner}/{name}/stats/" %}
+{% set stats_dir = stats_dir.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
 
-- name: samtools_stats_{{ sample_name }}_{{ aligner }}
-  tags: [samtools, stats, {{ sample_name }}]
-  methods: Quality control metrics for {{ sample_name }} ({{ aligner }}) were
+- name: samtools_stats_{{ sample.name }}_{{ aligner }}
+  tags: [samtools, stats, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
-  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
   cpus: 2
   cmd: |
@@ -29,11 +29,11 @@
       "{{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt"
 
 
-- name: samtools_flagstat_{{ sample_name }}_{{ aligner }}
-  tags: [samtools, flagstat, {{ sample_name }}]
-  methods: Quality control metrics for {{ sample_name }} ({{ aligner }}) were
+- name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
+  tags: [samtools, flagstat, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
-  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
   cpus: 8
   cmd: |
@@ -48,9 +48,9 @@
       "{{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt"
 
 
-- name: samtools_idxstats_{{ sample_name }}_{{ aligner }}
-  tags: [samtools, idxstats, {{ sample_name }}]
-  methods: Index stats for {{ sample_name }} ({{ aligner }}) were
+- name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
+  tags: [samtools, idxstats, {{ sample.name }}]
+  methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
   input: {{ bam_path }}
   walltime: "4:00:00"
@@ -68,10 +68,10 @@
 
 
 
-- name: gatk_collectmultiplemetrics_{{ sample_name }}_{{ aligner }}
-  tags: [gatk, picard, collectmultiplemetrics, {{ sample_name}}]
+- name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectmultiplemetrics, {{ sample.name}}]
   methods: Alignment metrics, base distribution, insert size, quality,
-    and other metrics for {{ sample_name }} ({{ aligner }}) were
+    and other metrics for {{ sample.name }} ({{ aligner }}) were
     gathered with {{ constants.tools.gatk_4_0_7_0.verbose }}
     CollectMultipleMetrics.
   input: {{ bam_path }}
@@ -98,10 +98,10 @@
       --PROGRAM CollectQualityYieldMetrics
 
 
-- name: gatk_convertsequencingarrtifacttooxog_{{ sample_name }}_{{ aligner }}
-  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample_name}}]
+- name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample.name}}]
   input: {{ bam_path }}
-  after: gatk_collectmultiplemetrics_{{ sample_name }}_{{ aligner }}
+  after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   walltime: "24:00:00"
   cpus: 16
   cmd: |
@@ -114,8 +114,8 @@
 
 
 {% if sample.glType|lower == 'genome' %}
-- name: gatk_collectwgsmetrics_{{ sample_name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetrics, {{ sample_name}}]
+- name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectwgsmetrics, {{ sample.name}}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -132,8 +132,8 @@
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
 
 
-- name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample_name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample_name}}]
+- name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.name}}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -150,8 +150,8 @@
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
 
 
-- name: gatk_collectrawwgsmetrics_{{ sample_name }}_{{ aligner }}
-  tags: [gatk, picard, collectrawwgsmetrics, {{ sample_name}}]
+- name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.name}}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -173,8 +173,8 @@
 {% set library_code = sample.assayCode[0:2] %}
 {% set capture_kit_code = sample.assayCode[2:5] %}
 
-- name: gatk_collecthsmetrics_{{ sample_name }}_{{ aligner }}
-  tags: [gatk, picard, collecthsmetrics, {{ sample_name}}]
+- name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collecthsmetrics, {{ sample.name}}]
   input: {{ bam_path }}
   walltime: "8:00:00"
   cpus: 16
@@ -195,8 +195,8 @@
 {% endif %}
 
 {% if sample.subGroup|lower == 'constitutional' %}
-- name: verifybamid2_{{ sample_name }}
-  tags: [qc, verifybamid2, {{ sample_name }}]
+- name: verifybamid2_{{ sample.name }}
+  tags: [qc, verifybamid2, {{ sample.name }}]
   input: {{ bam_path }}
   cpus: 1
   mem: 4000M

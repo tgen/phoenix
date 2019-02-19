@@ -2,8 +2,8 @@
 - name: lancet_{{ pair.name }}_{{ aligner }}
   tags: [lancet, {{ pair.name }}]
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
+    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   output:
     - {{ pair.tumor.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf
   cpus: 20
@@ -18,8 +18,8 @@
     lancet \
       --num-threads 20 \
       --ref "{{ constants.phoenix.reference_fasta_path }}" \
-      --normal "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
-      --tumor "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
+      --normal "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
+      --tumor "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       > "{{ pair.tumor.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf"
 
 {% endmacro %}

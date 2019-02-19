@@ -1,7 +1,7 @@
-{% macro snpeff(sample_name, sample, aligner, tool_type, tool_name, tool_abbr) %}
-- name: snpeff_{{ tool_name }}_{{ sample_name }}_{{ aligner }}
-  tags: [snpeff, annotation, {{ sample_name }}]
-  input: {{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.{{ tool_abbr }}.vcf.gz
+{% macro snpeff(sample, aligner, tool_type, tool_name, tool_abbr) %}
+- name: snpeff_{{ tool_name }}_{{ sample.name }}_{{ aligner }}
+  tags: [snpeff, annotation, {{ sample.name }}]
+  input: {{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.{{ tool_abbr }}.vcf.gz
   walltime: "8:00:00"
   cpus: 4
   cmd: |
@@ -14,7 +14,7 @@
       -noLog \
       -dataDir "{{ constants.phoenix.snpeff_data_dir }}" \
       "{{ constants.phoenix.snpeff_db_name }}" \
-      "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.{{ tool_abbr }}.vcf.gz" \
-      > "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.ann.{{ tool_abbr }}.vcf.gz"
+      "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.{{ tool_abbr }}.vcf.gz" \
+      > "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ann.{{ tool_abbr }}.vcf.gz"
 
 {% endmacro %}

@@ -2,8 +2,8 @@
 {% for batch in constants.phoenix.intervals_batched %}
 - name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam
+    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   cpus: 4
   walltime: "24:00:00"
   cmd: |
@@ -15,9 +15,9 @@
     gatk Mutect2 \
       --TMP_DIR temp/ \
       -R {{ constants.phoenix.reference_fasta_path }} \
-      -I "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal_name }}/{{ pair.normal_name }}.{{ aligner }}.bam" \
+      -I "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       -normal "{{ pair.normal.rgsm }}" \
-      -I "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor_name }}/{{ pair.tumor_name }}.{{ aligner }}.bam" \
+      -I "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       -tumor "{{ pair.tumor.rgsm }}" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \

@@ -36,29 +36,30 @@
 {% for file in dataFiles %}
     {% do file.update({'glType': file.glType.lower()}) %}
     {% if 'sampleMergeKey' in file %}
-        {% set sample_name = file.sampleMergeKey %}
+        {% set name = file.sampleMergeKey %}
     {% else %}
-        {% set sample_name = file.sampleName %}
+        {% set name = file.sampleName %}
     {% endif %}
-    {% if sample_name not in samples %}
-        {% do samples.update({sample_name: {}}) %}
-        {% do samples[sample_name].update(file) %}
+    {% if name not in samples %}
+        {% do samples.update({name: {}}) %}
+        {% do samples[name].update(file) %}
+        {% do samples[name].update({"name": name}) %}
     {% endif %}
 {% endfor %}
 
 {% for rgid, data_files in dataFiles | groupby('rgid') %}
     {% set rg = data_files|first %}
     {% if 'sampleMergeKey' in rg %}
-        {% set sample_name = rg.sampleMergeKey %}
+        {% set name = rg.sampleMergeKey %}
     {% else %}
-        {% set sample_name = rg.sampleName %}
+        {% set name = rg.sampleName %}
     {% endif %}
-    {% if not 'read_groups' in samples[sample_name] %}
-        {% do samples[sample_name].update({'read_groups': {}}) %}
+    {% if not 'read_groups' in samples[name] %}
+        {% do samples[name].update({'read_groups': {}}) %}
     {% endif %}
-    {% do samples[sample_name]['read_groups'].update({rgid: {}}) %}
-    {% do samples[sample_name]['read_groups'][rgid].update(rg) %}
-    {% do samples[sample_name]['read_groups'][rgid].update({'data_files': data_files}) %}
+    {% do samples[name]['read_groups'].update({rgid: {}}) %}
+    {% do samples[name]['read_groups'][rgid].update(rg) %}
+    {% do samples[name]['read_groups'][rgid].update({'data_files': data_files}) %}
 {% endfor %}
 
 # Start of module imports

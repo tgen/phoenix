@@ -1,9 +1,9 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
-{% macro freebayes(sample_name, sample, aligner='bwa') %}
+{% macro freebayes(sample, aligner='bwa') %}
 {% for batch in constants.phoenix.intervals_batched %}
-- name: freebayes_{{ sample_name }}_{{ aligner }}_{{ loop.index }}
-  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam
+- name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "24:00:00"
   cpus: 4
   mem: 16000
@@ -11,30 +11,30 @@
     set -uev
     module load {{ constants.tools.freebayes_1_2.module }}
 
-    mkdir -p "temp/{{ sample_name }}_{{ aligner }}_freebayes/"
+    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_freebayes/"
 
     TAB=$'\t'
-    cat <<EOF > "temp/{{ sample_name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed"
+    cat <<EOF > "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed"
     {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
 
     freebayes \
-      -b "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.bam" \
+      -b "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       -f "{{ constants.phoenix.reference_fasta_path }}" \
-      -t "temp/{{ sample_name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed" \
+      -t "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed" \
       --ploidy 2 \
       --min-repeat-entropy 1 \
-      > "temp/{{ sample_name }}_{{ aligner }}_freebayes/{{ loop.index }}.vcf"
+      > "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.vcf"
 
 {% endfor %}
 
 
-- name: freebayes_merge_{{ sample_name }}_{{ aligner }}
+- name: freebayes_merge_{{ sample.name }}_{{ aligner }}
   after: 
-    re: freebayes_{{ sample_name }}_{{ aligner }}_.*
-  output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf.gz
+    re: freebayes_{{ sample.name }}_{{ aligner }}_.*
+  output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16000
@@ -42,19 +42,19 @@
     set -euv
     module load {{ constants.tools.gatk_4_0_7_0.module }}
 
-    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}/"
+    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/"
 
     gatk MergeVcfs \
       {% for batch in constants.phoenix.intervals_batched %}
-      --INPUT "temp/{{ sample_name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
+      --INPUT "temp/{{ sample.name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
       {% endfor %}
-      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample_name }}/{{ sample_name }}.{{ aligner }}.freebayes.vcf.gz"
+      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.vcf.gz"
 
     {% if not debug %}
-    rm -r "temp/{{ sample_name }}_{{ aligner }}_freebayes/"
+    rm -r "temp/{{ sample.name }}_{{ aligner }}_freebayes/"
     {% endif %}
 
 
-{{- snpeff(sample_name, sample, aligner, "constitutional_variant_calls", "freebayes", "freebayes") }}
+{{- snpeff(sample.name, sample, aligner, "constitutional_variant_calls", "freebayes", "freebayes") }}
 
 {% endmacro %}

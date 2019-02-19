@@ -11,39 +11,39 @@
   {% set chunking = chunking | default(True) %}
   {% set reads_per_chunk = reads_per_chunk | default(48000000) %}
 
-  {% for sample_name, sample in samples.items() if sample.glType|lower in ['genome', 'exome'] %}
+  {% for sample in samples.values() if sample.glType|lower in ['genome', 'exome'] %}
     {% set first_rg = sample.read_groups.values()|first %}
     {% if alignment_gatk_picard is defined and alignment_gatk_picard %}
       {% if chunking and first_rg.numberOfReads is defined and first_rg.numberOfReads > reads_per_chunk %}
-        {{- bwa_mem_gatk_picard_chunked(sample_name, sample, reads_per_chunk) }}
+        {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) }}
       {% else %}
-        {{- bwa_mem_gatk_picard(sample_name, sample) }}
+        {{- bwa_mem_gatk_picard(sample) }}
       {% endif %}
     {% else %}
       {% if chunking and first_rg.numberOfReads is defined and first_rg.numberOfReads > reads_per_chunk %}
-        {{- bwa_mem_samtools_chunked(sample_name, sample, reads_per_chunk) }}
+        {{- bwa_mem_samtools_chunked(sample, reads_per_chunk) }}
       {% else %}
-        {{- bwa_mem_samtools(sample_name, sample) }}
+        {{- bwa_mem_samtools(sample) }}
       {% endif %}
     {% endif %}
 
     {% if sample.glType|lower == 'genome' %}
       {% if tasks.Genome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Genome_base_recalibration_gatk_4_0_1_2 %}
-        {{- nobaserecalibration(sample_name, sample, aligner='bwa') }}
+        {{- nobaserecalibration(sample, aligner='bwa') }}
       {% else %}
-        {{- baserecalibration(sample_name, sample, aligner='bwa') }}
+        {{- baserecalibration(sample, aligner='bwa') }}
       {% endif %}
     {% elif sample.glType|lower == 'exome' %}
       {% if tasks.Exome_base_recalibration_gatk_4_0_1_2 is defined and not tasks.Exome_base_recalibration_gatk_4_0_1_2 %}
-          {{- nobaserecalibration(sample_name, sample, aligner='bwa') }}
+          {{- nobaserecalibration(sample, aligner='bwa') }}
       {% else %}
-          {{- baserecalibration(sample_name, sample, aligner='bwa') }}
+          {{- baserecalibration(sample, aligner='bwa') }}
       {% endif %}
 
     {% endif %}
 
-    {{- make_cram(sample_name, sample) }}
-    {{- bam_qc(sample_name, sample, aligner='bwa') }}
+    {{- make_cram(sample) }}
+    {{- bam_qc(sample, aligner='bwa') }}
 
   {% endfor %}
 {% endmacro %}
