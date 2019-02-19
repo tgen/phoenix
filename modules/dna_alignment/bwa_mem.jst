@@ -1,8 +1,4 @@
 # Shared bwa command used by both Picard and Samtools workflows
 {% macro bwa_mem() %}
-bwa mem \
-  -v 3 \
-  -Y \
-  -K 100000000 \
-  -t9 \
+bwa mem -v 3 -Y -K 100000000 -t9 \
 {% endmacro %}
