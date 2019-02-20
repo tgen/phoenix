@@ -1,0 +1,63 @@
+${STARPATH}/STAR --genomeDir ${STARREF} \
+    --runMode alignReads \
+    --limitOutSAMoneReadBytes 90000000 \
+    --readFilesCommand zcat \
+    --readFilesIn ${FASTQL1} ${FASTQL2} \
+    --outSAMtype SAM \
+    --outFilterType BySJout \
+    --outFilterMultimapNmax 10 \
+    --outFilterMismatchNmax 10 \
+    --outFilterMismatchNoverLmax 0.1 \
+    --alignIntronMin 20 \
+    --alignIntronMax 1000000 \
+    --alignMatesGapMax 1000000 \
+    --alignSJoverhangMin 8 \
+    --alignSJDBoverhangMin 1 \
+    --seedSearchStartLmax 30 \
+    --chimSegmentMin 15 \
+    --chimJunctionOverhangMin 15 \
+    --runThreadN 14 \
+    --genomeLoad NoSharedMemory \
+    --outSAMstrandField intronMotif \
+    --outSAMunmapped Within \
+    --outSAMmapqUnique 255 \
+    --outSAMattrRGline ${RGTAGLIST} \
+    --outSAMmode Full > ${DIR}.starOut
+# Run Salmon RNA Quantification
+{% macro salmon(sample) %}
+
+{% set r1fqlist = [] %}
+{% set r2fqlist = [] %}
+{% for rgid, rg in sample.read_groups.items() %}
+    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
+        {% do r1fqlist.append(fq) %}
+    {% endfor %}
+    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
+        {% do r2fqlist.append(fq) %}
+    {% endfor %}
+{% endfor %}
+
+- name: salmon_quant_cdna_{{ sample.name }}
+  methods: >
+    Transcript quantification for {{ sample.name }} was performed with
+    {{ constants.tools.salmon_0_6_0.verbose }} using the cDNA index.
+  output: RNA/{{ sample.name }}
+  cpus: 16
+  walltime: "24:00:00"
+  cmd: |
+    #!/bin/bash
+
+    set -ue
+    module load {{ constants.tools.salmon_0_6_0.module }}
+
+    salmon quant \
+      --index "{{ constants.phoenix.reference_index_prefix }}" \
+      --libType IU \
+      -1 {{ r1fqlist|map(attribute='fastqPath')|join(',') }}  \
+      -2 {{ r2fqlist|map(attribute='fastqPath')|join(',') }} \
+      --threads 16 \
+      --biasCorrect \
+      --geneMap {{ constants.phoenix.gtf }} \
+      --output "RNA/{{ sample.name }}/"
+
+{% endmacro %}

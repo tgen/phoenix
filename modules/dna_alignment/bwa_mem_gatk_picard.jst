@@ -67,13 +67,13 @@ gatk MarkDuplicates \
 
     mkdir -p "temp/{{ rgid }}/"
 
-   {{ bwa_mem(threads=9) }} \
+    {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
     samtools view \
-      -o BAM \
+      -O BAM \
       - \
       > "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
 
@@ -92,7 +92,7 @@ gatk MarkDuplicates \
 
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 
-    {{ markduplicates(sample) -}} \
+    {{ markduplicates(sample)|indent(2) }} \
     {% for rgid in sample.read_groups %}
       --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
     {% endfor %}
@@ -164,7 +164,7 @@ gatk MarkDuplicates \
 
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
-- name: bwa_mem_gatk_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
+- name: bwa_mem_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   after: 
     - split_fastq_{{ r1fastq.fastqPath|basename }}
     - split_fastq_{{ r2fastq.fastqPath|basename }}
@@ -182,7 +182,7 @@ gatk MarkDuplicates \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
     samtools view \
-      -o BAM \
+      -O BAM \
       - \
       > "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
 
@@ -202,7 +202,7 @@ gatk MarkDuplicates \
 
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 
-    {{ markduplicates(sample) -}} \
+    {{ markduplicates(sample)|indent(2) }} \
     {% for rgid, rg in sample.read_groups.items() %}
     {% for i in range(rg['n_chunks']) %}
     {% set chunk_suffix = '%02d' % i %}
