@@ -63,11 +63,11 @@ gatk MarkDuplicates \
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "temp/{{ rgid }}/"
 
-   {{ bwa_mem() -}} \
+   {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
@@ -176,7 +176,7 @@ gatk MarkDuplicates \
 
     module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.gatk_4_0_7_0.module }}
 
-    {{ bwa_mem() -}} \
+    {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \

@@ -15,7 +15,9 @@
       --java-options "-Xms3000m" \
       BaseRecalibrator \
       --reference "{{ constants.phoenix.reference_fasta_path }}" \
-      --known-sites "{{ constants.phoenix.reference_snps }}" \
+      {% for vcf in constants.phoenix.gatk_known_sites %}
+      --known-sites "{{ vcf }}" \
+      {% endfor %}
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}

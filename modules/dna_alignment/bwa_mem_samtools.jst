@@ -95,11 +95,16 @@
 
     mkdir -p "temp/{{ rgid }}/"
 
-    {{ bwa_mem() -}} \
+    {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
+    samtools fixmate \
+      -@ 9 \
+      -m \
+      - \
+      - |\
     samtools sort \
       -l 5 \
       -m 1G \
@@ -236,7 +241,7 @@
     rm -r "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
     mkdir -p "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
 
-    {{ bwa_mem() -}} \
+    {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
