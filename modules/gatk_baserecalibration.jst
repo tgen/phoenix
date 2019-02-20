@@ -78,7 +78,7 @@
   walltime: "4:00:00"
   cpus: 4
   cmd: |
-    set -uex
+    set -uev
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/"

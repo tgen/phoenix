@@ -114,6 +114,7 @@ gatk MarkDuplicates \
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
+
 - name: copy_fastqs_{{ sample.name }}_{{ rgid }}
   after: start_bwa_mem_{{ sample.name }}
   retry: 2

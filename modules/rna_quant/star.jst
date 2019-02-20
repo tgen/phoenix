@@ -37,7 +37,7 @@ ${STARPATH}/STAR --genomeDir ${STARREF} \
     {% endfor %}
 {% endfor %}
 
-- name: salmon_quant_cdna_{{ sample.name }}
+- name: star_alignment_for_htseq_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.salmon_0_6_0.verbose }} using the cDNA index.
