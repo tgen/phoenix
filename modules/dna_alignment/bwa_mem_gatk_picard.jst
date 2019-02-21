@@ -185,7 +185,7 @@ gatk MarkDuplicates \
     samtools view \
       -O BAM \
       - \
-      > "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
+      > "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
 
 {% endfor %}
 {% endfor %}
