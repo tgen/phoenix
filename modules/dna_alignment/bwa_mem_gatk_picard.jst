@@ -54,7 +54,7 @@ gatk MarkDuplicates \
     rsync_from_isilon "{{ r2fastq.fastqPath }}" "temp/fastqs/"
 
 
-- name: bwa_mem_gatk_fixmate_{{ sample.name }}_{{ rgid }}
+- name: bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}
   tags: [bwa, gatk, picard, {{ sample.name }}, {{ rgid }}]
   after: copy_fastqs_{{ sample.name }}_{{ rgid }}
   walltime: "24:00:00"
@@ -82,7 +82,7 @@ gatk MarkDuplicates \
 - name: gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, markduplicates, {{ sample.name }}]
   after:
-    re: bwa_mem_gatk_fixmate_{{ sample.name }}_.*
+    re: bwa_mem_samtools_view_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "24:00:00"
   cpus: 4
@@ -165,7 +165,7 @@ gatk MarkDuplicates \
 
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
-- name: bwa_mem_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
+- name: bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   after: 
     - split_fastq_{{ r1fastq.fastqPath|basename }}
     - split_fastq_{{ r2fastq.fastqPath|basename }}
@@ -193,7 +193,7 @@ gatk MarkDuplicates \
 - name: gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, markduplicates, {{ sample.name }}]
   after:
-    re: bwa_mem_gatk_fixmate_{{ sample.name }}_.*
+    re: bwa_mem_samtools_view_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "24:00:00"
   cpus: 4
