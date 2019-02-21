@@ -265,7 +265,7 @@
 
 - name: merge_bam_chunks_{{ sample.name }}
   after:
-    re: chunked_bwa_mem_{{ sample.name }}_.*
+    re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 4
