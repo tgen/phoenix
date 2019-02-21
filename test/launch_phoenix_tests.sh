@@ -3,7 +3,7 @@
 # given as command arguments, a new project will be created in the test 
 # directory with the config file added. Finally, the pipeline will be launched
 # as a slurm batch job.
-set -uev 
+set -ue 
 
 REPO=~/jetstream_pipelines/phoenix/
 

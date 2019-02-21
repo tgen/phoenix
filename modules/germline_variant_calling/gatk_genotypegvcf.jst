@@ -23,6 +23,7 @@
 
 {% endfor %}
 
+
 - name: genotypegvcf_merge_{{ sample.name }}_{{ aligner }}
   after: 
     re: genotypegvcf_{{ sample.name }}_{{ aligner }}_.*
@@ -44,6 +45,25 @@
     rm -r "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/"
     {% endif %}
 
+
+- name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}
+  input: 
+    - {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz
+    - {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz
+  walltime: 24:00:00
+  cpus: 2
+  cmd: |
+    set -euv
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    gatk CNNScoreVariants \
+      -tensor-type read-tensor \
+      -I "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      -V "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \
+      -R "{{ constants.phoenix.reference_fasta_path }}" \
+      -O "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz"
+      
 
 {{- snpeff(sample, aligner, "constitutional_variant_calls", "haplotypecaller", "hc") }}
 
