@@ -72,14 +72,14 @@
   tags: [gatk, picard, collectmultiplemetrics, {{ sample.name}}]
   methods: Alignment metrics, base distribution, insert size, quality,
     and other metrics for {{ sample.name }} ({{ aligner }}) were
-    gathered with {{ constants.tools.gatk_4_0_7_0.verbose }}
+    gathered with {{ constants.tools.gatk_4_1_0_0.verbose }}
     CollectMultipleMetrics.
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
     
@@ -106,7 +106,7 @@
   cpus: 16
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk ConvertSequencingArtifactToOxoG \
       -I "{{ stats_dir }}/{{ bam_path|basename }}" \
@@ -121,7 +121,7 @@
   cpus: 16
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 
@@ -139,7 +139,7 @@
   cpus: 16
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 
@@ -157,7 +157,7 @@
   cpus: 16
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 
@@ -180,7 +180,7 @@
   cpus: 16
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 

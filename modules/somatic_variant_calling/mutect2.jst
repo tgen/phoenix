@@ -8,7 +8,7 @@
   walltime: "24:00:00"
   cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
 
@@ -29,7 +29,7 @@
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   methods: Somatic variant calls for {{ pair.name }} were called with
-    {{ constants.tools.gatk_4_0_7_0.verbose }} Mutect2 in parallel chunks and
+    {{ constants.tools.gatk_4_1_0_0.verbose }} Mutect2 in parallel chunks and
     then merged together with MergeVcfs.
   after: 
     re: mutect2_{{ pair.name }}_{{ aligner }}_.*
@@ -38,7 +38,7 @@
   walltime: "24:00:00"
   cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/"
 

@@ -82,7 +82,7 @@
     rsync_from_isilon "{{ r2fastq.fastqPath }}" "temp/fastqs/"
 
 
-- name: bwa_mem_{{ sample.name }}_{{ rgid }}
+- name: bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}
   tags: [bwa, samtools, {{ sample.name }}, {{ rgid }}]
   after: copy_fastqs_{{ sample.name }}_{{ rgid }}
   walltime: "8:00:00"
@@ -119,7 +119,7 @@
 - name: samtools_merge_rg_bams_{{ sample.name }}_bwa
   tags: [samtools, merge, {{ sample.name }}]
   after:
-    re: bwa_mem_{{ sample.name }}_.*
+    re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 4
@@ -223,7 +223,7 @@
 
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
-- name: bwa_mem_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
+- name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   after: 
     - split_fastq_{{ r1fastq.fastqPath|basename }}
     - split_fastq_{{ r2fastq.fastqPath|basename }}
@@ -246,6 +246,11 @@
       "{{ constants.phoenix.reference_index_prefix }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
+    samtools fixmate \
+      -@ 9 \
+      -m \
+      - \
+      - |\
     samtools sort \
       -T "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" \
       -l 5 \
@@ -260,7 +265,7 @@
 
 - name: merge_bam_chunks_{{ sample.name }}
   after:
-    re: bwa_mem_{{ sample.name }}_.*
+    re: chunked_bwa_mem_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 4

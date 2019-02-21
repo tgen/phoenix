@@ -88,7 +88,7 @@ gatk MarkDuplicates \
   cpus: 4
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 
@@ -165,7 +165,7 @@ gatk MarkDuplicates \
 
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
-- name: bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
+- name: chunked_bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   after: 
     - split_fastq_{{ r1fastq.fastqPath|basename }}
     - split_fastq_{{ r2fastq.fastqPath|basename }}
@@ -175,7 +175,7 @@ gatk MarkDuplicates \
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
 
     {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
@@ -193,13 +193,13 @@ gatk MarkDuplicates \
 - name: gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, markduplicates, {{ sample.name }}]
   after:
-    re: bwa_mem_samtools_view_{{ sample.name }}_.*
+    re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "24:00:00"
   cpus: 4
   cmd: |
     set -uev
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 

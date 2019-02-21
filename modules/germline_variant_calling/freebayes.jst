@@ -40,7 +40,7 @@
   mem: 16000
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/"
 

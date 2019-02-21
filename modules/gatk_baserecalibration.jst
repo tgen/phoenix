@@ -9,7 +9,7 @@
   cpus: 4
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk \
       --java-options "-Xms3000m" \
@@ -34,7 +34,7 @@
   cpus: 4
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk \
       --java-options "-Xms3000m" \
@@ -49,14 +49,14 @@
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, ApplyBQSR, {{ sample.name }}]
   methods: Reads for {{ sample.name }} were processed with
-    {{ constants.tools.gatk_4_0_7_0.verbose }} BaseRecalibrator to correct
+    {{ constants.tools.gatk_4_1_0_0.verbose }} BaseRecalibrator to correct
     systematic errors in base quality scores.
   after: gather_bqsr_reports_{{ sample.name }}_{{ aligner }}
   walltime: "4:00:00"
   cpus: 8
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_0_7_0.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk ApplyBQSR \
       --java-options "-Xms3000m" \
