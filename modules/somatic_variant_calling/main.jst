@@ -19,15 +19,15 @@
     # to every normal of the same glType.
     {% set pairs = [] %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.glType|lower == 'exome' %}
-        {% for normal in samples.items() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'exome' %}
+        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'exome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
-            {% do pairs.append({pair_name: {'name': pair_name, 'normal': normal, 'tumor': tumor}}) %}
+            {% do pairs.append({'name': pair_name, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.glType|lower == 'genome' %}
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'genome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
-            {% do pairs.append({pair_name: {'name': pair_name, 'normal': normal, 'tumor': tumor}}) %}
+            {% do pairs.append({'name': pair_name, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
 {% endif %}
