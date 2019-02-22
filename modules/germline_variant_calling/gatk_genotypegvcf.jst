@@ -13,7 +13,7 @@
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/"
 
     gatk GenotypeGVCFs \
-      --java-options "-Xms4g" \
+      --java-options "-Xmx14G" \
       --reference {{ constants.phoenix.reference_fasta_path }} \
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
@@ -36,6 +36,7 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk MergeVcfs \
+      --java-options "-Xmx14G" \
       {% for batch in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
       {% endfor %}
@@ -58,6 +59,7 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk CNNScoreVariants \
+      --java-options "-Xmx6G" \
       -tensor-type read-tensor \
       -I "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       -V "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \

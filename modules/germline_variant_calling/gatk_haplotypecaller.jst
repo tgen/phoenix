@@ -13,7 +13,7 @@
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_hc_gvcf_chunks/"
 
     gatk HaplotypeCaller \
-      --java-options "-Xms4G" \
+      --java-options "-Xmx14G" \
       -ERC GVCF \
       -R {{ constants.phoenix.reference_fasta_path }} \
       -I "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
@@ -38,6 +38,7 @@
     mkdir -p "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
 
     gatk MergeVcfs \
+      --java-options "-Xmx14G" \
       {% for batch in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ sample.name }}_{{ aligner }}_hc_gvcf_chunks/{{ loop.index }}.g.vcf.gz" \
       {% endfor %}

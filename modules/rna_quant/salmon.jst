@@ -5,10 +5,10 @@
 {% set r2fqlist = [] %}
 {% for rgid, rg in sample.read_groups.items() %}
     {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
-        {% do r1fqlist.append(fq) %}
+        {% do r1fqlist.append(fq.fastqPath) %}
     {% endfor %}
     {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
-        {% do r2fqlist.append(fq) %}
+        {% do r2fqlist.append(fq.fastqPath) %}
     {% endfor %}
 {% endfor %}
 
@@ -20,19 +20,19 @@
   cpus: 16
   walltime: "24:00:00"
   cmd: |
-    #!/bin/bash
-
-    set -ue
+    set -uev
     module load {{ constants.tools.salmon_0_6_0.module }}
+
+    mkdir -p "{{ sample.glType }}/salmon/{{ sample.name }}/"
 
     salmon quant \
       --index "{{ constants.phoenix.reference_index_prefix }}" \
       --libType IU \
-      -1 {{ r1fqlist|map(attribute='fastqPath')|join(',') }}  \
-      -2 {{ r2fqlist|map(attribute='fastqPath')|join(',') }} \
+      -1 "{{ r1fqlist|join(',') }}"  \
+      -2 "{{ r2fqlist|join(',') }}" \
       --threads 16 \
       --biasCorrect \
-      --geneMap {{ constants.phoenix.gtf }} \
-      --output "RNA/{{ sample.name }}/"
+      --geneMap "{{ constants.phoenix.gtf }}" \
+      --output "{{ sample.glType }}/salmon/{{ sample.name }}/"
 
 {% endmacro %}

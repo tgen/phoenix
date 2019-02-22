@@ -18,6 +18,7 @@
   {% set distance = 100 %}
 {% endif %}
 gatk MarkDuplicates \
+  --java-options "-Xmx 28G"
   --ASSUME_SORT_ORDER queryname \
   --CLEAR_DT false \
   --ADD_PG_TAG_TO_READS false \
