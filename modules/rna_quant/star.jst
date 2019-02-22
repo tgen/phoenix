@@ -54,4 +54,14 @@
       --outSAMmode Full \
       > "{{ sample.glType }}/star-quant/{{ sample.name }}/"
 
+- name: htseq_{{ sample.name }}
+  output: {{ sample.glType }}/htseq/{{ sample.name }}/
+  cpus: 16
+  walltime: 24:00:00
+  cmd: |
+    set -uev
+    module load {{ constants.tools.htseq_0_6_1.module }}
+
+    
+
 {% endmacro %}

@@ -6,14 +6,16 @@
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   cpus: 4
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
-    set -eu
+    set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
 
     gatk Mutect2 \
+      --java-options "-Xmx14G" \
       --tmp-dir temp/ \
       --reference {{ constants.phoenix.reference_fasta_path }} \
       --input "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
@@ -21,7 +23,7 @@
       --input "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --tumor-sample "{{ pair.tumor.rgsm }}" \
       {% for interval in batch %}
-      --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --output "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz"
 
@@ -36,15 +38,17 @@
   after: 
     re: mutect2_{{ pair.name }}_{{ aligner }}_.*
   output: {{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf.gz
-  cpus: 2
+  cpus: 4
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
-    set -eu
+    set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/"
 
     gatk MergeVcfs \
+      --java-options "-Xmx14G" \
       {% for b in constants.phoenix.intervals_batched %}
       --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz" \
       {% endfor %}

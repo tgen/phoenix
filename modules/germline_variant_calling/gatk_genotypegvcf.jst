@@ -7,6 +7,7 @@
   input: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4
+  mem: 16G
   cmd: |
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
@@ -30,6 +31,7 @@
   output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz
   walltime: "24:00:00"
   cpus: 4
+  mem: 16G
   cmd: |
     #!/bin/bash
     set -euv
@@ -54,6 +56,7 @@
   output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz
   walltime: 24:00:00
   cpus: 2
+  mem: 8G
   cmd: |
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
