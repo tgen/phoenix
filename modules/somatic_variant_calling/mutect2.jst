@@ -1,6 +1,7 @@
 {% macro mutect2(pair, aligner='bwa') %}
 {% for batch in constants.phoenix.intervals_batched %}
 - name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [gatk, mutect2, somatic_variant_calling]
   input:
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
@@ -13,21 +14,22 @@
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
 
     gatk Mutect2 \
-      --TMP_DIR temp/ \
-      -R {{ constants.phoenix.reference_fasta_path }} \
-      -I "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
-      -normal "{{ pair.normal.rgsm }}" \
-      -I "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      -tumor "{{ pair.tumor.rgsm }}" \
+      --tmp-dir temp/ \
+      --reference {{ constants.phoenix.reference_fasta_path }} \
+      --input "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
+      --normal-sample "{{ pair.normal.rgsm }}" \
+      --input "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
+      --tumor-sample "{{ pair.tumor.rgsm }}" \
       {% for interval in batch %}
-      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      -O "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz"
+      --output "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz"
 
 {% endfor %}
 
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [gatk, picard, merge_vcfs]
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk_4_1_0_0.verbose }} Mutect2 in parallel chunks and
     then merged together with MergeVcfs.
