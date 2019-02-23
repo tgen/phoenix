@@ -67,10 +67,11 @@
 {% from 'modules/germline_variant_calling/main.jst' import germline_variant_calling with context %}
 {% from 'modules/somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
 {% from 'modules/rna_quant/main.jst' import rna_quant with context %}
+{% from 'modules/rna_fusion_detection/main.jst' import rna_fusion_detection with context %}
 
 # Start of module calls
 {{ dna_alignment(samples) }}
-{{ rna_quant(samples) }}
 {{ germline_variant_calling(samples) }}
 {{ somatic_variant_calling(samples) }}
-
+{{ rna_quant(samples) }}
+{{ rna_fusion_detection(samples) }}

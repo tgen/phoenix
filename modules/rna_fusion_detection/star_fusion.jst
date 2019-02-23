@@ -1,0 +1,36 @@
+# Run STAR-Fusion for detecting gene fusions
+{% macro star_fusion(sample) %}
+
+{% set r1fqlist = [] %}
+{% set r2fqlist = [] %}
+{% for rgid, rg in sample.read_groups.items() %}
+    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
+        {% do r1fqlist.append(fq.fastqPath) %}
+    {% endfor %}
+    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
+        {% do r2fqlist.append(fq.fastqPath) %}
+    {% endfor %}
+{% endfor %}
+
+- name: star_fusion_{{ sample.name }}
+  tags: [star, fusion]
+  output: {{ sample.glType }}/star-fusion/{{ sample.name }}/
+  cpus: 16
+  walltime: 24:00:00
+  cmd: |
+    set -ue
+
+    module load {{ constants.tools.star_fusion_1_5_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+
+    mkdir -p "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
+
+    STAR-Fusion \
+      --CPU 16 \
+      --genome_lib_dir TODO \
+      --left_fq <(zcat {% for fq in r1fqlist %}"{{ fq }}" {% endfor %}) \
+      --right_fq <(zcat {% for fq in r2fqlist %}"{{ fq }}" {% endfor %}) \
+      --output_dir "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
+
+{% endmacro %}
