@@ -51,7 +51,7 @@
       --runMode alignReads \
       --runThreadN 14 \
       --seedSearchStartLmax 30 \
-      --genomeDir "{{ constants.phoenix.reference_index_prefix }}" \
+      --genomeDir "{{ constants.phoenix.reference_star_path }}" \
       --readFilesIn "{{ r1fqlist|join(',') }}" "{{ r2fqlist|join(',') }}" \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
       --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}"
