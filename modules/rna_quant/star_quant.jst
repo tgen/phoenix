@@ -23,7 +23,7 @@
   cpus: 16
   walltime: "24:00:00"
   cmd: |
-    set -ue
+    set -uev
     module load {{ constants.tools.star_2_6_1d.module }}
 
     mkdir -p "{{ sample.glType }}/star-quant/{{ sample.name }}/"
@@ -54,8 +54,7 @@
       --genomeDir "{{ constants.phoenix.reference_index_prefix }}" \
       --readFilesIn "{{ r1fqlist|join(',') }}" "{{ r2fqlist|join(',') }}" \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
-      > "{{ sample.glType }}/star-quant/{{ sample.name }}/"
-
+      --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}"
 
 - name: htseq_{{ sample.name }}
   output: {{ sample.glType }}/htseq/{{ sample.name }}/

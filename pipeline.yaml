@@ -41,7 +41,6 @@ constants:
       - {"contig": chr22, "length": 50818468}
       - {"contig": chrX, "length": 156040895}
       - {"contig": chrY, "length": 57227415}
-      - {"contig": chrM, "length": 16569}
     intervals:
       - {"contig": "chr1", "length": 197665, "start": 10001, "stop": 207666}
       - {"contig": "chr1", "length": 40301, "start": 257667, "stop": 297968}
