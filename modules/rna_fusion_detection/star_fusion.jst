@@ -4,16 +4,24 @@
 {% set r1fqlist = [] %}
 {% set r2fqlist = [] %}
 {% for rgid, rg in sample.read_groups.items() %}
-    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
-        {% do r1fqlist.append(fq.fastqPath) %}
-    {% endfor %}
-    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
-        {% do r2fqlist.append(fq.fastqPath) %}
-    {% endfor %}
+  {% if rg.data_files|length != 2 %}
+      {{ raise('This module only supports paired-end data with two fastqs per rg') }}
+  {% endif %}
+  {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+  {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+  {% do r1fqlist.append(r1fastq) %}
+  {% do r2fqlist.append(r2fastq) %}
 {% endfor %}
 
 - name: star_fusion_{{ sample.name }}
   tags: [star, fusion]
+  input:
+  {% for fq in r1fqlist %}
+    - temp/fastqs/{{ fq.fastqPath|basename }}
+  {% endfor %}
+  {% for fq in r2fqlist %}
+    - temp/fastqs/{{ fq.fastqPath|basename }}
+  {% endfor %}
   output: {{ sample.glType }}/star-fusion/{{ sample.name }}/
   cpus: 16
   walltime: "24:00:00"
@@ -29,8 +37,8 @@
     STAR-Fusion \
       --CPU 16 \
       --genome_lib_dir TODO \
-      --left_fq <(zcat {% for fq in r1fqlist %}"{{ fq }}" {% endfor %}) \
-      --right_fq <(zcat {% for fq in r2fqlist %}"{{ fq }}" {% endfor %}) \
+      --left_fq <(zcat {% for fq in r1fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}" {% endfor %}) \
+      --right_fq <(zcat {% for fq in r2fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}" {% endfor %}) \
       --output_dir "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
 
 

@@ -13,7 +13,7 @@
 # Markdups task is used by chunking and non-chunking alignments
 {% macro samtools_markdup(sample) %}
 - name: samtools_markdup_{{ sample.name }}_bwa
-  tags: [samtools, markdup, {{ sample.name }}]
+  tags: [samtools, samtools-markdup, {{ sample.glType }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools_1_9.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
@@ -51,14 +51,6 @@
 
 # Single alignment task per read group, no chunking
 {% macro bwa_mem_samtools(sample) %}
-- name: start_bwa_mem_{{ sample.name }}
-  cmd: null
-  methods: Fastqs for {{ sample.name }} were aligned with
-    {{ constants.tools.bwa_0_7_17.verbose }}. The resulting data was streamed
-    into {{ constants.tools.samtools_1_9.verbose }} fixmate and sort to
-    generate a temporary aligned read group bam. Finally, all the bam chunks
-    were merged together with {{ constants.tools.samtools_1_9.verbose }} merge.
-
 {% for rgid, rg in sample.read_groups.items() %}
 {% if rg.data_files|length != 2 %}
     {{ raise('This module only supports paired-end data with two fastqs per rg') }}
@@ -67,24 +59,11 @@
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
-- name: copy_fastqs_{{ sample.name }}_{{ rgid }}
-  after: start_bwa_mem_{{ sample.name }}
-  tags: [rsync, {{ sample.name }}, {{ rgid }}]
-  retry: 2
-  cpus: 1
-  walltime: "1:00:00"
-  cmd: |
-    set -uev
-
-    mkdir -p temp/fastqs/
-
-    rsync_from_isilon "{{ r1fastq.fastqPath }}" "temp/fastqs/"
-    rsync_from_isilon "{{ r2fastq.fastqPath }}" "temp/fastqs/"
-
-
 - name: bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}
-  tags: [bwa, samtools, {{ sample.name }}, {{ rgid }}]
-  after: copy_fastqs_{{ sample.name }}_{{ rgid }}
+  tags: [bwa, samtools, samtools-fixmate, samtools-sort, {{ sample.glType }}]
+  input:
+    - temp/fastqs/{{ r1fastq.fastqPath|basename }}
+    - temp/fastqs/{{ r2fastq.fastqPath|basename }}
   walltime: "8:00:00"
   cpus: 10
   cmd: |
@@ -117,7 +96,7 @@
 
 
 - name: samtools_merge_rg_bams_{{ sample.name }}_bwa
-  tags: [samtools, merge, {{ sample.name }}]
+  tags: [samtools, samtools-merge, {{ sample.glType }}]
   after:
     re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
@@ -161,32 +140,9 @@
 # This macro splits large fastqs into chunks prior to aligning. The inputs
 # and outputs are the same as above.
 {% macro bwa_mem_samtools_chunked(sample, reads_per_chunk) %}
-- name: start_bwa_mem_{{ sample.name }}
-  cmd: null
-  methods: Fastqs for {{ sample.name }} were split into chunks no larger
-    than {{ reads_per_chunk}}, then aligned with
-    {{ constants.tools.bwa_0_7_17.verbose }}. The resulting data was streamed
-    into {{ constants.tools.samtools_1_9.verbose }} fixmate and sort to
-    generate a temporary aligned read group bam. Finally, all the bam chunks
-    were merged together with {{ constants.tools.samtools_1_9.verbose }} merge.
-
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-
-- name: copy_fastqs_{{ sample.name }}_{{ rgid }}
-  after: start_bwa_mem_{{ sample.name }}
-  retry: 2
-  cpus: 1
-  walltime: "1:00:00"
-  cmd: |
-    set -uev
-
-    mkdir -p temp/fastqs/
-
-    rsync_from_isilon {{ r1fastq.fastqPath }} temp/fastqs/
-    rsync_from_isilon {{ r2fastq.fastqPath }} temp/fastqs/
-
 
 {% set n_lines = (reads_per_chunk * 4)|int %}
 {% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
@@ -194,7 +150,9 @@
 
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|basename }}
-  after: copy_fastqs_{{ sample.name }}_{{ rgid }}
+  tags: [split, {{ sample.glType }}]
+  input:
+    - temp/fastqs/{{ fastq.fastqPath|basename }}
   cpus: 1
   walltime: "4:00:00"
   cmd: |
@@ -224,6 +182,7 @@
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
+  tags: [bwa, bwa-mem, samtools-fixmate, samtools-sort, {{ sample.glType }}]
   after: 
     - split_fastq_{{ r1fastq.fastqPath|basename }}
     - split_fastq_{{ r2fastq.fastqPath|basename }}
@@ -264,6 +223,7 @@
 {% endfor %}
 
 - name: merge_bam_chunks_{{ sample.name }}
+  tags: [samtools, samtools-merge, {{ sample.glType }}]
   after:
     re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
@@ -280,8 +240,8 @@
       "temp/{{ rgid }}/"*.bwa.bam \
     {% endfor %}
 
-    {% if not debug %}
     # Cleanup the tempfiles
+    {% if not debug %}
     {% for rgid in sample.read_groups %}
     rm -r "temp/{{ rgid }}/"
     {% endfor %}

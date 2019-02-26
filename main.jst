@@ -69,6 +69,28 @@
 {% from 'modules/rna_quant/main.jst' import rna_quant with context %}
 {% from 'modules/rna_fusion_detection/main.jst' import rna_fusion_detection with context %}
 
+
+{% for batch in dataFiles|batch(4) %}
+- name: copy_fastqs_{{ loop.index }}
+  output:
+    {% for fq in batch %}
+    - temp/fastqs/{{ fq.fastqPath|basename }}
+    {% endfor %}
+  tags: [rsync,]
+  retry: 2
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    mkdir -p temp/fastqs/
+
+    {% for fq in batch %}
+    rsync_from_isilon "{{ fq.fastqPath }}" "temp/fastqs/"
+    {% endfor %}
+
+{% endfor %}
+
 # Start of module calls
 {{ dna_alignment(samples) }}
 {{ germline_variant_calling(samples) }}

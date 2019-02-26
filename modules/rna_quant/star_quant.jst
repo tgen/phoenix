@@ -5,20 +5,34 @@
 {% set r1fqlist = [] %}
 {% set r2fqlist = [] %}
 {% set rglinelist = [] %}
+
 {% for rgid, rg in sample.read_groups.items() %}
-    {% do rglinelist.append( read_group_line(rg, format='star') ) %}
-    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
-        {% do r1fqlist.append(fq.fastqPath) %}
-    {% endfor %}
-    {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
-        {% do r2fqlist.append(fq.fastqPath) %}
-    {% endfor %}
+  {% if rg.data_files|length != 2 %}
+      {{ raise('This module only supports paired-end data with two fastqs per rg') }}
+  {% endif %}
+  {% do rglinelist.append( read_group_line(rg, format='star') ) %}
+  
+  {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+  {% do r1fastq.update({"path": "temp/fastqs/" + (r1fastq.fastqPath|basename)}) %}
+  {% do r1fqlist.append(r1fastq) %}
+    
+  {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+  {% do r2fastq.update({"path": "temp/fastqs/" + (r2fastq.fastqPath|basename)}) %}
+  {% do r2fqlist.append(r2fastq) %}
+
 {% endfor %}
 
 - name: star_quant_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.star_2_6_1d.verbose }} followed by TODO...
+  input:
+    {% for fq in r1fqlist %}
+    - {{ fq.path }}
+    {% endfor %}
+    {% for fq in r2fqlist %}
+    - {{ fq.path }}
+    {% endfor %}
   output: {{ sample.glType }}/star-quant/{{ sample.name }}/
   cpus: 16
   walltime: "24:00:00"
@@ -52,7 +66,7 @@
       --runThreadN 14 \
       --seedSearchStartLmax 30 \
       --genomeDir "{{ constants.phoenix.reference_star_path }}" \
-      --readFilesIn "{{ r1fqlist|join(',') }}" "{{ r2fqlist|join(',') }}" \
+      --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
       --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}"
 
