@@ -164,7 +164,7 @@ gatk MarkDuplicates \
     re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "24:00:00"
-  cpus: 4
+  cpus: 16
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
