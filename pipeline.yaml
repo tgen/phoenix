@@ -16,6 +16,7 @@ constants:
       - /home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     reference_index_prefix: "/home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta.64"
     reference_fasta_path: "/home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta"
+    reference_star_path: "/home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR_2.6.1d/GRCh38.94_100bp/"
     main_contigs:
       - {"contig": chr1, "length": 248956422}
       - {"contig": chr2, "length": 242193529}
