@@ -1,4 +1,4 @@
-{% macro read_group_line(rg, delim='\\t') -%}
+{% macro read_group_line(rg, format='bwa') -%}
 {% set tags = [
   'ID:' + rg.rgid,
   'LB:' + rg.rglb,
@@ -9,7 +9,16 @@
   'PM:' + rg.rgpm,
   'KS:' + rg.rgks|default('unknown')
 ] %}
+{% if format == 'bwa' %}
+  {% set delim = '\\t' %}
+  {% set prefix = '@RG' + delim %}
+{% elif format == 'star' %}
+  {% set delim = '\t' %}
+  {% set prefix = '' %}
+{% else %}
+  {{ raise('Read group line format should be "bwa" or "star"') }}
+{% endif %}
 {% set tags = delim.join(tags) %}
-{% set rgline = '@RG' + delim + tags %}
+{% set rgline = prefix + tags %}
 {{ rgline }}
 {%- endmacro %}
