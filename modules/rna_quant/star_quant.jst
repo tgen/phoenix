@@ -1,9 +1,12 @@
+{% from 'modules/read_group_line.jst' import read_group_line %}
+
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample) %}
-
 {% set r1fqlist = [] %}
 {% set r2fqlist = [] %}
+{% set rglinelist = [] %}
 {% for rgid, rg in sample.read_groups.items() %}
+    {% do rglinelist.append( read_group_line(rg, delim='\t') ) %}
     {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
         {% do r1fqlist.append(fq.fastqPath) %}
     {% endfor %}
@@ -26,32 +29,31 @@
     mkdir -p "{{ sample.glType }}/star-quant/{{ sample.name }}/"
 
     STAR \
-      --limitOutSAMoneReadBytes 90000000 \
-      --runMode alignReads \
-      --outSAMtype SAM \
-      --outFilterType BySJout \
-      --outFilterMultimapNmax 10 \
-      --outFilterMismatchNmax 10 \
-      --outFilterMismatchNoverLmax 0.1 \
       --alignIntronMin 20 \
       --alignIntronMax 1000000 \
       --alignMatesGapMax 1000000 \
       --alignSJoverhangMin 8 \
       --alignSJDBoverhangMin 1 \
-      --seedSearchStartLmax 30 \
       --chimSegmentMin 15 \
       --chimJunctionOverhangMin 15 \
-      --runThreadN 14 \
       --genomeLoad NoSharedMemory \
+      --limitOutSAMoneReadBytes 90000000 \
+      --outFilterType BySJout \
+      --outFilterMultimapNmax 10 \
+      --outFilterMismatchNmax 10 \
+      --outFilterMismatchNoverLmax 0.1 \
       --outSAMstrandField intronMotif \
       --outSAMunmapped Within \
       --outSAMmapqUnique 255 \
-      --genomeDir "{{ constants.phoenix.reference_index_prefix }}" \
-      --readFilesIn \
-      <(zcat {% for fq in r1fqlist %}"{{ fq }}" {% endfor %}) \
-      <(zcat {% for fq in r2fqlist %}"{{ fq }}" {% endfor %}) \
-      --outSAMattrRGline ${RGTAGLIST} \
       --outSAMmode Full \
+      --outSAMtype SAM \
+      --readFilesCommand zcat \
+      --runMode alignReads \
+      --runThreadN 14 \
+      --seedSearchStartLmax 30 \
+      --genomeDir "{{ constants.phoenix.reference_index_prefix }}" \
+      --readFilesIn "{{ r1fqlist|join(',') }}" "{{ r2fqlist|join(',') }}" \
+      --outSAMattrRGline "{{ rglinelist|join(',') }}" \
       > "{{ sample.glType }}/star-quant/{{ sample.name }}/"
 
 

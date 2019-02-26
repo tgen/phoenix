@@ -1,4 +1,4 @@
-{% macro read_group_line(rg) -%}
+{% macro read_group_line(rg, delim='\\t') -%}
 {% set tags = [
   'ID:' + rg.rgid,
   'LB:' + rg.rglb,
@@ -9,7 +9,7 @@
   'PM:' + rg.rgpm,
   'KS:' + rg.rgks|default('unknown')
 ] %}
-{% set tags = '\\t'.join(tags) %}
-{% set rgline = '@RG\\t' + tags %}
+{% set tags = delim.join(tags) %}
+{% set rgline = '@RG' + delim + tags %}
 {{ rgline }}
 {%- endmacro %}

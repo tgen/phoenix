@@ -33,4 +33,5 @@
       --right_fq <(zcat {% for fq in r2fqlist %}"{{ fq }}" {% endfor %}) \
       --output_dir "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
 
+
 {% endmacro %}

@@ -2,7 +2,7 @@
 # Take DNA fastq data files to aligned bams with qc data
 {% from 'modules/dna_alignment/bwa_mem_samtools.jst' import bwa_mem_samtools, bwa_mem_samtools_chunked with context %}
 {% from 'modules/dna_alignment/bwa_mem_gatk_picard.jst' import bwa_mem_gatk_picard, bwa_mem_gatk_picard_chunked with context %}
-{% from 'modules/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
+{% from 'modules/dna_alignment/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
 {% from 'modules/cram.jst' import make_cram with context %}
 {% from 'modules/bam_qc.jst' import bam_qc with context %}
 
