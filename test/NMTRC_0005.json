@@ -306,8 +306,8 @@
     "tasks": {
         "Exome_base_recalibration_gatk_4_0_1_2": false,
         "Exome_deepvariant_deepvariant_0_7_1": false,
-        "Exome_freebayes_freebayes_1_2_0": false,
-        "Exome_genotype_hc_gvcf_gatk_4_0_1_2": false,
+        "Exome_freebayes_freebayes_1_2_0": true,
+        "Exome_genotype_hc_gvcf_gatk_4_0_1_2": true,
         "Exome_hc_gvcf_gatk_4_0_1_2": true,
         "Exome_hmmcopy_make_wig_HMM_Copy_Utils_1_0": true,
         "Exome_ichor_cna_ichor_0_1_0": true,

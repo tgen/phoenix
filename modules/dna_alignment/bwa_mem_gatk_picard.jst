@@ -22,7 +22,6 @@ gatk MarkDuplicates \
   --ASSUME_SORT_ORDER queryname \
   --CLEAR_DT false \
   --ADD_PG_TAG_TO_READS false \
-  --CREATE_INDEX false \
   --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} 
 {%- endmacro %}
 
@@ -181,7 +180,7 @@ gatk MarkDuplicates \
       --METRICS_FILE "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
 
-     # Cleanup the tempfiles
+    # Cleanup the tempfiles
     {% if not debug %}
     {% for rgid in sample.read_groups %}
     rm -r "temp/{{ rgid }}/"
