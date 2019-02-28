@@ -20,8 +20,9 @@
       > "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ann.{{ tool_abbr }}.vcf"
 
     bcftools \
+      view \
       -O z \
-      -o "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ann.{{ tool_abbr }}.vcf.gz"
+      -o "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ann.{{ tool_abbr }}.vcf.gz" \
       "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ann.{{ tool_abbr }}.vcf"
 
     rm "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ann.{{ tool_abbr }}.vcf"

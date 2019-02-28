@@ -54,7 +54,7 @@
     - {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz
     - {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz
-  walltime: 24:00:00
+  walltime: "24:00:00"
   cpus: 2
   mem: 8G
   cmd: |
@@ -68,9 +68,8 @@
       -V "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \
       -R "{{ constants.phoenix.reference_fasta_path }}" \
       -O "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz"
-      
 
-{{- snpeff(sample, aligner, "constitutional_variant_calls", "haplotypecaller", "hc") }}
+{{ snpeff(sample, aligner, "constitutional_variant_calls", "haplotypecaller", "hc") }}
 
 {% endmacro %}
 
