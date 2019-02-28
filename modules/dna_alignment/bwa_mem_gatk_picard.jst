@@ -20,6 +20,7 @@
 gatk MarkDuplicates \
   --java-options "-Xmx28G" \
   --ASSUME_SORT_ORDER queryname \
+  --CREATE_INDEX true \
   --CLEAR_DT false \
   --ADD_PG_TAG_TO_READS false \
   --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} 
