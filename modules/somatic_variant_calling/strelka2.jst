@@ -2,7 +2,7 @@
 # number of contigs. The workaround involves limiting the calling to major 
 # contigs (1-22,X,Y,MT for example) to avoid slowdown issues.
 
-{% macro strelka2(pair, exome=False, aligner='bwa') %}
+{% macro strelka2(pair, aligner='bwa') %}
 - name: manta_somatic_{{ pair.name }}_{{ aligner }}
   methods: > 
     Structural variants (SVs) and indels for {{ pair.name }} ({{ aligner }}) were called with 
@@ -10,14 +10,14 @@
   input:
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
-  output: {{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}
+  output: {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}
   cpus: 28
   walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.manta_1_4.module }}
 
-    RUNDIR="{{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}"
+    RUNDIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}"
 
     # Purge any existing run files prior to starting
     rm -r "${RUNDIR}" || true
@@ -29,7 +29,7 @@
     EOF
 
     configManta.py \
-      {% if exome %}
+      {% if pair.glType == 'exome' %}
       --exome \
       --generateEvidenceBam \
       {% endif %}
@@ -45,11 +45,11 @@
     # Move the final results out of the rundir
     mv \
       "${RUNDIR}/results" \
-      "{{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}"
+      "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}"
 
     # Compress the rest of the files for reference later
     tar -cz --remove-files \
-      -f "{{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tar.gz" \
+      -f "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tar.gz" \
       "${RUNDIR}"
  
 
@@ -60,15 +60,15 @@
   input:
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
-    - {{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}
-  output: {{ pair.normal.glType }}/{{ pair.name }}_{{ aligner }}/strelka2/
+    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}
+  output: {{ pair.glType }}/{{ pair.name }}_{{ aligner }}/strelka2/
   cpus: 28
   walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.strelka_2_9_2.module }}
 
-    RUNDIR="{{ pair.normal.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}"
+    RUNDIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}"
 
     # Purge any existing run files prior to starting
     rm -r "${RUNDIR}" || true
@@ -80,13 +80,13 @@
     EOF
 
     configureStrelkaSomaticWorkflow.py \
-      {% if exome %}
+      {% if pair.glType == 'exome' %}
       --exome \
       {% endif %}
       --config "${RUNDIR}/config.ini" \
       --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      --indelCandidates "{{ pair.normal.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
+      --indelCandidates "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
       --ref "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
 
@@ -96,11 +96,11 @@
      # Move the final results out of the rundir
     mv \
       "${RUNDIR}/results" \
-      "{{ pair.normal.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/results_{{ aligner }}"
+      "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/results_{{ aligner }}"
 
     # Compress the workspace files after the run completes successfully
     tar -cz --remove-files \
-      -f "{{ pair.normal.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tar.gz" \
+      -f "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tar.gz" \
       "${RUNDIR}"
 
 {% endmacro %}

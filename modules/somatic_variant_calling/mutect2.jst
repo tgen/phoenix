@@ -1,7 +1,11 @@
+# Call somatic variants on pairs with Mutect2, also filters the results
+# and annotates the VCF with SnpEff
+{% from 'modules/snpeff.jst' import snpeff with context %}
+
 {% macro mutect2(pair, aligner='bwa') %}
 {% for batch in constants.phoenix.intervals_batched %}
 - name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [gatk, mutect2, somatic_variant_calling]
+  tags: [gatk, gatk-Mutect2, {{ pair.glType }}]
   input:
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
@@ -25,19 +29,19 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --output "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz"
+      --output "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.m2.vcf.gz"
 
 {% endfor %}
 
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [gatk, picard, merge_vcfs]
+  tags: [gatk, gatk-MergeVcfs, {{ pair.glType }}]
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk_4_1_0_0.verbose }} Mutect2 in parallel chunks and
     then merged together with MergeVcfs.
   after: 
     re: mutect2_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf.gz
+  output: {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -45,17 +49,37 @@
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/"
+    mkdir -p "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/"
 
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
       {% for b in constants.phoenix.intervals_batched %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vcf.gz" \
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.m2.vcf.gz" \
       {% endfor %}
-      --OUTPUT "{{ pair.tumor.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf.gz"
+      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
     {% endif %}
+
+
+- name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
+  tags: [gatk, gatk-FilterMutectCalls, {{ pair.glType }}]
+  after: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
+  input: {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz
+  output: {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.filt.m2.vcf.gz
+  cpus: 8
+  mem: 32G
+  walltime: "24:00:00"
+  cmd: |
+    set -uev 
+     module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    gatk FilterMutectCalls \
+      -V "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz" \
+      -O "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.filt.m2.vcf.gz"
+
+
+{{ snpeff(pair, aligner, "somatic_variant_calls", "mutect2", "filt.m2") }}
 
 {% endmacro %}

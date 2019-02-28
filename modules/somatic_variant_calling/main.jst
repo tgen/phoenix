@@ -21,26 +21,20 @@
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.glType|lower == 'exome' %}
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'exome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
-            {% do pairs.append({'name': pair_name, 'normal': normal, 'tumor': tumor}) %}
+            {% do pairs.append({'name': pair_name, 'glType': normal.glType, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.glType|lower == 'genome' %}
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'genome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
-            {% do pairs.append({'name': pair_name, 'normal': normal, 'tumor': tumor}) %}
+            {% do pairs.append({'name': pair_name, 'glType': normal.glType, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
 {% endif %}
 
-{% for pair in pairs if pair.normal.glType == 'genome' %}
+{% for pair in pairs %}
     {{- mutect2(pair, aligner='bwa') }}
-    {{- strelka2(pair, exome=False, aligner='bwa') }}
-    {{- lancet(pair, aligner='bwa') }}
-{% endfor %}
-
-{% for pair in pairs if pair.normal.glType == 'exome' %}
-    {{- mutect2(pair, aligner='bwa') }}
-    {{- strelka2(pair, exome=True, aligner='bwa') }}
+    {{- strelka2(pair, aligner='bwa') }}
     {{- lancet(pair, aligner='bwa') }}
 {% endfor %}
 
