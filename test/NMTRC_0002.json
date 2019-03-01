@@ -290,7 +290,7 @@
             "umiRead": false
         }
     ],
-    "dnaAlignmentStyle": "tgen",
+    "dnaAlignmentStyle": "broad",
     "email": "sbyron@tgen.org",
     "holdConfig": false,
     "hpcAccount": "tgen-244000",

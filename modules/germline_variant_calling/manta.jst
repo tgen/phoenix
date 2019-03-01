@@ -6,11 +6,12 @@
   input:
     - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output: {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/results_{{ aligner }}
-  cpus: 39
+  cpus: 40
   walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.manta_1_4.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     RUNDIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}"
 
@@ -18,11 +19,18 @@
     rm -r "${RUNDIR}" || true
     mkdir -p "${RUNDIR}"
 
-    # cat <<EOF > "${RUNDIR}/config.ini"
-    # [manta]
-    # enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
-    # EOF
-     # --config "${RUNDIR}/config.ini" \
+    MANTA_BED="temp/{{ sample.name }}_{{ aligner }}_manta/{{ loop.index }}.bed"
+
+    TAB=$'\t'
+    cat <<EOF > "${MANTA_BED}"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+
+    bgzip -f "${MANTA_BED}"
+    tabix -f -p bed "${MANTA_BED}.gz"
+
     configManta.py \
       {% if exome %}
       --exome \
@@ -32,7 +40,7 @@
       --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
 
-    # Execute on the local machine with 28 parallel jobs
+    # Execute on the local machine with 39 parallel jobs
     "${RUNDIR}/runWorkflow.py" -m local -j 39
 
     # Move the final results out of the rundir
