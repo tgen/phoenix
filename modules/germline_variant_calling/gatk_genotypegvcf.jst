@@ -63,11 +63,11 @@
 
     gatk CNNScoreVariants \
       --java-options "-Xmx6G" \
-      -tensor-type read-tensor \
-      -I "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      -V "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \
-      -R "{{ constants.phoenix.reference_fasta_path }}" \
-      -O "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz"
+      --tensor-type read_tensor \
+      --reference "{{ constants.phoenix.reference_fasta_path }}" \
+      --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \
+      --input "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --output "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz"
 
 {{ snpeff(sample, aligner, "constitutional_variant_calls", "haplotypecaller", "hc") }}
 

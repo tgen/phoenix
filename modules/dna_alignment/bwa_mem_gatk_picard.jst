@@ -9,6 +9,7 @@
 {% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
 {% from 'modules/read_group_line.jst' import read_group_line %}
 
+
 # Shared MarkDuplicates command for split and non-split alignment
 {% macro markduplicates(sample) %}
 {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
@@ -20,13 +21,15 @@
 gatk MarkDuplicates \
   --java-options "-Xmx28G" \
   --ASSUME_SORT_ORDER queryname \
-  --CREATE_INDEX true \
   --CLEAR_DT false \
   --ADD_PG_TAG_TO_READS false \
   --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} 
 {%- endmacro %}
 
 
+# Start of tasks
+# This macro aligns data for each read group with bwa mem then
+# marks dups and sorts with GATK/Picard tools
 {% macro bwa_mem_gatk_picard(sample) %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% if rg.data_files|length != 2 %}
@@ -67,7 +70,6 @@ gatk MarkDuplicates \
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
   after:
     re: bwa_mem_samtools_view_{{ sample.name }}_.*
-  output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "24:00:00"
   cpus: 16
   cmd: |
@@ -81,6 +83,26 @@ gatk MarkDuplicates \
       --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
     {% endfor %}
       --METRICS_FILE "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
+      --OUTPUT "temp/{{ sample.name }}.bwa.md-uns.bam"
+
+
+- name: gatk_picard_sortsam_{{ sample.name }}
+  tags: [gatk, picard, picard-SortSam, {{ sample.glType }}]
+  after: gatk_picard_markduplicates_{{ sample.name }}
+  output: temp/{{ sample.name }}.bwa.md.bam
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    gatk SortSam \
+      --java-options "-Xmx28G" \
+      --SORT_ORDER "coordinate" \
+      --CREATE_INDEX true \
+      --CREATE_MD5_FILE true \
+      --MAX_RECORDS_IN_RAM 300000 \
+      --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
 
 {% endmacro %}
@@ -158,11 +180,10 @@ gatk MarkDuplicates \
 {% endfor %}
 {% endfor %}
 
-- name: gatk_picard_markduplicates_{{ sample.name }}
+- name: chunked_gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
   after:
     re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
-  output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "24:00:00"
   cpus: 16
   cmd: |
@@ -179,7 +200,7 @@ gatk MarkDuplicates \
     {% endfor %}
     {% endfor %}
       --METRICS_FILE "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
-      --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
+      --OUTPUT "temp/{{ sample.name }}.bwa.md-uns.bam"
 
     # Cleanup the tempfiles
     {% if not debug %}
@@ -188,5 +209,25 @@ gatk MarkDuplicates \
     {% endfor %}
     {% endif %}
 
+
+- name: chunked_gatk_picard_sortsam_{{ sample.name }}
+  tags: [gatk, picard, picard-SortSam, {{ sample.glType }}]
+  after: chunked_gatk_picard_markduplicates_{{ sample.name }}
+  output: temp/{{ sample.name }}.bwa.md.bam
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    gatk SortSam \
+      --java-options "-Xmx28G" \
+      --SORT_ORDER "coordinate" \
+      --CREATE_INDEX true \
+      --CREATE_MD5_FILE true \
+      --MAX_RECORDS_IN_RAM 300000 \
+      --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
+      --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
+      
 
 {% endmacro %}
