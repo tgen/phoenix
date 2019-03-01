@@ -87,7 +87,10 @@
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
+      --METRIC_ACCUMULATION_LEVEL SAMPLE \
+      --PROGRAM null \
       --PROGRAM CollectAlignmentSummaryMetrics \
       --PROGRAM CollectBaseDistributionByCycle \
       --PROGRAM CollectInsertSizeMetrics \

@@ -62,6 +62,8 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk CNNScoreVariants \
+      --verbosity DEBUG \
+      --tmp-dir "temp" \
       --java-options "-Xmx6G" \
       --tensor-type read_tensor \
       --reference "{{ constants.phoenix.reference_fasta_path }}" \

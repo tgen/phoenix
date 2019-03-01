@@ -76,7 +76,7 @@
 
     {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg, format='bwa') }}" \
-      "{{ constants.phoenix.reference_index_prefix }}" \
+      "{{ constants.phoenix.bwa_index }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
     samtools fixmate \
@@ -202,7 +202,7 @@
 
     {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg, format='bwa') }}" \
-      "{{ constants.phoenix.reference_index_prefix }}" \
+      "{{ constants.phoenix.bwa_index }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
     samtools fixmate \

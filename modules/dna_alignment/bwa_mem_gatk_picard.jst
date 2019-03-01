@@ -56,7 +56,7 @@ gatk MarkDuplicates \
 
     {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
-      "{{ constants.phoenix.reference_index_prefix }}" \
+      "{{ constants.phoenix.bwa_index }}" \
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
     samtools view \
@@ -104,6 +104,11 @@ gatk MarkDuplicates \
       --MAX_RECORDS_IN_RAM 300000 \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
+
+    # Cleanup the tempfiles
+    {% if not debug %}
+    rm "temp/{{ sample.name }}.bwa.md-uns.bam"
+    {% endif %}
 
 {% endmacro %}
 
@@ -169,7 +174,7 @@ gatk MarkDuplicates \
 
     {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
-      "{{ constants.phoenix.reference_index_prefix }}" \
+      "{{ constants.phoenix.bwa_index }}" \
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
     samtools view \
@@ -228,6 +233,11 @@ gatk MarkDuplicates \
       --MAX_RECORDS_IN_RAM 300000 \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
-      
+    
+    # Cleanup the tempfiles
+    {% if not debug %}
+    rm "temp/{{ sample.name }}.bwa.md-uns.bam"
+    {% endif %}
+
 
 {% endmacro %}
