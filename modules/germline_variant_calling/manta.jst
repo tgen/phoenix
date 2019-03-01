@@ -23,7 +23,7 @@
 
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
-    {% for interval in batch %}
+    {% for interval in constants.phoenix.intervals %}
     {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
