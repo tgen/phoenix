@@ -19,7 +19,7 @@
     rm -r "${RUNDIR}" || true
     mkdir -p "${RUNDIR}"
 
-    MANTA_BED="temp/{{ sample.name }}_{{ aligner }}_manta/{{ loop.index }}.bed"
+    MANTA_BED="temp/{{ sample.name }}_{{ aligner }}_manta.bed"
 
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
@@ -46,7 +46,7 @@
     # Move the final results out of the rundir
     mv \
       "${RUNDIR}/results" \
-      "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/results_{{ aligner }}"
+      "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}"
 
     # Compress the rest of the files for reference later
     tar -cz --remove-files \
