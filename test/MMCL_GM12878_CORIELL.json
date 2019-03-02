@@ -769,6 +769,7 @@
             "umiRead": false
         }
     ],
+    "dnaAlignmentStyle": "broad",
     "email": "jkeats@tgen.org",
     "holdConfig": false,
     "hpcAccount": "tgen-524000",

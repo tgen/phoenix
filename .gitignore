@@ -1,6 +1,7 @@
 # Annoying garbage
 .DS_Store
 .idea/
+test/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
