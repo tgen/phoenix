@@ -14,7 +14,7 @@
     snpEff eff \
       -Xmx26G \
       -t \
-      -c "{{ constants.phoenix.snpeff_config }}"
+      -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       "{{ constants.phoenix.snpeff_db }}" \
       "{{ sample.glType }}/{{ tool_type }}/{{ tool_name }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.{{ tool_abbr }}.vcf.gz" \
