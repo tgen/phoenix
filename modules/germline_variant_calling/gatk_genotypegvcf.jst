@@ -58,6 +58,10 @@
   cpus: 2
   mem: 8G
   cmd: |
+    # This tool is not working, there are several posts about the 
+    # issues on the GATK forums
+    exit 0
+
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 

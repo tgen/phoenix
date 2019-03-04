@@ -68,7 +68,7 @@
       --genomeDir "{{ constants.phoenix.star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
-      --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}"
+      --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}_"
 
 - name: htseq_{{ sample.name }}
   output: {{ sample.glType }}/htseq/{{ sample.name }}/

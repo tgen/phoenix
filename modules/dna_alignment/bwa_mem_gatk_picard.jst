@@ -109,7 +109,7 @@ gatk SortSam \
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    {{ sortsam() }} \
+    {{ sortsam()|indent(4) }} \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
 
@@ -233,7 +233,7 @@ gatk SortSam \
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    {{ sortsam() }} \
+    {{ sortsam()|indent(4) }} \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
     
