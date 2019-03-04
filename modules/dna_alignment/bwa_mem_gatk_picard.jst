@@ -20,10 +20,23 @@
 {% endif %}
 gatk MarkDuplicates \
   --java-options "-Xmx28G" \
+  --TMP_DIR "temp" \
   --ASSUME_SORT_ORDER queryname \
   --CLEAR_DT false \
   --ADD_PG_TAG_TO_READS false \
   --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} 
+{%- endmacro %}
+
+
+# Shared SortSam command for split and non-split alignment
+{% macro sortsam() %}
+gatk SortSam \
+  --java-options "-Xmx28G" \
+  --TMP_DIR "temp" \
+  --SORT_ORDER "coordinate" \
+  --CREATE_INDEX true \
+  --CREATE_MD5_FILE true \
+  --MAX_RECORDS_IN_RAM 300000
 {%- endmacro %}
 
 
@@ -96,12 +109,7 @@ gatk MarkDuplicates \
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    gatk SortSam \
-      --java-options "-Xmx28G" \
-      --SORT_ORDER "coordinate" \
-      --CREATE_INDEX true \
-      --CREATE_MD5_FILE true \
-      --MAX_RECORDS_IN_RAM 300000 \
+    {{ sortsam() }} \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
 
@@ -225,12 +233,7 @@ gatk MarkDuplicates \
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    gatk SortSam \
-      --java-options "-Xmx28G" \
-      --SORT_ORDER "coordinate" \
-      --CREATE_INDEX true \
-      --CREATE_MD5_FILE true \
-      --MAX_RECORDS_IN_RAM 300000 \
+    {{ sortsam() }} \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
     
