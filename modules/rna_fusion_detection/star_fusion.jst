@@ -36,7 +36,7 @@
 
     STAR-Fusion \
       --CPU 16 \
-      --genome_lib_dir TODO \
+      --genome_lib_dir "{{ constants.phoenix.starfusion_index }}" \
       --left_fq <(zcat {% for fq in r1fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}" {% endfor %}) \
       --right_fq <(zcat {% for fq in r2fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}" {% endfor %}) \
       --output_dir "{{ sample.glType }}/star-fusion/{{ sample.name }}/"

@@ -28,7 +28,7 @@
     salmon quant \
       --threads 16 \
       --libType IU \
-      --index "{{ constants.phoenix.bwa_index }}" \
+      --index "{{ constants.phoenix.salmon_index }}" \
       --geneMap "{{ constants.phoenix.gtf }}" \
       -1 "{{ r1fqlist|join(',') }}"  \
       -2 "{{ r2fqlist|join(',') }}" \

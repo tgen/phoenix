@@ -20,6 +20,9 @@
       {% endfor %}
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% if loop.last %}
+      -L "unmapped" \
+      {% endif %}
       {% endfor %}
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       --output "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table"
@@ -65,6 +68,9 @@
       --bqsr-recal-file "temp/{{ sample.name }}.{{ aligner }}.recal_data.table" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% if loop.last %}
+      -L "unmapped" \
+      {% endif %}
       {% endfor %}
       -O "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
 

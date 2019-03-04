@@ -70,6 +70,7 @@
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
       --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}_"
 
+
 - name: htseq_{{ sample.name }}
   output: {{ sample.glType }}/htseq/{{ sample.name }}/
   cpus: 16
