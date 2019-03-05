@@ -1,12 +1,13 @@
+{% from 'modules/snpeff.jst' import snpeff with context %}
+
 {% macro lancet(pair, aligner='bwa') %}
-- name: lancet_{{ pair.name }}_{{ aligner }}
+{% for batch in constants.phoenix.intervals_batched %}
+- name: lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [lancet, {{ pair.name }}]
   input:
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
-  output:
-    - {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf
-  cpus: 20
+  cpus: 8
   walltime: "24:00:00"
   cmd: |
     set -uev
@@ -14,12 +15,51 @@
     module load {{ constants.tools.lancet_1_0_7.module }}
     mkdir -p "{{ pair.tumor.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/"
 
+    # Write out the regions in this batch to a bed file
+    TAB=$'\t'
+    cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_lancet/{{ loop.index }}.bed"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+
     # Do we need to batch this process with intervals: --bed target_1.bed?
     lancet \
       --num-threads 20 \
+      {% for interval in batch %}
+      --reg "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
       --ref "{{ constants.phoenix.reference_fasta_path }}" \
       --normal "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumor "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       > "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vcf"
+
+{% endfor %}
+
+
+- name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [lancet, {{ pair.glType }}]
+  after: 
+    re: lancet_{{ pair.name }}_{{ aligner }}_.*
+  output: {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.vcf.gz
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -euv
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/"
+
+    gatk MergeVcfs \
+      --java-options "-Xmx14G" \
+      {% for b in constants.phoenix.intervals_batched %}
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}..vcf.gz" \
+      {% endfor %}
+      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz"
+
+    {% if not debug %}
+    rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_chunks/"
+    {% endif %}
 
 {% endmacro %}
