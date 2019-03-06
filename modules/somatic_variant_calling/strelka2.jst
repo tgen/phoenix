@@ -11,45 +11,70 @@
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   output: {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}
-  cpus: 28
+  cpus: 40
   walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.manta_1_4.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}"
+    RUNDIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/{{ pair.name }}.{{ aligner }}"
 
     # Purge any existing run files prior to starting
     rm -r "${RUNDIR}" || true
     mkdir -p "${RUNDIR}"
 
-    cat <<EOF > "${RUNDIR}/config.ini"
+    # In order to restrict calling to only the specified regions
+    # manta requires a bed file (that has been bgzipped and indexed
+    # with tabix). Here we generate that file on the fly, store in
+    # the run dir, and pass the path to Manta.
+    MANTA_BED="${RUNDIR}/callRegions.bed"
+
+    TAB=$'\t'
+    cat <<EOF > "${MANTA_BED}"
+    {% for batch in constants.phoenix.calling_intervals %}
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    {% endfor %}
+    EOF
+
+    bgzip -f "${MANTA_BED}"
+    tabix -f -p bed "${MANTA_BED}.gz"
+
+    # Some settings are only configurable via tha ini file. Here 
+    # we generate this ini file and save it to the run dir.
+    MANTA_CONFIG="${RUNDIR}/config.ini"
+
+    cat <<EOF > "${MANTA_CONFIG}"
     [manta]
     enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
     EOF
 
+    # Build the Manta run file
     configManta.py \
       {% if pair.glType == 'exome' %}
       --exome \
       --generateEvidenceBam \
       {% endif %}
-      --config "${RUNDIR}/config.ini" \
+      --callRegions "${MANTA_BED}" \
+      --config "${MANTA_CONFIG}" \
       --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
 
-    # Execute on the local machine with 28 parallel jobs
-    "${RUNDIR}/runWorkflow.py" -m local -j 28
+    # Execute on the local machine with 39 parallel jobs
+    "${RUNDIR}/runWorkflow.py" -m local -j 39
 
     # Move the final results out of the rundir
     mv \
-      "${RUNDIR}/results" \
-      "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/results_{{ aligner }}"
+      "${RUNDIR}/results/" \
+      "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/"
 
     # Compress the rest of the files for reference later
     tar -cz --remove-files \
-      -f "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tar.gz" \
+      -f "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/run_dir.tar.gz" \
       "${RUNDIR}"
  
 

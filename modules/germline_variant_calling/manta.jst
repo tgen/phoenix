@@ -13,29 +13,37 @@
     module load {{ constants.tools.manta_1_4.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}"
+    RUNDIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/run_dir/"
 
     # Purge any existing run files prior to starting
     rm -r "${RUNDIR}" || true
     mkdir -p "${RUNDIR}"
 
-    MANTA_BED="temp/{{ sample.name }}_{{ aligner }}_manta.bed"
+    # In order to restrict calling to only the specified regions
+    # manta requires a bed file (that has been bgzipped and indexed
+    # with tabix). Here we generate that file on the fly, store in
+    # the run dir, and pass the path to Manta.
+    MANTA_BED="${RUNDIR}/callRegions.bed"
 
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
-    {% for interval in constants.phoenix.intervals %}
+    {% for batch in constants.phoenix.calling_intervals %}
+    {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
+    {% endfor %}
     {% endfor %}
     EOF
 
     bgzip -f "${MANTA_BED}"
     tabix -f -p bed "${MANTA_BED}.gz"
 
+    # Build the Manta run file
     configManta.py \
       {% if sample.glType == 'exome' %}
       --exome \
       --generateEvidenceBam \
       {% endif %}
+      --callRegions "${MANTA_BED}" \
       --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
@@ -45,12 +53,12 @@
 
     # Move the final results out of the rundir
     mv \
-      "${RUNDIR}/results" \
-      "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}"
+      "${RUNDIR}/results/" \
+      "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/"
 
     # Compress the rest of the files for reference later
     tar -cz --remove-files \
-      -f "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.tar.gz" \
+      -f "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/run_dir.tar.gz" \
       "${RUNDIR}"
 
 {% endmacro %}

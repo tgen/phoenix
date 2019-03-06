@@ -401,7 +401,6 @@ constants:
         - {"contig": "chrY", "length": 4867932, "start": 21805282, "stop": 26673214}
         - {"contig": "chrY", "length": 98294, "start": 56673215, "stop": 56771509}
         - {"contig": "chrY", "length": 66392, "start": 56821510, "stop": 56887902}
-        - {"contig": "chrM", "length": 16569, "start": 1, "stop": 16569}
         - {"contig": "chr1_KI270706v1_random", "length": 175055, "start": 1, "stop": 175055}
         - {"contig": "chr1_KI270707v1_random", "length": 32032, "start": 1, "stop": 32032}
         - {"contig": "chr1_KI270708v1_random", "length": 127682, "start": 1, "stop": 127682}
