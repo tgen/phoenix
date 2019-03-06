@@ -1,7 +1,7 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
 {% macro freebayes(sample, aligner='bwa') %}
-{% for batch in constants.phoenix.intervals_batched %}
+{% for batch in constants.phoenix.calling_intervals %}
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "24:00:00"
@@ -45,7 +45,7 @@
     mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/"
 
     gatk MergeVcfs \
-      {% for batch in constants.phoenix.intervals_batched %}
+      {% for batch in constants.phoenix.calling_intervals %}
       --INPUT "temp/{{ sample.name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
       {% endfor %}
       --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.vcf.gz"

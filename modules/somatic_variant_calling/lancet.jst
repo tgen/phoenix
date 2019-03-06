@@ -1,7 +1,7 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
 {% macro lancet(pair, aligner='bwa') %}
-{% for batch in constants.phoenix.intervals_batched %}
+{% for batch in constants.phoenix.calling_intervals %}
 - name: lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [lancet, {{ pair.name }}]
   input:
@@ -50,7 +50,7 @@
 
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
-      {% for b in constants.phoenix.intervals_batched %}
+      {% for b in constants.phoenix.calling_intervals %}
       --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf.gz" \
       {% endfor %}
       --OUTPUT "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.vcf.gz"

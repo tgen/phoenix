@@ -1,7 +1,7 @@
 # This macro adds tasks for running GATK BaseRecalibrator on the output
 # from markdups.
 {% macro baserecalibration(sample, aligner='bwa') %}
-{% for batch in constants.phoenix.intervals_batched %}
+{% for batch in constants.phoenix.all_intervals %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-BaseRecalibrator, {{ sample.glType }}]
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
@@ -42,13 +42,13 @@
     gatk \
       --java-options "-Xms3000m" \
       GatherBQSRReports \
-      {% for b in constants.phoenix.intervals_batched %}
+      {% for b in constants.phoenix.all_intervals %}
       --input "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table" \
       {% endfor %}
       --output "temp/{{ sample.name }}.{{ aligner }}.recal_data.table"
 
 
-{% for batch in constants.phoenix.intervals_batched %}
+{% for batch in constants.phoenix.all_intervals %}
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-ApplyBQSR]
   methods: Reads for {{ sample.name }} were processed with
@@ -91,7 +91,7 @@
 
     samtools merge \
       -f "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      {% for b in constants.phoenix.intervals_batched %}
+      {% for b in constants.phoenix.all_intervals %}
       "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
       {% endfor %}
 
@@ -99,7 +99,7 @@
 
     # Cleanup the tempfiles
     {% if not debug %}
-    {% for b in constants.phoenix.intervals_batched %}
+    {% for b in constants.phoenix.all_intervals %}
     rm "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
     {% endfor %}
     {% endif %}

@@ -21,6 +21,6 @@ for CONFIG in $@; do
   FILENAME="$(basename $CONFIG)"
   PROJECT="${FILENAME%.*}"
   jetstream init "${DIRNAME}/${PROJECT}" -- --config "${CONFIG}" 
-  sbatch -o "${DIRNAME}/%x-slurm-%j.out" -J "${PROJECT}" --wrap "exec jetstream pipelines phoenix --project ${DIRNAME}/${PROJECT}"
+  sbatch -o "${DIRNAME}/${PROJECT}/%x-slurm-%j.out" -J "${PROJECT}" --wrap "exec jetstream pipelines phoenix --project ${DIRNAME}/${PROJECT}"
 done
 

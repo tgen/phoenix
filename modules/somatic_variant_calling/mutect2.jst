@@ -3,7 +3,7 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
 {% macro mutect2(pair, aligner='bwa') %}
-{% for batch in constants.phoenix.intervals_batched %}
+{% for batch in constants.phoenix.calling_intervals %}
 - name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-Mutect2, {{ pair.glType }}]
   input:
@@ -53,7 +53,7 @@
 
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
-      {% for b in constants.phoenix.intervals_batched %}
+      {% for b in constants.phoenix.calling_intervals %}
       --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.m2.vcf.gz" \
       {% endfor %}
       --OUTPUT "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz"
