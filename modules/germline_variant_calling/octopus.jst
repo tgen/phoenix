@@ -14,7 +14,7 @@
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus/"
 
     octopus \
-      --caller population \
+      --caller individual \
       --threads 4 \
       --ignore-unmapped-contigs \
       --assembly-candidate-generator ON \
@@ -25,9 +25,7 @@
       --reads ${LIST_BAMS[@]} \
       --normal-sample ${NORMAL_BAM_NAME} \
       --regions ${CHROM} \
-      -o "temp/{{ sample.name }}_{{ aligner }}_hc_gvcf_chunks/{{ loop.index }}.vcf.gz" \
-     
-
+      -o "temp/{{ sample.name }}_{{ aligner }}_octopus_vcf_chunks/{{ loop.index }}.vcf.gz" 
 
 {% endfor %}
 

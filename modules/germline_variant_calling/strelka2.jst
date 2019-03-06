@@ -1,14 +1,13 @@
-{% macro strelka2_somatic(pair, aligner='bwa') %}
-- name: manta_somatic_{{ pair.name }}_{{ aligner }}
-  tags: [manta, manta-somatic, {{ pair.glType }}]
+{% macro strelka2_constitutional(sample, aligner='bwa') %}
+- name: manta_constitutional_{{ sample.name }}_{{ aligner }}
+  tags: [manta, manta-constitutional, {{ sample.glType }}]
   methods: > 
-    Somatic structural variants and indels for {{ pair.name }} ({{ aligner }}) 
-    were called with {{ constants.tools.manta_1_4.verbose }}.
+    Constitutional structural variants and indels for {{ sample.name }} 
+    ({{ aligner }}) were called with {{ constants.tools.manta_1_4.verbose }}.
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output: 
-    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/
+    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/
   cpus: 40
   walltime: "24:00:00"
   cmd: |
@@ -16,7 +15,7 @@
     module load {{ constants.tools.manta_1_4.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/run_dir/"
+    RUNDIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/run_dir/"
 
     # Purge any existing run files prior to starting
     rm -r "${RUNDIR}" || true
@@ -39,24 +38,14 @@
     bgzip -f "${MANTA_BED}"
     tabix -f -p bed "${MANTA_BED}.gz"
 
-    # Some settings are only configurable via tha ini file. Here 
-    # we generate this ini file and save it to the run dir.
-    MANTA_CONFIG="${RUNDIR}/config.ini"
-    cat <<EOF > "${MANTA_CONFIG}"
-    [manta]
-    enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
-    EOF
-
     # Build the Manta run file
     configManta.py \
-      {% if pair.glType == 'exome' %}
+      {% if sample.glType == 'exome' %}
       --exome \
       --generateEvidenceBam \
       {% endif %}
       --callRegions "${MANTA_BED}" \
-      --config "${MANTA_CONFIG}" \
-      --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
-      --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
+      --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
 
@@ -64,27 +53,24 @@
     "${RUNDIR}/runWorkflow.py" -m local -j 39
 
     # Move the final results out of the rundir
-    mv "${RUNDIR}/results/" "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/"
+    mv "${RUNDIR}/results/" "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/"
 
     # Compress the rest of the files for reference later
-    tar \
-      -cz \
-      --remove-files \
-      -f "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/run_dir.tar.gz" \
+    tar -cz --remove-files \
+      -f "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/run_dir.tar.gz" \
       "${RUNDIR}"
- 
 
-- name: strelka2_somatic_{{ pair.name }}_{{ aligner }}
-  tags: [strelka2, strelka2-somatic, {{ pair.glType }}]
+
+- name: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
+  tags: [strelka2, strelka2-germline, {{ sample.glType }}]
   methods: > 
-    Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
+    Germline variants for {{ sample.name }} ({{ aligner }}) were called with 
     {{ constants.tools.strelka_2_9_2.verbose }}.
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
-    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/
+    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/
   output: 
-    - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/
+    - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/
   cpus: 40
   walltime: "24:00:00"
   cmd: |
@@ -92,7 +78,7 @@
     module load {{ constants.tools.strelka_2_9_2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/run_dir/"
+    RUNDIR="{{ sample.glType }}/somatic_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/run_dir/"
 
     # Purge any existing run files prior to starting
     rm -r "${RUNDIR}" || true
@@ -116,20 +102,18 @@
     # we generate this ini file and save it to the run dir.
     STRELKA_CONFIG="${RUNDIR}/config.ini"
     cat <<EOF > "${STRELKA_CONFIG}"
-    [StrelkaSomatic]
+    [StrelkaGermline]
     isWriteRealignedBam = 1
     EOF
 
-    # Build the Strelka run file
-    configureStrelkaSomaticWorkflow.py \
-      {% if pair.glType == 'exome' %}
+    configureStrelkaGermlineWorkflow.py \
+      {% if sample.glType == 'exome' %}
       --exome \
       {% endif %}
       --config "${STRELKA_CONFIG}" \
       --callRegions "${STRELKA_BED}" \
-      --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
-      --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      --indelCandidates "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
+      --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --indelCandidates "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
       --ref "{{ constants.phoenix.reference_fasta_path }}" \
       --runDir "${RUNDIR}"
 
@@ -137,13 +121,13 @@
     "${RUNDIR}/runWorkflow.py" -m local -j 39
 
     # Move the final results out of the rundir
-    mv "${RUNDIR}/results/" "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/"
+    mv "${RUNDIR}/results/" "{{ sample.glType }}/somatic_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/"
 
     # Compress the workspace files after the run completes successfully
     tar \
       -cz \
       --remove-files \
-      -f "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/run_dir.tar.gz" \
+      -f "{{ sample.glType }}/constitutional_structural_calls/strelka2/{{ sample.name }}_{{ aligner }}/run_dir.tar.gz" \
       "${RUNDIR}"
 
 {% endmacro %}

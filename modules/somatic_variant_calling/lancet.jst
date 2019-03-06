@@ -13,7 +13,7 @@
     set -uev
 
     module load {{ constants.tools.lancet_1_0_7.module }}
-    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_lancet_chunks/"
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
 
     # Write out the regions in this batch to a bed file
     TAB=$'\t'
@@ -29,7 +29,7 @@
       --ref "{{ constants.phoenix.reference_fasta_path }}" \
       --normal "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumor "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      > "temp/{{ pair.name }}_{{ aligner }}_lancet_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf.gz"
+      > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf.gz"
 
 {% endfor %}
 
@@ -51,12 +51,12 @@
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
       {% for b in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf.gz" \
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf.gz" \
       {% endfor %}
       --OUTPUT "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.vcf.gz"
 
     {% if not debug %}
-    rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_chunks/"
+    rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
     {% endif %}
 
 {% endmacro %}
