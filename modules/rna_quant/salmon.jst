@@ -5,10 +5,10 @@
 {% set r2fqlist = [] %}
 {% for rgid, rg in sample.read_groups.items() %}
     {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
-        {% do r1fqlist.append("temp/fastqs/" + (fq.fastqPath|basename)) %}
+        {% do r1fqlist.append('"temp/fastqs/' + (fq.fastqPath|basename) + '"') %}
     {% endfor %}
     {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
-        {% do r2fqlist.append("temp/fastqs/" + (fq.fastqPath|basename)) %}
+        {% do r2fqlist.append('"temp/fastqs/' + (fq.fastqPath|basename) + '"') %}
     {% endfor %}
 {% endfor %}
 
@@ -30,8 +30,10 @@
       --libType IU \
       --index "{{ constants.phoenix.salmon_index }}" \
       --geneMap "{{ constants.phoenix.gtf }}" \
-      -1 "{{ r1fqlist|join(',') }}"  \
-      -2 "{{ r2fqlist|join(',') }}" \
+      -1 <(zcat {{ r1fqlist|join(' ') }})  \
+      {% if r2fqlist %}
+      -2 <(zcat {{ r2fqlist|join(' ') }}) \
+      {% endif %}
       --output "{{ sample.glType }}/salmon/{{ sample.name }}/"
 
 {% endmacro %}
