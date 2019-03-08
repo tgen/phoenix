@@ -17,7 +17,7 @@
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.salmon_0_8_0.verbose }} using the cDNA index.
   output: RNA/{{ sample.name }}
-  cpus: 16
+  cpus: 14
   walltime: "24:00:00"
   cmd: |
     set -uev
@@ -26,7 +26,7 @@
     mkdir -p "{{ sample.glType }}/salmon/{{ sample.name }}/"
 
     salmon quant \
-      --threads 16 \
+      --threads 12 \
       --libType IU \
       --index "{{ constants.phoenix.salmon_index }}" \
       --geneMap "{{ constants.phoenix.gtf }}" \
