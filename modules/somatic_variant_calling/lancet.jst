@@ -39,7 +39,7 @@
   tags: [lancet, {{ pair.glType }}]
   after: 
     re: lancet_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.vcf.gz
+  output: {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
