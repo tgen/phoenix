@@ -16,6 +16,13 @@
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.salmon_0_8_0.verbose }} using the cDNA index.
+  input:
+  {% for fq in r1fqlist %} 
+    - {{ fq }}
+  {% endfor %}
+  {% for fq in r2fqlist %}
+    - {{ fq }}
+  {% endfor %}
   output: RNA/{{ sample.name }}
   cpus: 14
   walltime: "24:00:00"
