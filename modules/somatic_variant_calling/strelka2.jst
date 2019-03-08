@@ -53,18 +53,18 @@
       --exome \
       --generateEvidenceBam \
       {% endif %}
-      --callRegions "${MANTA_BED}" \
+      --callRegions "${MANTA_BED}.gz" \
       --config "${MANTA_CONFIG}" \
       --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      --referenceFasta "{{ constants.phoenix.reference_fasta_path }}" \
+      --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
       --runDir "${RUNDIR}"
 
     # Execute on the local machine with 39 parallel jobs
     "${RUNDIR}/runWorkflow.py" -m local -j 39
 
     # Move the final results out of the rundir
-    mv "${RUNDIR}/results/" "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/"
+    mv "${RUNDIR}/results/"* "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/"
 
     # Compress the rest of the files for reference later
     tar \
@@ -112,6 +112,9 @@
     {% endfor %}
     EOF
 
+    bgzip -f "${STRELKA_BED}"
+    tabix -f -p bed "${STRELKA_BED}.gz"
+
     # Some settings are only configurable via an ini file. Here 
     # we generate this ini file and save it to the run dir.
     STRELKA_CONFIG="${RUNDIR}/config.ini"
@@ -126,18 +129,18 @@
       --exome \
       {% endif %}
       --config "${STRELKA_CONFIG}" \
-      --callRegions "${STRELKA_BED}" \
+      --callRegions "${STRELKA_BED}.gz" \
       --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --indelCandidates "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
-      --ref "{{ constants.phoenix.reference_fasta_path }}" \
+      --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "${RUNDIR}"
 
     # Execute on the local machine with 39 parallel jobs
     "${RUNDIR}/runWorkflow.py" -m local -j 39
 
     # Move the final results out of the rundir
-    mv "${RUNDIR}/results/" "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/"
+    mv "${RUNDIR}/results/"* "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/"
 
     # Compress the workspace files after the run completes successfully
     tar \

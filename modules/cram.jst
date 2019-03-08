@@ -17,7 +17,7 @@
 
     samtools view \
       -C \
-      -T  "{{ constants.phoenix.reference_fasta_path }}" \
+      -T  "{{ constants.phoenix.reference_fasta }}" \
       "{{ bam_path }}" > "{{ cram_path }}"
 
     samtools index "{{ cram_path }}"

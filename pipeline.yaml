@@ -6,7 +6,8 @@ constants:
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
-    reference_fasta_path: /home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta
+    reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta
+    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/Homo_sapiens.GRCh38.95.UCSC.fasta
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/Homo_sapiens.GRCh38.95.UCSC.gtf.gz
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta.64
     gatk_known_sites:

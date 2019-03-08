@@ -22,7 +22,7 @@
 
     freebayes \
       -b "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      -f "{{ constants.phoenix.reference_fasta_path }}" \
+      -f "{{ constants.phoenix.reference_fasta }}" \
       -t "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed" \
       --ploidy 2 \
       --min-repeat-entropy 1 \

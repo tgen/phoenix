@@ -7,29 +7,30 @@
   input:
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
-  cpus: 8
+  cpus: 4
   walltime: "24:00:00"
   cmd: |
     set -uev
 
     module load {{ constants.tools.lancet_1_0_7.module }}
+    
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
 
     # Write out the regions in this batch to a bed file
     TAB=$'\t'
-    cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_lancet/{{ loop.index }}.bed"
+    cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ loop.index }}.bed"
     {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
 
     lancet \
-      --num-threads 20 \
-      --bed "temp/{{ pair.name }}_{{ aligner }}_lancet/{{ loop.index }}.bed" \
-      --ref "{{ constants.phoenix.reference_fasta_path }}" \
+      --num-threads 4 \
+      --bed "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ loop.index }}.bed" \
+      --ref "{{ constants.phoenix.reference_fasta }}" \
       --normal "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumor "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf.gz"
+      > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf"
 
 {% endfor %}
 
@@ -51,12 +52,30 @@
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
       {% for b in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf.gz" \
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf" \
       {% endfor %}
-      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.vcf.gz"
+      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
     {% endif %}
+
+
+- name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [bcftools, filter, pair.glType]
+  input:
+    - {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz
+  output:
+    - {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "PASS"' \
+      "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz" \
+      > "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz"
+
 
 {% endmacro %}

@@ -24,7 +24,7 @@
       --threads 2 \
       --remove-dups \
       --remove-overlaps \
-      --ref-seq "{{ constants.phoenix.reference_fasta_path }}" \
+      --ref-seq "{{ constants.phoenix.reference_fasta }}" \
       "{{ bam_path }}" >\
       "{{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt"
 
@@ -86,7 +86,7 @@
     gatk CollectMultipleMetrics \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --METRIC_ACCUMULATION_LEVEL SAMPLE \
@@ -113,7 +113,7 @@
 
     gatk ConvertSequencingArtifactToOxoG \
       -I "{{ stats_dir }}/{{ bam_path|basename }}" \
-      -R "{{ constants.phoenix.reference_fasta_path }}"
+      -R "{{ constants.phoenix.reference_fasta }}"
 
 
 {% if sample.glType|lower == 'genome' %}
@@ -132,7 +132,7 @@
       --USE_FAST_ALGORITHM true \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_metrics.txt" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
 
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
@@ -150,7 +150,7 @@
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.txt" \
       --CHART_OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.pdf" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}"
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
 
 
 - name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
@@ -168,7 +168,7 @@
       --USE_FAST_ALGORITHM true \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_raw_metrics.txt" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       --INCLUDE_BQ_HISTOGRAM true
 
 
@@ -191,7 +191,7 @@
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta_path }}" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       --BAIT_INTERVALS "{{ constants.capture_kits[capture_kit_code].probes }}" \
       --TARGET_INTERVALS "{{ constants.capture_kits[capture_kit_code].targets }}"
 
@@ -218,7 +218,7 @@
       --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.UD" \
       --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.mu" \
       --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.bed" \
-      --Reference "{{ constants.phoenix.reference_fasta_path }}" \
+      --Reference "{{ constants.phoenix.reference_fasta }}" \
       --BamFile "{{ bam_path }}" \
       --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
 

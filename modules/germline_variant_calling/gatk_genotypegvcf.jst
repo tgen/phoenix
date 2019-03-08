@@ -15,7 +15,7 @@
 
     gatk GenotypeGVCFs \
       --java-options "-Xmx14G" \
-      --reference {{ constants.phoenix.reference_fasta_path }} \
+      --reference {{ constants.phoenix.reference_fasta }} \
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
@@ -70,7 +70,7 @@
       --tmp-dir "temp" \
       --java-options "-Xmx6G" \
       --tensor-type read_tensor \
-      --reference "{{ constants.phoenix.reference_fasta_path }}" \
+      --reference "{{ constants.phoenix.reference_fasta }}" \
       --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \
       --input "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --output "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.scored.hc.vcf.gz"

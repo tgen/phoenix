@@ -72,6 +72,7 @@
 
 
 - name: htseq_{{ sample.name }}
+  input: {{ sample.glType }}/star-quant/{{ sample.name }}/
   output: {{ sample.glType }}/htseq/{{ sample.name }}/
   cpus: 16
   walltime: "24:00:00"

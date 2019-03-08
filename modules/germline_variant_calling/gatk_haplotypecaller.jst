@@ -15,7 +15,7 @@
     gatk HaplotypeCaller \
       --java-options "-Xmx14G" \
       -ERC GVCF \
-      -R {{ constants.phoenix.reference_fasta_path }} \
+      -R {{ constants.phoenix.reference_fasta }} \
       -I "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
