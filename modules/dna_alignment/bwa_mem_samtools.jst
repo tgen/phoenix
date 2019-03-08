@@ -40,7 +40,7 @@
       -s \
       --threads 4 \
       -T "temp/markdup_{{ sample.name }}_bwa/" \
-      <(samtools view --threads 4 -h "temp/{{ sample.name }}.bwa.bam") \
+      "temp/{{ sample.name }}.bwa.bam" \
       "temp/{{ sample.name }}.bwa.md.bam" \
       2> "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.markdup.txt"
 
