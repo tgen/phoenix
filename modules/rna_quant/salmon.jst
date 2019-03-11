@@ -15,7 +15,7 @@
 - name: salmon_quant_cdna_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
-    {{ constants.tools.salmon_0_8_0.verbose }} using the cDNA index.
+    {{ constants.tools.salmon_0_12_0.verbose }} using the cDNA index.
   input:
   {% for fq in r1fqlist %} 
     - {{ fq }}
@@ -23,23 +23,26 @@
   {% for fq in r2fqlist %}
     - {{ fq }}
   {% endfor %}
-  output: RNA/{{ sample.name }}
+  output: {{ sample.glType }}/salmon/{{ sample.name }}/
   cpus: 14
   walltime: "24:00:00"
   cmd: |
     set -uev
-    module load {{ constants.tools.salmon_0_8_0.module }}
+    module load {{ constants.tools.salmon_0_12_0.module }}
 
     mkdir -p "{{ sample.glType }}/salmon/{{ sample.name }}/"
 
     salmon quant \
+      --validateMappings \
+      --seqBias \
+      --gcBias \
       --threads 12 \
       --libType IU \
       --index "{{ constants.phoenix.salmon_index }}" \
-      --geneMap "{{ constants.phoenix.gtf }}" \
-      -1 <(zcat {{ r1fqlist|join(' ') }})  \
+      --geneMap <(zcat "{{ constants.phoenix.gtf }}") \
+      -1 {{ r1fqlist|join(' ') }} \
       {% if r2fqlist %}
-      -2 <(zcat {{ r2fqlist|join(' ') }}) \
+      -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
       --output "{{ sample.glType }}/salmon/{{ sample.name }}/"
 
