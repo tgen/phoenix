@@ -30,8 +30,19 @@
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --normal "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumor "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf"
+      > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet-uns.vcf"
 
+    # Lancet sorts output in lexicographical order and this does not
+    # match the reference fasta order. Here we resort to match the reference
+    gatk SortVcf \
+      --java-options "-Xmx14G" \
+      --TMP_DIR "temp" \
+      --SEQUENCE_DICTIONARY {{ constants.phoenix.reference_dict }} \
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet-uns.vcf" \
+      --OUTPUT ""temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf"
+
+    rm "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet-uns.vcf"
+      
 {% endfor %}
 
 
@@ -51,6 +62,8 @@
 
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
+      --TMP_DIR "temp" \
+      --SEQUENCE_DICTIONARY {{ constants.phoenix.reference_dict }} \
       {% for b in constants.phoenix.calling_intervals %}
       --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf" \
       {% endfor %}
