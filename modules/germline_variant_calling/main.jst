@@ -3,7 +3,7 @@
 {% from 'modules/germline_variant_calling/gatk_genotypegvcf.jst' import genotypegvcf with context %}
 {% from 'modules/germline_variant_calling/freebayes.jst' import freebayes with context %}
 {% from 'modules/germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
-{% from 'modules/germline_variant_calling/strelka2.jst' import strelka2_constitutional with context %}
+{% from 'modules/germline_variant_calling/manta_strelka2.jst' import manta_strelka2_constitutional with context %}
 
 
 {% macro germline_variant_calling(samples) %}
@@ -13,7 +13,7 @@
     {% if tasks.Exome_freebayes_freebayes_1_2_0 is defined and tasks.Exome_freebayes_freebayes_1_2_0 %}
         {{- genotypegvcf(sample, aligner='bwa') }}
         {{- freebayes(sample, aligner='bwa') }}
-        {{- strelka2_constitutional(sample, aligner='bwa') }}
+        {{- manta_strelka2_constitutional(sample, aligner='bwa') }}
     {% endif %}
 
     {% if sample.subGroup|lower == 'constitutional' %}
