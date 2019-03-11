@@ -1,4 +1,4 @@
-{% macro strelka2_somatic(pair, aligner='bwa') %}
+{% macro manta_strelka2_somatic(pair, aligner='bwa') %}
 - name: manta_somatic_{{ pair.name }}_{{ aligner }}
   tags: [manta, manta-somatic, {{ pair.glType }}]
   methods: > 
@@ -16,32 +16,31 @@
     module load {{ constants.tools.manta_1_4.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/run_dir/"
+    PAIR_DIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}"
+    RUN_DIR="${PAIR_DIR}/run_dir"
 
     # Purge any existing run files prior to starting
-    rm -r "${RUNDIR}" || true
-    mkdir -p "${RUNDIR}"
+    rm -r "${RUN_DIR}" || true
+    mkdir -p "${RUN_DIR}"
 
     # In order to restrict calling to only the specified regions
     # Manta requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Manta.
-    MANTA_BED="${RUNDIR}/callRegions.bed"
+    MANTA_BED="${PAIR_DIR}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
-    {% for batch in constants.phoenix.calling_intervals %}
-    {% for interval in batch %}
-    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
-    {% endfor %}
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
     {% endfor %}
     EOF
 
     bgzip -f "${MANTA_BED}"
     tabix -f -p bed "${MANTA_BED}.gz"
 
-    # Some settings are only configurable via tha ini file. Here 
+    # Some settings are only configurable via tha ini file. Here
     # we generate this ini file and save it to the run dir.
-    MANTA_CONFIG="${RUNDIR}/config.ini"
+    MANTA_CONFIG="${PAIR_DIR}/config.ini"
     cat <<EOF > "${MANTA_CONFIG}"
     [manta]
     enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
@@ -58,20 +57,15 @@
       --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
-      --runDir "${RUNDIR}"
+      --runDir "${RUN_DIR}"
 
     # Execute on the local machine with 39 parallel jobs
-    "${RUNDIR}/runWorkflow.py" -m local -j 39
-
-    # Move the final results out of the rundir
-    mv "${RUNDIR}/results/"* "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/"
-
-    # Compress the rest of the files for reference later
-    tar \
-      -cz \
-      --remove-files \
-      -f "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/run_dir.tar.gz" \
-      "${RUNDIR}"
+    "${RUN_DIR}/runWorkflow.py" -m local -j 39
+   
+    # Move the final results out of the run_dir then compress the
+    # rest of the files for reference later
+    mv "${RUN_DIR}/results/"* "${PAIR_DIR}"
+    (cd "${PAIR_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
  
 
 - name: strelka2_somatic_{{ pair.name }}_{{ aligner }}
@@ -92,32 +86,31 @@
     module load {{ constants.tools.strelka_2_9_2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/run_dir/"
+    PAIR_DIR="{{ pair.glType }}/somatic_variant_calls/manta/{{ pair.name }}_{{ aligner }}"
+    RUN_DIR="${PAIR_DIR}/run_dir"
 
     # Purge any existing run files prior to starting
-    rm -r "${RUNDIR}" || true
-    mkdir -p "${RUNDIR}"
+    rm -r "${RUN_DIR}" || true
+    mkdir -p "${RUN_DIR}"
 
     # In order to restrict calling to only the specified regions
     # strelka requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Strelka.
-    STRELKA_BED="${RUNDIR}/callRegions.bed"
+    STRELKA_BED="${PAIR_DIR}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${STRELKA_BED}"
-    {% for batch in constants.phoenix.calling_intervals %}
-    {% for interval in batch %}
-    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
-    {% endfor %}
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
     {% endfor %}
     EOF
 
     bgzip -f "${STRELKA_BED}"
     tabix -f -p bed "${STRELKA_BED}.gz"
 
-    # Some settings are only configurable via an ini file. Here 
+    # Some settings are only configurable via an ini file. Here
     # we generate this ini file and save it to the run dir.
-    STRELKA_CONFIG="${RUNDIR}/config.ini"
+    STRELKA_CONFIG="${PAIR_DIR}/config.ini"
     cat <<EOF > "${STRELKA_CONFIG}"
     [StrelkaSomatic]
     isWriteRealignedBam = 1
@@ -134,19 +127,14 @@
       --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --indelCandidates "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
-      --runDir "${RUNDIR}"
+      --runDir "${RUN_DIR}"
 
     # Execute on the local machine with 39 parallel jobs
-    "${RUNDIR}/runWorkflow.py" -m local -j 39
+    "${RUN_DIR}/runWorkflow.py" -m local -j 39
 
-    # Move the final results out of the rundir
-    mv "${RUNDIR}/results/"* "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/"
-
-    # Compress the workspace files after the run completes successfully
-    tar \
-      -cz \
-      --remove-files \
-      -f "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}/run_dir.tar.gz" \
-      "${RUNDIR}"
+    # Move the final results out of the run_dir then compress the
+    # rest of the files for reference later
+    mv "${RUN_DIR}/results/"* "${PAIR_DIR}"
+    (cd "${PAIR_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
 
 {% endmacro %}

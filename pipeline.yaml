@@ -1,12 +1,13 @@
 name: phoenix
 main: main.jst
 description: Human GRCh38 genomics suite
-version: 1.1.0
+version: 1.1.0b
 constants:
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta
+    reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.dict
     transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/Homo_sapiens.GRCh38.95.UCSC.fasta
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/Homo_sapiens.GRCh38.95.UCSC.gtf.gz
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.fasta.64
@@ -20,7 +21,10 @@ constants:
     snpeff_config: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/snpEff/snpEff.config
     snpeff_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/snpEff/data
     snpeff_db: GRCh38.95
-    main_contigs:
+    calling_contigs:
+      # Contigs in the genome build that should be considered for variant calling
+      # Note that chrM is not included in this list because the mitochrondria 
+      # should be analyzed separately.
       - {"contig": chr1, "length": 248956422}
       - {"contig": chr2, "length": 242193529}
       - {"contig": chr3, "length": 198295559}
@@ -45,7 +49,179 @@ constants:
       - {"contig": chr22, "length": 50818468}
       - {"contig": chrX, "length": 156040895}
       - {"contig": chrY, "length": 57227415}
+      - {"contig": "chr1_KI270706v1_random", "length": 175055}
+      - {"contig": "chr1_KI270707v1_random", "length": 32032}
+      - {"contig": "chr1_KI270708v1_random", "length": 127682}
+      - {"contig": "chr1_KI270709v1_random", "length": 66860}
+      - {"contig": "chr1_KI270710v1_random", "length": 40176}
+      - {"contig": "chr1_KI270711v1_random", "length": 42210}
+      - {"contig": "chr1_KI270712v1_random", "length": 176043}
+      - {"contig": "chr1_KI270713v1_random", "length": 40745}
+      - {"contig": "chr1_KI270714v1_random", "length": 41717}
+      - {"contig": "chr2_KI270715v1_random", "length": 161471}
+      - {"contig": "chr2_KI270716v1_random", "length": 153799}
+      - {"contig": "chr3_GL000221v1_random", "length": 155397}
+      - {"contig": "chr4_GL000008v2_random", "length": 209709}
+      - {"contig": "chr5_GL000208v1_random", "length": 92689}
+      - {"contig": "chr9_KI270717v1_random", "length": 40062}
+      - {"contig": "chr9_KI270718v1_random", "length": 38054}
+      - {"contig": "chr9_KI270719v1_random", "length": 176845}
+      - {"contig": "chr9_KI270720v1_random", "length": 39050}
+      - {"contig": "chr11_KI270721v1_random", "length": 100316}
+      - {"contig": "chr14_GL000009v2_random", "length": 201709}
+      - {"contig": "chr14_GL000225v1_random", "length": 211173}
+      - {"contig": "chr14_KI270722v1_random", "length": 194050}
+      - {"contig": "chr14_GL000194v1_random", "length": 191469}
+      - {"contig": "chr14_KI270723v1_random", "length": 38115}
+      - {"contig": "chr14_KI270724v1_random", "length": 39555}
+      - {"contig": "chr14_KI270725v1_random", "length": 172810}
+      - {"contig": "chr14_KI270726v1_random", "length": 43739}
+      - {"contig": "chr15_KI270727v1_random", "length": 448248}
+      - {"contig": "chr16_KI270728v1_random", "length": 1872759}
+      - {"contig": "chr17_GL000205v2_random", "length": 185591}
+      - {"contig": "chr17_KI270729v1_random", "length": 280839}
+      - {"contig": "chr17_KI270730v1_random", "length": 112551}
+      - {"contig": "chr22_KI270731v1_random", "length": 150754}
+      - {"contig": "chr22_KI270732v1_random", "length": 41543}
+      - {"contig": "chr22_KI270733v1_random", "length": 179772}
+      - {"contig": "chr22_KI270734v1_random", "length": 165050}
+      - {"contig": "chr22_KI270735v1_random", "length": 42811}
+      - {"contig": "chr22_KI270736v1_random", "length": 181920}
+      - {"contig": "chr22_KI270737v1_random", "length": 103838}
+      - {"contig": "chr22_KI270738v1_random", "length": 99375}
+      - {"contig": "chr22_KI270739v1_random", "length": 73985}
+      - {"contig": "chrY_KI270740v1_random", "length": 37240}
+      - {"contig": "chrUn_KI270302v1", "length": 2274}
+      - {"contig": "chrUn_KI270304v1", "length": 2165}
+      - {"contig": "chrUn_KI270303v1", "length": 1942}
+      - {"contig": "chrUn_KI270305v1", "length": 1472}
+      - {"contig": "chrUn_KI270322v1", "length": 21476}
+      - {"contig": "chrUn_KI270320v1", "length": 4416}
+      - {"contig": "chrUn_KI270310v1", "length": 1201}
+      - {"contig": "chrUn_KI270316v1", "length": 1444}
+      - {"contig": "chrUn_KI270315v1", "length": 2276}
+      - {"contig": "chrUn_KI270312v1", "length": 998}
+      - {"contig": "chrUn_KI270311v1", "length": 12399}
+      - {"contig": "chrUn_KI270317v1", "length": 37690}
+      - {"contig": "chrUn_KI270412v1", "length": 1179}
+      - {"contig": "chrUn_KI270411v1", "length": 2646}
+      - {"contig": "chrUn_KI270414v1", "length": 2489}
+      - {"contig": "chrUn_KI270419v1", "length": 1029}
+      - {"contig": "chrUn_KI270418v1", "length": 2145}
+      - {"contig": "chrUn_KI270420v1", "length": 2321}
+      - {"contig": "chrUn_KI270424v1", "length": 2140}
+      - {"contig": "chrUn_KI270417v1", "length": 2043}
+      - {"contig": "chrUn_KI270422v1", "length": 1445}
+      - {"contig": "chrUn_KI270423v1", "length": 981}
+      - {"contig": "chrUn_KI270425v1", "length": 1884}
+      - {"contig": "chrUn_KI270429v1", "length": 1361}
+      - {"contig": "chrUn_KI270442v1", "length": 392061}
+      - {"contig": "chrUn_KI270466v1", "length": 1233}
+      - {"contig": "chrUn_KI270465v1", "length": 1774}
+      - {"contig": "chrUn_KI270467v1", "length": 3920}
+      - {"contig": "chrUn_KI270435v1", "length": 92983}
+      - {"contig": "chrUn_KI270438v1", "length": 112505}
+      - {"contig": "chrUn_KI270468v1", "length": 4055}
+      - {"contig": "chrUn_KI270510v1", "length": 2415}
+      - {"contig": "chrUn_KI270509v1", "length": 2318}
+      - {"contig": "chrUn_KI270518v1", "length": 2186}
+      - {"contig": "chrUn_KI270508v1", "length": 1951}
+      - {"contig": "chrUn_KI270516v1", "length": 1300}
+      - {"contig": "chrUn_KI270512v1", "length": 22689}
+      - {"contig": "chrUn_KI270519v1", "length": 138126}
+      - {"contig": "chrUn_KI270522v1", "length": 5674}
+      - {"contig": "chrUn_KI270511v1", "length": 8127}
+      - {"contig": "chrUn_KI270515v1", "length": 6361}
+      - {"contig": "chrUn_KI270507v1", "length": 5353}
+      - {"contig": "chrUn_KI270517v1", "length": 3253}
+      - {"contig": "chrUn_KI270529v1", "length": 1899}
+      - {"contig": "chrUn_KI270528v1", "length": 2983}
+      - {"contig": "chrUn_KI270530v1", "length": 2168}
+      - {"contig": "chrUn_KI270539v1", "length": 993}
+      - {"contig": "chrUn_KI270538v1", "length": 91309}
+      - {"contig": "chrUn_KI270544v1", "length": 1202}
+      - {"contig": "chrUn_KI270548v1", "length": 1599}
+      - {"contig": "chrUn_KI270583v1", "length": 1400}
+      - {"contig": "chrUn_KI270587v1", "length": 2969}
+      - {"contig": "chrUn_KI270580v1", "length": 1553}
+      - {"contig": "chrUn_KI270581v1", "length": 7046}
+      - {"contig": "chrUn_KI270579v1", "length": 31033}
+      - {"contig": "chrUn_KI270589v1", "length": 44474}
+      - {"contig": "chrUn_KI270590v1", "length": 4685}
+      - {"contig": "chrUn_KI270584v1", "length": 4513}
+      - {"contig": "chrUn_KI270582v1", "length": 6504}
+      - {"contig": "chrUn_KI270588v1", "length": 6158}
+      - {"contig": "chrUn_KI270593v1", "length": 3041}
+      - {"contig": "chrUn_KI270591v1", "length": 5796}
+      - {"contig": "chrUn_KI270330v1", "length": 1652}
+      - {"contig": "chrUn_KI270329v1", "length": 1040}
+      - {"contig": "chrUn_KI270334v1", "length": 1368}
+      - {"contig": "chrUn_KI270333v1", "length": 2699}
+      - {"contig": "chrUn_KI270335v1", "length": 1048}
+      - {"contig": "chrUn_KI270338v1", "length": 1428}
+      - {"contig": "chrUn_KI270340v1", "length": 1428}
+      - {"contig": "chrUn_KI270336v1", "length": 1026}
+      - {"contig": "chrUn_KI270337v1", "length": 1121}
+      - {"contig": "chrUn_KI270363v1", "length": 1803}
+      - {"contig": "chrUn_KI270364v1", "length": 2855}
+      - {"contig": "chrUn_KI270362v1", "length": 3530}
+      - {"contig": "chrUn_KI270366v1", "length": 8320}
+      - {"contig": "chrUn_KI270378v1", "length": 1048}
+      - {"contig": "chrUn_KI270379v1", "length": 1045}
+      - {"contig": "chrUn_KI270389v1", "length": 1298}
+      - {"contig": "chrUn_KI270390v1", "length": 2387}
+      - {"contig": "chrUn_KI270387v1", "length": 1537}
+      - {"contig": "chrUn_KI270395v1", "length": 1143}
+      - {"contig": "chrUn_KI270396v1", "length": 1880}
+      - {"contig": "chrUn_KI270388v1", "length": 1216}
+      - {"contig": "chrUn_KI270394v1", "length": 970}
+      - {"contig": "chrUn_KI270386v1", "length": 1788}
+      - {"contig": "chrUn_KI270391v1", "length": 1484}
+      - {"contig": "chrUn_KI270383v1", "length": 1750}
+      - {"contig": "chrUn_KI270393v1", "length": 1308}
+      - {"contig": "chrUn_KI270384v1", "length": 1658}
+      - {"contig": "chrUn_KI270392v1", "length": 971}
+      - {"contig": "chrUn_KI270381v1", "length": 1930}
+      - {"contig": "chrUn_KI270385v1", "length": 990}
+      - {"contig": "chrUn_KI270382v1", "length": 4215}
+      - {"contig": "chrUn_KI270376v1", "length": 1136}
+      - {"contig": "chrUn_KI270374v1", "length": 2656}
+      - {"contig": "chrUn_KI270372v1", "length": 1650}
+      - {"contig": "chrUn_KI270373v1", "length": 1451}
+      - {"contig": "chrUn_KI270375v1", "length": 2378}
+      - {"contig": "chrUn_KI270371v1", "length": 2805}
+      - {"contig": "chrUn_KI270448v1", "length": 7992}
+      - {"contig": "chrUn_KI270521v1", "length": 7642}
+      - {"contig": "chrUn_GL000195v1", "length": 182896}
+      - {"contig": "chrUn_GL000219v1", "length": 179198}
+      - {"contig": "chrUn_GL000220v1", "length": 161802}
+      - {"contig": "chrUn_GL000224v1", "length": 179693}
+      - {"contig": "chrUn_KI270741v1", "length": 157432}
+      - {"contig": "chrUn_GL000226v1", "length": 15008}
+      - {"contig": "chrUn_GL000213v1", "length": 164239}
+      - {"contig": "chrUn_KI270743v1", "length": 210658}
+      - {"contig": "chrUn_KI270744v1", "length": 168472}
+      - {"contig": "chrUn_KI270745v1", "length": 41891}
+      - {"contig": "chrUn_KI270746v1", "length": 66486}
+      - {"contig": "chrUn_KI270747v1", "length": 198735}
+      - {"contig": "chrUn_KI270748v1", "length": 93321}
+      - {"contig": "chrUn_KI270749v1", "length": 158759}
+      - {"contig": "chrUn_KI270750v1", "length": 148850}
+      - {"contig": "chrUn_KI270751v1", "length": 150742}
+      - {"contig": "chrUn_KI270752v1", "length": 27745}
+      - {"contig": "chrUn_KI270753v1", "length": 62944}
+      - {"contig": "chrUn_KI270754v1", "length": 40191}
+      - {"contig": "chrUn_KI270755v1", "length": 36723}
+      - {"contig": "chrUn_KI270756v1", "length": 79590}
+      - {"contig": "chrUn_KI270757v1", "length": 71251}
+      - {"contig": "chrUn_GL000214v1", "length": 137718}
+      - {"contig": "chrUn_KI270742v1", "length": 186739}
+      - {"contig": "chrUn_GL000216v2", "length": 176608}
+      - {"contig": "chrUn_GL000218v1", "length": 161147}
     calling_intervals:
+      # Calling contigs broken down into smaller batches of intervals. These intervals
+      # are taken from GATK Resource Bundle and describe intervals that can be safely
+      # called independently for SNP/small indel genotyping.
       - - {"contig": "chr1", "length": 197665, "start": 10001, "stop": 207666}
         - {"contig": "chr1", "length": 40301, "start": 257667, "stop": 297968}
         - {"contig": "chr1", "length": 188019, "start": 347969, "stop": 535988}
@@ -572,6 +748,9 @@ constants:
         - {"contig": "chrUn_GL000216v2", "length": 176608, "start": 1, "stop": 176608}
         - {"contig": "chrUn_GL000218v1", "length": 161147, "start": 1, "stop": 161147}
     all_intervals:
+      # All contigs in the reference fasta broken into calling interval batches. This
+      # list is used by BaseRecalibrator where we don't want to lose any reads as a
+      # result of the batching process.
       - - {"contig": "chr1", "length": 197665, "start": 10001, "stop": 207666}
         - {"contig": "chr1", "length": 40301, "start": 257667, "stop": 297968}
         - {"contig": "chr1", "length": 188019, "start": 347969, "stop": 535988}

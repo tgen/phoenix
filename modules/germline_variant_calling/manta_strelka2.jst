@@ -1,4 +1,4 @@
-{% macro strelka2_constitutional(sample, aligner='bwa') %}
+{% macro manta_strelka2_constitutional(sample, aligner='bwa') %}
 - name: manta_constitutional_{{ sample.name }}_{{ aligner }}
   tags: [manta, manta-constitutional, {{ sample.glType }}]
   methods: > 
@@ -15,23 +15,22 @@
     module load {{ constants.tools.manta_1_4.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/run_dir/"
+    SAMPLE_DIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}"
+    RUN_DIR="${SAMPLE_DIR}/run_dir"
 
     # Purge any existing run files prior to starting
-    rm -r "${RUNDIR}" || true
-    mkdir -p "${RUNDIR}"
+    rm -r "${RUN_DIR}" || true
+    mkdir -p "${RUN_DIR}"
 
     # In order to restrict calling to only the specified regions
     # Manta requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Manta.
-    MANTA_BED="${RUNDIR}/callRegions.bed"
+    MANTA_BED="${SAMPLE_DIR}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
-    {% for batch in constants.phoenix.calling_intervals %}
-    {% for interval in batch %}
-    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
-    {% endfor %}
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
     {% endfor %}
     EOF
 
@@ -47,18 +46,15 @@
       --callRegions "${MANTA_BED}.gz" \
       --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
-      --runDir "${RUNDIR}"
+      --runDir "${RUN_DIR}"
 
     # Execute on the local machine with 39 parallel jobs
-    "${RUNDIR}/runWorkflow.py" -m local -j 39
+    "${RUN_DIR}/runWorkflow.py" -m local -j 39
 
-    # Move the final results out of the rundir
-    mv "${RUNDIR}/results/"* "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/"
-
-    # Compress the rest of the files for reference later
-    tar -cz --remove-files \
-      -f "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/run_dir.tar.gz" \
-      "${RUNDIR}"
+    # Move the final results out of the run_dir then compress the
+    # rest of the files for reference later
+    mv "${RUN_DIR}/results/"* "${SAMPLE_DIR}"
+    (cd "${SAMPLE_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
 
 
 - name: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
@@ -78,23 +74,22 @@
     module load {{ constants.tools.strelka_2_9_2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    RUNDIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/run_dir/"
+    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/manta/{{ sample.name }}_{{ aligner }}"
+    RUN_DIR="${SAMPLE_DIR}/run_dir"
 
     # Purge any existing run files prior to starting
-    rm -r "${RUNDIR}" || true
-    mkdir -p "${RUNDIR}"
+    rm -r "${RUN_DIR}" || true
+    mkdir -p "${RUN_DIR}"
 
     # In order to restrict calling to only the specified regions
     # strelka requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Strelka.
-    STRELKA_BED="${RUNDIR}/callRegions.bed"
+    STRELKA_BED="${SAMPLE_DIR}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${STRELKA_BED}"
-    {% for batch in constants.phoenix.calling_intervals %}
-    {% for interval in batch %}
-    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
-    {% endfor %}
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
     {% endfor %}
     EOF
 
@@ -103,7 +98,7 @@
 
     # Some settings are only configurable via an ini file. Here 
     # we generate this ini file and save it to the run dir.
-    STRELKA_CONFIG="${RUNDIR}/config.ini"
+    STRELKA_CONFIG="${SAMPLE_DIR}/config.ini"
     cat <<EOF > "${STRELKA_CONFIG}"
     [StrelkaGermline]
     isWriteRealignedBam = 1
@@ -118,19 +113,15 @@
       --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --indelCandidates "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
-      --runDir "${RUNDIR}"
+      --runDir "${RUN_DIR}"
 
     # Execute on the local machine with 39 parallel jobs
-    "${RUNDIR}/runWorkflow.py" -m local -j 39
+    "${RUN_DIR}/runWorkflow.py" -m local -j 39
 
-    # Move the final results out of the rundir
-    mv "${RUNDIR}/results/"* "{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/"
+    # Move the final results out of the run_dir then compress the
+    # rest of the files for reference later
+    mv "${RUN_DIR}/results/"* "${SAMPLE_DIR}"
+    (cd "${SAMPLE_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
 
-    # Compress the workspace files after the run completes successfully
-    tar \
-      -cz \
-      --remove-files \
-      -f "{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/run_dir.tar.gz" \
-      "${RUNDIR}"
 
 {% endmacro %}
