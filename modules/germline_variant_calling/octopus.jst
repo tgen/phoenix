@@ -1,6 +1,8 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
 {% macro octopus(sample, aligner='bwa') %}
+
+# TODO add BAM path 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: octopus_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
@@ -23,7 +25,6 @@
       --legacy \
       --reference {{ constants.phoenix.reference_fasta }} \
       --reads ${LIST_BAMS[@]} \
-      --normal-sample ${NORMAL_BAM_NAME} \
       --regions ${CHROM} \
       -o "temp/{{ sample.name }}_{{ aligner }}_octopus_vcf_chunks/{{ loop.index }}.vcf.gz" 
 

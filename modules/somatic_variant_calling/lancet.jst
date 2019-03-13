@@ -13,6 +13,7 @@
     set -uev
 
     module load {{ constants.tools.lancet_1_0_7.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
     
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
 

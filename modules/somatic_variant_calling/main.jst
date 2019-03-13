@@ -7,16 +7,30 @@
 # because the samples are grouped and aligned by sampleName or sampleMergeKey. 
 
 {% from 'modules/somatic_variant_calling/mutect2.jst' import mutect2 with context %}
-{% from 'modules/somatic_variant_calling/manta_strelka2.jst' import manta_strelka2_somatic with context %}
 {% from 'modules/somatic_variant_calling/lancet.jst' import lancet with context %}
+{% from 'modules/somatic_variant_calling/manta.jst' import manta_somatic with context %}
+{% from 'modules/somatic_variant_calling/strelka2.jst' import strelka2_somatic with context %}
+
+
 
 {% macro somatic_variant_calling(samples) %}
-
-{% if pairs is defined %}
-    # Pairs were already defined
+{% if somatic_variant_calling_pairs is defined %}
+    # Pairs can be a predefined list of objects: 
+    # [{"tumor": <tumor name>, "normal": <normal name>},...]
+    {% set pairs = [] %}
+    {% for pair in somatic_variant_calling_pairs %}
+        {% set tumor = samples[pair.tumor] %}
+        {% set normal = samples[pair.normal] %}
+        {% set pair_name = normal.name + '-' + tumor.name %}
+        {% do pairs.append({'name': pair_name, 'glType': normal.glType, 'normal': normal, 'tumor': tumor}) %}
+    {% endfor %}
 {% else %}
-    # Build up the somatic variant calling sample pairs object by pairing every tumor 
-    # to every normal of the same glType.
+    # If pairs are not predefined, build up the somatic variant calling 
+    # sample pairs object by pairing every tumor to every normal of the 
+    # same glType. This will essentially permute every tumor-normal 
+    # combination in the project. For projects with multiple individuals
+    # this is likely NOT what you want to do, and pairs should be 
+    # predefined in the config data. 
     {% set pairs = [] %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.glType|lower == 'exome' %}
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'exome' %}
@@ -32,10 +46,42 @@
     {% endfor %}
 {% endif %}
 
-{% for pair in pairs %}
-    {{- mutect2(pair, aligner='bwa') }}
-    {{- lancet(pair, aligner='bwa') }}
-    {{- manta_strelka2_somatic(pair, aligner='bwa') }}
+# Start of the macro calls that will actually add the tasks to the workflow
+{% for pair in pairs if pair.glType == 'genome' %}
+    {% if tasks.mutect2_genome|default(True) %}
+        {{- mutect2(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.lancet_genome|default(True) %}
+        {{- lancet(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.manta_somatic_genome|default(True) %}
+        {{- manta_somatic(pair, aligner='bwa') }}
+    {% endif %}
+    
+    {% if tasks.strelka2_somatic_genome|default(True) %}
+        {{- strelka2_somatic(pair, aligner='bwa') }}
+    {% endif %}
 {% endfor %}
+
+{% for pair in pairs if pair.glType == 'exome' %}
+    {% if tasks.mutect2_exome|default(True) %}
+        {{- mutect2(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.lancet_exome|default(True) %}
+        {{- lancet(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.manta_somatic_exome|default(True) %}
+        {{- manta_somatic(pair, aligner='bwa') }}
+    {% endif %}
+    
+    {% if tasks.strelka2_somatic_exome|default(True) %}
+        {{- strelka2_somatic(pair, aligner='bwa') }}
+    {% endif %}
+{% endfor %}
+
 
 {% endmacro %}

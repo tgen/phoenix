@@ -41,7 +41,6 @@
     then merged together with MergeVcfs.
   after: 
     re: mutect2_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -66,8 +65,8 @@
 - name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
   tags: [gatk, gatk-FilterMutectCalls, {{ pair.glType }}]
   after: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
-  input: {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz
-  output: {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.filt.vcf.gz
+  output:
+    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz
   cpus: 8
   mem: 32G
   walltime: "24:00:00"
@@ -82,10 +81,25 @@
       {% endif %}
       --max-alt-allele-count 2 \
       --variant "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz" \
-      --output "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.filt.vcf.gz" \
+      --output "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz" \
       --stats "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.stats.tsv"
 
 
-{{ snpeff(pair, aligner, "somatic_variant_calls", "mutect2", "m2.filt") }}
+- name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [bcftools, filter, pair.glType]
+  input: 
+    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz
+  output:
+    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.pass.vcf.gz
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "PASS"' \
+      "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz" \
+      > "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.pass.vcf.gz"
+
 
 {% endmacro %}

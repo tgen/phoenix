@@ -30,7 +30,9 @@
 #               ...
 
 {# Setting debug to True retains many of the intermediate files #}
-{% if not debug is defined %}{% set debug = False %}{% endif %}
+{% if debug is not defined %}{% set debug = False %}{% endif %}
+{# Tasks contains switches for toggling many of the features #}
+{% if tasks is not defined %}{% set tasks = {} %}{% endif %}
 
 {% set samples = {} %}
 {% for file in dataFiles %}
@@ -61,6 +63,7 @@
     {% do samples[name]['read_groups'][rgid].update(rg) %}
     {% do samples[name]['read_groups'][rgid].update({'data_files': data_files}) %}
 {% endfor %}
+
 
 # Start of module imports
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}

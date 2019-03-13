@@ -1,6 +1,6 @@
 # Call germline variants with haplotype caller. In order to call 
 # variants, this step must be followed with genotype gvcfs task.
-{% macro haplotypecaller(sample, aligner='bwa') %}
+{% macro haplotypecallergvcf(sample, aligner='bwa') %}
 {% for batch in constants.phoenix.calling_intervals %}
 - name: haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
