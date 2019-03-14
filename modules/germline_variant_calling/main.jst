@@ -13,7 +13,7 @@
         {{- haplotypecallergvcf(sample, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks.genotypegvcf|default(True) %}
+    {% if tasks.genotypegvcf_genome|default(True) %}
         {{- genotypegvcf(sample, aligner='bwa') }}
     {% endif %}
 
@@ -42,7 +42,7 @@
         {{- haplotypecallergvcf(sample, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks.genotypegvcf|default(True) %}
+    {% if tasks.genotypegvcf_exome|default(True) %}
         {{- genotypegvcf(sample, aligner='bwa') }}
     {% endif %}
 

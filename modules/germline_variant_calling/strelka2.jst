@@ -16,7 +16,7 @@
     module load {{ constants.tools.strelka_2_9_2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/manta/{{ sample.name }}_{{ aligner }}"
+    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}"
     RUN_DIR="${SAMPLE_DIR}/run_dir"
 
     # Purge any existing run files prior to starting

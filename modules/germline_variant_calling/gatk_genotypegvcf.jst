@@ -64,6 +64,7 @@
 
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
+    source activate gatk
 
     gatk CNNScoreVariants \
       --verbosity DEBUG \

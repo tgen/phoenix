@@ -29,7 +29,7 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --output "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.m2.vcf.gz"
+      --output "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.mutect2.vcf.gz"
 
 {% endfor %}
 
@@ -53,9 +53,9 @@
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
       {% for b in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.m2.vcf.gz" \
+      --INPUT "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.mutect2.vcf.gz" \
       {% endfor %}
-      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz"
+      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_mutect2_chunks/"
@@ -66,7 +66,7 @@
   tags: [gatk, gatk-FilterMutectCalls, {{ pair.glType }}]
   after: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   output:
-    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz
+    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz
   cpus: 8
   mem: 32G
   walltime: "24:00:00"
@@ -80,17 +80,17 @@
       --strict-strand-bias true \
       {% endif %}
       --max-alt-allele-count 2 \
-      --variant "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.vcf.gz" \
-      --output "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz" \
+      --variant "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.vcf.gz" \
+      --output "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz" \
       --stats "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.stats.tsv"
 
 
 - name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, filter, pair.glType]
   input: 
-    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz
+    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz
   output:
-    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.pass.vcf.gz
+    - {{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.pass.vcf.gz
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
@@ -98,8 +98,8 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.all.vcf.gz" \
-      > "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.m2.pass.vcf.gz"
+      "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz" \
+      > "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.pass.vcf.gz"
 
 
 {% endmacro %}

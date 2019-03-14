@@ -17,7 +17,7 @@
     module load {{ constants.tools.strelka_2_9_2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    PAIR_DIR="{{ pair.glType }}/somatic_variant_calls/manta/{{ pair.name }}_{{ aligner }}"
+    PAIR_DIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}"
     RUN_DIR="${PAIR_DIR}/run_dir"
 
     # Purge any existing run files prior to starting
@@ -67,5 +67,34 @@
     # rest of the files for reference later
     mv "${RUN_DIR}/results/"* "${PAIR_DIR}"
     (cd "${PAIR_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
+
+
+- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [strelka2, strelka2-somatic, bcftools, {{ pair.glType }}]
+  input:
+    - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/
+  output:
+    - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
+    - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    # Merge the snvs and indels into a final vcf
+    bcftools concat \
+      -a \
+      --threads 2 \
+      -O z \
+      -o "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.vcf.gz"
+      "${PAIR_DIR}/variants/somatic.indels.vcf.gz" \
+      "${PAIR_DIR}/variants/somatic.snvs.vcf.gz"
+
+    # Then filter out the PASS variants to a separate file
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "PASS"' \
+      "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz" \
+      > "{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
+
 
 {% endmacro %}
