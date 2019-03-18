@@ -66,4 +66,31 @@
     (cd "${SAMPLE_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
 
 
+- name: strelka2_constitutional_filter_variants_{{ sample.name }}_{{ aligner }}
+  tags: [strelka2, strelka2-constitutional, bcftools, {{ sample.glType }}]
+  input:
+    - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/
+  output:
+    - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz
+    - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}"
+
+    # Move and rename the the vcfs out of their generic location
+    mv "${SAMPLE_DIR}/variants/variants.vcf.gz" {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz
+    mv "${SAMPLE_DIR}/variants/variants.vcf.gz.tbi" {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz.tbi
+
+    # Then filter out the PASS variants to a separate file
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "PASS"' \
+      "{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz" \
+      > "{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
+
+    bcftools index "{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
+
+
 {% endmacro %}

@@ -69,7 +69,7 @@
     (cd "${PAIR_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
 
 
-- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
+- name: strelka2_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [strelka2, strelka2-somatic, bcftools, {{ pair.glType }}]
   input:
     - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/
@@ -80,12 +80,14 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
+    PAIR_DIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}"
+
     # Merge the snvs and indels into a final vcf
     bcftools concat \
       -a \
       --threads 2 \
       -O z \
-      -o "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.vcf.gz"
+      -o "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz"
       "${PAIR_DIR}/variants/somatic.indels.vcf.gz" \
       "${PAIR_DIR}/variants/somatic.snvs.vcf.gz"
 
