@@ -38,3 +38,10 @@ cohorts.
 - GATK tools have bug which trims everything from contig name following a final `:`. Is this still
 an issue? Are we excluding data by using their intervals for paralellizing tasks?
 
+# sampleName vs RG.SM
+
+sampleName is used for naming files and merging together multiple input read files (fastqs) into 
+a single bam for the sample. RG SM is very similar but intentionally left separate to support 
+several "samples" from a single "specimen". 
+
+
