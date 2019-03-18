@@ -1,0 +1,28 @@
+{% macro vcfmerger2(pair, callers, aligner='bwa') %}
+
+- name: vcfmerger2_{{ pair.name }}_{{ aligner }}
+  tags: [vcfMerger2, {{ pair.name }}]
+  input:
+  {% for caller in callers %}
+    - {{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz
+  {% endfor %}
+  cpus: 4
+  walltime: "24:00:00"
+  cmd: |
+    set -ue
+
+    NORMAL_BAM="{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam }}"
+
+    vcfMerger2.py \
+      -g "{{ constants.phoenix.reference_fasta }}" \
+      --bam "${NORMAL_BAM}||" \
+      --toolnames "{{ callers.join('|') }}" \
+      --vcfs "" \
+      --prep-outfilenames "{{ callers| }} \
+      --normal-sname {{ pair.normal.name }} \
+      --tumor-sname {{ pair.tumor.name }} \
+      -o "{{ pair.glType }}/somatic_variant_calls/vcfMerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
+
+
+
+{% endmacro %}
