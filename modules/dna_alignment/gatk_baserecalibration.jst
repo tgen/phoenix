@@ -3,7 +3,6 @@
 {% macro baserecalibration(sample, aligner='bwa') %}
 
 {% for batch in constants.phoenix.all_intervals %}
-{% set batch_loop=loop %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-BaseRecalibrator, {{ sample.glType }}]
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
@@ -23,7 +22,7 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      {% if batch_loop.last %}
+      {% if loop.last %}
       -L "unmapped" \
       {% endif %}
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
@@ -51,7 +50,6 @@
 
 
 {% for batch in constants.phoenix.all_intervals %}
-{% set batch_loop=loop %}
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-ApplyBQSR]
   methods: Reads for {{ sample.name }} were processed with
@@ -72,7 +70,7 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      {% if batch_loop.last %}
+      {% if loop.last %}
       -L "unmapped" \
       {% endif %}
       -O "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
