@@ -1,59 +1,78 @@
 # Phoenix
 
-This pipeline consists of subtemplates (jst files found throughout this 
-directory) that will only be used if specific data types are present in the 
-project. E.g. If RNA FASTQs are present, the RNA module will be used, but 
-otherwise it will not be included. "Features" are enabled/disabled purely
-by the content of the project. This pattern is discussed in more detail in the
-[implementation](implementation) section.
+## Features
 
-# Features
+_Click to show details_
 
-## DNA Alignment
+<details>
+  <summary><b>DNA Alignment</b></summary>
 
-The DNA Alignment module looks for fastq data in the read_groups section of
-the config. Read groups will be aligned, post-processed, and qc'ed.
+  The DNA Alignment module takes fastqs to aligned BAMs, then runs BAM qc steps.
+  `dnaAlignmentStyle` can be used to select from different alignment strategies.
 
-## Somatic Variant Calling
+</details>
 
-This module will run several somatic variant callers on tumor/normal data pairs.
+<details>
+  <summary><b>Somatic Variant Calling</b></summary>
+  
+  This module will run several somatic variant callers on tumor/normal 
+  data pairs:
 
-## Germline Variant Calling
+  - Strelka2 (Somatic mode)
+  - Mutect2
+  - Lancet
 
-Generates germline variant call files (VCF) with several callers. Additionally,
-this will create a gVCF for each sample that can be used to jointly call large
-cohorts.
+</details>
+
+<details>
+  <summary><b>Germline Variant Calling</b></summary>
+  
+  Generates germline variant call files (VCF) with several callers. Additionally,
+  this will create a gVCF for each sample that can be used to jointly call large
+  cohorts.
+
+  - GATK HaplotypeCaller (gVCF mode)
+  - Freebayes
+  - Strelka2 (Germline mode)
+  - Octopus (Individual)
+
+</details>
 
 
-# Notes
+## Config
 
-- fields:
-    glType: genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip
-    glPrep: genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip
-  S5U:
-    original_bed:
-    targets_interval_list:
-    baits_interaval_list:
-    extended_bed:
-    cna_index_bed:
-    unmatched_cna_index_bed:
-  STX:
-    original_bed:
-    targets_interval_list:
-    baits_interaval_list:
-    extended_bed:
-    cna_index_bed:
-    unmatched_cna_index_bed:
-  note: khwgl vs khstx vs kh 
 
-- Somatic variant calling Mutect must know the SM of the tumor/normal. If we do data merging
-  based on sampleName (or sampleMergeKey), and sampleName is _different_ than rgsm. What will
-  happen?
+### Data file attributes
 
-- For single samples, Broad using haplotypecaller -ERC GVCF followed by ValidateGVCF?
+  - *glType* [genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]
+    
+    Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
+    tasks to the final workflow. Each sample discovered will take this attribute from
+    the first file encountered for that sample in the config file.
 
-- duplicate variant calling steps these for exome and genome?
+  - *glPrep* [genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]
 
-- GATK tools have bug which trims everything from contig name following a final `:`. Is this still
-an issue? Are we excluding data by using their intervals for paralellizing tasks?
+    Not used yet.
 
+  - rnaStrandDirection 
+    rnaStrandType
+    readOrientation
+
+    assayCode
+    fastqCode [R1|R2]
+    fastqPath
+    fileType
+    numberOfReads
+    
+    rgcn
+    rgid
+    rgks
+    rglb
+    rgpl
+    rgpm
+    rgpu
+    rgsm
+
+    sampleMergeKey
+    sampleName
+    subGroup

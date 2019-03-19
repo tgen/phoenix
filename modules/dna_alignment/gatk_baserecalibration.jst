@@ -1,7 +1,9 @@
 # This macro adds tasks for running GATK BaseRecalibrator on the output
 # from markdups.
 {% macro baserecalibration(sample, aligner='bwa') %}
+
 {% for batch in constants.phoenix.all_intervals %}
+{% set batch_loop=loop %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-BaseRecalibrator, {{ sample.glType }}]
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
@@ -20,10 +22,10 @@
       {% endfor %}
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
-      {% if loop.last %}
+      {% endfor %}
+      {% if batch_loop.last %}
       -L "unmapped" \
       {% endif %}
-      {% endfor %}
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       --output "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table"
 
@@ -49,6 +51,7 @@
 
 
 {% for batch in constants.phoenix.all_intervals %}
+{% set batch_loop=loop %}
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-ApplyBQSR]
   methods: Reads for {{ sample.name }} were processed with
@@ -68,10 +71,10 @@
       --bqsr-recal-file "temp/{{ sample.name }}.{{ aligner }}.recal_data.table" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
-      {% if loop.last %}
+      {% endfor %}
+      {% if batch_loop.last %}
       -L "unmapped" \
       {% endif %}
-      {% endfor %}
       -O "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
 
 {% endfor %}
@@ -86,10 +89,11 @@
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/"
 
-    gatk GatherBams \
+    gatk GatherBamFiles \
       --OUTPUT "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       {% for b in constants.phoenix.all_intervals %}
       --INPUT "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
