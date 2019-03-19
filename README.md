@@ -27,6 +27,25 @@ cohorts.
 
 # Notes
 
+- fields:
+    glType: genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip
+    glPrep: genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip
+  S5U:
+    original_bed:
+    targets_interval_list:
+    baits_interaval_list:
+    extended_bed:
+    cna_index_bed:
+    unmatched_cna_index_bed:
+  STX:
+    original_bed:
+    targets_interval_list:
+    baits_interaval_list:
+    extended_bed:
+    cna_index_bed:
+    unmatched_cna_index_bed:
+  note: khwgl vs khstx vs kh 
+
 - Somatic variant calling Mutect must know the SM of the tumor/normal. If we do data merging
   based on sampleName (or sampleMergeKey), and sampleName is _different_ than rgsm. What will
   happen?

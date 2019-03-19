@@ -222,7 +222,7 @@
 {% endfor %}
 {% endfor %}
 
-- name: merge_bam_chunks_{{ sample.name }}
+- name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [samtools, samtools-merge, {{ sample.glType }}]
   after:
     re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*

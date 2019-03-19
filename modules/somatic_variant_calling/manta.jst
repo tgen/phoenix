@@ -1,4 +1,5 @@
 {% macro manta_somatic(pair, aligner='bwa') %}
+
 - name: manta_somatic_{{ pair.name }}_{{ aligner }}
   tags: [manta, manta-somatic, {{ pair.glType }}]
   methods: > 

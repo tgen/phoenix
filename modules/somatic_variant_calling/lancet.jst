@@ -1,6 +1,8 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
 {% macro lancet(pair, aligner='bwa') %}
+{% do pair.callers.append('lancet') %}
+
 {% for batch in constants.phoenix.calling_intervals %}
 - name: lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [lancet, {{ pair.name }}]

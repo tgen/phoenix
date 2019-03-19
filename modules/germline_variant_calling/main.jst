@@ -8,7 +8,7 @@
 
 
 {% macro germline_variant_calling(samples) %}
-{% for sample in samples.values() if sample.glType|lower == 'genome' %}
+{% for sample in samples.values() if sample.glType|lower == 'genome' and sample.subGroup != 'tumor' %}
     {% if tasks.haplotypecallergvcf_genome|default(True) %}
         {{- haplotypecallergvcf(sample, aligner='bwa') }}
     {% endif %}
@@ -37,7 +37,7 @@
 {% endfor %}
 
 
-{% for sample in samples.values() if sample.glType|lower == 'exome' %}
+{% for sample in samples.values() if sample.glType|lower == 'exome' and sample.subGroup != 'tumor' %}
     {% if tasks.haplotypecallergvcf_exome|default(True) %}
         {{- haplotypecallergvcf(sample, aligner='bwa') }}
     {% endif %}

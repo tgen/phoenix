@@ -1,4 +1,5 @@
 {% macro strelka2_somatic(pair, aligner='bwa') %}
+{% do pair.callers.append('strelka2') %}
 - name: strelka2_somatic_{{ pair.name }}_{{ aligner }}
   tags: [strelka2, strelka2-somatic, {{ pair.glType }}]
   methods: > 

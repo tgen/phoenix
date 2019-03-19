@@ -1,28 +1,34 @@
-{% macro vcfmerger2(pair, callers, aligner='bwa') %}
+{% macro vcfmerger2(pair, aligner='bwa') %}
+
+{% set bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+
+{% set vcfs = [] %}
+{% for caller in pair.callers %}
+{% set vcf %}{{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
+{% do vcfs.append(vcf) %}
+{% endfor %}
 
 - name: vcfmerger2_{{ pair.name }}_{{ aligner }}
   tags: [vcfMerger2, {{ pair.name }}]
   input:
-  {% for caller in callers %}
-    - {{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz
+  {% for vcf in vcfs %}
+    - {{ vcf }}
   {% endfor %}
   cpus: 4
   walltime: "24:00:00"
   cmd: |
     set -ue
 
-    NORMAL_BAM="{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam }}"
+    module load {{ constants.tools.samtools_1_9.module }}
 
     vcfMerger2.py \
       -g "{{ constants.phoenix.reference_fasta }}" \
-      --bam "${NORMAL_BAM}||" \
-      --toolnames "{{ callers.join('|') }}" \
-      --vcfs "" \
-      --prep-outfilenames "{{ callers| }} \
-      --normal-sname {{ pair.normal.name }} \
-      --tumor-sname {{ pair.tumor.name }} \
+      --bam "{{ bam }}||" \
+      --toolnames "{{ pair.callers|join('|') }}" \
+      --vcfs "{{ vcfs|join('|') }}" \
+      --prep-outfilenames "{% for c in pair.callers %}{{ 'temp/%s.%s.prep.vcf'|format(pair.name, c) }}{% if not loop.last %}|{% endif %}{% endfor %}" \
+      --normal-sname {{ pair.normal.rgsm }} \
+      --tumor-sname {{ pair.tumor.rgsm }} \
       -o "{{ pair.glType }}/somatic_variant_calls/vcfMerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
-
-
 
 {% endmacro %}

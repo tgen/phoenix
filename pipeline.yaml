@@ -3,6 +3,159 @@ main: main.jst
 description: Human GRCh38 genomics suite
 version: 1.1.0b
 constants:
+  tools:
+    bwa_0_7_17:
+      module: bwa/0.7.17
+      version: "0.7.17"
+      verbose: Burrows-Wheeler Aligner v0.7.17
+      website: http://bio-bwa.sourceforge.net
+      citation: >
+        Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
+        Bioinformatics, 25:1754-60. [PMID: 19451168]
+    freebayes_1_2:
+      module: freebayes/1.2
+      version: "1.2"
+      verbose: Freebayes v1.2
+      website: https://github.com/ekg/freebayes
+      citation: >
+        Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing.
+        arXiv preprint arXiv:1207.3907 [q-bio.GN] 2012
+    gatk_4_1_0_0:
+      module: gatk/4.1.0.0
+      version: "4.1.0.0"
+      verbose: Genome Analysis Toolkit v4.1.0.0
+      website: https://software.broadinstitute.org/gatk/
+      citation: >
+        The Genome Analysis Toolkit: a MapReduce framework for analyzing
+        next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
+        Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
+        Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
+    hmmcopy_utils_1_0:
+      module: HMM_Copy_Utils/1.0
+      version: "1.0"
+      verbose: HMM Copy Utils v1.0
+      website: https://github.com/shahcompbio/hmmcopy_utils
+      citation: >
+        Daniel Lai dalai@bccrc.ca Department of Molecular Oncology, BC Cancer
+        Research Agency Date: August 02, 2011
+    htseq_0_6_1:
+      module: HTSeq/0.6.1
+      version: 0.6.1
+      verbose: HTSeq v0.6.1
+      website: https://htseq.readthedocs.io
+      citation: >
+        Simon Anders, Paul Theodor Pyl, Wolfgang Huber
+        HTSeq — A Python framework to work with high-throughput sequencing data
+        Bioinformatics (2014), in print, online at doi:10.1093/bioinformatics/btu638
+    ichorcna_0_1_0:
+      module: R/3.4.1
+      launcher: /home/tgenref/binaries/scripts/ichorCNA/0.1.0-1d54a1f/runIchorCNA.R
+      version: "0.1.0-1d54a1f"
+      verbose: ichorCNA v0.1.0 (1d54a1f)
+      website: https://github.com/broadinstitute/ichorCNA
+      citation: >
+        Adalsteinsson, Ha, Freeman, et al. Scalable whole-exome sequencing of
+        cell-free DNA reveals high concordance with metastatic tumors. (2017)
+        Nature Communications Nov 6;8(1):1324. doi: 10.1038/s41467-017-00965-y
+    lancet_1_0_7:
+      module: lancet/1.0.7
+      version: "1.0.7"
+      verbose: lancet v1.0.7
+      website: https://github.com/nygenome/lancet
+      citation: >
+        Narzisi G, Corvelo A, Arora K, Bergmann E, Shah M, Musunuri R, Emde AK, Robine N, Vacic V,
+        Zody MC. Genome-wide somatic variant calling using localized colored de Bruijn graphs.
+        Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
+        (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
+    manta_1_4:
+      module: manta/1.4
+      version: "1.4"
+      verbose: Manta v1.4
+      website: https://github.com/Illumina/manta
+      citation: >
+        Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
+        cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
+    rstats_3_4_1:
+      module: R/3.4.1
+      version: "3.4.1"
+      verbose: R v3.4.1
+      website: https://www.r-project.org
+      citation: >
+        R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
+        Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+    samtools_1_7:
+      module: samtools/1.7
+      version: "1.7"
+      verbose: SAMtools v1.7
+      website: http://www.htslib.org
+      citation: >
+        Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
+        Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
+        Bioinformatics (2009) 25(16) 2078-9 [19505943]
+    samtools_1_9:
+      module: samtools/1.9
+      version: "1.9"
+      verbose: SAMtools v1.9
+      website: http://www.htslib.org
+      citation: >
+        Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
+        Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
+        Bioinformatics (2009) 25(16) 2078-9 [19505943]
+    salmon_0_12_0:
+      module: salmon/0.12.0
+      version: "0.12.0"
+      verbose: Salmon v0.12.0
+      website: https://combine-lab.github.io/salmon/
+      citation: >
+        Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
+        fast and bias-aware quantification of transcript expression. Nature Methods.
+    snpeff_4_3t:
+      module: snpEff/v4_3t
+      version: "4.3T"
+      verbose: SnpEff v4.3T
+      website: http://snpeff.sourceforge.net/index.html
+      citation: >
+        A program for annotating and predicting the effects of single
+        nucleotide polymorphisms, SnpEff: SNPs in the genome of Drosophila
+        melanogaster strain w1118; iso-2; iso-3.", Cingolani P, Platts A, Wang
+        le L, Coon M, Nguyen T, Wang L, Land SJ, Lu X, Ruden DM. Fly (Austin).
+        2012 Apr-Jun;6(2):80-92. PMID: 22728672
+    star_2_6_1d:
+      module: STAR/2.6.1d
+      version: 2.6.1d
+      verbose: STAR v2.6.1d
+      website: https://github.com/alexdobin/STAR
+      citation: >
+        Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P,
+        Chaisson M, Gingeras TR. STAR: ultrafast universal RNA-seq aligner.
+        Bioinformatics. 2013 Jan 1;29(1):15-21. doi: 10.1093/bioinformatics/bts635. Epub
+        2012 Oct 25. PubMed PMID: 23104886; PubMed Central PMCID: PMC3530905.
+    star_fusion_1_5_0:
+      module: STAR-Fusion/1.5.0
+      version: 1.5.0
+      verbose: STAR-Fusion v1.5.0
+      website: https://github.com/STAR-Fusion/STAR-Fusion
+      citation: >
+        "STAR-Fusion: Fast and Accurate Fusion Transcript Detection from RNA-Seq
+        Brian Haas, Alexander Dobin, Nicolas Stransky, Bo Li, Xiao Yang, Timothy Tickle,
+        Asma Bankapur, Carrie Ganote, Thomas Doak, Natalie Pochet, Jing Sun, Catherine Wu,
+        Thomas Gingeras, Aviv Regev bioRxiv 120295; doi: https://doi.org/10.1101/120295"
+    strelka_2_9_2:
+      module: strelka/2.9.2
+      version: "2.9.2"
+      verbose: Strelka2 Small Variant Caller v2.9.2
+      website: https://github.com/Illumina/strelka
+      citation: >
+        Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
+        variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
+    verifybamid2_1_0_5:
+      module: verifybamID/1.0.5
+      version: 1.0.5
+      website: https://github.com/Griffan/VerifyBamID
+      citation: >
+        Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
+        Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
+        sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38

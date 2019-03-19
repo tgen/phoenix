@@ -10,10 +10,11 @@
 {% from 'modules/somatic_variant_calling/lancet.jst' import lancet with context %}
 {% from 'modules/somatic_variant_calling/manta.jst' import manta_somatic with context %}
 {% from 'modules/somatic_variant_calling/strelka2.jst' import strelka2_somatic with context %}
-
+{% from 'modules/somatic_variant_calling/vcfmerger2.jst' import vcfmerger2 with context %}
 
 
 {% macro somatic_variant_calling(samples) %}
+
 {% if somatic_variant_calling_pairs is defined %}
     # Pairs can be a predefined list of objects: 
     # [{"tumor": <tumor name>, "normal": <normal name>},...]
@@ -45,6 +46,10 @@
         {% endfor %}
     {% endfor %}
 {% endif %}
+
+# Caller macros that are used will add their name to the pair.caller list and then
+# vcfmerger will run on the callers that were used for that pair.
+{% for pair in pairs %}{% do pair.update({'callers': []}) %}{% endfor %}
 
 # Start of the macro calls that will actually add the tasks to the workflow
 {% for pair in pairs if pair.glType == 'genome' %}
@@ -83,5 +88,8 @@
     {% endif %}
 {% endfor %}
 
+{% for pair in pairs %}
+    {{- vcfmerger2(pair, aligner='bwa') }}
+{% endfor %}
 
 {% endmacro %}
