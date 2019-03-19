@@ -57,16 +57,15 @@
     - {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
   walltime: "24:00:00"
   cpus: 2
-  mem: 8G
+  mem: 16G
   cmd: |
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     source activate gatk
 
     gatk CNNScoreVariants \
-      --verbosity DEBUG \
       --tmp-dir "temp" \
-      --java-options "-Xmx6G" \
+      --java-options "-Xmx14G" \
       --tensor-type read_tensor \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \

@@ -85,14 +85,14 @@
   cpus: 4
   cmd: |
     set -uev
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/"
 
-    samtools merge \
-      -f "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+    gatk GatherBams \
+      --OUTPUT "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       {% for b in constants.phoenix.all_intervals %}
-      "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
+      --INPUT "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
       {% endfor %}
 
     samtools index "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
