@@ -38,10 +38,32 @@ cohorts.
 - GATK tools have bug which trims everything from contig name following a final `:`. Is this still
 an issue? Are we excluding data by using their intervals for paralellizing tasks?
 
-# sampleName vs RG.SM
+# TGen Naming Convention
+- The naming format used in the LIMS trys to ensures all specimens have unique file names based on specific metadata fields
+
+STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY<br/>
+----------------- PatientID<br/>
+---------------------- VisitID<br/>
+--------------------------------- SpecimenID<br/>
+----------------------------------------------------------------- SampleID<br/>
+----------------------------------------------------------------- RG.SM (VCF file genotype column header)<br/>
+------------------------------------------------------------------------- sampleMergeKey (BAM filename)<br/>
+
+# sampleName vs RG.SM vs sample_mergeKey
 
 sampleName is used for naming files and merging together multiple input read files (fastqs) into 
 a single bam for the sample. RG SM is very similar but intentionally left separate to support 
 several "samples" from a single "specimen". 
+#### RG.SM
+STUDY_1234_1_PB_Whole_C1
+- This is the value we expect to be in the header of any VCF genotype column related to sample in question
+- Allows rapid comparison between assays for the same patient
+#### sampleMergeKey
+STUDY_1234_1_PB_Whole_C1_KHWGS
+- This key is used to merge data from multiple sequencing lanes or flowcells for data from the same specimen tested with the same assay
+- This is the expected BAM filename
+#### sampleName
+STUDY_1234_1_PB_Whole_C1_KHWGS_K12345
+- This is the expected base FASTQ filename
 
 
