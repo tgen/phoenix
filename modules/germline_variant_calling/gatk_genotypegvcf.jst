@@ -14,6 +14,7 @@
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/"
 
     gatk GenotypeGVCFs \
+      --tmp-dir "temp" \
       --java-options "-Xmx14G" \
       --reference {{ constants.phoenix.reference_fasta }} \
       {% for interval in batch %}
@@ -38,6 +39,7 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk MergeVcfs \
+      --tmp-dir "temp" \
       --java-options "-Xmx14G" \
       {% for batch in constants.phoenix.calling_intervals %}
       --INPUT "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
@@ -49,7 +51,8 @@
     {% endif %}
 
 
-- name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}
+{% for batch in constants.phoenix.calling_intervals %}
+- name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input: 
     - {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz
     - {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
@@ -62,15 +65,47 @@
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     source activate gatk
+    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/"
 
     gatk CNNScoreVariants \
       --tmp-dir "temp" \
       --java-options "-Xmx14G" \
       --tensor-type read_tensor \
+      {% for interval in batch %}
+      --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz" \
       --input "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      --output "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz"
+      --output "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz"
+      --output 
+
+{% endfor %}
+
+
+- name: cnnscorevariants2d_merge_{{ sample.name }}_{{ aligner }}
+  after: 
+    re: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_.*
+  output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 16G
+  cmd: |
+    #!/bin/bash
+    set -euv
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    gatk MergeVcfs \
+      --tmp-dir "temp" \
+      --java-options "-Xmx14G" \
+      {% for batch in constants.phoenix.calling_intervals %}
+      --INPUT "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz" \
+      {% endfor %}
+      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.vcf.gz"
+
+    {% if not debug %}
+    rm -r "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/"
+    {% endif %}
 
 
 - name: haplotypecaller_filter_variants_{{ sample.name }}_{{ aligner }}
@@ -91,6 +126,7 @@
       > "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
 
     bcftools index "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
+
 
 
 {% endmacro %}
