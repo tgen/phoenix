@@ -17,6 +17,7 @@
     set -euv
     module load {{ constants.tools.strelka_2_9_2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.python_2_7_15.module }}
 
     PAIR_DIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}"
     RUN_DIR="${PAIR_DIR}/run_dir"

@@ -14,6 +14,7 @@
     set -euv
     module load {{ constants.tools.manta_1_4.module }}
     module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.python_2_7_15.module }}
 
     SAMPLE_DIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}"
     RUN_DIR="${SAMPLE_DIR}/run_dir"

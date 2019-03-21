@@ -16,6 +16,7 @@
     set -euv
     module load {{ constants.tools.manta_1_4.module }}
     module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.python_2_7_15.module }}
 
     PAIR_DIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}"
     RUN_DIR="${PAIR_DIR}/run_dir"

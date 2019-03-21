@@ -75,6 +75,13 @@ constants:
       citation: >
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
+    python_2_7_15:
+      module: python/2.7.15
+      version: 2.7.15
+      verbose: Python v2.7.15
+      website: https://www.python.org
+      citation: > 
+        Python Software Foundation. Python Language Reference, version 2.7.15. Available at http://www.python.org
     rstats_3_4_1:
       module: R/3.4.1
       version: "3.4.1"
