@@ -2,17 +2,18 @@
 
 {% set bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 
-{% set vcfs = [] %}
-{% for caller in pair.callers %}
-{% set vcf %}{{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
-{% do vcfs.append(vcf) %}
+{% set vcfs=[] %}
+    {% for caller in pair.callers %}
+    {% set gzipped_path %}{{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
+    {% set unzipped_path %}temp/vcfmerger2/{{ pair.name }}_{{ aligner }}_{{ caller }}.vcf{% endset %}
+    {% do vcfs.append({'gzipped_path': gzipped_path, 'unzipped_path': unzipped_path}) %}
 {% endfor %}
 
 - name: vcfmerger2_{{ pair.name }}_{{ aligner }}
   tags: [vcfMerger2, {{ pair.name }}]
   input:
   {% for vcf in vcfs %}
-    - {{ vcf }}
+    - {{ vcf.gzipped_path }}
   {% endfor %}
   cpus: 4
   walltime: "24:00:00"
@@ -20,15 +21,23 @@
     set -ue
 
     module load {{ constants.tools.samtools_1_9.module }}
+    
+    mkdir "temp/vcfmerger2/"
+
+    {% for vcf in vcfs %}
+    gunzip -c "{{ vcf.gzipped_path }}" > "{{ vcf.unzipped_path }}"
+    {% endfor %}
 
     vcfMerger2.py \
       -g "{{ constants.phoenix.reference_fasta }}" \
       --bam "{{ bam }}||" \
       --toolnames "{{ pair.callers|join('|') }}" \
-      --vcfs "{{ vcfs|join('|') }}" \
+      --vcfs "{{ vcfs|map(attribute='unzipped_path')|join('|') }}" \
       --prep-outfilenames "{% for c in pair.callers %}{{ 'temp/%s.%s.prep.vcf'|format(pair.name, c) }}{% if not loop.last %}|{% endif %}{% endfor %}" \
       --normal-sname {{ pair.normal.rgsm }} \
       --tumor-sname {{ pair.tumor.rgsm }} \
       -o "{{ pair.glType }}/somatic_variant_calls/vcfMerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
+
+    rm -r "temp/vcfmerger2/"
 
 {% endmacro %}
