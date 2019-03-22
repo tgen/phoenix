@@ -42,7 +42,7 @@
       -T "temp/markdup_{{ sample.name }}_bwa/" \
       "temp/{{ sample.name }}.bwa.bam" \
       "temp/{{ sample.name }}.bwa.md.bam" \
-      2> "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.markdup.txt"
+      2> "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
 
     samtools index "temp/{{ sample.name }}.bwa.md.bam"
     rm -r "temp/markdup_{{ sample.name }}_bwa/"
