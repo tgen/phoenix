@@ -12,6 +12,30 @@
     {% endfor %}
 {% endfor %}
 
+
+{% set library_format = [] %}
+
+{% if sample.readOrientation|default('')|lower == 'inward' %}
+  {% do library_format.append('I') %}
+{% elif sample.readOrientation|default('')|lower == 'outward' %}
+  {% do library_format.append('O') %}
+{% elif sample.readOrientation|default('')|lower == 'matching' %}
+  {% do library_format.append('M') %}
+{% endif %}
+
+{% if sample.rnaStrandType|default('')|lower == 'stranded' %}
+  {% do library_format.append('S') %}
+{% elif sample.rnaStrandType|default('')|lower == 'unstranded' %}
+  {% do library_format.append('U') %}
+{% endif %}
+
+{% if sample.rnaStrandDirection|default('')|lower == 'forward' %}
+  {% do library_format.append('F') %}
+{% elif sample.rnaStrandDirection|default('')|lower == 'reverse' %}
+  {% do library_format.append('R') %}
+{% endif %}
+
+
 - name: salmon_quant_cdna_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
@@ -37,7 +61,7 @@
       --seqBias \
       --gcBias \
       --threads 14 \
-      --libType IU \
+      --libType {% if library_format %}{{ library_format|join('') }}{% else %}IU{% endif %} \
       --index "{{ constants.phoenix.salmon_index }}" \
       --geneMap <(zcat "{{ constants.phoenix.gtf }}") \
       -1 {{ r1fqlist|join(' ') }} \
