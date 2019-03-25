@@ -22,6 +22,9 @@
 
 {% endfor %}
 
+{% set read_length = sample.read_length|default('default') %}
+{% set star_index = constants.phoenix.star_indices[read_length] %}
+
 - name: star_quant_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
@@ -65,7 +68,7 @@
       --runMode alignReads \
       --runThreadN 14 \
       --seedSearchStartLmax 30 \
-      --genomeDir "{{ constants.phoenix.star_index }}" \
+      --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
       --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}_"
