@@ -53,10 +53,9 @@ _Click to show details_
 
     Not used yet.
 
-  - rnaStrandDirection 
-    rnaStrandType
-    readOrientation
-
+  - rnaStrandDirection [NotApplicable|]
+    rnaStrandType [NotApplicable|]
+    readOrientation [Inward|]
     assayCode
     fastqCode [R1|R2]
     fastqPath
