@@ -82,6 +82,13 @@ constants:
       website: https://www.python.org
       citation: > 
         Python Software Foundation. Python Language Reference, version 2.7.15. Available at http://www.python.org
+    python_3_6_0:
+      module: python/3.6.0
+      version: 3.6.0
+      verbose: Python v3.6.0
+      website: https://www.python.org
+      citation: > 
+        Python Software Foundation. Python Language Reference, version 3.6.0. Available at http://www.python.org
     rstats_3_4_1:
       module: R/3.4.1
       version: "3.4.1"
@@ -172,7 +179,7 @@ constants:
       - ${REF}/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - ${REF}/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
       - ${REF}/homo_sapiens/grch38_hg38/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-    bwa_index: ${REF}/homo_sapiens/grch38_hg38/tool_resources/bwa_0_7_17/GRCh38tgen_decoy_alts_hla.fa
+    bwa_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0_7_17/GRCh38tgen_decoy_alts_hla.fa
     gtf: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.UCSC.gtf.gz
     transcriptome_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.UCSC.transcriptome.fasta
     salmon_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
@@ -186,6 +193,8 @@ constants:
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
     snpeff_db: GRCh38
     capture_kits:
+      # Capture kits have a defined genomic space where they are designed
+      # to target. Using 
       default:
         source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list

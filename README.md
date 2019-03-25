@@ -1,5 +1,13 @@
 # Phoenix
 
+# Notes for 0325 meeting
+
+- CNNScoreVariants Filter tranches?
+
+- Strexome liftover
+
+- Any other tasks that need toggles?
+
 ## Features
 
 _Click to show details_
