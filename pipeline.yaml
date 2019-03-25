@@ -186,6 +186,10 @@ constants:
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
     snpeff_db: GRCh38
     capture_kits:
+      default:
+        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
+        targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list
+        extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.extended.bed
       S5U:
         source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs.targets.interval_list

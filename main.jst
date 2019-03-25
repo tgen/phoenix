@@ -64,6 +64,16 @@
     {% do samples[name]['read_groups'][rgid].update({'data_files': data_files}) %}
 {% endfor %}
 
+# Setup capture kit props for exome samples
+{% for sample in samples.values() if sample.glType == 'exome' %}
+    {% do sample.update({'library_code': sample.assayCode[0:2]|upper}) %}
+    {% do sample.update({'capture_kit_code': sample.assayCode[2:5]|upper}) %}
+    {% if sample.capture_kit_code in constants.phoenix.capture_kits %}
+        {% do sample.update({'capture_kit': constants.phoenix.capture_kits[sample.capture_kit_code]}) %}
+    {% else %}
+        {% do sample.update({'capture_kit': constants.phoenix.capture_kits['default']}) %}
+    {% endif %}
+{% endfor %}
 
 # Start of module imports
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}

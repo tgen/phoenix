@@ -173,9 +173,6 @@
 
 
 {% elif sample.glType|lower == 'exome' %}
-{% set library_code = sample.assayCode[0:2] %}
-{% set capture_kit_code = sample.assayCode[2:5] %}
-
 - name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collecthsmetrics, {{ sample.name}}]
   input: {{ bam_path }}
@@ -192,8 +189,10 @@
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
-      --BAIT_INTERVALS "{{ constants.capture_kits[capture_kit_code].probes }}" \
-      --TARGET_INTERVALS "{{ constants.capture_kits[capture_kit_code].targets }}"
+      --TARGET_INTERVALS "{{ sample.capture_kit.targets_interval_list }}" \
+      {% if sample.capture_kit.baits_interval_list is defined %}
+      --BAIT_INTERVALS "{{ sample.capture_kit.baits_interval_list }}"
+      {% endif %}
 
 {% endif %}
 
