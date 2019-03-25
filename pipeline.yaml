@@ -179,11 +179,13 @@ constants:
       - ${REF}/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - ${REF}/homo_sapiens/grch38_hg38/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
       - ${REF}/homo_sapiens/grch38_hg38/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-    bwa_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0_7_17/GRCh38tgen_decoy_alts_hla.fa
+    bwa_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
     gtf: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.UCSC.gtf.gz
     transcriptome_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.UCSC.transcriptome.fasta
     salmon_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
     star_indices:
+      # Multiple STAR references defined here in order to accommodate 
+      # RNA data with different read lengths.
       default: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/STAR_2.6.1d/100bpReads
       75: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/STAR_2.6.1d/75bpReads
       100: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/STAR_2.6.1d/100bpReads
@@ -194,7 +196,9 @@ constants:
     snpeff_db: GRCh38
     capture_kits:
       # Capture kits have a defined genomic space where they are designed
-      # to target. Using 
+      # to target. Here are files describing the regions that are covered
+      # by each capture kit. These are used for filtering variants and 
+      # calculating coverage metrics.
       default:
         source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list
@@ -422,7 +426,7 @@ constants:
       - {"contig": "chrUn_GL000218v1", "length": 161147}
     calling_intervals:
       # Calling contigs broken down into smaller batches of intervals. These intervals
-      # are taken from GATK Resource Bundle and describe intervals that can be safely
+      # are taken from GATK Resource Bundle and describe regions that can be safely
       # called independently for SNP/small indel genotyping.
       - - {"contig": "chr1", "length": 197665, "start": 10001, "stop": 207666}
         - {"contig": "chr1", "length": 40301, "start": 257667, "stop": 297968}

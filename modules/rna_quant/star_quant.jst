@@ -22,7 +22,7 @@
 
 {% endfor %}
 
-{% set read_length = sample.read_length|default('default') %}
+{% set read_length = sample.star_index|default('default') %}
 {% set star_index = constants.phoenix.star_indices[read_length] %}
 
 - name: star_quant_{{ sample.name }}
