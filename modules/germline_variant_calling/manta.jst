@@ -6,8 +6,10 @@
     ({{ aligner }}) were called with {{ constants.tools.manta_1_4.verbose }}.
   input:
     - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: 
-    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/
+  output:
+    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
   cpus: 40
   walltime: "24:00:00"
   cmd: |
@@ -16,8 +18,8 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    SAMPLE_DIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}"
-    RUN_DIR="${SAMPLE_DIR}/run_dir"
+    SAMPLE_DIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}"
+    RUN_DIR="${SAMPLE_DIR}/{{ sample.name }}_{{ aligner }}_run_dir"
 
     # Purge any existing run files prior to starting
     rm -r "${RUN_DIR}" || true
@@ -27,7 +29,7 @@
     # Manta requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Manta.
-    MANTA_BED="${SAMPLE_DIR}/callRegions.bed"
+    MANTA_BED="${RUN_DIR}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
     {% for contig in constants.phoenix.calling_contigs %}
@@ -52,9 +54,19 @@
     # Execute on the local machine with 39 parallel jobs
     "${RUN_DIR}/runWorkflow.py" -m local -j 39
 
-    # Move the final results out of the run_dir then compress the
-    # rest of the files for reference later
-    mv "${RUN_DIR}/results/"* "${SAMPLE_DIR}"
-    (cd "${SAMPLE_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
+    # Save the evidence bams to the sample dir
+    mkdir -p "${SAMPLE_DIR}/evidence/"
+    mv "${RUN_DIR}/evidence/"* "${SAMPLE_DIR}/evidence/"
+
+    # Save all the vcs in the sample dir
+    mv "${RUN_DIR}/variants/candidateSmallIndels.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+    mv "${RUN_DIR}/variants/candidateSmallIndels.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
+    mv "${RUN_DIR}/variants/candidateSV.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
+    mv "${RUN_DIR}/variants/candidateSV.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
+    mv "${RUN_DIR}/variants/diploidSV.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
+    mv "${RUN_DIR}/variants/diploidSV.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
+
+    # Remove the remaining files
+    rm -r "${RUN_DIR}"
 
 {% endmacro %}

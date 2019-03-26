@@ -6,9 +6,7 @@
     {{ constants.tools.strelka_2_9_2.verbose }}.
   input:
     - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/
-  output: 
-    - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/
+    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
   cpus: 40
   walltime: "24:00:00"
   cmd: |
@@ -17,8 +15,8 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}"
-    RUN_DIR="${SAMPLE_DIR}/run_dir"
+    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}"
+    RUN_DIR="${SAMPLE_DIR}/{{ sample.name }}_{{ aligner }}_rundir"
 
     # Purge any existing run files prior to starting
     rm -r "${RUN_DIR}" || true
@@ -28,7 +26,7 @@
     # strelka requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Strelka.
-    STRELKA_BED="${SAMPLE_DIR}/callRegions.bed"
+    STRELKA_BED="${RUN_DIR}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${STRELKA_BED}"
     {% for contig in constants.phoenix.calling_contigs %}
@@ -41,7 +39,7 @@
 
     # Some settings are only configurable via an ini file. Here 
     # we generate this ini file and save it to the run dir.
-    STRELKA_CONFIG="${SAMPLE_DIR}/config.ini"
+    STRELKA_CONFIG="${RUN_DIR}/config.ini"
     cat <<EOF > "${STRELKA_CONFIG}"
     [StrelkaGermline]
     isWriteRealignedBam = 1
@@ -54,23 +52,17 @@
       --config "${STRELKA_CONFIG}" \
       --callRegions "${STRELKA_BED}.gz" \
       --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      --indelCandidates "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}_{{ aligner }}/variants/candidateSmallIndels.vcf.gz" \
+      --indelCandidates "{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "${RUN_DIR}"
 
     # Execute on the local machine with 39 parallel jobs
     "${RUN_DIR}/runWorkflow.py" -m local -j 39
 
-    # Move the final results out of the run_dir then compress the
-    # rest of the files for reference later
-    mv "${RUN_DIR}/results/"* "${SAMPLE_DIR}"
-    (cd "${SAMPLE_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
-
 
 - name: strelka2_constitutional_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [strelka2, strelka2-constitutional, bcftools, {{ sample.glType }}]
-  input:
-    - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}/
+  after: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
   output:
     - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz
     - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz
@@ -78,11 +70,17 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}"
+    SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}"
+    RUN_DIR="${SAMPLE_DIR}/{{ sample.name }}_{{ aligner }}_rundir"
+
+    # Move and rename the evidence vcs
+    mkdir -p "${SAMPLE_DIR}/evidence"
+    mv "${RUN_DIR}/realigned/realigned.S1.bam" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "${RUN_DIR}/realigned/realigned.S1.bam.bai" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
 
     # Move and rename the the vcfs out of their generic location
-    mv "${SAMPLE_DIR}/variants/variants.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz" || true
-    mv "${SAMPLE_DIR}/variants/variants.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz.tbi" || true
+    mv "${RUN_DIR}/variants/variants.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz" || true
+    mv "${RUN_DIR}/variants/variants.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz.tbi" || true
 
     # Then filter out the PASS variants to a separate file
     bcftools filter \
@@ -91,7 +89,9 @@
       "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz" \
       > "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
 
-    bcftools index "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
+    bcftools index -t "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
 
+    # Finally remove the remaining files
+    rm -r "${RUN_DIR}"
 
 {% endmacro %}
