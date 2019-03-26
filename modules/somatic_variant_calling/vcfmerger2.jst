@@ -35,6 +35,7 @@
     
     ${PREPVCF} \
       -g "{{ constants.phoenix.reference_fasta }}" \
+      -d "temp/vcfmerger2" \
       --toolname "{{ caller }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
