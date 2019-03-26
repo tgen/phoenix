@@ -89,7 +89,7 @@
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Annotate with FilterVariantTranches 
-    gatk FilterVariantTranches\
+    gatk FilterVariantTranches \
       --java-options "-Xmx14G" \
       --info-key CNN_2D \
       --snp-tranche 99.9 \
