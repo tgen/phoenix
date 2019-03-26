@@ -93,7 +93,7 @@
       "${PAIR_DIR}/variants/somatic.indels.vcf.gz" \
       "${PAIR_DIR}/variants/somatic.snvs.vcf.gz"
 
-    bcftools index "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz"
+    bcftools index -t "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz"
 
     # Then filter out the PASS variants to a separate file
     bcftools filter \
@@ -102,7 +102,7 @@
       "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz" \
       > "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
 
-    bcftools index "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
+    bcftools index -t "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
 
 
 {% endmacro %}
