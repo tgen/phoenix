@@ -42,7 +42,7 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk \
-      --java-options "-Xms3000m" \
+      --java-options "-Xmx14G" \
       GatherBQSRReports \
       {% for b in constants.phoenix.sequence_groupings %}
       --input "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table" \
@@ -64,7 +64,7 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk ApplyBQSR \
-      --java-options "-Xms3000m" \
+      --java-options "-Xmx28G" \
       --useOriginalQualities \
       -SQQ 10 -SQQ 20 -SQQ 30 -SQQ 40 \
       --emit_original_quals \
@@ -96,6 +96,7 @@
     mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/"
 
     gatk GatherBamFiles \
+      --java-options "-Xmx14G" \
       --OUTPUT "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       {% for b in constants.phoenix.sequence_groupings %}
       --INPUT "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
