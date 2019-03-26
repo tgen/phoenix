@@ -2,7 +2,7 @@
 # from markdups.
 {% macro baserecalibration(sample, aligner='bwa') %}
 
-{% for batch in constants.phoenix.all_intervals %}
+{% for batch in constants.phoenix.sequence_groupings %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-BaseRecalibrator, {{ sample.glType }}]
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
@@ -13,14 +13,15 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk \
-      --java-options "-Xms3000m" \
+      --java-options "-Xmx14G" \
       BaseRecalibrator \
+      --useOriginalQualities \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% for vcf in constants.phoenix.gatk_known_sites %}
       --known-sites "{{ vcf }}" \
       {% endfor %}
       {% for interval in batch %}
-      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      -L "{{ interval }}:1+" \
       {% endfor %}
       {% if loop.last %}
       -L "unmapped" \
@@ -43,13 +44,13 @@
     gatk \
       --java-options "-Xms3000m" \
       GatherBQSRReports \
-      {% for b in constants.phoenix.all_intervals %}
+      {% for b in constants.phoenix.sequence_groupings %}
       --input "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table" \
       {% endfor %}
       --output "temp/{{ sample.name }}.{{ aligner }}.recal_data.table"
 
 
-{% for batch in constants.phoenix.all_intervals %}
+{% for batch in constants.phoenix.sequence_groupings %}
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, gatk-ApplyBQSR]
   methods: Reads for {{ sample.name }} were processed with
@@ -64,11 +65,14 @@
 
     gatk ApplyBQSR \
       --java-options "-Xms3000m" \
+      --useOriginalQualities \
+      -SQQ 10 -SQQ 20 -SQQ 30 -SQQ 40 \
+      --emit_original_quals \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       --bqsr-recal-file "temp/{{ sample.name }}.{{ aligner }}.recal_data.table" \
       {% for interval in batch %}
-      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      -L "{{ interval }}:1+" \
       {% endfor %}
       {% if loop.last %}
       -L "unmapped" \
@@ -93,7 +97,7 @@
 
     gatk GatherBamFiles \
       --OUTPUT "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      {% for b in constants.phoenix.all_intervals %}
+      {% for b in constants.phoenix.sequence_groupings %}
       --INPUT "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
       {% endfor %}
 
@@ -101,7 +105,7 @@
 
     # Cleanup the tempfiles
     {% if not debug %}
-    {% for b in constants.phoenix.all_intervals %}
+    {% for b in constants.phoenix.sequence_groupings %}
     rm "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
     {% endfor %}
     {% endif %}
