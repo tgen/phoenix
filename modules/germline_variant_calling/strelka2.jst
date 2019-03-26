@@ -73,7 +73,7 @@
     SAMPLE_DIR="{{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}"
     RUN_DIR="${SAMPLE_DIR}/{{ sample.name }}_{{ aligner }}_rundir"
 
-    # Move and rename the evidence vcs
+    # Move and rename the evidence bams
     mkdir -p "${SAMPLE_DIR}/evidence"
     mv "${RUN_DIR}/realigned/realigned.S1.bam" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam"
     mv "${RUN_DIR}/realigned/realigned.S1.bam.bai" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai"

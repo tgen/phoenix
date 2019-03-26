@@ -9,7 +9,10 @@
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   output: 
-    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}/
+    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
   cpus: 40
   walltime: "24:00:00"
   cmd: |
@@ -18,8 +21,8 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    PAIR_DIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}_{{ aligner }}"
-    RUN_DIR="${PAIR_DIR}/run_dir"
+    PAIR_DIR="{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}"
+    RUN_DIR="${PAIR_DIR}/{{ pair.name }}_{{ aligner }}_run_dir"
 
     # Purge any existing run files prior to starting
     rm -r "${RUN_DIR}" || true
@@ -29,7 +32,7 @@
     # Manta requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Manta.
-    MANTA_BED="${PAIR_DIR}/callRegions.bed"
+    MANTA_BED="${RUN_DIR}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
     {% for contig in constants.phoenix.calling_contigs %}
@@ -42,7 +45,7 @@
 
     # Some settings are only configurable via tha ini file. Here
     # we generate this ini file and save it to the run dir.
-    MANTA_CONFIG="${PAIR_DIR}/config.ini"
+    MANTA_CONFIG="${RUN_DIR}/config.ini"
     cat <<EOF > "${MANTA_CONFIG}"
     [manta]
     enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
@@ -64,9 +67,21 @@
     # Execute on the local machine with 39 parallel jobs
     "${RUN_DIR}/runWorkflow.py" -m local -j 39
    
-    # Move the final results out of the run_dir then compress the
-    # rest of the files for reference later
-    mv "${RUN_DIR}/results/"* "${PAIR_DIR}"
-    (cd "${PAIR_DIR}" && tar -cz --remove-files -f "run_dir.tar.gz" "run_dir")
+    # Save the evidence bams to the sample dir
+    mkdir -p "${PAIR_DIR}/evidence/"
+    mv "${RUN_DIR}/evidence/"* "${PAIR_DIR}/evidence/"
+
+    # Save all the vcs in the sample dir
+    mv "${RUN_DIR}/variants/candidateSmallIndels.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+    mv "${RUN_DIR}/variants/candidateSmallIndels.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
+    mv "${RUN_DIR}/variants/candidateSV.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
+    mv "${RUN_DIR}/variants/candidateSV.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
+    mv "${RUN_DIR}/variants/diploidSV.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
+    mv "${RUN_DIR}/variants/diploidSV.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
+    mv "${RUN_DIR}/variants/somaticSV.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz"
+    mv "${RUN_DIR}/variants/somaticSV.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
+
+    # Remove the remaining files
+    rm -r "${RUN_DIR}"
 
 {% endmacro %}
