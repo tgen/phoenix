@@ -27,8 +27,8 @@
 - name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   after: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 6
+  mem: 24G
   cmd: |
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
@@ -36,7 +36,7 @@
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/"
 
     gatk CNNScoreVariants \
-      --java-options "-Xmx14G" \
+      --java-options "-Xmx20G" \
       --tensor-type read_tensor \
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
