@@ -15,7 +15,7 @@
     gatk \
       --java-options "-Xmx14G" \
       BaseRecalibrator \
-      --useOriginalQualities \
+      --use-original-qualities \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% for vcf in constants.phoenix.gatk_known_sites %}
       --known-sites "{{ vcf }}" \
@@ -65,9 +65,12 @@
 
     gatk ApplyBQSR \
       --java-options "-Xmx28G" \
-      --useOriginalQualities \
-      -SQQ 10 -SQQ 20 -SQQ 30 -SQQ 40 \
-      --emit_original_quals \
+      --use-original-qualities \
+      --static-quantized-quals 10 \
+      --static-quantized-quals 20 \
+      --static-quantized-quals 30 \
+      --static-quantized-quals 40 \
+      --emit-original-quals  \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       --bqsr-recal-file "temp/{{ sample.name }}.{{ aligner }}.recal_data.table" \
