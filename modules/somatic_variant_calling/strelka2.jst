@@ -79,10 +79,10 @@
 
     # Move and rename the evidence bams
     mkdir -p "${PAIR_DIR}/evidence"
-    mv "${RUN_DIR}/realigned/realigned.normal.bam" "${PAIR_DIR}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam"
-    mv "${RUN_DIR}/realigned/realigned.normal.bam.bai" "${PAIR_DIR}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
-    mv "${RUN_DIR}/realigned/realigned.tumor.bam" "${PAIR_DIR}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
-    mv "${RUN_DIR}/realigned/realigned.tumor.bam.bai" "${PAIR_DIR}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    mv "${RUN_DIR}/results/realigned/realigned.normal.bam" "${PAIR_DIR}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "${RUN_DIR}/results/realigned/realigned.normal.bam.bai" "${PAIR_DIR}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    mv "${RUN_DIR}/results/realigned/realigned.tumor.bam" "${PAIR_DIR}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "${RUN_DIR}/results/realigned/realigned.tumor.bam.bai" "${PAIR_DIR}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
 
     # Merge the snvs and indels into a final vcf
     bcftools concat \
@@ -90,8 +90,8 @@
       --threads 2 \
       -O z \
       -o "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz" \
-      "${PAIR_DIR}/variants/somatic.indels.vcf.gz" \
-      "${PAIR_DIR}/variants/somatic.snvs.vcf.gz"
+      "${RUN_DIR}/results/variants/somatic.indels.vcf.gz" \
+      "${RUN_DIR}/results/variants/somatic.snvs.vcf.gz"
 
     bcftools index -t "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz"
 

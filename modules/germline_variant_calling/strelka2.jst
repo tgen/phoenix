@@ -75,12 +75,12 @@
 
     # Move and rename the evidence bams
     mkdir -p "${SAMPLE_DIR}/evidence"
-    mv "${RUN_DIR}/realigned/realigned.S1.bam" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam"
-    mv "${RUN_DIR}/realigned/realigned.S1.bam.bai" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    mv "${RUN_DIR}/results/realigned/realigned.S1.bam" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "${RUN_DIR}/results/realigned/realigned.S1.bam.bai" "${SAMPLE_DIR}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
 
     # Move and rename the the vcfs out of their generic location
-    mv "${RUN_DIR}/variants/variants.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz" || true
-    mv "${RUN_DIR}/variants/variants.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz.tbi" || true
+    mv "${RUN_DIR}/results/variants/variants.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz" || true
+    mv "${RUN_DIR}/results/variants/variants.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz.tbi" || true
 
     # Then filter out the PASS variants to a separate file
     bcftools filter \
