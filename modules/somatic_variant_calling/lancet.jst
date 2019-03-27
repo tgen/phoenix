@@ -74,6 +74,10 @@
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
+    # This version of Lancet leaves behind a config.txt file in the top 
+    # of the project dir. This was patched in a later versions so that
+    # we can remove later.
+    rm config.txt || true
     {% endif %}
 
 
