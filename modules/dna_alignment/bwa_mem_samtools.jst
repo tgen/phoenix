@@ -80,14 +80,14 @@
       "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
       "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
     samtools fixmate \
-      -@ 9 \
+      --threads 9 \
       -m \
       - \
       - |\
     samtools sort \
       -l 5 \
       -m 1G \
-      -@ 9 \
+      --threads 9 \
       -O BAM \
       - \
       -o "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
@@ -109,6 +109,7 @@
     {% if sample.read_groups | length > 1 %}
 
     samtools merge \
+      --threads 4 \
       -c \
       -f "temp/{{ sample.name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
@@ -206,7 +207,7 @@
       "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
     samtools fixmate \
-      -@ 9 \
+      --threads 9 \
       -m \
       - \
       - |\
@@ -214,7 +215,7 @@
       -T "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" \
       -l 5 \
       -m 1G \
-      -@ 9 \
+      --threads 9 \
       -O BAM \
       - \
       -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
@@ -234,6 +235,7 @@
     module load {{ constants.tools.samtools_1_7.module }}
 
     samtools merge \
+      --threads 4 \
       -c \
       -f "temp/{{ sample.name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
