@@ -37,6 +37,7 @@
 {% set samples = {} %}
 {% for file in dataFiles %}
     {% do file.update({'glType': file.glType.lower()}) %}
+    {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
     {% if 'sampleMergeKey' in file %}
         {% set name = file.sampleMergeKey %}
     {% else %}
@@ -75,6 +76,10 @@
     {% endif %}
 {% endfor %}
 
+{% if dry_run|default(False) %}
+{{ samples|tojson(indent=4) }}
+{% else %}
+
 # Start of module imports
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
 {% from 'modules/germline_variant_calling/main.jst' import germline_variant_calling with context %}
@@ -110,3 +115,5 @@
 {{ somatic_variant_calling(samples) }}
 {{ rna_quant(samples) }}
 {{ rna_fusion_detection(samples) }}
+
+{% endif %}

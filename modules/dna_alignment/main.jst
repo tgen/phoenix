@@ -17,13 +17,13 @@
     {% set number_of_reads = first_rg.numberOfReads|default(0) %}
 
     {% if alignment_style == 'tgen' %}
-      {% if chunking and first_rg.numberOfReads > reads_per_chunk %}
+      {% if chunking and first_rg.numberOfReads|default(0) > reads_per_chunk %}
         {{- bwa_mem_samtools_chunked(sample, reads_per_chunk) }}
       {% else %}
         {{- bwa_mem_samtools(sample) }}
       {% endif %}
     {% elif alignment_style == 'broad'  %}
-      {% if chunking and first_rg.numberOfReads > reads_per_chunk %}
+      {% if chunking and first_rg.numberOfReads|default(0) > reads_per_chunk %}
         {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) }}
       {% else %}
         {{- bwa_mem_gatk_picard(sample) }}

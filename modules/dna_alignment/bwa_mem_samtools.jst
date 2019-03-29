@@ -117,7 +117,7 @@
     {% endfor %}
 
     {% else %}
-    
+    {% set rgid = sample.read_groups|first %}
     # No merging needed for <= 1 read group not split
     mv \
       "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
