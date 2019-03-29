@@ -55,8 +55,9 @@
     "${RUN_DIR}/runWorkflow.py" -m local -j 39
 
     # Save the evidence bams to the sample dir
+    # these will only be generated for exome samples
     mkdir -p "${SAMPLE_DIR}/evidence/"
-    mv "${RUN_DIR}/results/evidence/"* "${SAMPLE_DIR}/evidence/"
+    mv "${RUN_DIR}/results/evidence/"* "${SAMPLE_DIR}/evidence/" || true
 
     # Save all the vcs in the sample dir
     mv "${RUN_DIR}/results/variants/candidateSmallIndels.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
