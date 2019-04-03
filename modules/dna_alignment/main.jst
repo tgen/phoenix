@@ -15,7 +15,7 @@
   {% for sample in samples.values() if sample.glType|lower in ['genome', 'exome'] %}
     {% set needs_split = False %}
     {% for rg in sample.read_groups.values() %}
-      {% if first_rg.numberOfReads|default(0) > reads_per_chunk %}
+      {% if rg.numberOfReads|default(0) > reads_per_chunk %}
         {% set needs_split = True %}
       {% endif %}
     {% endfor %}
