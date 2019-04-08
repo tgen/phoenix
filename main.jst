@@ -1,11 +1,16 @@
+{% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
+{% from 'modules/germline_variant_calling/main.jst' import germline_variant_calling with context %}
+{% from 'modules/somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
+{% from 'modules/rna_quant/main.jst' import rna_quant with context %}
+{% from 'modules/rna_fusion_detection/main.jst' import rna_fusion_detection with context %}
 # Phoenix Human GRCh38 pipeline
-
+#
 # The config variables includes an array of dataFiles. Here we
 # need to group the data files into read groups, and then group 
 # read_groups into samples. This will make it easier to add tasks
 # later in the pipeline. The resulting samples dict will look
 # like this:
- 
+# 
 # sampleMergeKey/sampleName:
 #   glPrep: RNA
 #   glType: RNA
@@ -76,17 +81,10 @@
     {% endif %}
 {% endfor %}
 
+{# Dry run will just print out the object we created above #}
 {% if dry_run|default(False) %}
 {{ samples|tojson(indent=4) }}
 {% else %}
-
-# Start of module imports
-{% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
-{% from 'modules/germline_variant_calling/main.jst' import germline_variant_calling with context %}
-{% from 'modules/somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
-{% from 'modules/rna_quant/main.jst' import rna_quant with context %}
-{% from 'modules/rna_fusion_detection/main.jst' import rna_fusion_detection with context %}
-
 
 {% for batch in dataFiles|batch(4) %}
 - name: copy_fastqs_{{ loop.index }}
@@ -110,10 +108,24 @@
 {% endfor %}
 
 # Start of module calls
-{{ dna_alignment(samples) }}
-{{ germline_variant_calling(samples) }}
-{{ somatic_variant_calling(samples) }}
-{{ rna_quant(samples) }}
-{{ rna_fusion_detection(samples) }}
+{% if tasks.dna_alignment|default(True) %}
+    {{- dna_alignment(samples) }}
+{% endif %}
+
+{% if tasks.germline_variant_calling|default(True) %}
+    {{- germline_variant_calling(samples) }}
+{% endif %}
+
+{% if tasks.somatic_variant_calling|default(True) %}
+    {{- somatic_variant_calling(samples) }}
+{% endif %}
+
+{% if tasks.rna_quant|default(True) %}
+    {{- rna_quant(samples) }}
+{% endif %}
+
+{% if tasks.rna_fusion_detection|default(True) %}
+    {{- rna_fusion_detection(samples) }}
+{% endif %}
 
 {% endif %}
