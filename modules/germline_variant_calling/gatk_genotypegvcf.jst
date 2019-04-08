@@ -60,6 +60,8 @@
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
+    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
+
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
       --TMP_DIR "temp" \
@@ -100,13 +102,13 @@
       --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.raw.vcf.gz" \
       --output {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz \
        
-    # # Then filter out the PASS variants to a separate file
-    # bcftools filter \
-    #   -O z \
-    #   -i 'FILTER == "PASS"' \
-    #   "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz" \
-    #   > "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
-    #bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
+    # Then filter out the passing variants to a separate file
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "."' \
+      "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz" \
+      > "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
+    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
 
 
 
