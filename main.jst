@@ -1,8 +1,3 @@
-{% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
-{% from 'modules/germline_variant_calling/main.jst' import germline_variant_calling with context %}
-{% from 'modules/somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
-{% from 'modules/rna_quant/main.jst' import rna_quant with context %}
-{% from 'modules/rna_fusion_detection/main.jst' import rna_fusion_detection with context %}
 # Phoenix Human GRCh38 pipeline
 #
 # The config variables includes an array of dataFiles. Here we
@@ -38,6 +33,12 @@
 {% if debug is not defined %}{% set debug = False %}{% endif %}
 {# Tasks contains switches for toggling many of the features #}
 {% if tasks is not defined %}{% set tasks = {} %}{% endif %}
+
+{% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
+{% from 'modules/germline_variant_calling/main.jst' import germline_variant_calling with context %}
+{% from 'modules/somatic_variant_calling/main.jst' import somatic_variant_calling with context %}
+{% from 'modules/rna_quant/main.jst' import rna_quant with context %}
+{% from 'modules/rna_fusion_detection/main.jst' import rna_fusion_detection with context %}
 
 {% set samples = {} %}
 {% for file in dataFiles %}
