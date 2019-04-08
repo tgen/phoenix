@@ -75,6 +75,14 @@ constants:
       citation: >
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
+    octopus_0_6_0b:
+      module: octopus/2019
+      version: 0.6.0-beta
+      verbose: Octopus v0.6.0-beta
+      website: https://github.com/luntergroup/octopus
+      citation: >
+        A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
+        David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
     python_2_7_15:
       module: python/2.7.15
       version: 2.7.15

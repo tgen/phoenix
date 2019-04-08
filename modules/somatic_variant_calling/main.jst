@@ -10,6 +10,7 @@
 {% from 'modules/somatic_variant_calling/lancet.jst' import lancet with context %}
 {% from 'modules/somatic_variant_calling/manta.jst' import manta_somatic with context %}
 {% from 'modules/somatic_variant_calling/strelka2.jst' import strelka2_somatic with context %}
+{% from 'modules/somatic_variant_calling/octopus.jst' import octopus_somatic with context %}
 {% from 'modules/somatic_variant_calling/vcfmerger2.jst' import vcfmerger2 with context %}
 
 
@@ -68,6 +69,10 @@
     {% if tasks.strelka2_somatic_genome|default(True) %}
         {{- strelka2_somatic(pair, aligner='bwa') }}
     {% endif %}
+
+    {% if tasks.octopus_somatic_genome|default(True) %}
+        {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
 {% endfor %}
 
 {% for pair in pairs if pair.glType == 'exome' %}
@@ -85,6 +90,10 @@
     
     {% if tasks.strelka2_somatic_exome|default(True) %}
         {{- strelka2_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.octopus_somatic_exome|default(True) %}
+        {{- octopus_somatic(pair, aligner='bwa') }}
     {% endif %}
 {% endfor %}
 
