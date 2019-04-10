@@ -115,9 +115,9 @@ constants:
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
     samtools_1_9:
-      module: samtools/1.9
-      version: "1.9"
-      verbose: SAMtools v1.9
+      module: samtools/1.9-65-g1b72f1a
+      version: "1.9-65-g1b72f1a"
+      verbose: SAMtools v1.9 dev branch commit g1b72f1a
       website: http://www.htslib.org
       citation: >
         Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
