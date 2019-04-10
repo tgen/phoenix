@@ -16,7 +16,7 @@
     TAB=$'\t'
     cat <<EOF > "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed"
     {% for interval in batch %}
-    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
 

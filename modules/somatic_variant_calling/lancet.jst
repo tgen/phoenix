@@ -23,7 +23,7 @@
     TAB=$'\t'
     cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ loop.index }}.bed"
     {% for interval in batch %}
-    {{ interval.contig }}${TAB}{{ interval.start }}${TAB}{{ interval.stop }}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
 
