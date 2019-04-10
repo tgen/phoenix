@@ -67,7 +67,6 @@
       "{{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt"
 
 
-
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collectmultiplemetrics, {{ sample.name}}]
   methods: Alignment metrics, base distribution, insert size, quality,
