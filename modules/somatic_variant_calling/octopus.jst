@@ -15,12 +15,13 @@
     module load {{ constants.tools.octopus_0_6_0b.module }}
     
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/"
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_bam_chunks/"
 
     # Write out the regions in this batch to a file
     TAB=$'\t'
-    cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.txt"
+    cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.bed"
     {% for interval in batch %}
-    {{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
 
@@ -34,20 +35,20 @@
       --somatics-only OFF \
       --phasing-level minimal \
       --legacy \
-      --reference {{ constants.phoenix.reference_fasta }} \
-      --regions "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.txt" \
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --regions-file "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.bed" \
       --reads \
         "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
         "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --normal-sample "{{ pair.normal.rgsm }}" \
-      --bamout "temp/{{ pair.name }}_{{ aligner }}_hc_gvcf_chunks/{{ loop.index }}.realigned.bam" \
+      --bamout "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_bam_chunks/{{ loop.index }}.realigned.bam" \
       --output "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.octopus.vcf"
       
 {% endfor %}
 
 
 - name: octopus_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [octopus_somatic, {{ pair.glType }}]
+  tags: [bcftools, concat, octopus_somatic, {{ pair.glType }}]
   after: 
     re: octopus_somatic_{{ pair.name }}_{{ aligner }}_.*
   output: {{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz
@@ -56,18 +57,16 @@
   walltime: "24:00:00"
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/"
 
-    gatk MergeVcfs \
-      --java-options "-Xmx14G" \
-      --TMP_DIR "temp" \
-      --SEQUENCE_DICTIONARY {{ constants.phoenix.reference_dict }} \
+    bcftools concat \
+      -O z \
+      -o "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.octopus.vcf" \
+      "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.octopus.legacy.vcf" \
       {% endfor %}
-      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/"
