@@ -86,6 +86,9 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
+      {% if sample.glType|lower == 'exome' %}
+      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
       "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
       > "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz"
 

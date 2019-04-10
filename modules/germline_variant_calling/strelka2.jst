@@ -61,7 +61,7 @@
 
 
 - name: strelka2_constitutional_filter_variants_{{ sample.name }}_{{ aligner }}
-  tags: [strelka2, strelka2-constitutional, bcftools, {{ sample.glType }}]
+  tags: [strelka2, strelka2-constitutional, bcftools, filter, {{ sample.glType }}]
   after: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
   output:
     - {{ sample.glType }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz
@@ -86,6 +86,9 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
+      {% if sample.glType|lower == 'exome' %}
+      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
       "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz" \
       > "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
 

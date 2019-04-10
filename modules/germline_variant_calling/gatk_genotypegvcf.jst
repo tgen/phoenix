@@ -4,6 +4,7 @@
 {% macro genotypegvcf(sample, aligner='bwa') %}
 {% for batch in constants.phoenix.calling_intervals %}
 - name: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [gatk, GenotypeGVCFs, {{ sample.glType }}]
   input: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4
@@ -25,6 +26,7 @@
 
 
 - name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [gatk, CNNScoreVariants, {{ sample.glType }}]
   after: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   walltime: "24:00:00"
   cpus: 6
@@ -50,6 +52,7 @@
 
 
 - name: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
+  tags: [bcftools, concat, {{ sample.glType }}]
   after: 
     re: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_.*
   output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
@@ -58,17 +61,16 @@
   mem: 16G
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
 
-    gatk MergeVcfs \
-      --java-options "-Xmx14G" \
-      --TMP_DIR "temp" \
+    bcftools concat \
+      -O z \
+      -o "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz" \
       {% for batch in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz" \
+       "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz" \
       {% endfor %}
-      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/"
@@ -77,7 +79,7 @@
 
 
 - name: haplotypecaller_filter_variants_{{ sample.name }}_{{ aligner }}
-  tags: [haplotypecaller, bcftools, {{ sample.glType }}]
+  tags: [gatk, FilterVariantTranches, bcftools, filter, {{ sample.glType }}]
   input:
     - {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
   output:
@@ -106,6 +108,9 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "."' \
+      {% if sample.glType|lower == 'exome' %}
+      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
       "temp/{{ sample.name }}.{{ aligner }}.hc.fvt.vcf.gz" \
       > "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
 

@@ -50,7 +50,7 @@
 
 
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [lancet, {{ pair.glType }}]
+  tags: [bcftools, concat, {{ pair.glType }}]
   after: 
     re: lancet_{{ pair.name }}_{{ aligner }}_.*
   output: {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz
@@ -59,18 +59,16 @@
   walltime: "24:00:00"
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/"
 
-    gatk MergeVcfs \
-      --java-options "-Xmx14G" \
-      --TMP_DIR "temp" \
-      --SEQUENCE_DICTIONARY {{ constants.phoenix.reference_dict }} \
+    bcftools concat \
+      -O z \
+      -o "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf" \
+      "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf" \
       {% endfor %}
-      --OUTPUT "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
@@ -82,7 +80,7 @@
 
 
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, filter, pair.glType]
+  tags: [bcftools, filter, {{ pair.glType }}]
   input:
     - {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz
   output:
@@ -94,6 +92,9 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
+      {% if sample.glType|lower == 'exome' %}
+      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
       "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz" \
       > "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz"
 

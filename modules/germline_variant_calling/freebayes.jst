@@ -3,6 +3,7 @@
 {% macro freebayes(sample, aligner='bwa') %}
 {% for batch in constants.phoenix.calling_intervals %}
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [freebayes, {{ sample.glType }}]
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "24:00:00"
   cpus: 4
@@ -32,29 +33,55 @@
 
 
 - name: freebayes_merge_{{ sample.name }}_{{ aligner }}
+  tags: [freebayes, bcftools, {{ sample.glType }}]
   after: 
     re: freebayes_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.vcf.gz
+  output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16000
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/"
 
-    gatk MergeVcfs \
+    bcftools concat \
+      -O z \
+      -o "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
       {% for batch in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ sample.name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
-      {% endfor %}
-      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.vcf.gz"
+      "temp/{{ sample.name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
+      {% endfor %}      
 
     {% if not debug %}
     rm -r "temp/{{ sample.name }}_{{ aligner }}_freebayes/"
     {% endif %}
 
 
-{{- snpeff(sample, aligner, "constitutional_variant_calls", "freebayes", "freebayes") }}
+- name: freebayes_filter_variants_{{ sample.name }}_{{ aligner }}
+  tags: [freebayes, bcftools, filter, {{ sample.glType }}]
+  input:
+    - {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz
+  output:
+    - {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 16G
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    # Then filter out the passing variants to a separate file
+    bcftools filter \
+      -O z \
+      --include 'QUAL > 20' \
+      {% if sample.glType|lower == 'exome' %}
+      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
+      "temp/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
+      > "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz"
+
+    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz"
+
 
 {% endmacro %}

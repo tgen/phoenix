@@ -65,7 +65,7 @@
 
 
 - name: strelka2_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [strelka2, strelka2-somatic, bcftools, {{ pair.glType }}]
+  tags: [strelka2, strelka2-somatic, bcftools, filter, {{ pair.glType }}]
   after: strelka2_somatic_{{ pair.name }}_{{ aligner }}
   output:
     - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
@@ -99,6 +99,9 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
+      {% if sample.glType|lower == 'exome' %}
+      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
       "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz" \
       > "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz"
 
