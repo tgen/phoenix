@@ -15,14 +15,14 @@
 - name: samtools_markdup_{{ sample.name }}_bwa
   tags: [samtools, samtools-markdup, {{ sample.glType }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
-    {{ constants.tools.samtools_1_9.verbose }} markdup.
+    {{ constants.tools.samtools_1_9_65_g1b72f1a.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -euv
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools_1_9_65_g1b72f1a.module }}
 
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
@@ -31,10 +31,6 @@
     mkdir -p "temp/markdup_{{ sample.name }}_bwa/"
     mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
 
-    # Input bam here is a process substituion using samtools view because
-    # otherwise this command will sometimes segfault when running on the
-    # output from merge.
-  
     samtools markdup \
       -S \
       -s \
