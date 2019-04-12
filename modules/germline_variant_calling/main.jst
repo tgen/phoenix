@@ -4,6 +4,7 @@
 {% from 'modules/germline_variant_calling/freebayes.jst' import freebayes with context %}
 {% from 'modules/germline_variant_calling/manta.jst' import manta_constitutional with context %}
 {% from 'modules/germline_variant_calling/strelka2.jst' import strelka2_constitutional with context %}
+{% from 'modules/germline_variant_calling/deepvariant.jst' import deepvariant with context %}
 {% from 'modules/germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
 
 
@@ -27,6 +28,10 @@
 
     {% if tasks.strelka2_constitutional_genome|default(True) %}
         {{- strelka2_constitutional(sample, aligner='bwa') }}
+    {% endif %}
+
+     {% if tasks.deepvariant_genome|default(True) %}
+        {{- deepvariant(sample, aligner='bwa') }}
     {% endif %}
 
     {% if tasks.ichorcna_genome|default(True) %}
@@ -56,6 +61,10 @@
 
     {% if tasks.strelka2_constitutional_exome|default(True) %}
         {{- strelka2_constitutional(sample, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.deepvariant_exome|default(True) %}
+        {{- deepvariant(sample, aligner='bwa') }}
     {% endif %}
 
     {% if tasks.ichorcna_exome|default(True) %}
