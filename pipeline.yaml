@@ -12,6 +12,13 @@ constants:
       citation: >
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
+    deepvariant_0_7_0_gpu:
+      module: deepvariant/0.7.0-gpu
+      version: "0.7.0-gpu"
+      verbose: DeepVariant 0.7.0-gpu
+      website: https://github.com/google/deepvariant
+      citation: > 
+        TODO
     freebayes_1_2:
       module: freebayes/1.2
       version: "1.2"
@@ -211,10 +218,13 @@ constants:
       75bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/75bpReads
       100bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
       150bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
-    starfusion_index: ${REF}/homo_sapiens/grch38_hg38/tool_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
+    starfusion_index: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
     snpeff_config: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
     snpeff_db: GRCh38
+    deepvariant_models:
+      exome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wes_standard/model.ckpt
+      genome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt
     capture_kits:
       # Capture kits have a defined genomic space where they are designed
       # to target. Here are files describing the regions that are covered
