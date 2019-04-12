@@ -92,8 +92,8 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      {% if sample.glType|lower == 'exome' %}
-      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% if pair.glType|lower == 'exome' %}
+      --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz" \
       > "{{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz"
