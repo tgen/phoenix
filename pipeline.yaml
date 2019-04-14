@@ -147,6 +147,11 @@ constants:
       citation: >
         Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
         fast and bias-aware quantification of transcript expression. Nature Methods.
+    singularity_3_1_0:
+      module: singularity/3.1.0
+      version: "3.1.0"
+      verbose: Singularity v3.1.0
+      website: https://www.sylabs.io/singularity/
     snpeff_4_3t:
       module: snpEff/v4_3t
       version: "4.3T"

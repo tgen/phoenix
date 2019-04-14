@@ -10,8 +10,11 @@
   cmd: |
     set -euv
 
+    module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
+
+    mkdir -p "$(pwd)/temp/deepvariant/"
 
     # Run make_examples
     # This function does not need to be run on a GPU
@@ -20,8 +23,8 @@
       --mode calling \
       --task {{ i }} \
       --ref "{{ constants.phoenix.reference_fasta }}" \
-      --reads "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      --examples "temp/deepvariant/{{ sample.name }}_{{ aligner }}.examples.tfrecord@{{ nshards }}.gz" \
+      --reads "$(pwd)/{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --examples "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.examples.tfrecord@{{ nshards }}.gz" \
       
 {% endfor %}
 
@@ -48,14 +51,14 @@
       {% else %}
       --checkpoint  "{{ constants.phoenix.deepvariant_models.genome }}" \
       {% endif %}
-      --examples "temp/deepvariant/{{ sample.name }}_{{ aligner }}.examples.tfrecord@{{ nshards }}.gz" \
-      --outfile "temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz"
+      --examples "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.examples.tfrecord@{{ nshards }}.gz" \
+      --outfile "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz"
 
     # Run `postprocess_variants`, without gVCFs.
     postprocess_variants \
         --ref "{{ constants.phoenix.reference_fasta }}" \
-        --infile "temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz" \
-        --outfile "{{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz"
+        --infile "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz" \
+        --outfile "$(pwd)/{{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz"
 
 
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
