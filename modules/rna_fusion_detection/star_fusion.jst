@@ -23,6 +23,7 @@
     - temp/fastqs/{{ fq.fastqPath|basename }}
   {% endfor %}
   output: {{ sample.glType }}/star-fusion/{{ sample.name }}/
+  sbatch_args: ["--exclusive"]
   cpus: 16
   walltime: "24:00:00"
   cmd: |
