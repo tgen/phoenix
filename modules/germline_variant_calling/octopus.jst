@@ -1,37 +1,46 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
-{% macro octopus(sample, aligner='bwa') %}
+{% macro octopus_constitutional(sample, aligner='bwa') %}
 
-# TODO add BAM path 
 {% for batch in constants.phoenix.calling_intervals %}
-- name: octopus_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+- name: octopus_constitutional_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 8
+  mem: 32G
   cmd: |
     set -uev
     module load {{ constants.tools.octopus_1_2.module }}
 
-    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus/"
+    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/"
+    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_bam_chunks/"
+
+    # Write out the regions in this batch to a file
+    TAB=$'\t'
+    cat <<EOF > "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ loop.index }}.bed"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
 
     octopus \
       --caller individual \
-      --threads 4 \
+      --threads 8 \
+      --max-reference-cache-footprint 750MB \
       --ignore-unmapped-contigs \
       --assembly-candidate-generator ON \
-      --somatics-only OFF \
       --phasing-level minimal \
       --legacy \
-      --reference {{ constants.phoenix.reference_fasta }} \
-      --reads ${LIST_BAMS[@]} \
-      --regions ${CHROM} \
-      -o "temp/{{ sample.name }}_{{ aligner }}_octopus_vcf_chunks/{{ loop.index }}.vcf.gz" 
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --reads "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --regions-file "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ loop.index }}.bed" \
+      --bamout "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_bam_chunks/{{ loop.index }}.realigned.bam" \
+      --output "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ sample.name }}_{{ loop.index }}.{{ aligner }}.octopus.vcf"
 
 {% endfor %}
 
 
-- name: octopus_merge_{{ sample.name }}_{{ aligner }}
+- name: octopus_constitutional_merge_{{ sample.name }}_{{ aligner }}
   after: 
     re: octopus_{{ sample.name }}_{{ aligner }}_.*
   output: {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.oct.vcf.gz
@@ -40,23 +49,45 @@
   mem: 16G
   cmd: |
     set -euv
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/"
 
-    gatk MergeVcfs \
-      --java-options "-Xmx14G" \
-      {% for batch in constants.phoenix.calling_intervals %}
-      --INPUT "temp/{{ sample.name }}_{{ aligner }}_octopus//{{ loop.index }}.vcf" \
+    bcftools concat \
+      -O z \
+      -o "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz" \
+      {% for b in constants.phoenix.calling_intervals %}
+      "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ sample.name }}_{{ loop.index }}.{{ aligner }}.octopus.legacy.vcf" \
       {% endfor %}
-      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.oct.vcf.gz"
 
     {% if not debug %}
-    rm -r "temp/{{ sample.name }}_{{ aligner }}_octopus/"
+    rm -r "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/"
     {% endif %}
+    
 
+- name: octopus_constitutional_filter_variants_{{ sample.name }}_{{ aligner }}
+  tags: [octopus, bcftools, filter, {{ sample.glType }}]
+  input:
+    - {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz
+  output:
+    - {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 16G
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
 
-{{- snpeff(sample, aligner, "constitutional_variant_calls", "octopus", "oct") }}
+    # Then filter out the passing variants to a separate file
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "."' \
+      {% if sample.glType|lower == 'exome' %}
+      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz" \
+      > "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz"
+
+    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz"
 
 {% endmacro %}
-# Somatic calling with octopus
