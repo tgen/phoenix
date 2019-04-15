@@ -51,8 +51,9 @@
       -o "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
       {% for batch in constants.phoenix.calling_intervals %}
       "temp/{{ sample.name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
-      {% endfor %}      
+      {% endfor %}  
 
+    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz"
     {% if not debug %}
     rm -r "temp/{{ sample.name }}_{{ aligner }}_freebayes/"
     {% endif %}
@@ -78,7 +79,7 @@
       {% if sample.glType|lower == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
-      "temp/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
+      "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
       > "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz"
 
     bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz"

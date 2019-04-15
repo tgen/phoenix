@@ -97,6 +97,8 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
+    bcftools index -t "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz"
+    
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \

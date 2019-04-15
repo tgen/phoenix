@@ -83,6 +83,8 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
+    bcftools index -t "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz"
+    
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
