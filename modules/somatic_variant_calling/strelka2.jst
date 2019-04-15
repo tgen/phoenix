@@ -9,7 +9,7 @@
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
     - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
-  cpus: 40
+  cpus: 20
   walltime: "24:00:00"
   cmd: |
     set -euv
@@ -60,8 +60,8 @@
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "${RUN_DIR}"
 
-    # Execute on the local machine with 39 parallel jobs
-    "${RUN_DIR}/runWorkflow.py" -m local -j 39
+    # Execute on the local machine with 19 parallel jobs
+    "${RUN_DIR}/runWorkflow.py" -m local -j 19
 
 
 - name: strelka2_somatic_filter_variants_{{ pair.name }}_{{ aligner }}

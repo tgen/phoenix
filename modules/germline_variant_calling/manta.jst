@@ -10,7 +10,7 @@
     - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
     - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
-  cpus: 40
+  cpus: 20
   walltime: "24:00:00"
   cmd: |
     set -euv
@@ -51,8 +51,8 @@
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
       --runDir "${RUN_DIR}"
 
-    # Execute on the local machine with 39 parallel jobs
-    "${RUN_DIR}/runWorkflow.py" -m local -j 39
+    # Execute on the local machine with 19 parallel jobs
+    "${RUN_DIR}/runWorkflow.py" -m local -j 19
 
     # Save the evidence bams to the sample dir
     # these will only be generated for exome samples
