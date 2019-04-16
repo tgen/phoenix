@@ -2,20 +2,16 @@
 # WARNING - This pairs together all tumor and constitutional samples (of the same glType)
 # without comparing any sample identifiers. This means multiple individuals in the same 
 # project will be incorrectly paired together for somatic variant calling.
-
-# Have to add normal.name and tumor.name to the pairs objects instead of using normal.sampleName
-# because the samples are grouped and aligned by sampleName or sampleMergeKey. 
-
 {% from 'modules/somatic_variant_calling/mutect2.jst' import mutect2 with context %}
 {% from 'modules/somatic_variant_calling/lancet.jst' import lancet with context %}
 {% from 'modules/somatic_variant_calling/manta.jst' import manta_somatic with context %}
 {% from 'modules/somatic_variant_calling/strelka2.jst' import strelka2_somatic with context %}
 {% from 'modules/somatic_variant_calling/octopus.jst' import octopus_somatic with context %}
+{% from 'modules/somatic_variant_calling/tconut.jst' import tconut with context %}
 {% from 'modules/somatic_variant_calling/vcfmerger2.jst' import vcfmerger2 with context %}
 
 
 {% macro somatic_variant_calling(samples) %}
-
 {% if somatic_variant_calling_pairs is defined %}
     # Pairs can be a predefined list of objects: 
     # [{"tumor": <tumor name>, "normal": <normal name>},...]
@@ -72,6 +68,10 @@
 
     {% if tasks.octopus_somatic_genome|default(True) %}
         {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.tconut_genome|default(True) %}
+        {{- tconut(pair, aligner='bwa') }}
     {% endif %}
 {% endfor %}
 

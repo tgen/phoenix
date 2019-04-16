@@ -1,0 +1,1 @@
+${BINDIR_VARDICT}/VarDict -th ${SLURM_CPUS_PER_TASK} -G ${REF_GENOME} -f 0.01 -N ${TBAM} -b "${TBAM}|${NBAM}" -t --nosv -B 5 -Q 20 -R ${REGION} | Rscript ${BINDIR_VARDICT}/testsomatic.R | ${BINDIR_VARDICT}/var2vcf_paired.pl -N "${TBAM_SNAME}|${NBAM_SNAME}" -f 0.01 > vdj.$( echo ${REGION} | cut -d":" -f3 ).vcf

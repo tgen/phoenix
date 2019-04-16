@@ -75,6 +75,9 @@
   cmd: |
     set -uev 
     module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    bcftools index -t "{{ pair.glType }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.vcf.gz"
 
     gatk FilterMutectCalls \
       --java-options "-Xmx28G" \

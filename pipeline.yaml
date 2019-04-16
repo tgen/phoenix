@@ -191,6 +191,11 @@ constants:
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
         variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
+    vardict_:
+      citation: >
+        Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
+        JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
+        cancer research. Nucleic Acids Res. 2016, pii: gkw227.
     verifybamid2_1_0_5:
       module: verifybamID/1.0.5
       version: 1.0.5
@@ -204,6 +209,7 @@ constants:
     genome_build: grch38_hg38
     reference_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_dict: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
+    dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/common_all_20180418.vcf.gz
     gatk_known_sites:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
