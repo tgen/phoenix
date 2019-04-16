@@ -78,6 +78,8 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
+    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz"
+    
     # Then filter out the passing variants to a separate file
     bcftools filter \
       -O z \

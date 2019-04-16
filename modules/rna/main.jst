@@ -1,0 +1,16 @@
+{% from 'modules/rna/star_fusion.jst' import star_fusion with context %}
+{% from 'modules/rna/salmon.jst' import salmon with context %}
+{% from 'modules/rna/star_quant.jst' import star_quant with context %}
+
+{% macro rna_fusion_detection(samples) %}
+{% for sample in samples.values() if sample.glType|lower == 'rna' %}
+    {{- star_fusion(sample) }}    
+{% endfor %}
+{% endmacro %}
+
+{% macro rna_quant(samples) %}
+{% for sample in samples.values() if sample.glType|lower == 'rna' %}
+    {{- salmon(sample) }}
+    {{- star_quant(sample) }}
+{% endfor %}
+{% endmacro %}
