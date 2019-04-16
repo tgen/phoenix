@@ -10,7 +10,7 @@
   mem: 32G
   cmd: |
     set -uev
-    module load {{ constants.tools.octopus_1_2.module }}
+    module load {{ constants.tools.octopus_0_6_0b.module }}
 
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/"
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_bam_chunks/"
@@ -42,8 +42,8 @@
 
 - name: octopus_constitutional_merge_{{ sample.name }}_{{ aligner }}
   after: 
-    re: octopus_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.oct.vcf.gz
+    re: octopus_constitutional_{{ sample.name }}_{{ aligner }}_.*
+  output: {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
