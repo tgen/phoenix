@@ -22,7 +22,7 @@
     # In order to restrict calling to only the specified regions
     # strelka requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
-    # the run dir, and pass the path to Strelka.
+    # the run dir, and pass the path to Strelka2.
     STRELKA_BED="{{ run_dir }}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${STRELKA_BED}"
@@ -35,18 +35,17 @@
     tabix -f -p bed "${STRELKA_BED}.gz"
 
     # Build the Strelka run file
-    configureStrelkaSomaticWorkflow.py \
+    configureStrelkaGermlineWorkflow.py \
       {% if pair.glType == 'exome' %}
       --exome \
       {% endif %}
-      --config "${STRELKA_CONFIG}" \
       --callRegions "${STRELKA_BED}.gz" \
       --bam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
       --bam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "{{ run_dir }}"
 
-    # Execute on the local machine with 19 parallel jobs
+    # Execute on the local machine
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
 
@@ -54,7 +53,7 @@
   tags: [tconut, bcftools, filter, {{ pair.glType }}]
   after: tconut_call_snvs_{{ pair.name }}_{{ aligner }}
   output: 
-    - {{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf
+    - {{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz
   cpus: 2
   cmd: |
     set -euv
@@ -65,13 +64,14 @@
       --threads 2 \
       -O z \
       -a "{{ constants.phoenix.dbsnp }}" \
-      "${RUN_DIR}/results/variants/somatic.snvs.vcf.gz" 
-      -o "{{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf"
+      -c "ID,+INFO" \
+      "{{ run_dir }}/results/variants/variants.vcf.gz" \
+      -o "{{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz"
 
-    bcftools index -t "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz"
+    bcftools index -t "{{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz"
 
     # Finally remove the run dir
-    rm -r "${RUN_DIR}"
+    rm -r "{{ run_dir }}"
 
 
 {% endmacro %}

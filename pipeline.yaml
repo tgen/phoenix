@@ -209,7 +209,7 @@ constants:
     genome_build: grch38_hg38
     reference_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_dict: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
-    dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/common_all_20180418.vcf.gz
+    dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/common_all_20180418.UCSC.vcf.gz
     gatk_known_sites:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
