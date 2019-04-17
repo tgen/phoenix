@@ -27,19 +27,25 @@
   cpus: 16
   walltime: "24:00:00"
   cmd: |
-    set -ue
+    set -uev
 
     module load {{ constants.tools.star_fusion_1_5_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-
+    # Here we purge any existing run data prior to starting.
+    # STAR-Fusion keeps track of progress with checkpoint files 
+    # stored in the run dir. If they're present, steps in the 
+    # workflow will be skipped. For example, if the fastq inputs 
+    # changed, alignment will not be rerun properly unless these
+    # files are removed first.
+    rm -r "{{ sample.glType }}/star-fusion/{{ sample.name }}/" || true
     mkdir -p "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
 
     STAR-Fusion \
       --CPU 16 \
       --genome_lib_dir "{{ constants.phoenix.starfusion_index }}" \
-      --left_fq <(zcat {% for fq in r1fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}" {% endfor %}) \
-      --right_fq <(zcat {% for fq in r2fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}" {% endfor %}) \
+      --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
+      --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --output_dir "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
 
 
