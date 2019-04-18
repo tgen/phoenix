@@ -14,7 +14,7 @@
 {% endfor %}
 
 - name: star_fusion_{{ sample.name }}
-  tags: [star, fusion]
+  tags: [{{ sample.glType }}, star-fusion]
   input:
   {% for fq in r1fqlist %}
     - temp/fastqs/{{ fq.fastqPath|basename }}
@@ -22,13 +22,11 @@
   {% for fq in r2fqlist %}
     - temp/fastqs/{{ fq.fastqPath|basename }}
   {% endfor %}
-  output: {{ sample.glType }}/star-fusion/{{ sample.name }}/
-  sbatch_args: ["--exclusive"]
-  cpus: 16
+  output: {{ sample.glType }}/fusions/star-fusion/{{ sample.name }}/
+  cpus: 20
   walltime: "24:00:00"
   cmd: |
     set -uev
-
     module load {{ constants.tools.star_fusion_1_5_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
@@ -38,15 +36,16 @@
     # workflow will be skipped. For example, if the fastq inputs 
     # changed, alignment will not be rerun properly unless these
     # files are removed first.
-    rm -r "{{ sample.glType }}/star-fusion/{{ sample.name }}/" || true
-    mkdir -p "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
+    OUTDIR="{{ sample.glType }}/fusions/star-fusion/{{ sample.name }}/"
+    rm -r "${OUTDIR}" || true
+    mkdir -p "${OUTDIR}"
 
     STAR-Fusion \
       --CPU 16 \
       --genome_lib_dir "{{ constants.phoenix.starfusion_index }}" \
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.fastqPath|basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
-      --output_dir "{{ sample.glType }}/star-fusion/{{ sample.name }}/"
+      --output_dir "${OUTDIR}"
 
 
 {% endmacro %}
