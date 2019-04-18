@@ -10,11 +10,11 @@
   walltime: "24:00:00"
   cmd: |
     set -uev
-
     module load {{ constants.tools.octopus_0_6_0b.module }}
     
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/"
     mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_bam_chunks/"
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_temp/"
 
     # Write out the regions in this batch to a file
     TAB=$'\t'
@@ -26,7 +26,7 @@
 
     # Somatic calling with octopus
     octopus \
-      --caller population \
+      --caller cancer \
       --threads 8 \
       --max-reference-cache-footprint 750MB \
       --ignore-unmapped-contigs \
@@ -35,6 +35,7 @@
       --phasing-level minimal \
       --legacy \
       --reference "{{ constants.phoenix.reference_fasta }}" \
+      --temp-directory-prefix "temp/{{ pair.name }}_{{ aligner }}_octopus_temp/{{ loop.index }}" \
       --regions-file "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.bed" \
       --reads \
         "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \

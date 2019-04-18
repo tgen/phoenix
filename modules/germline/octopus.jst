@@ -14,6 +14,7 @@
 
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/"
     mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_bam_chunks/"
+    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_octopus_temp/"
 
     # Write out the regions in this batch to a file
     TAB=$'\t'
@@ -32,6 +33,7 @@
       --phasing-level minimal \
       --legacy \
       --reference "{{ constants.phoenix.reference_fasta }}" \
+      --temp-directory-prefix "temp/{{ sample.name }}_{{ aligner }}_octopus_temp/{{ loop.index }}" \
       --reads "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --regions-file "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ loop.index }}.bed" \
       --bamout "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_bam_chunks/{{ loop.index }}.realigned.bam" \
