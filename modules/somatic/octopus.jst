@@ -1,5 +1,4 @@
 {% macro octopus_somatic(pair, aligner='bwa') %}
-{% do pair.callers.append('octopus') %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: octopus_somatic_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
