@@ -72,7 +72,7 @@
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
-      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/"
+      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_"
 
 
 - name: htseq_{{ sample.name }}
@@ -90,7 +90,8 @@
 
     htseq-count \
       -f bam \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam" \
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
+      "{{ constants.phoenix.gtf }}" \
       > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.txt"
 
 {% endmacro %}
