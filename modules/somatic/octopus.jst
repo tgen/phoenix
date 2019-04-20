@@ -7,6 +7,7 @@
     - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   cpus: 8
+  mem: 32G
   walltime: "24:00:00"
   cmd: |
     set -uev
@@ -29,11 +30,11 @@
       --caller cancer \
       --threads 8 \
       --max-reference-cache-footprint 750MB \
-      --ignore-unmapped-contigs \
       --assembly-candidate-generator ON \
       --somatics-only OFF \
       --phasing-level minimal \
       --legacy \
+      --annotations AD ADP AF \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --temp-directory-prefix "temp/{{ pair.name }}_{{ aligner }}_octopus_temp/{{ loop.index }}" \
       --regions-file "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.bed" \

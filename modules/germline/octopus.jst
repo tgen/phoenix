@@ -28,10 +28,9 @@
       --caller individual \
       --threads 8 \
       --max-reference-cache-footprint 750MB \
-      --ignore-unmapped-contigs \
       --assembly-candidate-generator ON \
-      --phasing-level minimal \
       --legacy \
+      --annotations AD ADP AF \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --temp-directory-prefix "temp/{{ sample.name }}_{{ aligner }}_octopus_temp/{{ loop.index }}" \
       --reads "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
