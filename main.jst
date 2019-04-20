@@ -108,6 +108,19 @@
 
 {% endfor %}
 
+
+- name: finalize
+  after: 
+    re: .*
+  cpus: 1
+  walltime: "1:00:00"
+  cmd: | 
+    set -uev
+    module load {{ constants.tools.multiqc_1_7.module }}
+    
+    multiqc .
+
+
 # Start of module calls
 {% if tasks.dna_alignment|default(True) %}
     {{- dna_alignment(samples) }}

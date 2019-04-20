@@ -59,10 +59,15 @@
     set -uev
 
     module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.python_3_6_0.module }}
     
     vcfMerger2.py \
+      --skip-prep-vcfs \
       --toolnames "{{ pair.callers|join('|') }}" \
       --vcfs "{{ vcfs|map(attribute='prepped_path')|join('|') }}" \
+      -g "{{ constants.phoenix.reference_fasta }}" \
+      --normal-sname "{{ pair.normal.rgsm }}" \
+      --tumor-sname "{{ pair.tumor.rgsm }}" \
       -o "{{ pair.glType }}/somatic_variant_calls/vcfMerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
 
     rm -r "temp/vcfmerger2/"
