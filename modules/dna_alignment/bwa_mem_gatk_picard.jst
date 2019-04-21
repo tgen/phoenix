@@ -197,7 +197,6 @@ gatk SortSam \
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
   after:
     re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
-  walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -uev
