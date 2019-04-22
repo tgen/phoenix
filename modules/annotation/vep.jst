@@ -1,0 +1,15 @@
+{% macro vep(vcf, out) %}
+- name: vep_{{ vcf|sha256 }}
+  tags: [vep, annotation]
+  input: {{ vcf }}
+  output: {{ out }}
+  cmd: |
+    set -euv
+
+    module load {{ constants.tools.perlvepTODO }}
+   
+    vep \
+      -I "{{ vcf }}" \
+      -O "{{ out }}" 
+
+{% endmacro %}
