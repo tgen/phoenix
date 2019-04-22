@@ -1,6 +1,6 @@
 # Call somatic variants on pairs with Mutect2, also filters the results
 # and annotates the VCF with SnpEff
-{% from 'modules/snpeff.jst' import snpeff with context %}
+{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro mutect2(pair, aligner='bwa') %}
 {% do pair.callers.append('mutect2') %}

@@ -1,5 +1,5 @@
 # Call variants on a gVCF with GATK
-{% from 'modules/snpeff.jst' import snpeff with context %}
+{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro genotypegvcf(sample, aligner='bwa') %}
 {% for batch in constants.phoenix.calling_intervals %}

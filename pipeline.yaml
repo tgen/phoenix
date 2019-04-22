@@ -12,6 +12,11 @@ constants:
       citation: >
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
+    cuda_toolkit_10_0_0:
+      module: cuda/cuda10/toolkit/10.0.0
+      version: "10.0.0"
+      verbose: NVIDIA CUDA 10.0
+      website: https://developer.nvidia.com/cuda-toolkit
     deepvariant_0_7_0_gpu:
       module: deepvariant/0.7.0-gpu
       version: "0.7.0-gpu"

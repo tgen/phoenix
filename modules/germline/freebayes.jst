@@ -1,6 +1,9 @@
-{% from 'modules/snpeff.jst' import snpeff with context %}
+{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro freebayes(sample, aligner='bwa') %}
+{% set pass_vcf %}{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
+{% set ann_vcf %}{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.ann.vcf.gz{% endset %}
+
 {% for batch in constants.phoenix.calling_intervals %}
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [freebayes, {{ sample.glType }}]
@@ -64,7 +67,7 @@
   input:
     - {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz
   output:
-    - {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz
+    - {{ pass_vcf }}
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -80,9 +83,11 @@
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
-      > "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz"
+      > "{{ pass_vcf }}"
 
-    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz"
+    bcftools index -t "{{ pass_vcf }}"
 
+
+{{- snpeff(pass_vcf, ann_vcf) }}
 
 {% endmacro %}
