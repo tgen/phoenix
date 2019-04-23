@@ -4,6 +4,13 @@ description: Human GRCh38 genomics suite
 version: 1.1.0b
 constants:
   tools:
+    bedtools_2_26_0:
+      module: BEDTools/2.26.0
+      version: "2.26.0"
+      verbose: BEDTools v2.26.0
+      webiste: TODO
+      citation: >
+        TODO
     bwa_0_7_17:
       module: bwa/0.7.17
       version: "0.7.17"
@@ -24,6 +31,13 @@ constants:
       website: https://github.com/google/deepvariant
       citation: > 
         TODO
+    featurecounts_:
+      module: TODO
+      version: 
+      website: http://bioinf.wehi.edu.au/featureCounts/
+      citation: >
+        Liao Y, Smyth GK and Shi W (2014). featureCounts: an efficient general purpose program for 
+        assigning sequence reads to genomic features. Bioinformatics, 30(7):923-30.
     freebayes_1_2:
       module: freebayes/1.2
       version: "1.2"
@@ -207,7 +221,11 @@ constants:
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
         variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
-    vardict_:
+    vardict_1_6_0:
+      module: vardict/1.6.0
+      version: "1.6.0"
+      verbose: Vardict Java v1.6.0
+      website: https://github.com/AstraZeneca-NGS/VarDictJava
       citation: >
         Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
@@ -248,7 +266,7 @@ constants:
     starfusion_index: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
     snpeff_config: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
-    snpeff_db: GRCh38
+    snpeff_db: GRCh38.95
     deepvariant_models:
       exome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wes_standard/model.ckpt
       genome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt

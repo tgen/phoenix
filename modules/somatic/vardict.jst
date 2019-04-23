@@ -1,1 +1,143 @@
-~clegendre/tmp/VarDict-1.6.0/bin/VarDict -th 4 -b "/scratch/rrichholt/Phoenix-387643c/NMTRC_0002_tgen/exome/alignment/bwa/NMTRC_0002_1_PB_Whole_C1_KHSTX/NMTRC_0002_1_PB_Whole_C1_KHSTX.bwa.bam|/scratch/rrichholt/Phoenix-387643c/NMTRC_0002_tgen/exome/alignment/bwa/NMTRC_0002_2_AG_Whole_T1_KHSTX/NMTRC_0002_2_AG_Whole_T1_KHSTX.bwa.bam" -R chr1:1-1000000 -G /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa -f 0.01 -t --nosv -B 5 -Q 20 
+{% macro vardict_somatic(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+
+{% for batch in constants.phoenix.calling_intervals %}
+- name: vardict_somatic_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [vardict_somatic, {{ pair.glType }}]
+  input:
+    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+  cpus: 8
+  mem: 32G
+  walltime: "24:00:00"
+  cmd: |
+    set -uev
+    set -o pipefail
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.vardict_1_6_0.module }}
+    module load {{ constants.tools.bedtools_2_26_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+    
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/"
+
+    # Write out the regions in this batch to a file
+    # Here we use bedtools to split each interval into smaller chunks
+    # and the -s option to create overlaps in the chunks. This is due
+    # to the VarDict memory usage spiking very high on larger intervals.
+    VARDICT_BED="temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ loop.index }}.bed"
+    TAB=$'\t'
+    cat <<EOF | bedtools makewindows -w 20000 -s 19750 -b /dev/stdin > ${VARDICT_BED}
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+
+    # Custom settings:
+    # -Q 1 (default is 0) -O 5 (default is no filtering, suspect that means 0)
+    # -q 20 (default is 25), set as novaseq has bins of 2, 12, 23, 37
+    # enabled -UN to only count the first in pair when an overlap exists, didn't use -u that uses the
+    # forward strand read which might be second in pairs that typically has worse quality.
+    JAVA_OPTS="-Xmx26g" VarDict \
+      -th 4 \
+      -b "{{ normal_bam }}|{{ tumor_bam }}" \
+      -N "{{ pair.normal.name }}|{{ pair.tumor.name }}" \
+      -G "{{ constants.phoenix.reference_fasta }}" \
+      -A 4 \
+      -B 2 \
+      -F 0x500 \
+      -f 0.01 \
+      -I 50 \
+      -k 1 \
+      -M 0 \
+      -m 8 \
+      -O 5 \
+      -o 1.5 \
+      -P 5 \
+      -Q 1 \
+      -q 20 \
+      -r 2 \
+      --dedup \
+      --nosv \
+      -UN \
+      -V 0.05 \
+      -VS LENIENT \
+      -X 2 \
+      -x 0 \
+      -c 1 -S 2 -E 3 \
+      "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ loop.index }}.bed" \
+    | testsomatic.R \
+    | var2vcf_paired.pl \
+      -N "Constitutional.SM|Tumor.SM" \
+      -c 0 \
+      -I 12 \
+      -m 5.25 \
+      -P 0.05 \
+      -p 5 \
+      -q 22.5 \
+      -Q 1 \
+      -d 5 \
+      -v 3 \
+      -f 0.02 \
+      -F 0.2 \
+      -o 1.5 \
+    | bcftools view \
+      -O z \
+      -o "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz"
+
+{% endfor %}
+
+
+- name: vardict_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [bcftools, concat, vardict_somatic, {{ pair.glType }}]
+  after: 
+    re: vardict_somatic_{{ pair.name }}_{{ aligner }}_.*
+  output: {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/"
+
+    {% for b in constants.phoenix.calling_intervals %}
+    bcftools index -tf "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz"
+    {% endfor %}
+
+    bcftools concat \
+      -O z \
+      -o "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
+      {% for b in constants.phoenix.calling_intervals %}
+      "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz" \
+      {% endfor %}
+
+    {% if not debug %}
+    rm -r "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/"
+    {% endif %}
+
+
+- name: vardict_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [bcftools, filter, {{ pair.glType }}]
+  input:
+    - {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
+  output:
+    - {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    bcftools index -tf "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz"
+    
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "PASS"' \
+      {% if pair.glType|lower == 'exome' %}
+      --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
+      > "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz"
+
+{% endmacro %}
+

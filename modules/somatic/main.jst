@@ -3,6 +3,7 @@
 {% from 'modules/somatic/manta.jst' import manta_somatic with context %}
 {% from 'modules/somatic/strelka2.jst' import strelka2_somatic with context %}
 {% from 'modules/somatic/octopus.jst' import octopus_somatic with context %}
+{% from 'modules/somatic/vardict.jst' import vardict_somatic with context %}
 {% from 'modules/somatic/tconut.jst' import tconut with context %}
 {% from 'modules/somatic/vcfmerger2.jst' import vcfmerger2 with context %}
 
@@ -73,6 +74,10 @@
         {{- octopus_somatic(pair, aligner='bwa') }}
     {% endif %}
 
+    {% if tasks.vardict_somatic_genome|default(True) %}
+        {{- vardict_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
     {% if tasks.tconut_genome|default(True) %}
         {{- tconut(pair, aligner='bwa') }}
     {% endif %}
@@ -97,6 +102,10 @@
 
     {% if tasks.octopus_somatic_exome|default(True) %}
         {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.vardict_somatic_exome|default(True) %}
+        {{- vardict_somatic(pair, aligner='bwa') }}
     {% endif %}
 
     {% if tasks.tconut_exome|default(True) %}
