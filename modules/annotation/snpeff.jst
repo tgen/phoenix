@@ -19,7 +19,7 @@
       -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       "{{ constants.phoenix.snpeff_db }}" \
-      "{{ vcf }}" | 
+      "{{ vcf }}" | \
     bcftools \
       view \
       -O z \

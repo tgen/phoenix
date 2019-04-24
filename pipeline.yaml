@@ -267,6 +267,7 @@ constants:
     snpeff_config: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
     snpeff_db: GRCh38.95
+    snpSniffer_sites: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/snpSniffer/positions_387_hg38_ucsc.txt
     deepvariant_models:
       exome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wes_standard/model.ckpt
       genome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt
