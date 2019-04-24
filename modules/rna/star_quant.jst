@@ -92,6 +92,6 @@
       -f bam \
       "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
       "{{ constants.phoenix.gtf }}" \
-      > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.txt"
+      > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
 
 {% endmacro %}
