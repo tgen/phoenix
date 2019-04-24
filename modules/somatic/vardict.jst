@@ -27,7 +27,7 @@
     # to the VarDict memory usage spiking very high on larger intervals.
     VARDICT_BED="temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ loop.index }}.bed"
     TAB=$'\t'
-    cat <<EOF | bedtools makewindows -w 20000 -s 19750 -b /dev/stdin > ${VARDICT_BED}
+    cat <<EOF | bedtools makewindows -w 20000 -s 19850 -b /dev/stdin > ${VARDICT_BED}
     {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
@@ -40,8 +40,8 @@
     # forward strand read which might be second in pairs that typically has worse quality.
     JAVA_OPTS="-Xmx26g" VarDict \
       -th 4 \
-      -b "{{ normal_bam }}|{{ tumor_bam }}" \
-      -N "{{ pair.normal.name }}|{{ pair.tumor.name }}" \
+      -b "{{ tumor_bam }}|{{ normal_bam }}" \
+      -N "{{ pair.tumor.rgsm }}" \
       -G "{{ constants.phoenix.reference_fasta }}" \
       -A 4 \
       -B 2 \
@@ -132,7 +132,7 @@
     
     bcftools filter \
       -O z \
-      -i 'FILTER == "PASS"' \
+      -i 'FILTER == "PASS" & INFO/STATUS == "StrongSomatic"' \
       {% if pair.glType|lower == 'exome' %}
       --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
