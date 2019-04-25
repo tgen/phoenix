@@ -68,7 +68,7 @@
       "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ loop.index }}.bed" \
     | testsomatic.R \
     | var2vcf_paired.pl \
-      -N "Constitutional.SM|Tumor.SM" \
+      -N "{{ pair.tumor.rgsm }}|{{ pair.normal.rgsm }}" \
       -c 0 \
       -I 12 \
       -m 5.25 \
