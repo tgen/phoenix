@@ -38,7 +38,7 @@
     {% endfor %}
   output: 
     - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
-  cpus: 16
+  cpus: 20
   walltime: "24:00:00"
   cmd: |
     set -uev
@@ -46,33 +46,71 @@
 
     mkdir -p "{{ sample.glType }}/alignment/star/{{ sample.name }}/"
 
+    # Custom STAR Code Options ; defaults and source justification
+    ## Star Manual v2.7.0f Encode Recommendations:
+    ##### --outFilterType BySJout ; default=Normal ; reduces the number of spurious junctions
+    ##### --outFilterMultimapNmax 20 ; default=10 ; max number of multiple alignments allowed for a read, otherwise considered unmapped
+    ##### --alignSJoverhangMin 8 ; default=5 ; min overhang for unannotated junctions
+    ##### --alignSJDBoverhangMin 1 ; default=3 ; min overhang for annotated junctions
+    ##### --outFilterMismatchNmax 999 ; default=10 ; max number of mismatches per pair, large number switches off this filter (--outFilterMismatchNoverReadLmax enables a percentage filter)
+    ##### --outFilterMismatchNoverReadLmax 0.04 ; default=1.0 ; max number of mismatches per pair relative to read length (ie. 0.04*200=8 for the paired reads)
+    ##### --alignIntronMin 20 ; default=21 ; minimum intron length
+    ##### --alignIntronMax 1000000 ; default=0(enables calculation) ; maximum intron length
+    ##### --alignMatesGapMax 1000000 ; default=0(enables calculation) ; max genomic distance between mates
+    ## Star Fusion Parameters
+    ##### --chimJunctionOverhangMin 12 ; default=20 ; minimum overhang for a chimeric junction
+    ##### --chimMultimapNmax 10 ; default=0 ; maximum number of chimeric multi-alignments
+    ##### --chimSegmentMin 12 ; default=0, GDC=15 ; Needs to be a positive value to detect a fusion, min alignment on BOTH regions to define chimeric
+    ##### --outSAMstrandField intronMotif ; default=None ; allows support for cufflinks using unstranded libraries
+    ##### --twopassMode Basic ; default=- GDC=Basic GATKsnv=Basic ; all 1st pass junctions inserted into the genome indices on the fly
+    ##### --chimSegmentReadGapMax 3 ; default=0 ; maximum gap in the read sequence between chimeric segments
+    ##### --chimMultimapScoreRange 10 ; default=1 ; the score range for multi-mapping chimeras below the best chimeric score. Only works with {chimMultimapNmax > 1
+    ##### --chimNonchimScoreDropMin 10 ; default=20 ; to trigger chimeric detection, the drop in the best non-chimeric alignment score with respect to the read length has to be smaller than this value
+    ##### --chimOutJunctionFormat 1 ; default=0 ; required as of STAR v2.6.1 for usage with STAR-fusion
+    ##### --peOverlapNbasesMin 12 ; default=0 ; minimum number of overlap bases to trigger mates merging and realignment
+    ##### --peOverlapMMp 0.1 ; default=0.01 ; maximum proportion of mismatched bases in the overlap area
+    ## GDC
+    ##### --chimOutType Junctions SeparateSAMold WithinBAM SoftClip ; #default=Junctions ; NOTE:Did not enable SeparateSAMold as this will be deprecated
+    ##### --quantMode TranscriptomeSAM GeneCounts, default=- ; GeneCounts=count reads per gene
+
     STAR \
+      --runMode alignReads \
+      --twopassMode Basic \
+      --runThreadN 19 \
+      --genomeDir "{{ star_index }}" \
+      --genomeLoad NoSharedMemory \
+      --sjdbOverhang "+(read_length-1)} \       ####THIS NEED PROPER VARIABLE
+      --readFilesType Fastx \
+      --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
+      --readFilesCommand zcat \
+      --limitOutSAMoneReadBytes 90000000 \
+      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_" \
+      --outSAMtype BAM SortedByCoordinate \
+      --outSAMmode Full \
+      --outSAMstrandField intronMotif \
+      --outSAMunmapped Within \
+      --outSAMmapqUnique 255 \
+      --outSAMattrRGline "{{ rglinelist|join(',') }}" \
+      --outFilterType BySJout \
+      --outFilterMultimapNmax 20 \
+      --outFilterMismatchNmax 999 \
+      --outFilterMismatchNoverReadLmax 0.04 \
       --alignIntronMin 20 \
       --alignIntronMax 1000000 \
       --alignMatesGapMax 1000000 \
       --alignSJoverhangMin 8 \
       --alignSJDBoverhangMin 1 \
-      --chimSegmentMin 15 \
-      --chimJunctionOverhangMin 15 \
-      --genomeLoad NoSharedMemory \
-      --limitOutSAMoneReadBytes 90000000 \
-      --outFilterType BySJout \
-      --outFilterMultimapNmax 10 \
-      --outFilterMismatchNmax 10 \
-      --outFilterMismatchNoverLmax 0.1 \
-      --outSAMstrandField intronMotif \
-      --outSAMunmapped Within \
-      --outSAMmapqUnique 255 \
-      --outSAMmode Full \
-      --outSAMtype BAM SortedByCoordinate \
-      --readFilesCommand zcat \
-      --runMode alignReads \
-      --runThreadN 14 \
-      --seedSearchStartLmax 30 \
-      --genomeDir "{{ star_index }}" \
-      --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
-      --outSAMattrRGline "{{ rglinelist|join(',') }}" \
-      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_"
+      --peOverlapNbasesMin 12 \
+      --peOverlapMMp 0.1 \
+      --chimOutType Junctions WithinBAM SoftClip \
+      --chimSegmentMin 12 \
+      --chimJunctionOverhangMin 12 \
+      --chimSegmentReadGapMax 3 \
+      --chimMultimapNmax 10 \
+      --chimMultimapScoreRange 10 \
+      --chimNonchimScoreDropMin 10 \
+      --chimOutJunctionFormat 1 \
+      --quantMode TranscriptomeSAM GeneCounts
 
 
 - name: htseq_{{ sample.name }}
@@ -87,6 +125,9 @@
     module load {{ constants.tools.htseq_0_6_1.module }}
     
     mkdir -p "{{ sample.glType }}/quant/htseq/{{ sample.name }}/"
+
+    # is this faster on an unsorted BAM file?
+    # Does this need strand support?
 
     htseq-count \
       -f bam \
