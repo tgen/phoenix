@@ -8,9 +8,12 @@ constants:
       module: BEDTools/2.26.0
       version: "2.26.0"
       verbose: BEDTools v2.26.0
-      webiste: TODO
+      website: https://bedtools.readthedocs.io/
       citation: >
-        TODO
+        Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing
+        genomic features. Bioinformatics. 2010 Mar 15;26(6):841-2. doi:
+        10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
+        Central PMCID: PMC2832824.
     bwa_0_7_17:
       module: bwa/0.7.17
       version: "0.7.17"
@@ -30,14 +33,11 @@ constants:
       verbose: DeepVariant 0.7.0-gpu
       website: https://github.com/google/deepvariant
       citation: > 
-        TODO
-    featurecounts_:
-      module: TODO
-      version: 
-      website: http://bioinf.wehi.edu.au/featureCounts/
-      citation: >
-        Liao Y, Smyth GK and Shi W (2014). featureCounts: an efficient general purpose program for 
-        assigning sequence reads to genomic features. Bioinformatics, 30(7):923-30.
+        Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
+        Dijamco J, Nguyen N, Afshar PT, Gross SS, Dorfman L, McLean CY, DePristo MA. A
+        universal SNP and small-indel variant caller using deep neural networks. Nat
+        Biotechnol. 2018 Nov;36(10):983-987. doi: 10.1038/nbt.4235. Epub 2018 Sep 24.
+        PubMed PMID: 30247488.
     freebayes_1_2:
       module: freebayes/1.2
       version: "1.2"
