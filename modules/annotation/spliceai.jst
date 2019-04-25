@@ -1,0 +1,36 @@
+{% macro spliceai(vcf, out) %}
+{% set temp_vcf }temp/{{ vcf|sha256 }}.vcf{% endset %}
+- name: spliceai_{{ vcf|sha256 }}
+  tags: [spliceai, annotation]
+  input: {{ vcf }}
+  sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1', '-c', '10']
+  cmd: |
+    set -euv
+
+    module load {{ constants.tools.python_3_6_0.module }}
+    module load {{ constants.tools.cuda_toolkit_10_0_0.module }}
+
+    spliceai \
+      -A grch38 \
+      -R /home/tgenref/homo_sapiens/grch37_hg19/hs37d5_tgen/genome_reference/hs37d5_plusRibo_plusOncoViruses_plusERCC.fa \
+      -I "{{ vcf }}" \
+      -O "{{ temp_vcf }}" \
+
+
+- name: spliceai_filter_{{ vcf|sha256 }}
+  after: spliceai_{{ vcf|sha256 }}
+  output: {{ out }}
+  cpus: 2
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    bcftools filter \
+      -O z \
+      --include 'INFO/SpliceAI != "."' \
+      -o "{{ out }}" \
+      "{{ temp_vcf }}"
+
+    rm "{{ temp_vcf }}"
+
+{% endmacro %}

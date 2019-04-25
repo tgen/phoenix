@@ -1,20 +1,18 @@
-# Call variants between pairs of sequencing data
+{% from 'modules/somatic/mutect2.jst' import mutect2 with context %}
+{% from 'modules/somatic/lancet.jst' import lancet with context %}
+{% from 'modules/somatic/manta.jst' import manta_somatic with context %}
+{% from 'modules/somatic/strelka2.jst' import strelka2_somatic with context %}
+{% from 'modules/somatic/octopus.jst' import octopus_somatic with context %}
+{% from 'modules/somatic/vardict.jst' import vardict_somatic with context %}
+{% from 'modules/somatic/tconut.jst' import tconut with context %}
+{% from 'modules/somatic/vcfmerger2.jst' import vcfmerger2 with context %}
+
+# Somatic tools generally operate on pairs of DNA samples (tumor/normal).
 # WARNING - This pairs together all tumor and constitutional samples (of the same glType)
 # without comparing any sample identifiers. This means multiple individuals in the same 
 # project will be incorrectly paired together for somatic variant calling.
 
-# Have to add normal.name and tumor.name to the pairs objects instead of using normal.sampleName
-# because the samples are grouped and aligned by sampleName or sampleMergeKey. 
-
-{% from 'modules/somatic_variant_calling/mutect2.jst' import mutect2 with context %}
-{% from 'modules/somatic_variant_calling/lancet.jst' import lancet with context %}
-{% from 'modules/somatic_variant_calling/manta.jst' import manta_somatic with context %}
-{% from 'modules/somatic_variant_calling/strelka2.jst' import strelka2_somatic with context %}
-{% from 'modules/somatic_variant_calling/vcfmerger2.jst' import vcfmerger2 with context %}
-
-
 {% macro somatic_variant_calling(samples) %}
-
 {% if somatic_variant_calling_pairs is defined %}
     # Pairs can be a predefined list of objects: 
     # [{"tumor": <tumor name>, "normal": <normal name>},...]
@@ -47,8 +45,11 @@
     {% endfor %}
 {% endif %}
 
-# Caller macros that are used will add their name to the pair.caller list and then
-# vcfmerger will run on the callers that were used for that pair.
+# Variant caller macros that are used should add their name to the pair.caller list 
+# and then vcfmerger will merge all variants for callers that were used.
+# For example: {# {% do pair.callers.append('mutect2') %} #}
+# This requires that the output vcfs be located and named consitently, more details
+# in vcfmerger2.jst
 {% for pair in pairs %}{% do pair.update({'callers': []}) %}{% endfor %}
 
 # Start of the macro calls that will actually add the tasks to the workflow
@@ -68,6 +69,18 @@
     {% if tasks.strelka2_somatic_genome|default(True) %}
         {{- strelka2_somatic(pair, aligner='bwa') }}
     {% endif %}
+
+    {% if tasks.octopus_somatic_genome|default(True) %}
+        {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.vardict_somatic_genome|default(True) %}
+        {{- vardict_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.tconut_genome|default(True) %}
+        {{- tconut(pair, aligner='bwa') }}
+    {% endif %}
 {% endfor %}
 
 {% for pair in pairs if pair.glType == 'exome' %}
@@ -85,6 +98,18 @@
     
     {% if tasks.strelka2_somatic_exome|default(True) %}
         {{- strelka2_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.octopus_somatic_exome|default(True) %}
+        {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.vardict_somatic_exome|default(True) %}
+        {{- vardict_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.tconut_exome|default(True) %}
+        {{- tconut(pair, aligner='bwa') }}
     {% endif %}
 {% endfor %}
 

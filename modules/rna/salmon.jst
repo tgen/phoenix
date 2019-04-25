@@ -47,14 +47,14 @@
   {% for fq in r2fqlist %}
     - {{ fq }}
   {% endfor %}
-  output: {{ sample.glType }}/salmon/{{ sample.name }}/
+  output: {{ sample.glType }}/quant/salmon/{{ sample.name }}/
   cpus: 14
   walltime: "24:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.salmon_0_12_0.module }}
 
-    mkdir -p "{{ sample.glType }}/salmon/{{ sample.name }}/"
+    mkdir -p "{{ sample.glType }}/quant/salmon/{{ sample.name }}/"
 
     salmon quant \
       --validateMappings \
@@ -68,6 +68,6 @@
       {% if r2fqlist %}
       -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
-      --output "{{ sample.glType }}/salmon/{{ sample.name }}/"
+      --output "{{ sample.glType }}/quant/salmon/{{ sample.name }}/"
 
 {% endmacro %}

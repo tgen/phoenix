@@ -13,17 +13,20 @@
   {% set reads_per_chunk = reads_per_chunk|default(48000000) %}
 
   {% for sample in samples.values() if sample.glType|lower in ['genome', 'exome'] %}
-    {% set first_rg = sample.read_groups.values()|first %}
-    {% set number_of_reads = first_rg.numberOfReads|default(0) %}
-
+    {% do sample.update({'needs_split': False}) %}
+    {% for rg in sample.read_groups.values() %}
+      {% if rg.numberOfReads|default(0) > reads_per_chunk %}
+        {% do sample.update({'needs_split': True}) %}
+      {% endif %}
+    {% endfor %}
     {% if alignment_style == 'tgen' %}
-      {% if chunking and first_rg.numberOfReads > reads_per_chunk %}
+      {% if chunking and sample.needs_split %}
         {{- bwa_mem_samtools_chunked(sample, reads_per_chunk) }}
       {% else %}
         {{- bwa_mem_samtools(sample) }}
       {% endif %}
     {% elif alignment_style == 'broad'  %}
-      {% if chunking and first_rg.numberOfReads > reads_per_chunk %}
+      {% if chunking and sample.needs_split %}
         {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) }}
       {% else %}
         {{- bwa_mem_gatk_picard(sample) }}

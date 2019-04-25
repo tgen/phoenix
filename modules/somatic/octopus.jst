@@ -1,0 +1,99 @@
+{% macro octopus_somatic(pair, aligner='bwa') %}
+
+{% for batch in constants.phoenix.calling_intervals %}
+- name: octopus_somatic_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [octopus_somatic, {{ pair.glType }}]
+  input:
+    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+  cpus: 8
+  mem: 32G
+  walltime: "24:00:00"
+  cmd: |
+    set -uev
+    module load {{ constants.tools.octopus_0_6_0b.module }}
+    
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/"
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_bam_chunks/"
+    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_octopus_temp/"
+
+    # Write out the regions in this batch to a file
+    TAB=$'\t'
+    cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.bed"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+
+    # Somatic calling with octopus
+    octopus \
+      --caller cancer \
+      --threads 8 \
+      --max-reference-cache-footprint 750MB \
+      --assembly-candidate-generator ON \
+      --somatics-only OFF \
+      --phasing-level minimal \
+      --legacy \
+      --annotations AD ADP AF \
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --temp-directory-prefix "temp/{{ pair.name }}_{{ aligner }}_octopus_temp/{{ loop.index }}" \
+      --regions-file "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ loop.index }}.bed" \
+      --reads \
+        "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
+        "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
+      --normal-sample "{{ pair.normal.rgsm }}" \
+      --bamout "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_bam_chunks/{{ loop.index }}.realigned.bam" \
+      --output "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.octopus.vcf"
+      
+{% endfor %}
+
+
+- name: octopus_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [bcftools, concat, octopus_somatic, {{ pair.glType }}]
+  after: 
+    re: octopus_somatic_{{ pair.name }}_{{ aligner }}_.*
+  output: {{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/"
+
+    bcftools concat \
+      -O z \
+      -o "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
+      {% for b in constants.phoenix.calling_intervals %}
+      "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.octopus.legacy.vcf" \
+      {% endfor %}
+
+    {% if not debug %}
+    rm -r "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/"
+    {% endif %}
+
+
+- name: octopus_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [bcftools, filter, {{ pair.glType }}]
+  input:
+    - {{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz
+  output:
+    - {{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz
+  cmd: |
+    set -euv
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    bcftools index -t "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz"
+    
+    bcftools filter \
+      -O z \
+      -i 'FILTER == "PASS"' \
+      {% if pair.glType|lower == 'exome' %}
+      --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
+      > "{{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz"
+
+
+{% endmacro %}

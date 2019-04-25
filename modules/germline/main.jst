@@ -1,11 +1,14 @@
-# Germline variant calling 
-{% from 'modules/germline_variant_calling/gatk_haplotypecallergvcf.jst' import haplotypecallergvcf with context %}
-{% from 'modules/germline_variant_calling/gatk_genotypegvcf.jst' import genotypegvcf with context %}
-{% from 'modules/germline_variant_calling/freebayes.jst' import freebayes with context %}
-{% from 'modules/germline_variant_calling/manta.jst' import manta_constitutional with context %}
-{% from 'modules/germline_variant_calling/strelka2.jst' import strelka2_constitutional with context %}
-{% from 'modules/germline_variant_calling/broad_ichorcna.jst' import ichorcna with context %}
+{% from 'modules/germline/gatk_haplotypecallergvcf.jst' import haplotypecallergvcf with context %}
+{% from 'modules/germline/gatk_genotypegvcf.jst' import genotypegvcf with context %}
+{% from 'modules/germline/freebayes.jst' import freebayes with context %}
+{% from 'modules/germline/manta.jst' import manta_constitutional with context %}
+{% from 'modules/germline/strelka2.jst' import strelka2_constitutional with context %}
+{% from 'modules/germline/deepvariant.jst' import deepvariant with context %}
+{% from 'modules/germline/octopus.jst' import octopus_constitutional with context %}
+{% from 'modules/germline/broad_ichorcna.jst' import ichorcna with context %}
 
+# Germline tools generally operate on a single DNA samples and should not run 
+# on "tumor" samples.
 
 {% macro germline_variant_calling(samples) %}
 {% for sample in samples.values() if sample.glType|lower == 'genome' and sample.subGroup|lower != 'tumor' %}
@@ -27,6 +30,14 @@
 
     {% if tasks.strelka2_constitutional_genome|default(True) %}
         {{- strelka2_constitutional(sample, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.deepvariant_genome|default(True) %}
+        {{- deepvariant(sample, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.octopus_constitutional_genome|default(True) %}
+        {{- octopus_constitutional(sample, aligner='bwa') }}
     {% endif %}
 
     {% if tasks.ichorcna_genome|default(True) %}
@@ -56,6 +67,14 @@
 
     {% if tasks.strelka2_constitutional_exome|default(True) %}
         {{- strelka2_constitutional(sample, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.deepvariant_exome|default(True) %}
+        {{- deepvariant(sample, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks.octopus_constitutional_exome|default(True) %}
+        {{- octopus_constitutional(sample, aligner='bwa') }}
     {% endif %}
 
     {% if tasks.ichorcna_exome|default(True) %}

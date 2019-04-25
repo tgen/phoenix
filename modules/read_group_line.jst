@@ -1,13 +1,13 @@
 {% macro read_group_line(rg, format='bwa') -%}
 {% set tags = [
-  'ID:' + rg.rgid,
-  'LB:' + rg.rglb,
-  'PU:' + rg.rgpu,
-  'SM:' + rg.rgsm,
-  'PL:' + rg.rgpl,
-  'CN:' + rg.rgcn|default('tgen'),
-  'PM:' + rg.rgpm,
-  'KS:' + rg.rgks|default('unknown')
+  'ID:{}'.format(rg.rgid),
+  'LB:{}'.format(rg.rglb),
+  'PU:{}'.format(rg.rgpu),
+  'SM:{}'.format(rg.rgsm|default(rg.sampleName)),
+  'PL:{}'.format(rg.rgpl),
+  'CN:{}'.format(rg.rgcn|default('tgen')),
+  'PM:{}'.format(rg.rgpm),
+  'KS:{}'.format(rg.rgks|default('unknown'))
 ] %}
 {% if format == 'bwa' %}
   {% set delim = '\\t' %}

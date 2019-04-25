@@ -2,13 +2,12 @@
 # Currently supports any sample but with special tasks added when the sample
 # glTypes is 'genome' or 'exome'
 {% macro bam_qc(sample, aligner='bwa') %}
-{% set bam_path = "{gltype}/alignment/{aligner}/{name}/{name}.{aligner}.bam" %}
-{% set bam_path = bam_path.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
-{% set stats_dir = "{gltype}/alignment/{aligner}/{name}/stats/" %}
-{% set stats_dir = stats_dir.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
+{% set bam_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
-- name: samtools_stats_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, stats, {{ sample.name }}]
+{% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
+- name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
+  tags: [samtools, stats, {{ sample.glType }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
@@ -20,17 +19,24 @@
 
     mkdir -p "{{ stats_dir }}"
 
+    samtools view \
+      -h \
+      {% for rg in rgs %}
+      -r "{{ rg.rgid }}" \
+      {% endfor %}
+      "{{ bam_path }}" \
+      | \
     samtools stats \
       --threads 2 \
       --remove-dups \
       --remove-overlaps \
       --ref-seq "{{ constants.phoenix.reference_fasta }}" \
-      "{{ bam_path }}" >\
-      "{{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt"
+      > "{{ stats_dir }}/{{ bam_path|basename }}.{{ lb }}.bamstats.txt"
 
+{% endfor %}
 
 - name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, flagstat, {{ sample.name }}]
+  tags: [samtools, flagstat, {{ sample.glType }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
   input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
@@ -44,12 +50,12 @@
 
     samtools flagstat \
       --threads 8 \
-      "{{ bam_path }}" >\
-      "{{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt"
+      "{{ bam_path }}" \
+      > "{{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt"
 
 
 - name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, idxstats, {{ sample.name }}]
+  tags: [samtools, idxstats, {{ sample.glType }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
   input: {{ bam_path }}
@@ -67,9 +73,8 @@
       "{{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt"
 
 
-
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectmultiplemetrics, {{ sample.name}}]
+  tags: [gatk, picard, collectmultiplemetrics, {{ sample.glType }}]
   methods: Alignment metrics, base distribution, insert size, quality,
     and other metrics for {{ sample.name }} ({{ aligner }}) were
     gathered with {{ constants.tools.gatk_4_1_0_0.verbose }}
@@ -102,7 +107,7 @@
 
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample.name}}]
+  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample.glType }}]
   input: {{ bam_path }}
   after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   walltime: "24:00:00"
@@ -116,9 +121,35 @@
       -R "{{ constants.phoenix.reference_fasta }}"
 
 
+- name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
+  tags: [snpSniffer, {{ sample.glType }}]
+  input: {{ bam_path }}
+  cpus: 4
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    # Genotype the 387 test positions across the genome, filter to calls with DP >= 5
+    bcftools mpileup \
+      --no-BAQ \
+      --max-depth 5000 \
+      --min-MQ 0 \
+      --min-BQ 13 \
+      --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
+      --regions-file "{{ constants.phoenix.snpSniffer_sites }}" \
+      {{ bam_path }} \
+      | \
+    bcftools call \
+      --consensus-caller \
+      | \
+    bcftools sort \
+      --output-type v \
+      --output-file "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
+
+
 {% if sample.glType|lower == 'genome' %}
 - name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetrics, {{ sample.name}}]
+  tags: [gatk, picard, collectwgsmetrics, {{ sample.glType }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -136,7 +167,7 @@
 
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.name}}]
+  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.glType }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -154,7 +185,7 @@
 
 
 - name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.name}}]
+  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.glType }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -174,7 +205,7 @@
 
 {% elif sample.glType|lower == 'exome' %}
 - name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collecthsmetrics, {{ sample.name}}]
+  tags: [gatk, picard, collecthsmetrics, {{ sample.glType }}]
   input: {{ bam_path }}
   walltime: "8:00:00"
   cpus: 16
@@ -192,13 +223,15 @@
       --TARGET_INTERVALS "{{ sample.capture_kit.targets_interval_list }}" \
       {% if sample.capture_kit.baits_interval_list is defined %}
       --BAIT_INTERVALS "{{ sample.capture_kit.baits_interval_list }}"
+      {% else %}
+      --BAIT_INTERVALS  "{{ sample.capture_kit.targets_interval_list }}"
       {% endif %}
 
 {% endif %}
 
 {% if sample.subGroup|lower == 'constitutional' %}
 - name: verifybamid2_{{ sample.name }}
-  tags: [qc, verifybamid2, {{ sample.name }}]
+  tags: [qc, verifybamid2, {{ sample.glType }}]
   input: {{ bam_path }}
   cpus: 1
   mem: 4000M
@@ -221,6 +254,6 @@
       --BamFile "{{ bam_path }}" \
       --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
 
-{% endif %}  
+{% endif %}
 
 {% endmacro %}

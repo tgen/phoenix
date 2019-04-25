@@ -36,14 +36,15 @@
     {% for fq in r2fqlist %}
     - {{ fq.path }}
     {% endfor %}
-  output: {{ sample.glType }}/star-quant/{{ sample.name }}/
+  output: 
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
   cpus: 16
   walltime: "24:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.star_2_6_1d.module }}
 
-    mkdir -p "{{ sample.glType }}/star-quant/{{ sample.name }}/"
+    mkdir -p "{{ sample.glType }}/alignment/star/{{ sample.name }}/"
 
     STAR \
       --alignIntronMin 20 \
@@ -63,7 +64,7 @@
       --outSAMunmapped Within \
       --outSAMmapqUnique 255 \
       --outSAMmode Full \
-      --outSAMtype SAM \
+      --outSAMtype BAM SortedByCoordinate \
       --readFilesCommand zcat \
       --runMode alignReads \
       --runThreadN 14 \
@@ -71,18 +72,26 @@
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
-      --outFileNamePrefix "{{ sample.glType }}/star-quant/{{ sample.name }}/{{ sample.name }}_"
+      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_"
 
 
 - name: htseq_{{ sample.name }}
-  input: {{ sample.glType }}/star-quant/{{ sample.name }}/
-  output: {{ sample.glType }}/htseq/{{ sample.name }}/
+  input: 
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
+  output: 
+    - {{ sample.glType }}/quant/htseq/{{ sample.name }}/
   cpus: 16
   walltime: "24:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.htseq_0_6_1.module }}
     
-    htseq TODO
+    mkdir -p "{{ sample.glType }}/quant/htseq/{{ sample.name }}/"
+
+    htseq-count \
+      -f bam \
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
+      "{{ constants.phoenix.gtf }}" \
+      > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
 
 {% endmacro %}

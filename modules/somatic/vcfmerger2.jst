@@ -5,10 +5,12 @@
 {% set vcfs=[] %}
 
 {% for caller in pair.callers %}
+{% set bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set gzipped_path %}{{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
 {% set unzipped_path %}temp/vcfmerger2/{{ pair.name }}_{{ aligner }}_{{ caller }}.vcf{% endset %}
-{% set prepped_path = 'temp/%s.%s.prep.vcf'|format(pair.name, caller) %}
+{% set prepped_path %}temp/vcfmerger2/{{ pair.name }}_{{ aligner }}_{{ caller }}.prepz.vcf{% endset %}
 {% do vcfs.append({
+  'bam': bam,
   'gzipped_path': gzipped_path, 
   'unzipped_path': unzipped_path,
   'prepped_path': prepped_path
@@ -21,13 +23,12 @@
   cpus: 2
   walltime: "24:00:00"
   cmd: |
-    set -ue
+    set -uev
 
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_3_6_0.module }}
 
-    rm -r "temp/vcfmerger2/" || true
-    mkdir "temp/vcfmerger2/"
+    mkdir -p "temp/vcfmerger2/"
     gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
 
     # Locate the prep_vcf.sh script relative to vcfMerger2.py 
@@ -35,7 +36,8 @@
     
     ${PREPVCF} \
       -g "{{ constants.phoenix.reference_fasta }}" \
-      -d "temp/vcfmerger2" \
+      -d . \
+      --bam "{{ bam }}" \
       --toolname "{{ caller }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
@@ -54,13 +56,18 @@
   cpus: 4
   walltime: "24:00:00"
   cmd: |
-    set -ue
+    set -uev
 
     module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.python_3_6_0.module }}
     
     vcfMerger2.py \
+      --skip-prep-vcfs \
       --toolnames "{{ pair.callers|join('|') }}" \
       --vcfs "{{ vcfs|map(attribute='prepped_path')|join('|') }}" \
+      -g "{{ constants.phoenix.reference_fasta }}" \
+      --normal-sname "{{ pair.normal.rgsm }}" \
+      --tumor-sname "{{ pair.tumor.rgsm }}" \
       -o "{{ pair.glType }}/somatic_variant_calls/vcfMerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
 
     rm -r "temp/vcfmerger2/"

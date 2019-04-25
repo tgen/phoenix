@@ -83,7 +83,6 @@ gatk SortSam \
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
   after:
     re: bwa_mem_samtools_view_{{ sample.name }}_.*
-  walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -uev
@@ -103,7 +102,6 @@ gatk SortSam \
   tags: [gatk, picard, picard-SortSam, {{ sample.glType }}]
   after: gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
-  walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -uev
@@ -197,7 +195,6 @@ gatk SortSam \
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
   after:
     re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
-  walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -uev
@@ -227,7 +224,6 @@ gatk SortSam \
   tags: [gatk, picard, picard-SortSam, {{ sample.glType }}]
   after: chunked_gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
-  walltime: "24:00:00"
   cpus: 16
   cmd: |
     set -uev

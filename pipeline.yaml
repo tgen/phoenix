@@ -4,6 +4,13 @@ description: Human GRCh38 genomics suite
 version: 1.1.0b
 constants:
   tools:
+    bedtools_2_26_0:
+      module: BEDTools/2.26.0
+      version: "2.26.0"
+      verbose: BEDTools v2.26.0
+      webiste: TODO
+      citation: >
+        TODO
     bwa_0_7_17:
       module: bwa/0.7.17
       version: "0.7.17"
@@ -12,6 +19,25 @@ constants:
       citation: >
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
+    cuda_toolkit_10_0_0:
+      module: cuda/cuda10/toolkit/10.0.0
+      version: "10.0.0"
+      verbose: NVIDIA CUDA 10.0
+      website: https://developer.nvidia.com/cuda-toolkit
+    deepvariant_0_7_0_gpu:
+      module: deepvariant/0.7.0-gpu
+      version: "0.7.0-gpu"
+      verbose: DeepVariant 0.7.0-gpu
+      website: https://github.com/google/deepvariant
+      citation: > 
+        TODO
+    featurecounts_:
+      module: TODO
+      version: 
+      website: http://bioinf.wehi.edu.au/featureCounts/
+      citation: >
+        Liao Y, Smyth GK and Shi W (2014). featureCounts: an efficient general purpose program for 
+        assigning sequence reads to genomic features. Bioinformatics, 30(7):923-30.
     freebayes_1_2:
       module: freebayes/1.2
       version: "1.2"
@@ -75,6 +101,25 @@ constants:
       citation: >
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
+    multiqc_1_7:
+      module: python/3.6.2
+      version: "1.7"
+      verbose: MultiQC v1.6
+      website: https://multiqc.info
+      citation: >
+          MultiQC\: Summarize analysis results for multiple tools and samples in a single report
+          Philip Ewels, Måns Magnusson, Sverker Lundin and Max Käller
+          Bioinformatics (2016)
+      doi: 10.1093/bioinformatics/btw354
+      PMID: 27312411
+    octopus_0_6_0b:
+      module: octopus/2019
+      version: 0.6.0-beta
+      verbose: Octopus v0.6.0-beta
+      website: https://github.com/luntergroup/octopus
+      citation: >
+        A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
+        David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
     python_2_7_15:
       module: python/2.7.15
       version: 2.7.15
@@ -115,6 +160,15 @@ constants:
         Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
+    samtools_1_9_65_g1b72f1a:
+      module: samtools/1.9-65-g1b72f1a
+      version: "1.9-65-g1b72f1a"
+      verbose: SAMtools v1.9 dev branch commit g1b72f1a
+      website: http://www.htslib.org
+      citation: >
+        Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
+        Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
+        Bioinformatics (2009) 25(16) 2078-9 [19505943]
     salmon_0_12_0:
       module: salmon/0.12.0
       version: "0.12.0"
@@ -123,6 +177,11 @@ constants:
       citation: >
         Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
         fast and bias-aware quantification of transcript expression. Nature Methods.
+    singularity_3_1_0:
+      module: singularity/3.1.0
+      version: "3.1.0"
+      verbose: Singularity v3.1.0
+      website: https://www.sylabs.io/singularity/
     snpeff_4_3t:
       module: snpEff/v4_3t
       version: "4.3T"
@@ -162,6 +221,15 @@ constants:
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
         variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
+    vardict_1_6_0:
+      module: vardict/1.6.0
+      version: "1.6.0"
+      verbose: Vardict Java v1.6.0
+      website: https://github.com/AstraZeneca-NGS/VarDictJava
+      citation: >
+        Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
+        JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
+        cancer research. Nucleic Acids Res. 2016, pii: gkw227.
     verifybamid2_1_0_5:
       module: verifybamID/1.0.5
       version: 1.0.5
@@ -175,6 +243,7 @@ constants:
     genome_build: grch38_hg38
     reference_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_dict: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
+    dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/common_all_20180418.UCSC.vcf.gz
     gatk_known_sites:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
@@ -184,20 +253,24 @@ constants:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     bwa_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
-    gtf: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.UCSC.gtf.gz
-    transcriptome_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.UCSC.transcriptome.fasta
+    gtf: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.gtf
+    transcriptome_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.transcriptome.fasta
     salmon_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
     star_indices:
       # Multiple STAR references defined here in order to accommodate 
       # RNA data with different read lengths.
-      default: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/STAR_2.6.1d/100bpReads
-      75bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/STAR_2.6.1d/75bpReads
-      100bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/STAR_2.6.1d/100bpReads
-      150bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/STAR_2.6.1d/150bpReads
-    starfusion_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
+      default: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
+      75bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/75bpReads
+      100bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
+      150bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
+    starfusion_index: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
     snpeff_config: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
-    snpeff_db: GRCh38
+    snpeff_db: GRCh38.95
+    snpSniffer_sites: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/snpSniffer/positions_387_hg38_ucsc.txt
+    deepvariant_models:
+      exome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wes_standard/model.ckpt
+      genome: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt
     capture_kits:
       # Capture kits have a defined genomic space where they are designed
       # to target. Here are files describing the regions that are covered
@@ -231,6 +304,14 @@ constants:
         source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.extended.bed
+      STX:
+        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome
+        targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome.targets.interval_list
+        extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome.extended.bed
+      ST2:
+        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome
+        targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.targets.interval_list
+        extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.extended.bed
     sequence_groupings:
       # Sequence groupings as per GATK for BQSR.
       - ['chr1']
