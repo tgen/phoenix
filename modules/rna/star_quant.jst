@@ -109,21 +109,29 @@
     
     mkdir -p "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/"
 
+    # TODO
+    # strandedness option -s depending on kit type
+    # Counting multimapped -M
+    # -p should only be set for paired-end
     featureCounts \
       -T 7 \
-      -a "{{ constants.phoenix.gtf }}" \
+      -p \
+      -M \
       -t "exon" \
-      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv"
+      -g gene_id \
+      -a "{{ constants.phoenix.gtf }}" \
+      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
       "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam"
 
-    # If walltime for these cmds is substantial, we'll split them into 2 separate 
+    # If walltime for these cmds is substantial, we'll split them into 2 separate
     # tasks. For now just testing them out vs HTSeq
     featureCounts \
       -T 7 \
-      -a "{{ constants.phoenix.gtf }}" \
+      -p \
+      -M \
       -t "gene" \
-      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv"
+      -a "{{ constants.phoenix.gtf }}" \
+      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
       "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam"
-
 
 {% endmacro %}
