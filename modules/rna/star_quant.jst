@@ -79,9 +79,9 @@
   input: 
     - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
   output: 
-    - {{ sample.glType }}/quant/htseq/{{ sample.name }}/
+    - {{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
   cpus: 16
-  walltime: "24:00:00"
+  walltime: "8:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.htseq_0_6_1.module }}
@@ -93,5 +93,37 @@
       "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
+
+
+- name: featurecounts_{{ sample.name }}
+  input: 
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
+  output: 
+    - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
+    - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
+  cpus: 8
+  walltime: "8:00:00"
+  cmd: |
+    set -uev
+    module load {{ constants.tools.subread_1_6_4.module }}
+    
+    mkdir -p "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/"
+
+    featureCounts \
+      -T 7 \
+      -a "{{ constants.phoenix.gtf }}" \
+      -t "exon" \
+      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv"
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam"
+
+    # If walltime for these cmds is substantial, we'll split them into 2 separate 
+    # tasks. For now just testing them out vs HTSeq
+    featureCounts \
+      -T 7 \
+      -a "{{ constants.phoenix.gtf }}" \
+      -t "gene" \
+      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv"
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam"
+
 
 {% endmacro %}

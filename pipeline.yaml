@@ -221,6 +221,14 @@ constants:
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
         variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
+    subread_1_6_4:
+      module: subread/1.6.4
+      version: "1.6.4"
+      verbose: Subread v1.6.4
+      webiste: http://subread.sourceforge.net
+      citation: >
+        Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
+        sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
     vardict_1_6_0:
       module: vardict/1.6.0
       version: "1.6.0"
