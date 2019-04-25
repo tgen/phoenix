@@ -152,14 +152,11 @@
 
     # TODO
     # strandedness option -s depending on kit type
-    # Counting multimapped -M
     # -p should only be set for paired-end
     featureCounts \
       -T 7 \
       -p \
-      -M \
       -t "exon" \
-      -g gene_id \
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
       "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam"
@@ -169,7 +166,6 @@
     featureCounts \
       -T 7 \
       -p \
-      -M \
       -t "gene" \
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
