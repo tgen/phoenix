@@ -31,7 +31,7 @@
     mkdir -p "temp/vcfmerger2/"
     gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
 
-    # Locate the prep_vcf.sh script relative to vcfMerger2.py 
+    # Locate the prep_vcf.sh script relative to vcfMerger2.py
     PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs/prep_vcf.sh
     
     ${PREPVCF} \
