@@ -126,11 +126,27 @@
     
     mkdir -p "{{ sample.glType }}/quant/htseq/{{ sample.name }}/"
 
-    # is this faster on an unsorted BAM file?
-    # Does this need strand support?
+    # NEED CONFIGURATION FOR STRAND_VARIABLE LIKE IN SALMON THIS MIGHT BE BETTER AS ITS OWN .JST SO ITS CONFIGURABLE
+
+    # -r --order=pos ; default=name ; GDC=name (bam unsorted)
+    # -s --stranded=<yes/no/reverse> ; default=yes ; GDC=no (Dumb)
+    # -a --a=<minaqual> ; default=10 ; skip all reads with alignment quality lower than the given minimum value
+    # --additional-attr=gene_name ; default=none ; will be printed as an additional column after the primary attribute column but before the counts column(s)
+    # --mode=<union/intersection-strict/intersection-nonempty> ; default=union ; Pegasus=union, GDC=intersection-nonempty
+    # --nonunique=<none/all> ; default=none ; Mode to handle reads that align to or are assigned to more than one feature in the overlap
+    # --secondary-alignments=<score/ignore> ; default=score
+    # --supplementary-alignments=<score/ignore> ; default=score
 
     htseq-count \
-      -f bam \
+      --format=bam \
+      --order=pos \
+      --stranded=${STRAND_VARIABLE} \
+      --a=10 \
+      --type=exon \
+      --idattr=gene_id \
+      --additional-attr=gene_name \
+      --mode=union \
+      --nonunique=none \
       "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
