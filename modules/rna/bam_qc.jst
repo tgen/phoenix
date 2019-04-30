@@ -1,0 +1,21 @@
+{% macro bam_qc(sample, aligner='star') %}
+
+- name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "8:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    CollectRnaSeqMetrics \
+      --INPUT input.bam \
+      --OUTPUT output.RNA_Metrics \
+      REF_FLAT=ref_flat.txt \
+      STRAND=SECOND_READ_TRANSCRIPTION_STRAND \
+      RIBOSOMAL_INTERVALS=ribosomal.interval_list
+
+{% endmacro %}
