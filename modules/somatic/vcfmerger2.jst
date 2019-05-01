@@ -1,14 +1,15 @@
 {% macro vcfmerger2(pair, aligner='bwa') %}
 
 {% set bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/vcfmerger2/{{ pair.name }}{% endset %}
 
 {% set vcfs=[] %}
 
 {% for caller in pair.callers %}
 {% set bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set gzipped_path %}{{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
-{% set unzipped_path %}temp/vcfmerger2/{{ pair.name }}_{{ aligner }}_{{ caller }}.vcf{% endset %}
-{% set prepped_path %}temp/vcfmerger2/{{ pair.name }}_{{ aligner }}_{{ caller }}.prepz.vcf{% endset %}
+{% set unzipped_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.vcf{% endset %}
+{% set prepped_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.prepz.vcf{% endset %}
 {% do vcfs.append({
   'bam': bam,
   'gzipped_path': gzipped_path, 
@@ -27,8 +28,10 @@
 
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_3_6_0.module }}
-
-    mkdir -p "temp/vcfmerger2/"
+    module load {{ constants.tools.bedtools_2_26_0.module }}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    
+    mkdir -p "{{ temp_dir }}"
     gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
 
     # Locate the prep_vcf.sh script relative to vcfMerger2.py
@@ -36,7 +39,7 @@
     
     ${PREPVCF} \
       -g "{{ constants.phoenix.reference_fasta }}" \
-      -d . \
+      -d "{{ temp_dir }}" \
       --bam "{{ bam }}" \
       --toolname "{{ caller }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
@@ -60,16 +63,24 @@
 
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_3_6_0.module }}
+    module load {{ constants.tools.bedtools_2_26_0.module }}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+
+    mkdir -p "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}"
     
     vcfMerger2.py \
+      --do-venn \
       --skip-prep-vcfs \
+      --precedence "{{ pair.callers|join('|') }}" \
       --toolnames "{{ pair.callers|join('|') }}" \
       --vcfs "{{ vcfs|map(attribute='prepped_path')|join('|') }}" \
       -g "{{ constants.phoenix.reference_fasta }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
-      -o "{{ pair.glType }}/somatic_variant_calls/vcfMerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
+      -d "{{ temp_dir }}" \
+      -o "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
 
-    rm -r "temp/vcfmerger2/"
+    mv "{{ temp_dir }}/venn*" "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/"
+    rm -r "{{ temp_dir }}"
 
 {% endmacro %}
