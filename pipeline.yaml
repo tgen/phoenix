@@ -269,6 +269,8 @@ constants:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     bwa_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
     gtf: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.gtf
+    ref_flat: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.refFlat.txt
+    ribo_locations: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.ribo.interval_list
     transcriptome_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.transcriptome.fasta
     salmon_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
     star_indices:

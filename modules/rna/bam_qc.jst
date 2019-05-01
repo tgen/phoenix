@@ -1,4 +1,6 @@
-{% macro bam_qc(sample, aligner='star') %}
+{% macro rna_bam_qc(sample, aligner='star') %}
+{% set bam_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam{% endset %}
+{% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
@@ -11,11 +13,16 @@
 
     mkdir -p "{{ stats_dir }}"
 
+    # NONE
+    # FIRST_READ_TRANSCRIPTION_STRAND
+    # SECOND_READ_TRANSCRIPTION_STRAND
+
     CollectRnaSeqMetrics \
-      --INPUT input.bam \
-      --OUTPUT output.RNA_Metrics \
-      REF_FLAT=ref_flat.txt \
-      STRAND=SECOND_READ_TRANSCRIPTION_STRAND \
-      RIBOSOMAL_INTERVALS=ribosomal.interval_list
+      --STRAND_SPECIFICITY NONE \
+      --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
+      --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
+
 
 {% endmacro %}
