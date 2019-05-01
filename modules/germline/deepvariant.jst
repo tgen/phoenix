@@ -1,5 +1,5 @@
 {% macro deepvariant(sample, aligner='bwa') %}
-{% set nshards=10 %}
+{% set nshards=40 %}
 {% for i in range(nshards) %}
 - name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   tags: [deepvariant, {{ sample.glType }}]
@@ -67,6 +67,8 @@
   after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
   output:
     - {{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz
+  cpus: 1
+  walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
