@@ -10,11 +10,13 @@
 {% set gzipped_path %}{{ pair.glType }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
 {% set unzipped_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.vcf{% endset %}
 {% set prepped_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.prepz.vcf{% endset %}
+{% set filtered_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.filt.vcf{% endset %}
 {% do vcfs.append({
   'bam': bam,
   'gzipped_path': gzipped_path, 
   'unzipped_path': unzipped_path,
-  'prepped_path': prepped_path
+  'prepped_path': prepped_path,
+  'filtered_path': filtered_path
 }) %}
 
 - name: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
@@ -22,7 +24,7 @@
   input: 
     - {{ gzipped_path }}
   cpus: 2
-  walltime: "24:00:00"
+  walltime: "4:00:00"
   cmd: |
     set -uev
 
@@ -47,6 +49,24 @@
       --vcf "{{ unzipped_path }}" \
       -o "{{ prepped_path }}"
 
+
+- name: vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  tags: [vcfMerger2, {{ pair.name }}]
+  after: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  cpus: 2
+  walltime: "24:00:00"
+  cmd: |
+    set -uev
+
+    module load {{ constants.tools.snpeff_4_3t.module }}
+    SNPSIFT="$(dirname $(dirname $(which snpEff)))/SnpSift.jar"
+
+    java -jar "${SNPSIFT}" \
+      filter \
+      '(GEN[ALL].DP > 10) & (GEN[0].AR < 0.02 & GEN[1].AR > 0.05)' \
+      "{{ prepped_path }}" \
+      > "{{ filtered_path }}"
+
 {% endfor %}
 
 
@@ -54,7 +74,7 @@
   tags: [vcfMerger2, {{ pair.name }}]
   after:
   {% for caller in pair.callers %}
-    - vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
+    - vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   {% endfor %}
   cpus: 4
   walltime: "24:00:00"
@@ -73,14 +93,14 @@
       --skip-prep-vcfs \
       --precedence "{{ pair.callers|join('|') }}" \
       --toolnames "{{ pair.callers|join('|') }}" \
-      --vcfs "{{ vcfs|map(attribute='prepped_path')|join('|') }}" \
+      --vcfs "{{ vcfs|map(attribute='filtered_path')|join('|') }}" \
       -g "{{ constants.phoenix.reference_fasta }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
       -d "{{ temp_dir }}" \
       -o "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
 
-    mv "{{ temp_dir }}/venn*" "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/"
+    mv "{{ temp_dir }}/venn"* "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/"
     rm -r "{{ temp_dir }}"
 
 {% endmacro %}
