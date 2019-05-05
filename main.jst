@@ -39,16 +39,20 @@
 {% from 'modules/somatic/main.jst' import somatic_variant_calling with context %}
 {% from 'modules/rna/main.jst' import rna_quant with context %}
 {% from 'modules/rna/main.jst' import rna_fusion_detection with context %}
+{% from 'modules/single_cell/main.jst' import single_cell_rna with context %}
 
 {% set samples = {} %}
 {% for file in dataFiles %}
-    {% do file.update({'glType': file.glType.lower()}) %}
-    {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
     {% if 'sampleMergeKey' in file %}
         {% set name = file.sampleMergeKey %}
     {% else %}
         {% set name = file.sampleName %}
     {% endif %}
+
+    {% do file.update({'name': name}) %}
+    {% do file.update({'glType': file.glType.lower()}) %}
+    {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
+
     {% if name not in samples %}
         {% do samples.update({name: {}}) %}
         {% do samples[name].update(file) %}
@@ -140,6 +144,10 @@
 
 {% if tasks.rna_fusion_detection|default(True) %}
     {{- rna_fusion_detection(samples) }}
+{% endif %}
+
+{% if tasks.single_cell_rna|default(False) %}
+    {{- single_cell_rna(dataFiles) }}
 {% endif %}
 
 {% endif %}

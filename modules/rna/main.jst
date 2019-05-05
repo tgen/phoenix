@@ -1,6 +1,7 @@
 {% from 'modules/rna/star_fusion.jst' import star_fusion with context %}
 {% from 'modules/rna/salmon.jst' import salmon with context %}
 {% from 'modules/rna/star_quant.jst' import star_quant with context %}
+{% from 'modules/rna/bam_qc.jst' import rna_bam_qc with context %}
 
 {% macro rna_fusion_detection(samples) %}
 {% for sample in samples.values() if sample.glType|lower == 'rna' %}
@@ -12,5 +13,7 @@
 {% for sample in samples.values() if sample.glType|lower == 'rna' %}
     {{- salmon(sample) }}
     {{- star_quant(sample) }}
+    {{- rna_bam_qc(sample, aligner='star') }}
 {% endfor %}
+
 {% endmacro %}

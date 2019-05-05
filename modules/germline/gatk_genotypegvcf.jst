@@ -17,7 +17,7 @@
     gatk GenotypeGVCFs \
       --tmp-dir "temp" \
       --java-options "-Xmx14G" \
-      --reference {{ constants.phoenix.reference_fasta }} \
+      --reference "{{ constants.phoenix.reference_fasta }}" \
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}

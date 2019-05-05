@@ -1,0 +1,35 @@
+# Run 10X Cell Ranger pipeline
+{% macro cellranger_10x(files) %}
+
+{% set libraries = files|groupby('name') %}
+{{ libraries | tojson(indent=4) }}
+
+{% if False %}
+- name: cellranger_count_{{ sample.name }}
+  methods: >
+    Transcript quantification for {{ sample.name }} was performed with
+    {{ constants.tools.cellranger_3_0_2.verbose }} using the cDNA index.
+  output: {{ sample.glType }}/quant/cellranger/{{ sample.name }}/
+  cpus: 12
+  mem: 48
+  walltime: "24:00:00"
+  cmd: |
+    set -uev
+    module load {{ constants.tools.cellranger_3_0_2.verbose }}
+
+    mkdir -p "{{ sample.glType }}/quant/cellranger/{{ sample.name }}/"
+
+    cellranger count \
+      --id=  \
+      --fastqs= \
+      --libraries= \
+      --sample={{ sample.name }} \
+      --transcriptome="{{ constants.phoenix.reference_CellRanger }}" \
+      --chemistry= \
+      --lanes= \
+      --localcores=12 \
+      --localmem=48 \
+      --output "{{ sample.glType }}/quant/cellranger/{{ sample.name }}/"
+{% endif %}
+
+{% endmacro %}

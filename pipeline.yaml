@@ -8,9 +8,12 @@ constants:
       module: BEDTools/2.26.0
       version: "2.26.0"
       verbose: BEDTools v2.26.0
-      webiste: TODO
+      website: https://bedtools.readthedocs.io/
       citation: >
-        TODO
+        Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing
+        genomic features. Bioinformatics. 2010 Mar 15;26(6):841-2. doi:
+        10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
+        Central PMCID: PMC2832824.
     bwa_0_7_17:
       module: bwa/0.7.17
       version: "0.7.17"
@@ -19,6 +22,13 @@ constants:
       citation: >
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
+    cellranger_3_0_2:
+      module: cellranger/3.0.2
+      version: "3.0.2"
+      verbose: 10X CellRanger v3.0.2
+      website: https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger
+      citation: > 
+        TODO
     cuda_toolkit_10_0_0:
       module: cuda/cuda10/toolkit/10.0.0
       version: "10.0.0"
@@ -30,14 +40,11 @@ constants:
       verbose: DeepVariant 0.7.0-gpu
       website: https://github.com/google/deepvariant
       citation: > 
-        TODO
-    featurecounts_:
-      module: TODO
-      version: 
-      website: http://bioinf.wehi.edu.au/featureCounts/
-      citation: >
-        Liao Y, Smyth GK and Shi W (2014). featureCounts: an efficient general purpose program for 
-        assigning sequence reads to genomic features. Bioinformatics, 30(7):923-30.
+        Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
+        Dijamco J, Nguyen N, Afshar PT, Gross SS, Dorfman L, McLean CY, DePristo MA. A
+        universal SNP and small-indel variant caller using deep neural networks. Nat
+        Biotechnol. 2018 Nov;36(10):983-987. doi: 10.1038/nbt.4235. Epub 2018 Sep 24.
+        PubMed PMID: 30247488.
     freebayes_1_2:
       module: freebayes/1.2
       version: "1.2"
@@ -221,6 +228,14 @@ constants:
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
         variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
+    subread_1_6_4:
+      module: subread/1.6.4
+      version: "1.6.4"
+      verbose: Subread v1.6.4
+      webiste: http://subread.sourceforge.net
+      citation: >
+        Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
+        sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
     vardict_1_6_0:
       module: vardict/1.6.0
       version: "1.6.0"
@@ -243,7 +258,7 @@ constants:
     genome_build: grch38_hg38
     reference_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_dict: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
-    dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/common_all_20180418.UCSC.vcf.gz
+    dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/b151/common_all_20180418.UCSC.vcf.gz
     gatk_known_sites:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
@@ -254,6 +269,8 @@ constants:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     bwa_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
     gtf: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.gtf
+    ref_flat: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.refFlat.txt
+    ribo_locations: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.ribo.interval_list
     transcriptome_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.transcriptome.fasta
     salmon_index: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
     star_indices:

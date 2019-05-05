@@ -1,5 +1,5 @@
 {% macro deepvariant(sample, aligner='bwa') %}
-{% set nshards=10 %}
+{% set nshards=40 %}
 {% for i in range(nshards) %}
 - name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   tags: [deepvariant, {{ sample.glType }}]
@@ -34,13 +34,12 @@
   {% for i in range(nshards) %}
     - deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   {% endfor %}
-  output:
-    - {{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz
-  sbatch_args: ['-p', 'gpu', '--gres', 'gpu:4', '-c', '40']
+  sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1', '-c', '10']
   walltime: "24:00:00"
   cmd: |
     set -euv
 
+    module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
     mkdir -p "{{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/"
@@ -55,7 +54,22 @@
       --examples "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.examples.tfrecord@{{ nshards }}.gz" \
       --outfile "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz"
 
-    # Run `postprocess_variants`, without gVCFs.
+
+- name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
+  tags: [deepvariant, {{ sample.glType }}]
+  after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
+  output:
+    - {{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz
+  cpus: 1
+  walltime: "24:00:00"
+  cmd: |
+    set -euv
+    
+    module load {{ constants.tools.singularity_3_1_0.module }}
+    module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
+    export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
+    
+    # Run postprocess_variants` without gVCFs
     postprocess_variants \
         --ref "{{ constants.phoenix.reference_fasta }}" \
         --infile "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz" \
@@ -64,9 +78,11 @@
 
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [deepvariant, bcftools, filter, {{ sample.glType }}]
-  after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
+  after: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
   output:
     - {{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz
+  cpus: 1
+  walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}

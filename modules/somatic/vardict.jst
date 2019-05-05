@@ -10,7 +10,7 @@
     - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   cpus: 8
   mem: 32G
-  walltime: "24:00:00"
+  walltime: "12:00:00"
   cmd: |
     set -uev
     set -o pipefail
@@ -68,7 +68,7 @@
       "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ loop.index }}.bed" \
     | testsomatic.R \
     | var2vcf_paired.pl \
-      -N "Constitutional.SM|Tumor.SM" \
+      -N "{{ pair.tumor.rgsm }}|{{ pair.normal.rgsm }}" \
       -c 0 \
       -I 12 \
       -m 5.25 \
@@ -95,7 +95,7 @@
   output: {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
   cpus: 4
   mem: 16G
-  walltime: "24:00:00"
+  walltime: "12:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
@@ -124,6 +124,9 @@
     - {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
   output:
     - {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz
+  cpus: 2
+  mem: 8G
+  walltime: "12:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
