@@ -22,7 +22,7 @@
 
 {% endfor %}
 
-{% set read_length = sample.star_index|default('default') %}
+{% set read_length = sample.read_length|default(100) %}
 {% set star_index = constants.phoenix.star_indices[read_length] %}
 
 - name: star_quant_{{ sample.name }}
@@ -79,14 +79,10 @@
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
-      --genomeDir "{{ star_index }}" \
       --genomeLoad NoSharedMemory \
-      --sjdbOverhang "+(read_length-1)} \       ####THIS NEED PROPER VARIABLE
       --readFilesType Fastx \
-      --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --readFilesCommand zcat \
       --limitOutSAMoneReadBytes 90000000 \
-      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_" \
       --outSAMtype BAM SortedByCoordinate \
       --outSAMmode Full \
       --outSAMstrandField intronMotif \
@@ -112,7 +108,11 @@
       --chimMultimapScoreRange 10 \
       --chimNonchimScoreDropMin 10 \
       --chimOutJunctionFormat 1 \
-      --quantMode TranscriptomeSAM GeneCounts
+      --quantMode TranscriptomeSAM GeneCounts \
+      --sjdbOverhang "{{ read_length - 1 }}" \
+      --genomeDir "{{ star_index }}" \
+      --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
+      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_"
 
 
 - name: htseq_{{ sample.name }}
