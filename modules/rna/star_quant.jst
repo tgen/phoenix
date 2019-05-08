@@ -22,8 +22,9 @@
 
 {% endfor %}
 
-{% set read_length = sample.read_length|default(100) %}
-{% set star_index = constants.phoenix.star_indices[read_length] %}
+{% set sjdb_overhang = sample.read_length|default(100) - 1 %}
+{% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
+{% set star_index = constants.phoenix.star_indices[star_index_size] %}
 
 - name: star_quant_{{ sample.name }}
   methods: >
@@ -49,11 +50,14 @@
     # Custom STAR Code Options ; defaults and source justification
     # Star Manual v2.7.0f Encode Recommendations:
     # --outFilterType BySJout ; default=Normal ; reduces the number of spurious junctions
-    # --outFilterMultimapNmax 20 ; default=10 ; max number of multiple alignments allowed for a read, otherwise considered unmapped
+    # --outFilterMultimapNmax 20 ; default=10 ; max number of multiple alignments allowed for a read,
+    #   otherwise considered unmapped
     # --alignSJoverhangMin 8 ; default=5 ; min overhang for unannotated junctions
     # --alignSJDBoverhangMin 1 ; default=3 ; min overhang for annotated junctions
-    # --outFilterMismatchNmax 999 ; default=10 ; max number of mismatches per pair, large number switches off this filter (--outFilterMismatchNoverReadLmax enables a percentage filter)
-    # --outFilterMismatchNoverReadLmax 0.04 ; default=1.0 ; max number of mismatches per pair relative to read length (ie. 0.04*200=8 for the paired reads)
+    # --outFilterMismatchNmax 999 ; default=10 ; max number of mismatches per pair, large number
+    #   switches off this filter (--outFilterMismatchNoverReadLmax enables a percentage filter)
+    # --outFilterMismatchNoverReadLmax 0.04 ; default=1.0 ; max number of mismatches per pair relative
+    #   to read length (ie. 0.04*200=8 for the paired reads)
     # --alignIntronMin 20 ; default=21 ; minimum intron length
     # --alignIntronMax 1000000 ; default=0(enables calculation) ; maximum intron length
     # --alignMatesGapMax 1000000 ; default=0(enables calculation) ; max genomic distance between mates
@@ -61,18 +65,23 @@
     # Star Fusion Parameters
     # --chimJunctionOverhangMin 12 ; default=20 ; minimum overhang for a chimeric junction
     # --chimMultimapNmax 10 ; default=0 ; maximum number of chimeric multi-alignments
-    # --chimSegmentMin 12 ; default=0, GDC=15 ; Needs to be a positive value to detect a fusion, min alignment on BOTH regions to define chimeric
+    # --chimSegmentMin 12 ; default=0, GDC=15 ; Needs to be a positive value to detect a fusion, min
+    #  alignment on BOTH regions to define chimeric
     # --outSAMstrandField intronMotif ; default=None ; allows support for cufflinks using unstranded libraries
-    # --twopassMode Basic ; default=- GDC=Basic GATKsnv=Basic ; all 1st pass junctions inserted into the genome indices on the fly
+    # --twopassMode Basic ; default=- GDC=Basic GATKsnv=Basic ; all 1st pass junctions inserted into the
+    #   genome indices on the fly
     # --chimSegmentReadGapMax 3 ; default=0 ; maximum gap in the read sequence between chimeric segments
-    # --chimMultimapScoreRange 10 ; default=1 ; the score range for multi-mapping chimeras below the best chimeric score. Only works with {chimMultimapNmax > 1
-    # --chimNonchimScoreDropMin 10 ; default=20 ; to trigger chimeric detection, the drop in the best non-chimeric alignment score with respect to the read length has to be smaller than this value
+    # --chimMultimapScoreRange 10 ; default=1 ; the score range for multi-mapping chimeras below the best chimeric
+    #   score. Only works with {chimMultimapNmax > 1
+    # --chimNonchimScoreDropMin 10 ; default=20 ; to trigger chimeric detection, the drop in the best non-chimeric
+    #   alignment score with respect to the read length has to be smaller than this value
     # --chimOutJunctionFormat 1 ; default=0 ; required as of STAR v2.6.1 for usage with STAR-fusion
     # --peOverlapNbasesMin 12 ; default=0 ; minimum number of overlap bases to trigger mates merging and realignment
     # --peOverlapMMp 0.1 ; default=0.01 ; maximum proportion of mismatched bases in the overlap area
     #
     # GDC
-    # --chimOutType Junctions SeparateSAMold WithinBAM SoftClip ; #default=Junctions ; NOTE:Did not enable SeparateSAMold as this will be deprecated
+    # --chimOutType Junctions SeparateSAMold WithinBAM SoftClip ; #default=Junctions ;
+    #   NOTE: Did not enable SeparateSAMold as this will be deprecated
     # --quantMode TranscriptomeSAM GeneCounts, default=- ; GeneCounts=count reads per gene
 
     STAR \
@@ -109,11 +118,10 @@
       --chimNonchimScoreDropMin 10 \
       --chimOutJunctionFormat 1 \
       --quantMode TranscriptomeSAM GeneCounts \
-      --sjdbOverhang "{{ read_length - 1 }}" \
+      --sjdbOverhang "{{ sjdb_overhang }}" \
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_"
-
 
 - name: htseq_{{ sample.name }}
   input: 
