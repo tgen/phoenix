@@ -1,4 +1,5 @@
 {% macro vardict_somatic(pair, aligner='bwa') %}
+{% do pair.callers.append('vardict') %}
 {% set normal_bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 
