@@ -30,7 +30,6 @@
       --localcores=12 \
       --localmem=48 \
       --output "{{ sample.glType }}/quant/cellranger/{{ sample.name }}/"
-{% endif %}
 
 - name: starSOLO_Count_{{ sample.name }}
   methods: >
@@ -161,5 +160,7 @@
       --soloBarcodeReadLength 0 \
       --soloStrand ${STRAND} \
       --soloOutFileNames Solo.out/ ${RGSM}_genes.tsv ${RGSM}_barcodes.tsv ${RGSM}_matrix.mtx ${RGSM}_matrixSJ.mtx
+{% endif %}
 
 {% endmacro %}
+
