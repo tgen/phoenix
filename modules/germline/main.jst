@@ -79,11 +79,7 @@
             {{- octopus_constitutional(sample, aligner='bwa') }}
         {% endif %}
     {% endif %}
-
-    {% if tasks.ichorcna_exome|default(True) %}
-        {{- ichorcna(sample, aligner='bwa') }}
-    {% endif %}
-
+    
 {% endfor %}
 
 

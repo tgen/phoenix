@@ -276,10 +276,10 @@ constants:
     star_indices:
       # Multiple STAR references defined here in order to accommodate 
       # RNA data with different read lengths.
-      default: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
-      75bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/75bpReads
-      100bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
-      150bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
+      100: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
+      75: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/75bpReads
+      100: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
+      150: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
     starfusion_index: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
     snpeff_config: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data

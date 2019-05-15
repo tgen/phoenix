@@ -3,7 +3,7 @@
 {% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
+  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.glType }}]
   input: {{ bam_path }}
   walltime: "8:00:00"
   cpus: 16
@@ -16,7 +16,6 @@
     # NONE
     # FIRST_READ_TRANSCRIPTION_STRAND
     # SECOND_READ_TRANSCRIPTION_STRAND
-
     CollectRnaSeqMetrics \
       --STRAND_SPECIFICITY NONE \
       --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
