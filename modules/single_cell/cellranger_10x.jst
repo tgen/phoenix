@@ -34,7 +34,7 @@
 - name: starSOLO_Count_{{ sample.name }}
   methods: >
     Alignment and quantification for {{ sample.name }} was performed with
-    {{ constants.tools.StarSolo_2.7.4f.verbose }} using the genome index.
+    {{ constants.tools.star_2_7_4f.verbose }} using the genome index.
   output: {{ sample.glType }}/quant/starSOLO/{{ sample.name }}/
   cpus: 20
   mem: 80
@@ -55,7 +55,6 @@
     # CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
     # CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
     # CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
-    ##
 
     # TEST CONFIGURATION - DELETE EVENTUALLY
     ASSAY=3PRIME
