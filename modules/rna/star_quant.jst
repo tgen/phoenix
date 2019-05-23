@@ -108,15 +108,14 @@
       --alignSJDBoverhangMin 1 \
       --peOverlapNbasesMin 12 \
       --peOverlapMMp 0.1 \
-      --chimOutType Junctions WithinBAM SoftClip \
+      --chimOutType WithinBAM SoftClip \
       --chimSegmentMin 12 \
       --chimJunctionOverhangMin 12 \
       --chimSegmentReadGapMax 3 \
-      --chimMultimapNmax 10 \
+      --chimMultimapNmax 0 \
       --chimMultimapScoreRange 10 \
       --chimNonchimScoreDropMin 10 \
       --chimOutJunctionFormat 1 \
-      --chimOutType Junctions \
       --quantMode TranscriptomeSAM GeneCounts \
       --outSAMattrRGline "{{ rglinelist|join(',') }}" \
       --sjdbOverhang "{{ sjdb_overhang }}" \
