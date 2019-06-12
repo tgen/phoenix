@@ -10,15 +10,17 @@
   'KS:{}'.format(rg.rgks|default('unknown'))
 ] %}
 {% if format == 'bwa' %}
-  {% set delim = '\\t' %}
-  {% set prefix = '@RG' + delim %}
+  {# BWA requires one argument with fields separated by \t #}
+  {% set rg_line = '\\t'.join(['@RG'] + tags) %}
 {% elif format == 'star' %}
-  {% set delim = '\t' %}
-  {% set prefix = '' %}
+  {# STAR requires one argument per field #}
+  {% set wrapped_tags = [] %}
+  {% for tag in tags %}
+    {% do wrapped_tags.append('"' + tag + '"') %}
+  {% endfor %}
+  {% set rg_line = ' '.join(wrapped_tags) %}
 {% else %}
   {{ raise('Read group line format should be "bwa" or "star"') }}
 {% endif %}
-{% set tags = delim.join(tags) %}
-{% set rgline = prefix + tags %}
-{{ rgline }}
+{{ rg_line }}
 {%- endmacro %}
