@@ -41,8 +41,7 @@
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk_4_1_0_0.verbose }} Mutect2 in parallel chunks and
     then merged together with {{ constants.tools.samtools_1_9.verbose }} concat.
-  after: 
-    re: mutect2_{{ pair.name }}_{{ aligner }}_.*
+  after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
   cpus: 4
   mem: 16G
   walltime: "24:00:00"

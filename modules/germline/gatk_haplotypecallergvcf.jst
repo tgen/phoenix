@@ -27,7 +27,9 @@
 
 - name: haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}
   after: 
-    re: haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_.*
+    {% for batch in constants.phoenix.calling_intervals %}
+    - haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+    {% endfor %}
   output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4

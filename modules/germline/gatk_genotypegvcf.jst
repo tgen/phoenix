@@ -53,8 +53,7 @@
 
 - name: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
   tags: [bcftools, concat, {{ sample.glType }}]
-  after: 
-    re: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_.*
+  after-re: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_.*
   output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
   walltime: "24:00:00"
   cpus: 4

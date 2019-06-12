@@ -37,8 +37,7 @@
 
 - name: freebayes_merge_{{ sample.name }}_{{ aligner }}
   tags: [freebayes, bcftools, {{ sample.glType }}]
-  after: 
-    re: freebayes_{{ sample.name }}_{{ aligner }}_.*
+  after-re: freebayes_{{ sample.name }}_{{ aligner }}_.*
   output: {{ sample.glType }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz
   walltime: "24:00:00"
   cpus: 4

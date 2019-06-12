@@ -93,8 +93,7 @@
 
 - name: samtools_merge_rg_bams_{{ sample.name }}_bwa
   tags: [samtools, samtools-merge, {{ sample.glType }}]
-  after:
-    re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
+  after-re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 4
@@ -146,7 +145,7 @@
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
 
 {% for fastq in [r1fastq, r2fastq] %}
-- name: split_fastq_{{ fastq.fastqPath|basename }}
+- name: split_fastq_{{ fastq.fastqPath|sha256 }}
   tags: [split, {{ sample.glType }}]
   input:
     - temp/fastqs/{{ fastq.fastqPath|basename }}
@@ -181,8 +180,8 @@
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [bwa, bwa-mem, samtools-fixmate, samtools-sort, {{ sample.glType }}]
   after: 
-    - split_fastq_{{ r1fastq.fastqPath|basename }}
-    - split_fastq_{{ r2fastq.fastqPath|basename }}
+    - split_fastq_{{ r1fastq.fastqPath|sha256 }}
+    - split_fastq_{{ r2fastq.fastqPath|sha256 }}
   walltime: "24:00:00"
   cpus: 10
   cmd: |
@@ -221,8 +220,7 @@
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [samtools, samtools-merge, {{ sample.glType }}]
-  after:
-    re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
+  after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 4

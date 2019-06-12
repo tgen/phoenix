@@ -51,8 +51,7 @@
 
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, concat, {{ pair.glType }}]
-  after: 
-    re: lancet_{{ pair.name }}_{{ aligner }}_.*
+  after-re: lancet_{{ pair.name }}_{{ aligner }}_.*
   output: {{ pair.glType }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz
   cpus: 4
   mem: 16G

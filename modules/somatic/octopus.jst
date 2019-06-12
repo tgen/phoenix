@@ -50,8 +50,7 @@
 
 - name: octopus_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, concat, octopus_somatic, {{ pair.glType }}]
-  after: 
-    re: octopus_somatic_{{ pair.name }}_{{ aligner }}_.*
+  after-re: octopus_somatic_{{ pair.name }}_{{ aligner }}_.*
   output: {{ pair.glType }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz
   cpus: 4
   mem: 16G

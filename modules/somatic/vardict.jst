@@ -91,8 +91,7 @@
 
 - name: vardict_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, concat, vardict_somatic, {{ pair.glType }}]
-  after: 
-    re: vardict_somatic_{{ pair.name }}_{{ aligner }}_.*
+  after-re: vardict_somatic_{{ pair.name }}_{{ aligner }}_.*
   output: {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
   cpus: 4
   mem: 16G

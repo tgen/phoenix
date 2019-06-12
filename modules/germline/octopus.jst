@@ -42,8 +42,7 @@
 
 
 - name: octopus_constitutional_merge_{{ sample.name }}_{{ aligner }}
-  after: 
-    re: octopus_constitutional_{{ sample.name }}_{{ aligner }}_.*
+  after-re: octopus_constitutional_{{ sample.name }}_{{ aligner }}_.*
   output: {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz
   walltime: "24:00:00"
   cpus: 4

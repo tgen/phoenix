@@ -81,8 +81,7 @@ gatk SortSam \
 
 - name: gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
-  after:
-    re: bwa_mem_samtools_view_{{ sample.name }}_.*
+  after-re: bwa_mem_samtools_view_{{ sample.name }}_.*
   cpus: 16
   cmd: |
     set -uev
@@ -133,7 +132,7 @@ gatk SortSam \
 {% do sample['read_groups'][rgid].update({'n_chunks': n_chunks}) %}
 
 {% for fastq in [r1fastq, r2fastq] %}
-- name: split_fastq_{{ fastq.fastqPath|basename }}
+- name: split_fastq_{{ fastq.fastqPath|sha256 }}
   tags: [split, {{ sample.glType }}]
   input:
     - temp/fastqs/{{ fastq.fastqPath|basename }}
@@ -168,8 +167,8 @@ gatk SortSam \
 - name: chunked_bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [bwa, samtools, samtools-view, {{ sample.glType }}]
   after: 
-    - split_fastq_{{ r1fastq.fastqPath|basename }}
-    - split_fastq_{{ r2fastq.fastqPath|basename }}
+    - split_fastq_{{ r1fastq.fastqPath|sha256 }}
+    - split_fastq_{{ r2fastq.fastqPath|sha256 }}
   walltime: "24:00:00"
   cpus: 10
   cmd: |
@@ -193,8 +192,7 @@ gatk SortSam \
 
 - name: chunked_gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
-  after:
-    re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
+  after-re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
   cpus: 16
   cmd: |
     set -uev
