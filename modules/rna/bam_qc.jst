@@ -1,10 +1,11 @@
 {% macro rna_bam_qc(sample, aligner='star') %}
-{% set bam_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam{% endset %}
 {% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collectrnaseqmetrics, {{ sample.glType }}]
-  input: {{ bam_path }}
+  input: 
+    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
+    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.toTranscriptome.out.bam
   walltime: "8:00:00"
   cpus: 16
   cmd: |
@@ -16,12 +17,22 @@
     # NONE
     # FIRST_READ_TRANSCRIPTION_STRAND
     # SECOND_READ_TRANSCRIPTION_STRAND
-    CollectRnaSeqMetrics \
+    gatk CollectRnaSeqMetrics \
+      --IGNORE_SEQUENCE ZZZ \
+      --STRAND_SPECIFICITY NONE \
+      --VALIDATION_STRINGENCY LENIENT \
+      --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
+      --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
+      --INPUT "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
+      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.sortedByCoord.RNA_Metrics.txt"
+
+    gatk CollectRnaSeqMetrics \
+      --IGNORE_SEQUENCE ZZZ \
       --STRAND_SPECIFICITY NONE \
       --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
       --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
+      --INPUT "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.toTranscriptome.out.bam" \
+      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.toTranscriptome.RNA_Metrics.txt"
 
 
 {% endmacro %}
