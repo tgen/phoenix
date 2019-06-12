@@ -38,7 +38,8 @@
     - {{ fq.path }}
     {% endfor %}
   output: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.toTranscriptome.out.bam
   cpus: 20
   walltime: "24:00:00"
   cmd: |
@@ -117,7 +118,7 @@
       --chimNonchimScoreDropMin 10 \
       --chimOutJunctionFormat 1 \
       --quantMode TranscriptomeSAM GeneCounts \
-      --outSAMattrRGline "{{ rglinelist|join(',') }}" \
+      --outSAMattrRGline {{ rglinelist|join(' , ') }} \
       --sjdbOverhang "{{ sjdb_overhang }}" \
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
@@ -125,7 +126,7 @@
 
 - name: htseq_{{ sample.name }}
   input: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
   output: 
     - {{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
   cpus: 16
@@ -164,7 +165,7 @@
 
 - name: featurecounts_{{ sample.name }}
   input: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
   output: 
     - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
     - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
