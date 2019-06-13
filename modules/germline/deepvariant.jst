@@ -60,7 +60,7 @@
   after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
   output:
     - {{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz
-  cpus: 1
+  cpus: 2
   walltime: "24:00:00"
   cmd: |
     set -euv
@@ -81,7 +81,7 @@
   after: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
   output:
     - {{ sample.glType }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz
-  cpus: 1
+  cpus: 2
   walltime: "24:00:00"
   cmd: |
     set -euv
