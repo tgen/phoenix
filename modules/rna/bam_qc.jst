@@ -1,11 +1,28 @@
 {% macro rna_bam_qc(sample, aligner='star') %}
 {% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam_path %}{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam{% endset %}
+{% set cram_path %}{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.cram{% endset %}
+
+- name: cram_{{ sample.name }}_{{ aligner }}
+  input: {{ bam_path }}
+  output: {{ cram_path }}
+  walltime: "8:00:00"
+  cpus: 1
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    samtools view \
+      -C \
+      -T  "{{ constants.phoenix.reference_fasta }}" \
+      "{{ bam_path }}" > "{{ cram_path }}"
+
+    samtools index "{{ cram_path }}"
+
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collectrnaseqmetrics, {{ sample.glType }}]
-  input: 
-    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
-    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.toTranscriptome.out.bam
+  input: {{ bam_path }}
   walltime: "8:00:00"
   cpus: 16
   cmd: |
@@ -23,16 +40,8 @@
       --VALIDATION_STRINGENCY LENIENT \
       --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
       --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
-      --INPUT "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
-      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.sortedByCoord.RNA_Metrics.txt"
-
-    gatk CollectRnaSeqMetrics \
-      --IGNORE_SEQUENCE ZZZ \
-      --STRAND_SPECIFICITY NONE \
-      --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
-      --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
-      --INPUT "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}_Aligned.toTranscriptome.out.bam" \
-      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.toTranscriptome.RNA_Metrics.txt"
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
 
 
 {% endmacro %}
