@@ -11,8 +11,9 @@
 
     snpEff eff \
       -t \
-      -dataDir "{{ constants.phoenix.snpeff_data_dir }}" \
-      "{{ constants.phoenix.snpeff_db_name }}" \
+      -c "{{ constants.phoenix.snpeff_config }}" \
+      -dataDir "{{ constants.phoenix.snpeff_data }}" \
+      "{{ constants.phoenix.snpeff_db }}" \
       "{{ input_vcf }}" \
       > "{{ output_vcf }}"
 
