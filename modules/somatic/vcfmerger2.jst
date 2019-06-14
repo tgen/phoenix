@@ -98,6 +98,7 @@
       -d "{{ temp_dir }}" \
       -o "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
 
+    chmod -R -g rw "{{ temp_dir }}/venn"*"/sets"
     mv "{{ temp_dir }}/venn"* "{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/"
 
 {% endmacro %}
