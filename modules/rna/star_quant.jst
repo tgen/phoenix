@@ -38,7 +38,7 @@
     - {{ fq.path }}
     {% endfor %}
   output: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
     - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.toTranscriptome.out.bam
   cpus: 20
   walltime: "24:00:00"
@@ -93,7 +93,7 @@
       --readFilesType Fastx \
       --readFilesCommand zcat \
       --limitOutSAMoneReadBytes 90000000 \
-      --outSAMtype BAM SortedByCoordinate \
+      --outSAMtype BAM Unsorted \
       --outSAMmode Full \
       --outSAMstrandField intronMotif \
       --outSAMunmapped Within \
@@ -124,9 +124,47 @@
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_"
 
+
+- name: markduplicates_star_{{ sample.name }}
+  input: 
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
+  output:
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam
+  cpus: 12
+  cmd: |
+    set -uev
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9_65_g1b72f1a.module }}
+
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools markdup. Here, we purge any
+    # existing temp files before making the directory again.
+    rm -r "temp/markdup_{{ sample.name }}_star/" || true
+    mkdir -p "temp/markdup_{{ sample.name }}_star/"
+    mkdir -p "{{ sample.glType }}/alignment/star/{{ sample.name }}/stats/"
+
+    samtools fixmate \
+      --threads 4 \
+      -m \
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam" \
+      - |\
+    samtools sort \
+      -l 5 \
+      -m 1G \
+      --threads 4 \
+      - |\
+    samtools markdup \
+      -s \
+      --threads 4 \
+      -T "temp/markdup_{{ sample.name }}_star/" \
+      - \
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam" \
+      2> "{{ sample.glType }}/alignment/star/{{ sample.name }}/stats/{{ sample.name }}.star.bam.markdup.txt"
+
+
 - name: htseq_{{ sample.name }}
   input: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam
   output: 
     - {{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
   cpus: 16
@@ -158,14 +196,14 @@
       --additional-attr=gene_name \
       --mode=union \
       --nonunique=none \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam" \
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
 
 
 - name: featurecounts_{{ sample.name }}
   input: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam
+    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam
   output: 
     - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
     - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
@@ -186,7 +224,7 @@
       -t "exon" \
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam"
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam"
 
     # If walltime for these cmds is substantial, we'll split them into 2 separate
     # tasks. For now just testing them out vs HTSeq
@@ -196,6 +234,7 @@
       -t "gene" \
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam"
+      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam"
+
 
 {% endmacro %}

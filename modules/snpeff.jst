@@ -1,0 +1,19 @@
+{% macro snpeff(input_vcf, output_vcf) %}
+- name: snpeff_{{ input_vcf|sha256 }}
+  tags: [snpeff, annotation]
+  input: {{ input_vcf }}
+  walltime: "8:00:00"
+  cpus: 4
+  cmd: |
+    set -euv
+
+    module load {{ constants.tools.snpeff_4_3t.module }}
+
+    snpEff eff \
+      -t \
+      -dataDir "{{ constants.phoenix.snpeff_data_dir }}" \
+      "{{ constants.phoenix.snpeff_db_name }}" \
+      "{{ input_vcf }}" \
+      > "{{ output_vcf }}"
+
+{% endmacro %}

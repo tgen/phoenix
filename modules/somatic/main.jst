@@ -6,6 +6,7 @@
 {% from 'modules/somatic/vardict.jst' import vardict_somatic with context %}
 {% from 'modules/somatic/tconut.jst' import tconut with context %}
 {% from 'modules/somatic/vcfmerger2.jst' import vcfmerger2 with context %}
+{% from 'modules/snpeff.jst' import snpeff with context %}
 
 # Somatic tools generally operate on pairs of DNA samples (tumor/normal).
 # WARNING - This pairs together all tumor and constitutional samples (of the same glType)
@@ -114,7 +115,10 @@
 {% endfor %}
 
 {% for pair in pairs %}
+    {% set merged_vcf %}{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf{% endset %}
+    {% set annotated_vcf %}{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.ann.vcf.gz{% endset %}
     {{- vcfmerger2(pair, aligner='bwa') }}
+    {{- snpeff(merged_vcf, annotated_vcf) }}
 {% endfor %}
 
 {% endmacro %}

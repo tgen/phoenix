@@ -86,10 +86,7 @@
     {% endif %}
 {% endfor %}
 
-{# Dry run will just print out the object we created above #}
-{% if dry_run|default(False) %}
-{{ samples|tojson(indent=4) }}
-{% else %}
+{{ log(samples|tojson(indent=4), level='CRITICAL') }}
 
 {% for batch in dataFiles|batch(4) %}
 - name: copy_fastqs_{{ loop.index }}
@@ -147,6 +144,4 @@
 
 {% if tasks.single_cell_rna|default(False) %}
     {{- single_cell_rna(dataFiles) }}
-{% endif %}
-
 {% endif %}
