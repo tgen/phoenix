@@ -1,10 +1,9 @@
 # Run 10X Cell Ranger pipeline
 {% macro cellranger_10x(files) %}
 
+{% set outdir %}{{ sample.glType }}/quant/starSOLO/{{ sample.name }}/{% endset %}
 {% set libraries = files|groupby('name') %}
-{{ libraries | tojson(indent=4) }}
 
-{% if False %}
 - name: cellranger_count_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
@@ -19,6 +18,14 @@
 
     mkdir -p "{{ sample.glType }}/quant/cellranger/{{ sample.name }}/"
 
+    {
+      'X3SCR': 'SC3Pv1',
+      'XCSCR': 'SC3Pv2',
+      'X3SC3': 'SC3Pv3',
+      'X5SCR': 'SC5P-R2',
+      None: 'auto'
+    }
+
     cellranger count \
       --id=  \
       --fastqs= \
@@ -31,135 +38,6 @@
       --localmem=48 \
       --output "{{ sample.glType }}/quant/cellranger/{{ sample.name }}/"
 
-- name: starSOLO_Count_{{ sample.name }}
-  methods: >
-    Alignment and quantification for {{ sample.name }} was performed with
-    {{ constants.tools.star_2_7_4f.verbose }} using the genome index.
-  output: {{ sample.glType }}/quant/starSOLO/{{ sample.name }}/
-  cpus: 20
-  mem: 80
-  walltime: "48:00:00"
-  cmd: |
-    set -uev
-    module load {{ constants.tools.star_2_7_4f.verbose }}  ## NEED TO INSTALL UPDATE
-
-    mkdir -p "{{ sample.glType }}/quant/starSOLO/{{ sample.name }}/"
-
-    ## Cell Barcode Whitelist NOTES:
-    # PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
-    # Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
-    # Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
-    # Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
-    # Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
-    # Single Cell V(D)J = 737K-august-2016.txt
-    # CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
-    # CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
-    # CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
-
-    # TEST CONFIGURATION - DELETE EVENTUALLY
-    ASSAY=3PRIME
-    #ASSAY=5PRIME
-    VERSION=V2
-    STAR=/home/jkeats/downloads/STAR-2.7.0f/source/STAR
-    RGSM=10XSCO_0001_1_PB_MNC_C2_XCSCR_K17017
-    #RGSM=MC1685_0003_1_LN_MNC_T2_X5SCR_K17932
-    STAR_INDEX=/scratch/jkeats/starSOLO_tests/starSOLO_100
-    BARCODE_PATH=/packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
-
-    ## LIKELY NEEDS TO MOVE INTO MAIN TO POPULATE VARIABLES
-    # Make a comma separated list of the CDNA and CBUMI read sets
-    echo "##############################"
-    echo "Generating cDNA Fastq List"
-    LOOP_STEP=0
-    for line in `ls *_R2_001.fastq.gz`
-    do
-        echo "Adding: ${line}"
-        if [ $LOOP_STEP -eq 0 ]
-        then
-            CDNA_LIST=${line}
-            LOOP_STEP=1
-        else
-            CDNA_LIST=${CDNA_LIST},${line}
-        fi
-        echo "Current String: ${CDNA_LIST}"
-    done
-
-    echo "##############################"
-    echo "Generating Cell Barcode and UMI Fastq List"
-    LOOP_STEP=0
-    for line in `ls *_R1_001.fastq.gz`
-    do
-        echo "Adding: ${line}"
-        if [ $LOOP_STEP -eq 0 ]
-        then
-            CB_UMI_LIST=${line}
-            LOOP_STEP=1
-        else
-            CB_UMI_LIST=${CB_UMI_LIST},${line}
-        fi
-        echo "Current String: ${CB_UMI_LIST}"
-    done
-
-    # Configure run for the 5' and 3' 10x Genomics Assays
-    if [ $ASSAY == "3PRIME" ]
-    then
-        STRAND=Forward
-
-        if [ $VERSION == "V1" ]
-        then
-            # This is the X3SCR kit
-            BARCODES=$BARCODE_PATH/737K-april-2014_rc
-        elif [ $VERSION == "V2" ]
-        then
-            # This is the XCSCR kit
-            BARCODES=$BARCODE_PATH/737K-august-2016
-        elif [ $VERSION == "V3" ]
-        then
-            # THIS ONE NEEDS NEW KIT OR VARIABLE TO INDICATE IT IS V3
-            BARCODES=$BARCODE_PATH/3M-february-2018
-        else
-            echo ERROR - No Single Cell Version Listed
-            exit 1
-        fi
-    elif [ $ASSAY == "5PRIME" ]
-    then
-        STRAND=Reverse
-        BARCODES=${BARCODE_PATH}/737K-august-2016.txt
-    else
-        echo ERROR
-        exit 1
-    fi
-
-    ##toadd --outSAMattrRGline "{{ rglinelist|join(',') }}" \
-
-    ${STAR} \
-      --runMode alignReads \
-      --runThreadN 19 \
-      --genomeDir $STAR_INDEX \
-      --genomeLoad NoSharedMemory \
-      --twopassMode Basic \
-      --sjdbOverhang 99 \    ## cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1
-      --readFilesType Fastx \
-      --readFilesIn ${CDNA_LIST} ${CB_UMI_LIST} \
-      --readFilesCommand zcat \
-      --outFileNamePrefix ${RGSM}_ \
-      --outSAMtype BAM SortedByCoordinate \
-      --outSAMmode Full \
-      --outSAMunmapped None \      ### Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
-      --outSAMmapqUnique 255 \
-      --outSAMattributes NH HI AS nM CR CY UR UY \
-      --soloType Droplet \
-      --soloCBwhitelist ${BARCODES} \
-      --soloFeatures Gene \
-      --soloUMIdedup 1MM_All \
-      --soloCBstart 1 \
-      --soloCBlen 16 \
-      --soloUMIstart 17 \
-      --soloUMIlen 10 \
-      --soloBarcodeReadLength 0 \
-      --soloStrand ${STRAND} \
-      --soloOutFileNames Solo.out/ ${RGSM}_genes.tsv ${RGSM}_barcodes.tsv ${RGSM}_matrix.mtx ${RGSM}_matrixSJ.mtx
-{% endif %}
 
 {% endmacro %}
 

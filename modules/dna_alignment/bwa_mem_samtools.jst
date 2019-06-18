@@ -49,7 +49,7 @@
 {% macro bwa_mem_samtools(sample) %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% if rg.data_files|length != 2 %}
-    {{ raise('This module only supports paired-end data with two fastqs per rg') }}
+    {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
 {% endif %}
 
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
