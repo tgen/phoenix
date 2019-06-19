@@ -1,0 +1,8 @@
+
+{% from 'modules/qc/<...jst>' import peddy with context %}
+
+{% macro qc(samples) %}
+    {% for sample in samples.values() %}
+        {{- peddy(sample) }}
+    {% endfor %}
+{% endmacro %}
