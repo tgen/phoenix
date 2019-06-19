@@ -577,10 +577,10 @@ constants:
         - {"contig": "chr2", "length": 2943602, "start": 94496016, "stop": 97439618}
       - - {"contig": "chr2", "length": 141414040, "start": 97489619, "stop": 238903659}
       - - {"contig": "chr2", "length": 3279481, "start": 238904048, "stop": 242183529}
-        - {"contig": "chr3", "length": 90555294, "start": 10001, "stop": 90565295}
-        - {"contig": "chr3", "length": 153629, "start": 90568829, "stop": 90722458}
+      - - {"contig": "chr3", "length": 90555294, "start": 10001, "stop": 90565295}
+      - - {"contig": "chr3", "length": 153629, "start": 90568829, "stop": 90722458}
         - {"contig": "chr3", "length": 477446, "start": 90772459, "stop": 91249905}
-        - {"contig": "chr3", "length": 1468, "start": 91256422, "stop": 91257890}
+      - - {"contig": "chr3", "length": 1468, "start": 91256422, "stop": 91257890}
         - {"contig": "chr3", "length": 5200, "start": 91260181, "stop": 91265381}
         - {"contig": "chr3", "length": 5180, "start": 91276995, "stop": 91282175}
         - {"contig": "chr3", "length": 2372839, "start": 91282735, "stop": 93655574}
