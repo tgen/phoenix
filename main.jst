@@ -50,7 +50,7 @@
     {% endif %}
 
     {% do file.update({'name': name}) %}
-    {% do file.update({'glType': file.glType.lower()}) %}
+    {% do file.update({'gltype': file.glType.lower()}) %}
     {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
 
     {% if name not in samples %}
@@ -75,8 +75,8 @@
     {% do samples[name]['read_groups'][rgid].update({'data_files': data_files}) %}
 {% endfor %}
 
-# Setup capture kit props for exome samples
-{% for sample in samples.values() if sample.glType == 'exome' %}
+# Setup calculated props for samples
+{% for sample in samples.values() if sample.gltype == 'exome' %}
     {% do sample.update({'library_code': sample.assayCode[0:2]|upper}) %}
     {% do sample.update({'capture_kit_code': sample.assayCode[2:5]|upper}) %}
     {% if sample.capture_kit_code in constants.phoenix.capture_kits %}
@@ -84,6 +84,13 @@
     {% else %}
         {% do sample.update({'capture_kit': constants.phoenix.capture_kits['default']}) %}
     {% endif %}
+{% endfor %}
+{% for sample in samples.values() if sample.gltype == 'rna' %}
+    {% set readOrientation=sample.readOrientation|default('inward')|lower %}
+    {% set rnaStrandType=sample.rnaStrandType|default('unstranded')|lower %}
+    {% set rnaStrandDirection=sample.rnaStrandDirection|default('notapplicable')|lower %}
+    {% set strandedness %}{{ readOrientation }}-{{ rnaStrandType }}-{{ rnaStrandDirection }}{% endset %}
+    {% do sample.update({'strandedness': strandedness}) %}
 {% endfor %}
 
 {{ log(samples|tojson(indent=4), level='CRITICAL') }}

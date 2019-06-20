@@ -1,16 +1,16 @@
 # This macro adds tasks for running BAM qc steps with samtools and gatk.
 # Currently supports any sample but with special tasks added when the sample
-# glTypes is 'genome' or 'exome'
+# gltypes is 'genome' or 'exome'
 {% macro bam_qc(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 {% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
-  tags: [samtools, stats, {{ sample.glType }}]
+  tags: [samtools, stats, {{ sample.gltype }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
-  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
   cpus: 2
   cmd: |
@@ -36,10 +36,10 @@
 {% endfor %}
 
 - name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, flagstat, {{ sample.glType }}]
+  tags: [samtools, flagstat, {{ sample.gltype }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
-  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
   cpus: 8
   cmd: |
@@ -55,7 +55,7 @@
 
 
 - name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, idxstats, {{ sample.glType }}]
+  tags: [samtools, idxstats, {{ sample.gltype }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
   input: {{ bam_path }}
@@ -74,7 +74,7 @@
 
 
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectmultiplemetrics, {{ sample.glType }}]
+  tags: [gatk, picard, collectmultiplemetrics, {{ sample.gltype }}]
   methods: Alignment metrics, base distribution, insert size, quality,
     and other metrics for {{ sample.name }} ({{ aligner }}) were
     gathered with {{ constants.tools.gatk_4_1_0_0.verbose }}
@@ -107,7 +107,7 @@
 
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample.glType }}]
+  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample.gltype }}]
   input: {{ bam_path }}
   after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   walltime: "24:00:00"
@@ -122,7 +122,7 @@
 
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
-  tags: [snpSniffer, {{ sample.glType }}]
+  tags: [snpSniffer, {{ sample.gltype }}]
   input: {{ bam_path }}
   cpus: 4
   cmd: |
@@ -147,9 +147,9 @@
       --output-file "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
 
 
-{% if sample.glType|lower == 'genome' %}
+{% if sample.gltype|lower == 'genome' %}
 - name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetrics, {{ sample.glType }}]
+  tags: [gatk, picard, collectwgsmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -167,7 +167,7 @@
 
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.glType }}]
+  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.gltype }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -185,7 +185,7 @@
 
 
 - name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.glType }}]
+  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -203,9 +203,9 @@
       --INCLUDE_BQ_HISTOGRAM true
 
 
-{% elif sample.glType|lower == 'exome' %}
+{% elif sample.gltype|lower == 'exome' %}
 - name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collecthsmetrics, {{ sample.glType }}]
+  tags: [gatk, picard, collecthsmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
   walltime: "8:00:00"
   cpus: 16
@@ -232,7 +232,7 @@
 
 {% if sample.subGroup|lower == 'constitutional' %}
 - name: verifybamid2_{{ sample.name }}
-  tags: [qc, verifybamid2, {{ sample.glType }}]
+  tags: [qc, verifybamid2, {{ sample.gltype }}]
   input: {{ bam_path }}
   cpus: 1
   mem: 4000M

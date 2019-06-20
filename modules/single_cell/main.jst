@@ -1,15 +1,8 @@
 {% from 'modules/single_cell/cellranger_10x.jst' import cellranger_10x with context %}
 
-# RNA library properties and their effects on tool parameters:
-
-# ReadOrientation  StrandType       StrandDirection     Salmon  HtSeq-Count  FeatureCounts     Tophat/Cufflinks()     
-# Inward           Unstranded       NotApplicable       -l IU   -s no        -s 0              -fr-unstranded
-# Inward           Stranded         Forward             -l ISF  -s yes       -s 1 (NEED TEST)  -fr-secondstrand
-# Inward           Stranded         Reverse             -l ISR  -s reverse   -s 2 (NEED TEST)  -fr-firststrand
-
 
 {% macro single_cell_rna(dataFiles) %}
-    {% for sample, files in dataFiles|groupby('name') if files[0].glType|lower == 'singlecellrna' %}
+    {% for sample, files in dataFiles|groupby('name') if files[0].gltype|lower == 'singlecellrna' %}
     {{- cellranger_10x(files, chemistry='') }}
     {% endfor %}
 {% endmacro %}

@@ -53,7 +53,7 @@ gatk SortSam \
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
 - name: bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}
-  tags: [bwa, samtools, samtools-view, {{ sample.glType }}]
+  tags: [bwa, samtools, samtools-view, {{ sample.gltype }}]
   input:
     - temp/fastqs/{{ r1fastq.fastqPath|basename }}
     - temp/fastqs/{{ r2fastq.fastqPath|basename }}
@@ -80,25 +80,25 @@ gatk SortSam \
 {% endfor %}
 
 - name: gatk_picard_markduplicates_{{ sample.name }}
-  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
+  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
   after-re: bwa_mem_samtools_view_{{ sample.name }}_.*
   cpus: 16
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     {{ markduplicates(sample)|indent(2) }} \
     {% for rgid in sample.read_groups %}
       --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
     {% endfor %}
-      --METRICS_FILE "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
+      --METRICS_FILE "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md-uns.bam"
 
 
 - name: gatk_picard_sortsam_{{ sample.name }}
-  tags: [gatk, picard, picard-SortSam, {{ sample.glType }}]
+  tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
   after: gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
   cpus: 16
@@ -133,7 +133,7 @@ gatk SortSam \
 
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
-  tags: [split, {{ sample.glType }}]
+  tags: [split, {{ sample.gltype }}]
   input:
     - temp/fastqs/{{ fastq.fastqPath|basename }}
   cpus: 1
@@ -165,7 +165,7 @@ gatk SortSam \
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
-  tags: [bwa, samtools, samtools-view, {{ sample.glType }}]
+  tags: [bwa, samtools, samtools-view, {{ sample.gltype }}]
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
@@ -191,14 +191,14 @@ gatk SortSam \
 {% endfor %}
 
 - name: chunked_gatk_picard_markduplicates_{{ sample.name }}
-  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.glType }}]
+  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
   after-re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
   cpus: 16
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     {{ markduplicates(sample)|indent(2) }} \
     {% for rgid, rg in sample.read_groups.items() %}
@@ -207,7 +207,7 @@ gatk SortSam \
       --INPUT "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
     {% endfor %}
     {% endfor %}
-      --METRICS_FILE "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
+      --METRICS_FILE "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md-uns.bam"
 
     # Cleanup the tempfiles
@@ -219,7 +219,7 @@ gatk SortSam \
 
 
 - name: chunked_gatk_picard_sortsam_{{ sample.name }}
-  tags: [gatk, picard, picard-SortSam, {{ sample.glType }}]
+  tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
   after: chunked_gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
   cpus: 16

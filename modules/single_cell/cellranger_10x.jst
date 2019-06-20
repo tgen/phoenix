@@ -1,14 +1,14 @@
 # Run 10X Cell Ranger pipeline
 {% macro cellranger_10x(files) %}
 
-{% set outdir %}{{ sample.glType }}/quant/starSOLO/{{ sample.name }}/{% endset %}
+{% set outdir %}{{ sample.gltype }}/quant/starSOLO/{{ sample.name }}/{% endset %}
 {% set libraries = files|groupby('name') %}
 
 - name: cellranger_count_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.cellranger_3_0_2.verbose }} using the cDNA index.
-  output: {{ sample.glType }}/quant/cellranger/{{ sample.name }}/
+  output: {{ sample.gltype }}/quant/cellranger/{{ sample.name }}/
   cpus: 12
   mem: 48
   walltime: "24:00:00"
@@ -16,7 +16,7 @@
     set -uev
     module load {{ constants.tools.cellranger_3_0_2.verbose }}
 
-    mkdir -p "{{ sample.glType }}/quant/cellranger/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/quant/cellranger/{{ sample.name }}/"
 
     {
       'X3SCR': 'SC3Pv1',
@@ -36,7 +36,7 @@
       --lanes= \
       --localcores=12 \
       --localmem=48 \
-      --output "{{ sample.glType }}/quant/cellranger/{{ sample.name }}/"
+      --output "{{ sample.gltype }}/quant/cellranger/{{ sample.name }}/"
 
 
 {% endmacro %}

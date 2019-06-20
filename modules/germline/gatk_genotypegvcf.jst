@@ -4,8 +4,8 @@
 {% macro genotypegvcf(sample, aligner='bwa') %}
 {% for batch in constants.phoenix.calling_intervals %}
 - name: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [gatk, GenotypeGVCFs, {{ sample.glType }}]
-  input: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
+  tags: [gatk, GenotypeGVCFs, {{ sample.gltype }}]
+  input: {{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -21,12 +21,12 @@
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz" \
+      --variant "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz" \
       --output "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz"
 
 
 - name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [gatk, CNNScoreVariants, {{ sample.glType }}]
+  tags: [gatk, CNNScoreVariants, {{ sample.gltype }}]
   after: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   walltime: "24:00:00"
   cpus: 6
@@ -44,7 +44,7 @@
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      --input "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --input "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --variant "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
       --output "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz"
 
@@ -52,9 +52,9 @@
 
 
 - name: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
-  tags: [bcftools, concat, {{ sample.glType }}]
+  tags: [bcftools, concat, {{ sample.gltype }}]
   after-re: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
+  output: {{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -62,16 +62,16 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
 
     bcftools concat \
       -O z \
-      -o "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz" \
+      -o "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz" \
       {% for batch in constants.phoenix.calling_intervals %}
        "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz" \
       {% endfor %}
 
-    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz"
+    bcftools index -t "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/"
@@ -80,11 +80,11 @@
 
 
 - name: haplotypecaller_filter_variants_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, FilterVariantTranches, bcftools, filter, {{ sample.glType }}]
+  tags: [gatk, FilterVariantTranches, bcftools, filter, {{ sample.gltype }}]
   input:
-    - {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
+    - {{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz
   output:
-    - {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz
+    - {{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -102,21 +102,21 @@
       {% for resource in constants.phoenix.gatk_cnn_resources %}
       --resource "{{ resource }}" \
       {% endfor %}
-      --variant "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz" \
+      --variant "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz" \
       --output "temp/{{ sample.name }}.{{ aligner }}.hc.fvt.vcf.gz" \
        
     # Then filter out the passing variants to a separate file
     bcftools filter \
       -O z \
       -i 'FILTER == "."' \
-      {% if sample.glType|lower == 'exome' %}
+      {% if sample.gltype|lower == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "temp/{{ sample.name }}.{{ aligner }}.hc.fvt.vcf.gz" \
-      > "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
+      > "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
 
     rm "temp/{{ sample.name }}.{{ aligner }}.hc.fvt.vcf.gz"
-    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
+    bcftools index -t "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz"
 
 
 

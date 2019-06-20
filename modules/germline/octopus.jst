@@ -4,7 +4,7 @@
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: octopus_constitutional_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -33,7 +33,7 @@
       --annotations AD ADP AF \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --temp-directory-prefix "temp/{{ sample.name }}_{{ aligner }}_octopus_temp/{{ loop.index }}" \
-      --reads "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --reads "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --regions-file "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ loop.index }}.bed" \
       --bamout "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_bam_chunks/{{ loop.index }}.realigned.bam" \
       --output "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ sample.name }}_{{ loop.index }}.{{ aligner }}.octopus.vcf"
@@ -43,7 +43,7 @@
 
 - name: octopus_constitutional_merge_{{ sample.name }}_{{ aligner }}
   after-re: octopus_constitutional_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz
+  output: {{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -51,11 +51,11 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/"
 
     bcftools concat \
       -O z \
-      -o "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz" \
+      -o "{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
       "temp/{{ sample.name }}_{{ aligner }}_octopus_constitutional_vcf_chunks/{{ sample.name }}_{{ loop.index }}.{{ aligner }}.octopus.legacy.vcf" \
       {% endfor %}
@@ -66,11 +66,11 @@
     
 
 - name: octopus_constitutional_filter_variants_{{ sample.name }}_{{ aligner }}
-  tags: [octopus, bcftools, filter, {{ sample.glType }}]
+  tags: [octopus, bcftools, filter, {{ sample.gltype }}]
   input:
-    - {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz
+    - {{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz
   output:
-    - {{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz
+    - {{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -78,18 +78,18 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz"
+    bcftools index -t "{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz"
     
     # Then filter out the passing variants to a separate file
     bcftools filter \
       -O z \
       -i 'FILTER == "."' \
-      {% if sample.glType|lower == 'exome' %}
+      {% if sample.gltype|lower == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
-      "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz" \
-      > "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz"
+      "{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz" \
+      > "{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz"
 
-    bcftools index -t "{{ sample.glType }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz"
+    bcftools index -t "{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz"
 
 {% endmacro %}

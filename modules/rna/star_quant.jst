@@ -25,7 +25,7 @@
 {% set sjdb_overhang = sample.read_length|default(100) - 1 %}
 {% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
-{% set star_finaldir %}{{ sample.glType }}/alignment/star/{{ sample.name }}{% endset %}
+{% set star_finaldir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
 {% set star_tempdir %}temp/star/{{ sample.name }}{% endset %}
 {% set star_mkdup_tempdir %}{{ star_tempdir }}/markdup_temp/{% endset %}
 {% set star_bam_unsort %}{{ star_tempdir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
@@ -169,14 +169,14 @@
 
 - name: htseq_{{ sample.name }}
   input: {{ star_bam_unsort }}
-  output: {{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
+  output: {{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
   cpus: 16
   walltime: "8:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.htseq_0_11_1.module }}
     
-    mkdir -p "{{ sample.glType }}/quant/htseq/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/"
 
     # NEED CONFIGURATION FOR STRAND_VARIABLE LIKE IN SALMON THIS MIGHT BE BETTER AS ITS OWN .JST SO ITS CONFIGURABLE
 
@@ -192,40 +192,40 @@
     htseq-count \
       --format=bam \
       --order=pos \
-      --stranded=${STRAND_VARIABLE} \
       --a=10 \
       --type=exon \
       --idattr=gene_id \
       --additional-attr=gene_name \
       --mode=union \
       --nonunique=none \
+      --stranded={{ constants.phoenix.strandedness_options[sample.strandedness] }} \
       "{{ star_bam_unsort }}" \
       "{{ constants.phoenix.gtf }}" \
-      > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
+      > "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
 
 
 - name: featurecounts_{{ sample.name }}
   input: {{ star_bam_unsort }}
   output: 
-    - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
-    - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
+    - {{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
+    - {{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
   cpus: 8
   walltime: "8:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.subread_1_6_4.module }}
     
-    mkdir -p "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/"
 
     # TODO
-    # strandedness option -s depending on kit type
     # -p should only be set for paired-end
     featureCounts \
       -T 7 \
       -p \
       -t "exon" \
-      -a "{{ constants.phoenix.gtf }}" \
-      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
+      -s "{{ constants.phoenix.strandedness_options[sample.strandedness] }}" \
+      -a "{{ constangltypeenix.gtf }}" \
+      -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
       "{{ star_bam_unsort }}"
 
     # If walltime for these cmds is substantial, we'll split them into 2 separate
@@ -234,8 +234,9 @@
       -T 7 \
       -p \
       -t "gene" \
-      -a "{{ constants.phoenix.gtf }}" \
-      -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
+      -s "{{ constants.phoenix.strandedness_options[sample.strandedness] }}" \
+      -a "{{ constangltypeenix.gtf }}" \
+      -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
       "{{ star_bam_unsort }}"
 
 

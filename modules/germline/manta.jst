@@ -1,15 +1,15 @@
 {% macro manta_constitutional(sample, aligner='bwa') %}
 - name: manta_constitutional_{{ sample.name }}_{{ aligner }}
-  tags: [manta, manta-constitutional, {{ sample.glType }}]
+  tags: [manta, manta-constitutional, {{ sample.gltype }}]
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
     ({{ aligner }}) were called with {{ constants.tools.manta_1_4.verbose }}.
   input:
-    - {{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output:
-    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
-    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
-    - {{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
   cpus: 20
   walltime: "24:00:00"
   cmd: |
@@ -18,7 +18,7 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    SAMPLE_DIR="{{ sample.glType }}/constitutional_structural_calls/manta/{{ sample.name }}"
+    SAMPLE_DIR="{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}"
     RUN_DIR="${SAMPLE_DIR}/{{ sample.name }}_{{ aligner }}_run_dir"
 
     # Purge any existing run files prior to starting
@@ -42,12 +42,12 @@
 
     # Build the Manta run file
     configManta.py \
-      {% if sample.glType == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --exome \
       --generateEvidenceBam \
       {% endif %}
       --callRegions "${MANTA_BED}.gz" \
-      --bam "{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --bam "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
       --runDir "${RUN_DIR}"
 

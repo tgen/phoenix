@@ -1,14 +1,14 @@
 {% macro strelka2_somatic(pair, aligner='bwa') %}
 {% do pair.callers.append('strelka2') %}
 - name: strelka2_somatic_{{ pair.name }}_{{ aligner }}
-  tags: [strelka2, strelka2-somatic, {{ pair.glType }}]
+  tags: [strelka2, strelka2-somatic, {{ pair.gltype }}]
   methods: > 
     Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
     {{ constants.tools.strelka_2_9_2.verbose }}.
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
-    - {{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+    - {{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
   cpus: 20
   walltime: "24:00:00"
   cmd: |
@@ -17,7 +17,7 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    PAIR_DIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}"
+    PAIR_DIR="{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}"
     RUN_DIR="${PAIR_DIR}/{{ pair.name }}_{{ aligner }}_run_dir"
 
     # Purge any existing run files prior to starting
@@ -49,14 +49,14 @@
 
     # Build the Strelka run file
     configureStrelkaSomaticWorkflow.py \
-      {% if pair.glType == 'exome' %}
+      {% if pair.gltype == 'exome' %}
       --exome \
       {% endif %}
       --config "${STRELKA_CONFIG}" \
       --callRegions "${STRELKA_BED}.gz" \
-      --normalBam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
-      --tumorBam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      --indelCandidates "{{ pair.glType }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz" \
+      --normalBam "{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
+      --tumorBam "{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
+      --indelCandidates "{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "${RUN_DIR}"
 
@@ -65,16 +65,16 @@
 
 
 - name: strelka2_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [strelka2, strelka2-somatic, bcftools, filter, {{ pair.glType }}]
+  tags: [strelka2, strelka2-somatic, bcftools, filter, {{ pair.gltype }}]
   after: strelka2_somatic_{{ pair.name }}_{{ aligner }}
   output:
-    - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
-    - {{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz
+    - {{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
+    - {{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    PAIR_DIR="{{ pair.glType }}/somatic_variant_calls/strelka2/{{ pair.name }}"
+    PAIR_DIR="{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}"
     RUN_DIR="${PAIR_DIR}/{{ pair.name }}_{{ aligner }}_run_dir"
 
     # Move and rename the evidence bams
@@ -99,7 +99,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      {% if pair.glType|lower == 'exome' %}
+      {% if pair.gltype|lower == 'exome' %}
       --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
       "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz" \

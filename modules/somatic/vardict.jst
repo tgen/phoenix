@@ -1,14 +1,14 @@
 {% macro vardict_somatic(pair, aligner='bwa') %}
 {% do pair.callers.append('vardict') %}
-{% set normal_bam %}{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
-{% set tumor_bam %}{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: vardict_somatic_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [vardict_somatic, {{ pair.glType }}]
+  tags: [vardict_somatic, {{ pair.gltype }}]
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+    - {{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   cpus: 8
   mem: 32G
   walltime: "12:00:00"
@@ -90,9 +90,9 @@
 
 
 - name: vardict_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, concat, vardict_somatic, {{ pair.glType }}]
+  tags: [bcftools, concat, vardict_somatic, {{ pair.gltype }}]
   after-re: vardict_somatic_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
+  output: {{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
   cpus: 4
   mem: 16G
   walltime: "12:00:00"
@@ -100,7 +100,7 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/"
+    mkdir -p "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/"
 
     {% for b in constants.phoenix.calling_intervals %}
     bcftools index -tf "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz"
@@ -108,7 +108,7 @@
 
     bcftools concat \
       -O z \
-      -o "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
+      -o "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
       "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz" \
       {% endfor %}
@@ -119,11 +119,11 @@
 
 
 - name: vardict_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, filter, {{ pair.glType }}]
+  tags: [bcftools, filter, {{ pair.gltype }}]
   input:
-    - {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
+    - {{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
   output:
-    - {{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz
+    - {{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz
   cpus: 2
   mem: 8G
   walltime: "12:00:00"
@@ -131,16 +131,16 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    bcftools index -tf "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz"
+    bcftools index -tf "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz"
     
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS" & INFO/STATUS == "StrongSomatic"' \
-      {% if pair.glType|lower == 'exome' %}
+      {% if pair.gltype|lower == 'exome' %}
       --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
-      "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
-      > "{{ pair.glType }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz"
+      "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
+      > "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz"
 
 {% endmacro %}
 

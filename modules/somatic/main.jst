@@ -9,7 +9,7 @@
 {% from 'modules/snpeff.jst' import snpeff with context %}
 
 # Somatic tools generally operate on pairs of DNA samples (tumor/normal).
-# WARNING - This pairs together all tumor and constitutional samples (of the same glType)
+# WARNING - This pairs together all tumor and constitutional samples (of the same gltype)
 # without comparing any sample identifiers. This means multiple individuals in the same 
 # project will be incorrectly paired together for somatic variant calling.
 
@@ -22,26 +22,26 @@
         {% set tumor = samples[pair.tumor] %}
         {% set normal = samples[pair.normal] %}
         {% set pair_name = normal.name + '-' + tumor.name %}
-        {% do pairs.append({'name': pair_name, 'glType': normal.glType, 'normal': normal, 'tumor': tumor}) %}
+        {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
     {% endfor %}
 {% else %}
     # If pairs are not predefined, build up the somatic variant calling 
     # sample pairs object by pairing every tumor to every normal of the 
-    # same glType. This will essentially permute every tumor-normal 
+    # same gltype. This will essentially permute every tumor-normal 
     # combination in the project. For projects with multiple individuals
     # this is likely NOT what you want to do, and pairs should be 
     # predefined in the config data. 
     {% set pairs = [] %}
-    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.glType|lower == 'exome' %}
-        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'exome' %}
+    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype|lower == 'exome' %}
+        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype|lower == 'exome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
-            {% do pairs.append({'name': pair_name, 'glType': normal.glType, 'normal': normal, 'tumor': tumor}) %}
+            {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
-    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.glType|lower == 'genome' %}
-        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.glType|lower == 'genome' %}
+    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype|lower == 'genome' %}
+        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype|lower == 'genome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
-            {% do pairs.append({'name': pair_name, 'glType': normal.glType, 'normal': normal, 'tumor': tumor}) %}
+            {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
 {% endif %}
@@ -54,7 +54,7 @@
 {% for pair in pairs %}{% do pair.update({'callers': []}) %}{% endfor %}
 
 # Start of the macro calls that will actually add the tasks to the workflow
-{% for pair in pairs if pair.glType == 'genome' %}
+{% for pair in pairs if pair.gltype == 'genome' %}
     {% if tasks.mutect2_genome|default(True) %}
         {{- mutect2(pair, aligner='bwa') }}
     {% endif %}
@@ -84,7 +84,7 @@
     {% endif %}
 {% endfor %}
 
-{% for pair in pairs if pair.glType == 'exome' %}
+{% for pair in pairs if pair.gltype == 'exome' %}
     {% if tasks.mutect2_exome|default(True) %}
         {{- mutect2(pair, aligner='bwa') }}
     {% endif %}
@@ -115,8 +115,8 @@
 {% endfor %}
 
 {% for pair in pairs %}
-    {% set merged_vcf %}{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf{% endset %}
-    {% set annotated_vcf %}{{ pair.glType }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.ann.vcf.gz{% endset %}
+    {% set merged_vcf %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf{% endset %}
+    {% set annotated_vcf %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.ann.vcf.gz{% endset %}
     {{- vcfmerger2(pair, aligner='bwa') }}
     {{- snpeff(merged_vcf, annotated_vcf) }}
 {% endfor %}

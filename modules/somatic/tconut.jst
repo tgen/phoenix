@@ -1,12 +1,12 @@
 {% macro tconut(pair, aligner='bwa') %}
-{% set pair_dir %}{{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}{% endset %}
+{% set pair_dir %}{{ pair.gltype }}/somatic_copy_number/tconut/{{ pair.name }}{% endset %}
 {% set run_dir %}{{ pair_dir }}/{{ pair.name }}_{{ aligner }}_s2_run_dir{% endset %}
 
 - name: tconut_call_snvs_{{ pair.name }}_{{ aligner }}
-  tags: [tconut, {{ pair.glType }}]
+  tags: [tconut, {{ pair.gltype }}]
   input:
-    - {{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+    - {{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
+    - {{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
   cpus: 20
   walltime: "24:00:00"
   cmd: |
@@ -36,12 +36,12 @@
 
     # Build the Strelka run file
     configureStrelkaGermlineWorkflow.py \
-      {% if pair.glType == 'exome' %}
+      {% if pair.gltype == 'exome' %}
       --exome \
       {% endif %}
       --callRegions "${STRELKA_BED}.gz" \
-      --bam "{{ pair.normal.glType }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
-      --bam "{{ pair.tumor.glType }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
+      --bam "{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
+      --bam "{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "{{ run_dir }}"
 
@@ -50,10 +50,10 @@
 
 
 - name: tconut_annotate_snvs_{{ pair.name }}_{{ aligner }}
-  tags: [tconut, bcftools, filter, {{ pair.glType }}]
+  tags: [tconut, bcftools, filter, {{ pair.gltype }}]
   after: tconut_call_snvs_{{ pair.name }}_{{ aligner }}
   output: 
-    - {{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz
+    - {{ pair.gltype }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz
   cpus: 2
   cmd: |
     set -euv
@@ -66,9 +66,9 @@
       -a "{{ constants.phoenix.dbsnp }}" \
       -c "ID,+INFO" \
       "{{ run_dir }}/results/variants/variants.vcf.gz" \
-      -o "{{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz"
+      -o "{{ pair.gltype }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz"
 
-    bcftools index -t "{{ pair.glType }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz"
+    bcftools index -t "{{ pair.gltype }}/somatic_copy_number/tconut/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz"
 
     # Finally remove the run dir
     rm -r "{{ run_dir }}"

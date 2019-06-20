@@ -13,7 +13,7 @@
 # Markdups task is used by chunking and non-chunking alignments
 {% macro samtools_markdup(sample) %}
 - name: samtools_markdup_{{ sample.name }}_bwa
-  tags: [samtools, samtools-markdup, {{ sample.glType }}]
+  tags: [samtools, samtools-markdup, {{ sample.gltype }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools_1_9_65_g1b72f1a.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
@@ -29,7 +29,7 @@
     # existing temp files before making the directory again.
     rm -r "temp/markdup_{{ sample.name }}_bwa/" || true
     mkdir -p "temp/markdup_{{ sample.name }}_bwa/"
-    mkdir -p "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/"
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     samtools markdup \
       -S \
@@ -38,7 +38,7 @@
       -T "temp/markdup_{{ sample.name }}_bwa/" \
       "temp/{{ sample.name }}.bwa.bam" \
       "temp/{{ sample.name }}.bwa.md.bam" \
-      2> "{{ sample.glType }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
+      2> "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
 
     samtools index "temp/{{ sample.name }}.bwa.md.bam"
     rm -r "temp/markdup_{{ sample.name }}_bwa/"
@@ -56,7 +56,7 @@
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
 - name: bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}
-  tags: [bwa, samtools, samtools-fixmate, samtools-sort, {{ sample.glType }}]
+  tags: [bwa, samtools, samtools-fixmate, samtools-sort, {{ sample.gltype }}]
   input:
     - temp/fastqs/{{ r1fastq.fastqPath|basename }}
     - temp/fastqs/{{ r2fastq.fastqPath|basename }}
@@ -92,7 +92,7 @@
 
 
 - name: samtools_merge_rg_bams_{{ sample.name }}_bwa
-  tags: [samtools, samtools-merge, {{ sample.glType }}]
+  tags: [samtools, samtools-merge, {{ sample.gltype }}]
   after-re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
@@ -146,7 +146,7 @@
 
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
-  tags: [split, {{ sample.glType }}]
+  tags: [split, {{ sample.gltype }}]
   input:
     - temp/fastqs/{{ fastq.fastqPath|basename }}
   cpus: 1
@@ -178,7 +178,7 @@
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
-  tags: [bwa, bwa-mem, samtools-fixmate, samtools-sort, {{ sample.glType }}]
+  tags: [bwa, bwa-mem, samtools-fixmate, samtools-sort, {{ sample.gltype }}]
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
@@ -219,7 +219,7 @@
 {% endfor %}
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
-  tags: [samtools, samtools-merge, {{ sample.glType }}]
+  tags: [samtools, samtools-merge, {{ sample.gltype }}]
   after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"

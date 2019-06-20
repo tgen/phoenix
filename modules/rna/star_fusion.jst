@@ -14,7 +14,7 @@
 {% endfor %}
 
 - name: star_fusion_{{ sample.name }}
-  tags: [{{ sample.glType }}, star-fusion]
+  tags: [{{ sample.gltype }}, star-fusion]
   input:
   {% for fq in r1fqlist %}
     - temp/fastqs/{{ fq.fastqPath|basename }}
@@ -22,7 +22,7 @@
   {% for fq in r2fqlist %}
     - temp/fastqs/{{ fq.fastqPath|basename }}
   {% endfor %}
-  output: {{ sample.glType }}/fusions/star-fusion/{{ sample.name }}/
+  output: {{ sample.gltype }}/fusions/star-fusion/{{ sample.name }}/
   cpus: 20
   walltime: "24:00:00"
   cmd: |
@@ -36,7 +36,7 @@
     # workflow will be skipped. For example, if the fastq inputs 
     # changed, alignment will not be rerun properly unless these
     # files are removed first.
-    OUTDIR="{{ sample.glType }}/fusions/star-fusion/{{ sample.name }}/"
+    OUTDIR="{{ sample.gltype }}/fusions/star-fusion/{{ sample.name }}/"
     rm -r "${OUTDIR}" || true
     mkdir -p "${OUTDIR}"
 

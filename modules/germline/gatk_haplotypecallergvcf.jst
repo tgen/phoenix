@@ -3,7 +3,7 @@
 {% macro haplotypecallergvcf(sample, aligner='bwa') %}
 {% for batch in constants.phoenix.calling_intervals %}
 - name: haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-  input: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "24:00:00"
   cpus: 4
   cmd: |
@@ -16,7 +16,7 @@
       --java-options "-Xmx14G" \
       -ERC GVCF \
       -R {{ constants.phoenix.reference_fasta }} \
-      -I "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      -I "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
@@ -30,21 +30,21 @@
     {% for batch in constants.phoenix.calling_intervals %}
     - haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
     {% endfor %}
-  output: {{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
+  output: {{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   cmd: |
     set -eu
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
-    mkdir -p "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
 
     gatk MergeVcfs \
       --java-options "-Xmx14G" \
       {% for batch in constants.phoenix.calling_intervals %}
       --INPUT "temp/{{ sample.name }}_{{ aligner }}_hc_gvcf_chunks/{{ loop.index }}.g.vcf.gz" \
       {% endfor %}
-      --OUTPUT "{{ sample.glType }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz"
+      --OUTPUT "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz"
 
     {% if not debug %}
     rm -r "temp/{{ sample.name }}_{{ aligner }}_hc_gvcf_chunks/"

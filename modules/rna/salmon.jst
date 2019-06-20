@@ -12,30 +12,6 @@
     {% endfor %}
 {% endfor %}
 
-
-{% set library_format = [] %}
-
-{% if sample.readOrientation|default('')|lower == 'inward' %}
-  {% do library_format.append('I') %}
-{% elif sample.readOrientation|default('')|lower == 'outward' %}
-  {% do library_format.append('O') %}
-{% elif sample.readOrientation|default('')|lower == 'matching' %}
-  {% do library_format.append('M') %}
-{% endif %}
-
-{% if sample.rnaStrandType|default('')|lower == 'stranded' %}
-  {% do library_format.append('S') %}
-{% elif sample.rnaStrandType|default('')|lower == 'unstranded' %}
-  {% do library_format.append('U') %}
-{% endif %}
-
-{% if sample.rnaStrandDirection|default('')|lower == 'forward' %}
-  {% do library_format.append('F') %}
-{% elif sample.rnaStrandDirection|default('')|lower == 'reverse' %}
-  {% do library_format.append('R') %}
-{% endif %}
-
-
 - name: salmon_quant_cdna_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
@@ -47,27 +23,27 @@
   {% for fq in r2fqlist %}
     - {{ fq }}
   {% endfor %}
-  output: {{ sample.glType }}/quant/salmon/{{ sample.name }}/
+  output: {{ sample.gltype }}/quant/salmon/{{ sample.name }}/
   cpus: 14
   walltime: "24:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.salmon_0_12_0.module }}
 
-    mkdir -p "{{ sample.glType }}/quant/salmon/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/quant/salmon/{{ sample.name }}/"
 
     salmon quant \
       --validateMappings \
       --seqBias \
       --gcBias \
       --threads 14 \
-      --libType {% if library_format %}{{ library_format|join('') }}{% else %}IU{% endif %} \
+      --libType "{{ constants.phoenix.strandedness_options[sample.strandedness] }}" \
       --index "{{ constants.phoenix.salmon_index }}" \
       --geneMap <(zcat "{{ constants.phoenix.gtf }}") \
       -1 {{ r1fqlist|join(' ') }} \
       {% if r2fqlist %}
       -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
-      --output "{{ sample.glType }}/quant/salmon/{{ sample.name }}/{{ sample.name }}"
+      --output "{{ sample.gltype }}/quant/salmon/{{ sample.name }}/{{ sample.name }}"
 
 {% endmacro %}

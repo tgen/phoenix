@@ -281,6 +281,22 @@ constants:
       100bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
       150bpReads: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
     starfusion_index: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
+    strandedness_options:
+      inward-unstranded-notapplicable:
+        salmon: "-l IU"
+        htseq: "no"
+        featurecounts: "0"
+        tophat: "-fr-unstranded"
+      inward-stranded-forward:
+        salmon: "-l ISF"
+        htseq: "yes"
+        featurecounts: "1"
+        tophat: "-fr-secondstrand"
+      inward-stranded-reverse:
+        salmon: "-l ISR"
+        htseq: "reverse"
+        featurecounts: "2"
+        tophat: "-fr-firststrand"
     snpeff_config: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
     snpeff_db: GRCh38.95

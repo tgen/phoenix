@@ -1,7 +1,7 @@
 {% macro rna_bam_qc(sample, aligner='star') %}
-{% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-{% set bam_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.star.bam{% endset %}
-{% set cram_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.star.cram{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.star.bam{% endset %}
+{% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.star.cram{% endset %}
 
 - name: cram_{{ sample.name }}_{{ aligner }}
   input: {{ bam_path }}
@@ -21,7 +21,7 @@
 
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.glType }}]
+  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
   walltime: "8:00:00"
   cpus: 16

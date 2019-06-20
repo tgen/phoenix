@@ -4,7 +4,7 @@
 
 {% for batch in constants.phoenix.sequence_groupings %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [gatk, gatk-BaseRecalibrator, {{ sample.glType }}]
+  tags: [gatk, gatk-BaseRecalibrator, {{ sample.gltype }}]
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
   walltime: "4:00:00"
   cpus: 4
@@ -32,7 +32,7 @@
 {% endfor %}
 
 - name: gather_bqsr_reports_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, gatk-GatherBQSRReports, {{ sample.glType }}]
+  tags: [gatk, gatk-GatherBQSRReports, {{ sample.gltype }}]
   after-re: baserecalibration_table_{{ sample.name }}_{{ aligner }}_.*
   walltime: "4:00:00"
   cpus: 4
@@ -84,9 +84,9 @@
 {% endfor %}
 
 - name: merge_bqsr_bam_chunks_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, samtools-merge, {{ sample.glType }}]
+  tags: [samtools, samtools-merge, {{ sample.gltype }}]
   after-re: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
   cpus: 4
   cmd: |
@@ -94,16 +94,16 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/"
 
     gatk GatherBamFiles \
       --java-options "-Xmx14G" \
-      --OUTPUT "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --OUTPUT "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       {% for b in constants.phoenix.sequence_groupings %}
       --INPUT "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
       {% endfor %}
 
-    samtools index "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+    samtools index "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
     # Cleanup the tempfiles
     {% if not debug %}
@@ -119,18 +119,18 @@
 {% macro nobaserecalibration(sample, aligner='bwa') %}
 - name: no_baserecalibration_{{ sample.name }}_{{ aligner }}
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
-  output: {{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/"
     mv \
       "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
-      "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+      "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
-    samtools index "{{ sample.glType}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+    samtools index "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
 {% endmacro %}

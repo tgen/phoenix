@@ -2,9 +2,9 @@
 {% macro make_cram(sample, aligner='bwa') %}
 
 {% set bam_path = "{gltype}/alignment/{aligner}/{name}/{name}.{aligner}.bam" %}
-{% set bam_path = bam_path.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
+{% set bam_path = bam_path.format(gltype=sample.gltype, name=sample.name, aligner=aligner) %}
 {% set cram_path = "{gltype}/alignment/{aligner}/{name}/{name}.{aligner}.cram" %}
-{% set cram_path = cram_path.format(gltype=sample.glType, name=sample.name, aligner=aligner) %}
+{% set cram_path = cram_path.format(gltype=sample.gltype, name=sample.name, aligner=aligner) %}
 
 - name: cram_{{ sample.name }}_{{ aligner }}
   input: {{ bam_path }}
