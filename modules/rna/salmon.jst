@@ -37,9 +37,9 @@
       --seqBias \
       --gcBias \
       --threads 14 \
-      --libType "{{ constants.phoenix.strandedness_options[sample.strandedness] }}" \
+      --libType "{{ constants.phoenix.strandedness_options[sample.strandedness].salmon }}" \
       --index "{{ constants.phoenix.salmon_index }}" \
-      --geneMap <(zcat "{{ constants.phoenix.gtf }}") \
+      --geneMap "{{ constants.phoenix.gtf }}" \
       -1 {{ r1fqlist|join(' ') }} \
       {% if r2fqlist %}
       -2 {{ r2fqlist|join(' ') }} \

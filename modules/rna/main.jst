@@ -14,7 +14,7 @@
 {% for sample in samples.values() if sample.gltype|lower == 'rna' %}
     {{- salmon(sample) }}
     {{- star_quant(sample) }}
-    {{- rna_bam_qc(sample, aligner='star') }gltype
+    {{- rna_bam_qc(sample, aligner='star') }}
 {% endfor %}
 
 {% endmacro %}

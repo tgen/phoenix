@@ -283,17 +283,17 @@ constants:
     starfusion_index: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
     strandedness_options:
       inward-unstranded-notapplicable:
-        salmon: "-l IU"
+        salmon: "IU"
         htseq: "no"
         featurecounts: "0"
         tophat: "-fr-unstranded"
       inward-stranded-forward:
-        salmon: "-l ISF"
+        salmon: "ISF"
         htseq: "yes"
         featurecounts: "1"
         tophat: "-fr-secondstrand"
       inward-stranded-reverse:
-        salmon: "-l ISR"
+        salmon: "ISR"
         htseq: "reverse"
         featurecounts: "2"
         tophat: "-fr-firststrand"

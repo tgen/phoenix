@@ -198,7 +198,7 @@
       --additional-attr=gene_name \
       --mode=union \
       --nonunique=none \
-      --stranded={{ constants.phoenix.strandedness_options[sample.strandedness] }} \
+      --stranded={{ constants.phoenix.strandedness_options[sample.strandedness].htseq }} \
       "{{ star_bam_unsort }}" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
@@ -223,8 +223,8 @@
       -T 7 \
       -p \
       -t "exon" \
-      -s "{{ constants.phoenix.strandedness_options[sample.strandedness] }}" \
-      -a "{{ constangltypeenix.gtf }}" \
+      -s "{{ constants.phoenix.strandedness_options[sample.strandedness].featurecounts }}" \
+      -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
       "{{ star_bam_unsort }}"
 
@@ -234,8 +234,8 @@
       -T 7 \
       -p \
       -t "gene" \
-      -s "{{ constants.phoenix.strandedness_options[sample.strandedness] }}" \
-      -a "{{ constangltypeenix.gtf }}" \
+      -s "{{ constants.phoenix.strandedness_options[sample.strandedness].featurecounts }}" \
+      -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
       "{{ star_bam_unsort }}"
 

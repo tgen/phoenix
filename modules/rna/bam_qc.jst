@@ -31,11 +31,12 @@
 
     mkdir -p "{{ stats_dir }}"
 
+    # TODO
     # NONE
     # FIRST_READ_TRANSCRIPTION_STRAND
     # SECOND_READ_TRANSCRIPTION_STRAND
     gatk CollectRnaSeqMetrics \
-      --IGNORE_SEQUENCE ZZZ \
+      --IGNORE_SEQUENCE chrEBV \
       --STRAND_SPECIFICITY NONE \
       --VALIDATION_STRINGENCY LENIENT \
       --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
