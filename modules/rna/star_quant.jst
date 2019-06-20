@@ -144,8 +144,8 @@
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
-    rm -r "{{ mkdup_tempdir }}" || true
-    mkdir -p "{{ mkdup_tempdir }}"
+    rm -r "{{ star_mkdup_tempdir }}" || true
+    mkdir -p "{{ star_mkdup_tempdir }}"
     mkdir -p "{{ star_finaldir }}/stats/"
 
     samtools fixmate \
