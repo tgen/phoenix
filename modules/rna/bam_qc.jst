@@ -1,7 +1,7 @@
 {% macro rna_bam_qc(sample, aligner='star') %}
 {% set stats_dir %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-{% set bam_path %}{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam{% endset %}
-{% set cram_path %}{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.cram{% endset %}
+{% set bam_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.star.bam{% endset %}
+{% set cram_path %}{{ sample.glType }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.star.cram{% endset %}
 
 - name: cram_{{ sample.name }}_{{ aligner }}
   input: {{ bam_path }}

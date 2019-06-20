@@ -72,10 +72,10 @@ constants:
       citation: >
         Daniel Lai dalai@bccrc.ca Department of Molecular Oncology, BC Cancer
         Research Agency Date: August 02, 2011
-    htseq_0_6_1:
-      module: HTSeq/0.6.1
-      version: 0.6.1
-      verbose: HTSeq v0.6.1
+    htseq_0_11_1:
+      module: HTSeq/0.11.1
+      version: 0.11.1
+      verbose: HTSeq v0.11.1
       website: https://htseq.readthedocs.io
       citation: >
         Simon Anders, Paul Theodor Pyl, Wolfgang Huber

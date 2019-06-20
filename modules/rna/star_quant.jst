@@ -8,7 +8,7 @@
 
 {% for rgid, rg in sample.read_groups.items() %}
   {% if rg.data_files|length < 2 %}
-      {{ raise('This module only supports paired-end data with two fastqs per rg') }}
+      {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
   {% endif %}
   {% do rglinelist.append( read_group_line(rg, format='star') ) %}
   
@@ -25,6 +25,13 @@
 {% set sjdb_overhang = sample.read_length|default(100) - 1 %}
 {% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
+{% set star_finaldir %}{{ sample.glType }}/alignment/star/{{ sample.name }}{% endset %}
+{% set star_tempdir %}temp/star/{{ sample.name }}{% endset %}
+{% set star_mkdup_tempdir %}{{ star_tempdir }}/markdup_temp/{% endset %}
+{% set star_bam_unsort %}{{ star_tempdir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
+{% set star_bam_transcript %}{{ star_tempdir }}/{{ sample.name }}.Aligned.toTranscriptome.out.bam{% endset %}
+{% set star_bam_md %}{{ star_tempdir }}/{{ sample.name }}.md.bam{% endset %}
+{% set star_bam_final %}{{ star_finaldir }}/{{ sample.name }}.star.bam{% endset %}
 
 - name: star_quant_{{ sample.name }}
   methods: >
@@ -38,15 +45,15 @@
     - {{ fq.path }}
     {% endfor %}
   output: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.toTranscriptome.out.bam
+    - {{ star_bam_unsort }}
+    - {{ star_bam_transcript }}
   cpus: 20
   walltime: "24:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.star_2_6_1d.module }}
 
-    mkdir -p "{{ sample.glType }}/alignment/star/{{ sample.name }}/"
+    mkdir -p "{{ star_tempdir }}"
 
     # Custom STAR Code Options ; defaults and source justification
     # Star Manual v2.7.0f Encode Recommendations:
@@ -122,14 +129,12 @@
       --sjdbOverhang "{{ sjdb_overhang }}" \
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
-      --outFileNamePrefix "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_"
+      --outFileNamePrefix "{{ star_tempdir }}/{{ sample.name }}."
 
 
 - name: markduplicates_star_{{ sample.name }}
-  input: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam
-  output:
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam
+  input: {{ star_bam_unsort }}
+  output: {{ star_bam_final }}
   cpus: 12
   cmd: |
     set -uev
@@ -139,14 +144,14 @@
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
-    rm -r "temp/markdup_{{ sample.name }}_star/" || true
-    mkdir -p "temp/markdup_{{ sample.name }}_star/"
-    mkdir -p "{{ sample.glType }}/alignment/star/{{ sample.name }}/stats/"
+    rm -r "{{ mkdup_tempdir }}" || true
+    mkdir -p "{{ mkdup_tempdir }}"
+    mkdir -p "{{ star_finaldir }}/stats/"
 
     samtools fixmate \
       --threads 4 \
       -m \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}_Aligned.out.bam" \
+      "{{ star_bam_unsort }}" \
       - |\
     samtools sort \
       -l 5 \
@@ -156,22 +161,20 @@
     samtools markdup \
       -s \
       --threads 4 \
-      -T "temp/markdup_{{ sample.name }}_star/" \
+      -T "{{ star_tempdir }}/markdup_temp/" \
       - \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam" \
-      2> "{{ sample.glType }}/alignment/star/{{ sample.name }}/stats/{{ sample.name }}.star.bam.markdup.txt"
+      "{{ star_bam_final }}" \
+      2> "{{ star_finaldir }}/stats/{{ sample.name }}.star.bam.markdup.txt"
 
 
 - name: htseq_{{ sample.name }}
-  input: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam
-  output: 
-    - {{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
+  input: {{ star_bam_unsort }}
+  output: {{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
   cpus: 16
   walltime: "8:00:00"
   cmd: |
     set -uev
-    module load {{ constants.tools.htseq_0_6_1.module }}
+    module load {{ constants.tools.htseq_0_11_1.module }}
     
     mkdir -p "{{ sample.glType }}/quant/htseq/{{ sample.name }}/"
 
@@ -196,14 +199,13 @@
       --additional-attr=gene_name \
       --mode=union \
       --nonunique=none \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam" \
+      "{{ star_bam_unsort }}" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.glType }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
 
 
 - name: featurecounts_{{ sample.name }}
-  input: 
-    - {{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam
+  input: {{ star_bam_unsort }}
   output: 
     - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
     - {{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
@@ -224,7 +226,7 @@
       -t "exon" \
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam"
+      "{{ star_bam_unsort }}"
 
     # If walltime for these cmds is substantial, we'll split them into 2 separate
     # tasks. For now just testing them out vs HTSeq
@@ -234,7 +236,7 @@
       -t "gene" \
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.glType }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
-      "{{ sample.glType }}/alignment/star/{{ sample.name }}/{{ sample.name }}.star.bam"
+      "{{ star_bam_unsort }}"
 
 
 {% endmacro %}

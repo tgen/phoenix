@@ -68,6 +68,6 @@
       {% if r2fqlist %}
       -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
-      --output "{{ sample.glType }}/quant/salmon/{{ sample.name }}/"
+      --output "{{ sample.glType }}/quant/salmon/{{ sample.name }}/{{ sample.name }}"
 
 {% endmacro %}
