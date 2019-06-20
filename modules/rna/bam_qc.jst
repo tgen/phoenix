@@ -37,7 +37,7 @@
     # SECOND_READ_TRANSCRIPTION_STRAND
     gatk CollectRnaSeqMetrics \
       --IGNORE_SEQUENCE chrEBV \
-      --STRAND_SPECIFICITY NONE \
+      --STRAND_SPECIFICITY {{ constants.phoenix.strandedness_options[sample.strandedness].collectrnaseqmetrics }} \
       --VALIDATION_STRINGENCY LENIENT \
       --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
       --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \

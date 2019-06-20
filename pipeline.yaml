@@ -287,16 +287,19 @@ constants:
         htseq: "no"
         featurecounts: "0"
         tophat: "-fr-unstranded"
+        collectrnaseqmetrics: "NONE"
       inward-stranded-forward:
         salmon: "ISF"
         htseq: "yes"
         featurecounts: "1"
         tophat: "-fr-secondstrand"
+        collectrnaseqmetrics: "FIRST_READ_TRANSCRIPTION_STRAND"
       inward-stranded-reverse:
         salmon: "ISR"
         htseq: "reverse"
         featurecounts: "2"
         tophat: "-fr-firststrand"
+        collectrnaseqmetrics: "SECOND_READ_TRANSCRIPTION_STRAND"
     snpeff_config: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
     snpeff_data: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
     snpeff_db: GRCh38.95
