@@ -107,6 +107,7 @@
       {% endif %}
       "{{ pair.gltype }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz" \
       > "{{ pair.gltype }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.pass.vcf.gz"
-
+    
+    bcftools index -t "{{ pair.gltype }}/somatic_variant_calls/mutect2/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.mutect2.pass.vcf.gz"
 
 {% endmacro %}

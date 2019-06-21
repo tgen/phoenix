@@ -141,6 +141,8 @@
       {% endif %}
       "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
       > "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz"
+     
+    bcftools index -t "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz"
 
 {% endmacro %}
 

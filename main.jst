@@ -126,7 +126,8 @@
     set -uev
     module load {{ constants.tools.multiqc_1_7.module }}
     
-    multiqc .
+    mkdir -p qc
+    multiqc -o qc .
 
 
 # Start of module calls

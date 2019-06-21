@@ -93,6 +93,8 @@
       {% endif %}
       "{{ pair.gltype }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
       > "{{ pair.gltype }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz"
+    
+    bcftools index -t "{{ pair.gltype }}/somatic_variant_calls/octopus/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz"
 
 
 {% endmacro %}

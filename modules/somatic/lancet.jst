@@ -98,6 +98,8 @@
       {% endif %}
       "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz" \
       > "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz"
+    
+    bcftools index -t "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz"
 
 
 {% endmacro %}
