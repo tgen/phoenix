@@ -104,8 +104,8 @@
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']
   retry: 2
-  cpus: 1
-  walltime: "1:00:00"
+  cpus: 6
+  walltime: "4:00:00"
   cmd: |
     set -uev
 
@@ -121,7 +121,7 @@
 - name: finalize
   after-re: .*
   cpus: 1
-  walltime: "1:00:00"
+  walltime: "4:00:00"
   cmd: | 
     set -uev
     module load {{ constants.tools.multiqc_1_7.module }}
@@ -151,6 +151,4 @@
     {{- rna_fusion_detection(samples) }}
 {% endif %}
 
-{% if False %}
-    {{- single_cell_rna(dataFiles) }}
-{% endif %}
+{{- single_cell_rna(dataFiles) }}

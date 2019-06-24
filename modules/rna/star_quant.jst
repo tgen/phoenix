@@ -26,6 +26,7 @@
 {% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
 {% set star_finaldir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
+{% set star_finalcountsdir %}{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
 {% set star_tempdir %}temp/star/{{ sample.name }}{% endset %}
 {% set star_mkdup_tempdir %}{{ star_tempdir }}/markdup_temp/{% endset %}
 {% set star_bam_unsort %}{{ star_tempdir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
@@ -54,6 +55,8 @@
     module load {{ constants.tools.star_2_6_1d.module }}
 
     mkdir -p "{{ star_tempdir }}"
+    mkdir -p "{{ star_finaldir }}"
+    mkdir -p "{{ star_finalcountsdir }}"
 
     # Custom STAR Code Options ; defaults and source justification
     # Star Manual v2.7.0f Encode Recommendations:
@@ -130,6 +133,11 @@
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outFileNamePrefix "{{ star_tempdir }}/{{ sample.name }}."
+    
+    mv \
+      "{{ star_tempdir }}/{{ sample.name }}.ReadsPerGene.out.tab" \
+      "{{ star_tempdir }}/{{ sample.name }}.SJ.out.tab" \
+      "{{ star_finalcountsdir }}"
 
 
 - name: markduplicates_star_{{ sample.name }}
@@ -171,15 +179,14 @@
   input: {{ star_bam_unsort }}
   output: {{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
   cpus: 16
-  walltime: "8:00:00"
+  walltime: "48:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.htseq_0_11_1.module }}
     
     mkdir -p "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/"
 
-    # NEED CONFIGURATION FOR STRAND_VARIABLE LIKE IN SALMON THIS MIGHT BE BETTER AS ITS OWN .JST SO ITS CONFIGURABLE
-
+    # Notes about command options:
     # -r --order=pos ; default=name ; GDC=name (bam unsorted)
     # -s --stranded=<yes/no/reverse> ; default=yes ; GDC=no (Dumb)
     # -a --a=<minaqual> ; default=10 ; skip all reads with alignment quality lower than the given minimum value

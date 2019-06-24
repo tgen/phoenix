@@ -3,6 +3,6 @@
 
 {% macro single_cell_rna(dataFiles) %}
     {% for sample, files in dataFiles|groupby('name') if files[0].gltype|lower == 'singlecellrna' %}
-    {{- cellranger_10x(files, chemistry='') }}
+        {{- cellranger_10x(files) }}
     {% endfor %}
 {% endmacro %}

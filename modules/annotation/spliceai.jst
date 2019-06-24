@@ -12,7 +12,7 @@
 
     spliceai \
       -A grch38 \
-      -R /home/tgenref/homo_sapiens/grch37_hg19/hs37d5_tgen/genome_reference/hs37d5_plusRibo_plusOncoViruses_plusERCC.fa \
+      -R "{{ constants.phoenix.reference_fasta }}" \
       -I "{{ vcf }}" \
       -O "{{ temp_vcf }}" \
 

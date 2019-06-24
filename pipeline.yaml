@@ -260,6 +260,13 @@ constants:
     reference_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_dict: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
     dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/b151/common_all_20180418.UCSC.vcf.gz
+    cellranger_reference: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
+    cellranger_chemistry:
+      X3SCR: SC3Pv1
+      XCSCR: SC3Pv2
+      X3SC3: SC3Pv3
+      X5SCR: SC5P-R2
+      unknown: auto
     gatk_known_sites:
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - ${REF}/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz

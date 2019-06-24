@@ -57,8 +57,9 @@ gatk SortSam \
   input:
     - temp/fastqs/{{ r1fastq.fastqPath|basename }}
     - temp/fastqs/{{ r2fastq.fastqPath|basename }}
-  walltime: "24:00:00"
+  walltime: "48:00:00"
   cpus: 10
+  mem: 40G
   cmd: |
     set -euv
     set -o pipefail
@@ -82,7 +83,9 @@ gatk SortSam \
 - name: gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
   after-re: bwa_mem_samtools_view_{{ sample.name }}_.*
+  walltime: "48:00:00"
   cpus: 16
+  mem: 64G
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
@@ -101,7 +104,9 @@ gatk SortSam \
   tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
   after: gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
+  walltime: "48:00:00"
   cpus: 16
+  mem: 64G
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
@@ -169,8 +174,9 @@ gatk SortSam \
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
-  walltime: "24:00:00"
+  walltime: "48:00:00"
   cpus: 10
+  mem: 40G
   cmd: |
     set -euv
     set -o pipefail
@@ -193,7 +199,9 @@ gatk SortSam \
 - name: chunked_gatk_picard_markduplicates_{{ sample.name }}
   tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
   after-re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
+  walltime: "48:00:00"
   cpus: 16
+  mem: 64G
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}
@@ -222,7 +230,9 @@ gatk SortSam \
   tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
   after: chunked_gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
+  walltime: "48:00:00"
   cpus: 16
+  mem: 64G
   cmd: |
     set -uev
     module load {{ constants.tools.gatk_4_1_0_0.module }}

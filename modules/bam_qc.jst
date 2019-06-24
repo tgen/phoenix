@@ -216,6 +216,7 @@
     mkdir -p "{{ stats_dir }}"
 
     gatk CollectHsMetrics \
+      --METRIC_ACCUMULATION_LEVEL ALL_READS \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \

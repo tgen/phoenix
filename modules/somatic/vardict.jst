@@ -107,6 +107,7 @@
     {% endfor %}
 
     bcftools concat \
+      --allow-overlaps \
       -O z \
       -o "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}

@@ -1,43 +1,39 @@
 # Run 10X Cell Ranger pipeline
 {% macro cellranger_10x(files) %}
-
-{% set outdir %}{{ sample.gltype }}/quant/starSOLO/{{ sample.name }}/{% endset %}
 {% set libraries = files|groupby('name') %}
 
-- name: cellranger_count_{{ sample.name }}
+{% for library, datafiles in libraries %}
+{% set props = datafiles[0] %}
+{% set assaycode = props.assayCode|default('unknown') %}
+{% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
+{% set outdir %}{{ props.gltype }}/quant/cellranger/{{ props.name }}/{% endset %}
+
+{{ log('Cellranger library: {} assay: {} chemistry: {}'.format(library, assaycode, chemistry), 'CRITICAL') }}
+
+- name: cellranger_count_{{ props.name }}_{{ library }}
   methods: >
-    Transcript quantification for {{ sample.name }} was performed with
+    Transcript quantification for {{ props.name }} was performed with
     {{ constants.tools.cellranger_3_0_2.verbose }} using the cDNA index.
-  output: {{ sample.gltype }}/quant/cellranger/{{ sample.name }}/
+  output: {{ props.gltype }}/quant/cellranger/{{ props.name }}/
   cpus: 12
   mem: 48
   walltime: "24:00:00"
   cmd: |
     set -uev
-    module load {{ constants.tools.cellranger_3_0_2.verbose }}
+    module load {{ constants.tools.cellranger_3_0_2.module }}
 
-    mkdir -p "{{ sample.gltype }}/quant/cellranger/{{ sample.name }}/"
-
-    {
-      'X3SCR': 'SC3Pv1',
-      'XCSCR': 'SC3Pv2',
-      'X3SC3': 'SC3Pv3',
-      'X5SCR': 'SC5P-R2',
-      None: 'auto'
-    }
-
+    mkdir -p "{{ outdir }}"
+    ##  TODO  make symlinks to  all fastqs for this library in a  tempdir
     cellranger count \
-      --id=  \
-      --fastqs= \
-      --libraries= \
-      --sample={{ sample.name }} \
-      --transcriptome="{{ constants.phoenix.reference_CellRanger }}" \
-      --chemistry= \
-      --lanes= \
-      --localcores=12 \
-      --localmem=48 \
-      --output "{{ sample.gltype }}/quant/cellranger/{{ sample.name }}/"
+      --localcores 12 \
+      --localmem 48 \
+      --fastqs "temp/cellranger_fastq_symlinks/" \
+      --transcriptome "{{ constants.phoenix.cellranger_reference }}" \
+      --chemistry "{{ chemistry }}" \
+      --id "{{ props.name }}_{{ library }}" \
+      --sample "{{ props.name }}" \
+      --output "{{ outdir }}"
 
-
+{% endfor %}
 {% endmacro %}
 

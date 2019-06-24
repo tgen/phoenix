@@ -18,8 +18,9 @@
     {{ constants.tools.samtools_1_9_65_g1b72f1a.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
   output: temp/{{ sample.name }}.bwa.md.bam
-  walltime: "24:00:00"
+  walltime: "48:00:00"
   cpus: 16
+  mem: 64G
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9_65_g1b72f1a.module }}
@@ -60,8 +61,9 @@
   input:
     - temp/fastqs/{{ r1fastq.fastqPath|basename }}
     - temp/fastqs/{{ r2fastq.fastqPath|basename }}
-  walltime: "8:00:00"
+  walltime: "48:00:00"
   cpus: 10
+  mem: 40G
   cmd: |
     set -euv
     set -o pipefail
@@ -95,8 +97,9 @@
   tags: [samtools, samtools-merge, {{ sample.gltype }}]
   after-re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
-  walltime: "24:00:00"
+  walltime: "48:00:00"
   cpus: 4
+  mem: 16G
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
@@ -182,8 +185,9 @@
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
-  walltime: "24:00:00"
+  walltime: "48:00:00"
   cpus: 10
+  mem: 40G
   cmd: |
     set -euv
     set -o pipefail
@@ -222,8 +226,9 @@
   tags: [samtools, samtools-merge, {{ sample.gltype }}]
   after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
-  walltime: "24:00:00"
+  walltime: "48:00:00"
   cpus: 4
+  mem: 16G
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_7.module }}

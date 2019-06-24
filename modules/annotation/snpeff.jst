@@ -1,28 +1,20 @@
-{% macro snpeff(vcf, out) %}
-
-- name: snpeff_{{ vcf|sha256 }}
-  tags: [snpeff, annotation, bcftools]
-  input: {{ vcf }}
-  output: {{ out }}
+{% macro snpeff(input_vcf, output_vcf) %}
+- name: snpeff_{{ input_vcf|sha256 }}
+  tags: [snpeff, annotation]
+  input: {{ input_vcf }}
   walltime: "8:00:00"
-  cpus: 8
-  mem: 32G
+  cpus: 4
   cmd: |
     set -euv
 
     module load {{ constants.tools.snpeff_4_3t.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
 
     snpEff eff \
-      -Xmx26G \
       -t \
       -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       "{{ constants.phoenix.snpeff_db }}" \
-      "{{ vcf }}" | \
-    bcftools \
-      view \
-      -O z \
-      -o "{{ out }}" \
+      "{{ input_vcf }}" \
+      > "{{ output_vcf }}"
 
 {% endmacro %}
