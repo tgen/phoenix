@@ -1,4 +1,5 @@
 {% macro snpeff(input_vcf, output_vcf) %}
+
 - name: snpeff_{{ input_vcf|sha256 }}
   tags: [snpeff, annotation]
   input: {{ input_vcf }}
