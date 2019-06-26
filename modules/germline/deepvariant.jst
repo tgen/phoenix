@@ -61,6 +61,7 @@
   output:
     - {{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz
   cpus: 8
+  mem: 64G
   walltime: "24:00:00"
   cmd: |
     set -euv
@@ -82,6 +83,7 @@
   output:
     - {{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz
   cpus: 2
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -euv
