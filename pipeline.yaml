@@ -355,7 +355,7 @@ constants:
         source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.extended.bed
-      ST2:
+      STL:
         source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.extended.bed
