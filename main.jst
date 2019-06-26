@@ -40,6 +40,7 @@
 {% from 'modules/rna/main.jst' import rna_quant with context %}
 {% from 'modules/rna/main.jst' import rna_fusion_detection with context %}
 {% from 'modules/single_cell/main.jst' import single_cell_rna with context %}
+{% from 'modules/qc/main.jst' import qc with context %}
 
 {% set samples = {} %}
 {% for file in dataFiles %}
@@ -152,3 +153,6 @@
 {% endif %}
 
 {{- single_cell_rna(dataFiles) }}
+
+{{- qc(samples) }}
+
