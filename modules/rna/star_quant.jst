@@ -173,6 +173,8 @@
       - \
       "{{ star_bam_final }}" \
       2> "{{ star_finaldir }}/stats/{{ sample.name }}.star.bam.markdup.txt"
+    
+    samtools index -t "{{ star_bam_final }}"
 
 
 - name: htseq_{{ sample.name }}
