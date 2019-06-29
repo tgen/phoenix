@@ -55,8 +55,8 @@ gatk SortSam \
 - name: bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}
   tags: [bwa, samtools, samtools-view, {{ sample.gltype }}]
   input:
-    - temp/fastqs/{{ r1fastq.fastqPath|basename }}
-    - temp/fastqs/{{ r2fastq.fastqPath|basename }}
+    - temp/fastqs/{{ r1fastq.basename }}
+    - temp/fastqs/{{ r2fastq.basename }}
   walltime: "48:00:00"
   cpus: 10
   mem: 40G
@@ -71,8 +71,8 @@ gatk SortSam \
     {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.bwa_index }}" \
-      "temp/fastqs/{{ r1fastq.fastqPath|basename }}" \
-      "temp/fastqs/{{ r2fastq.fastqPath|basename }}" |\
+      "temp/fastqs/{{ r1fastq.basename }}" \
+      "temp/fastqs/{{ r2fastq.basename }}" |\
     samtools view \
       -O BAM \
       - \
@@ -140,25 +140,25 @@ gatk SortSam \
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
   tags: [split, {{ sample.gltype }}]
   input:
-    - temp/fastqs/{{ fastq.fastqPath|basename }}
+    - temp/fastqs/{{ fastq.basename }}
   cpus: 1
   walltime: "4:00:00"
   cmd: |
     set -uev
     set -o pipefail
 
-    rm -r "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/" || true
-    mkdir -p "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/"
+    rm -r "temp/{{ rgid }}/{{ fastq.basename }}/" || true
+    mkdir -p "temp/{{ rgid }}/{{ fastq.basename }}/"
 
-    zcat "temp/fastqs/{{ fastq.fastqPath|basename }}" |\
+    zcat "temp/fastqs/{{ fastq.basename }}" |\
       split \
         -d \
         --suffix-length 2 \
         -l {{ n_lines }} \
         - \
-        "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/"
+        "temp/{{ rgid }}/{{ fastq.basename }}/"
 
-    N_CREATED=$(ls "temp/{{ rgid }}/{{ fastq.fastqPath|basename }}/" | wc -l)
+    N_CREATED=$(ls "temp/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
 
     if [[ ${N_CREATED} -ne {{ n_chunks }} ]]; then
       echo "Chunks created does not match expected value"
@@ -186,8 +186,8 @@ gatk SortSam \
     {{ bwa_mem(threads=9) }} \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.bwa_index }}" \
-      "temp/{{ rgid }}/{{ r1fastq.fastqPath|basename }}/{{ chunk_suffix }}" \
-      "temp/{{ rgid }}/{{ r2fastq.fastqPath|basename }}/{{ chunk_suffix }}" |\
+      "temp/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
+      "temp/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
     samtools view \
       -O BAM \
       - \

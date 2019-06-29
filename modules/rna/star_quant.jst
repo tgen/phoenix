@@ -10,14 +10,14 @@
   {% if rg.data_files|length < 2 %}
       {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
   {% endif %}
-  {% do rglinelist.append( read_group_line(rg, format='star') ) %}
+  {% do rglinelist.append(read_group_line(rg, format='star')) %}
   
   {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
-  {% do r1fastq.update({"path": "temp/fastqs/" + (r1fastq.fastqPath|basename)}) %}
+  {% do r1fastq.update({"path": "temp/fastqs/" + r1fastq.basename}) %}
   {% do r1fqlist.append(r1fastq) %}
     
   {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-  {% do r2fastq.update({"path": "temp/fastqs/" + (r2fastq.fastqPath|basename)}) %}
+  {% do r2fastq.update({"path": "temp/fastqs/" + r2fastq.basename}) %}
   {% do r2fqlist.append(r2fastq) %}
 
 {% endfor %}
