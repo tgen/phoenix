@@ -216,11 +216,11 @@
     mkdir -p "{{ stats_dir }}"
 
     gatk CollectHsMetrics \
+      --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL ALL_READS \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \
-      --PER_TARGET_COVERAGE "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics_perTargetCov.txt" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       --TARGET_INTERVALS "{{ sample.capture_kit.targets_interval_list }}" \
       {% if sample.capture_kit.baits_interval_list is defined %}
