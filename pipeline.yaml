@@ -246,6 +246,11 @@ constants:
         Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
+    vcfmerger2_0_7_0:
+      module: vcfmerger2/0.7.0
+      version: "0.7.0"
+      verbose: vcfMerger2 v0.7.0
+      website: https://github.com/tgen/vcfMerger2
     verifybamid2_1_0_5:
       module: verifybamID/1.0.5
       version: 1.0.5
