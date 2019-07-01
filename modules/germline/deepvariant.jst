@@ -15,7 +15,6 @@
   walltime: "24:00:00"
   cmd: |
     set -euv
-
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -44,7 +43,6 @@
   walltime: "24:00:00"
   cmd: |
     set -euv
-
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -70,7 +68,6 @@
   walltime: "24:00:00"
   cmd: |
     set -euv
-
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -106,6 +103,7 @@
       > "{{ pass_vcf }}"
 
     bcftools index -tf "{{ pass_vcf }}"
+
 
 {{ snpeff(pass_vcf, ann_vcf) }}
 
