@@ -325,23 +325,21 @@ constants:
       # by each capture kit. These are used for filtering variants and 
       # calculating coverage metrics.
       default:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.extended.bed
+      AG2:
+        targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/AG2_Ashion_GemExtra_V2/AG2_Ashion_GemExtra_V2.targets.interval_list
+        extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/AG2_Ashion_GemExtra_V2/AG2_Ashion_GemExtra_V2.extended.bed
       S5U:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs.extended.bed
       S5X:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5.extended.bed
       S6U:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR.extended.bed
       S6X:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6.extended.bed
       V6C:
@@ -349,19 +347,15 @@ constants:
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC.extended.bed
       S7X:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.extended.bed
       STX:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome.extended.bed
       ST2:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.extended.bed
       STL:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.extended.bed
     sequence_groupings:
