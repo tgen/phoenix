@@ -3,7 +3,25 @@
 # gltypes is 'genome' or 'exome'
 {% macro bam_qc(sample, aligner='bwa') %}
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: bam_cram_thank_you_mam_{{ sample.name }}_{{ aligner }}
+  input: {{ bam_path }}
+  output: {{ cram_path }}
+  walltime: "8:00:00"
+  cpus: 1
+  cmd: |
+    set -uev
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    samtools view \
+      -C \
+      -T  "{{ constants.phoenix.reference_fasta }}" \
+      "{{ bam_path }}" > "{{ cram_path }}"
+
+    samtools index "{{ cram_path }}"
+
 
 {% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
@@ -147,7 +165,7 @@
       --output-file "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
 
 
-{% if sample.gltype|lower == 'genome' %}
+{% if sample.gltype == 'genome' %}
 - name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collectwgsmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
@@ -203,7 +221,7 @@
       --INCLUDE_BQ_HISTOGRAM true
 
 
-{% elif sample.gltype|lower == 'exome' %}
+{% elif sample.gltype == 'exome' %}
 - name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collecthsmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
@@ -228,6 +246,32 @@
       {% else %}
       --BAIT_INTERVALS  "{{ sample.capture_kit.targets_interval_list }}"
       {% endif %}
+
+
+{% elif sample.gltype == 'rna' %}
+- name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "8:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    # TODO
+    # NONE
+    # FIRST_READ_TRANSCRIPTION_STRAND
+    # SECOND_READ_TRANSCRIPTION_STRAND
+    gatk CollectRnaSeqMetrics \
+      --IGNORE_SEQUENCE chrEBV \
+      --STRAND_SPECIFICITY {{ constants.phoenix.strandedness_options[sample.strandedness].collectrnaseqmetrics }} \
+      --VALIDATION_STRINGENCY LENIENT \
+      --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
+      --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
 
 {% endif %}
 
@@ -255,6 +299,7 @@
       --Reference "{{ constants.phoenix.reference_fasta }}" \
       --BamFile "{{ bam_path }}" \
       --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
+
 
 {% endif %}
 
