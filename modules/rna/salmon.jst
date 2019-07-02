@@ -1,5 +1,7 @@
 # Run Salmon RNA Quantification
 {% macro salmon(sample) %}
+{% set tempdir %}temp/{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
+{% set resultsdir %}{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
 
 {% set r1fqlist = [] %}
 {% set r2fqlist = [] %}
@@ -23,14 +25,15 @@
   {% for fq in r2fqlist %}
     - {{ fq }}
   {% endfor %}
-  output: {{ sample.gltype }}/quant/salmon/{{ sample.name }}/
+  output: {{ resultsdir }}/
   cpus: 14
   walltime: "24:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.salmon_0_12_0.module }}
 
-    mkdir -p "{{ sample.gltype }}/quant/salmon/{{ sample.name }}/"
+    mkdir -p "{{ tempdir }}"
+    mkdir -p "{{ resultsdir }}"
 
     salmon quant \
       --validateMappings \
@@ -44,6 +47,13 @@
       {% if r2fqlist %}
       -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
-      --output "{{ sample.gltype }}/quant/salmon/{{ sample.name }}/{{ sample.name }}"
+      --output "{{ tempdir }}"
+    
+    # Save back what we need and nuke the rest
+    mv "{{ tempdir }}/quant.sf" "{{ resultsdir }}/{{ sample.name }}.transcripts.sf"
+    mv "{{ tempdir }}/quant.genes.sf" "{{ resultsdir }}/{{ sample.name }}.genes.sf"
+    mv "{{ tempdir }}/lib_format_counts.json" "{{ resultsdir }}/{{ sample.name }}.counts.json"
+    rm -r "{{ tempdir }}"
+  
 
 {% endmacro %}
