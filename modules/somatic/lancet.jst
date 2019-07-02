@@ -1,14 +1,18 @@
-{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
-
 {% macro lancet(pair, aligner='bwa') %}
 {% do pair.callers.append('lancet') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [lancet, {{ pair.name }}]
   input:
-    - {{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
   cpus: 4
   walltime: "24:00:00"
   cmd: |
@@ -17,11 +21,11 @@
     module load {{ constants.tools.lancet_1_0_7.module }}
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     
-    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
+    mkdir -p "{{ temp_dir }}"
 
     # Write out the regions in this batch to a bed file
     TAB=$'\t'
-    cat <<EOF > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ loop.index }}.bed"
+    cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
     {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
@@ -29,11 +33,11 @@
 
     lancet \
       --num-threads 4 \
-      --bed "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ loop.index }}.bed" \
+      --bed "{{ temp_dir }}/{{ loop.index }}.bed" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
-      --normal "{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
-      --tumor "{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
-      > "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet-uns.vcf"
+      --normal "{{ normal_bam }}" \
+      --tumor "{{ tumor_bam }}" \
+      > "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
 
     # Lancet sorts output in lexicographical order and this does not
     # match the reference fasta order. Here we resort to match the reference
@@ -41,18 +45,18 @@
       --java-options "-Xmx14G" \
       --TMP_DIR "temp" \
       --SEQUENCE_DICTIONARY {{ constants.phoenix.reference_dict }} \
-      --INPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet-uns.vcf" \
-      --OUTPUT "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf"
+      --INPUT "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf" \
+      --OUTPUT "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
 
-    rm "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet-uns.vcf"
-      
+    rm "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
+
 {% endfor %}
 
 
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, concat, {{ pair.gltype }}]
   after-re: lancet_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz
+  output: {{ all_vcf }}
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -60,14 +64,16 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/"
+    mkdir -p "{{ results_dir }}"
 
     bcftools concat \
       -O z \
-      -o "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz" \
+      -o "{{ all_vcf }}" \
       {% for b in constants.phoenix.calling_intervals %}
-      "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.lancet.vcf" \
+      "{{ temp_dir }}/{{ loop.index }}.lancet.vcf" \
       {% endfor %}
+    
+    bcftools index -tf "{{ all_vcf }}"
 
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
@@ -80,15 +86,11 @@
 
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, filter, {{ pair.gltype }}]
-  input:
-    - {{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz
-  output:
-    - {{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz
+  after: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
+  output: {{ pass_vcf }}
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
-
-    bcftools index -t "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz"
 
     bcftools filter \
       -O z \
@@ -96,10 +98,10 @@
       {% if pair.gltype|lower == 'exome' %}
       --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
-      "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz" \
-      > "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz"
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
     
-    bcftools index -t "{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz"
+    bcftools index -tf "{{ pass_vcf }}"
 
 
 {% endmacro %}

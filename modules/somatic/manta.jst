@@ -1,4 +1,8 @@
 {% macro manta_somatic(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set pair_dir %}{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
+{% set run_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
 
 - name: manta_somatic_{{ pair.name }}_{{ aligner }}
   tags: [manta, manta-somatic, {{ pair.gltype }}]
@@ -6,13 +10,13 @@
     Somatic structural variants and indels for {{ pair.name }} ({{ aligner }}) 
     were called with {{ constants.tools.manta_1_4.verbose }}.
   input:
-    - {{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
   output: 
-    - {{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
-    - {{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
-    - {{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
-    - {{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
   cpus: 20
   walltime: "24:00:00"
   cmd: |
@@ -21,18 +25,15 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    PAIR_DIR="{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}"
-    RUN_DIR="${PAIR_DIR}/{{ pair.name }}_{{ aligner }}_run_dir"
-
     # Purge any existing run files prior to starting
-    rm -r "${RUN_DIR}" || true
-    mkdir -p "${RUN_DIR}"
+    rm -r "{{ run_dir }}" || true
+    mkdir -p "{{ run_dir }}"
 
     # In order to restrict calling to only the specified regions
     # Manta requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Manta.
-    MANTA_BED="${RUN_DIR}/callRegions.bed"
+    MANTA_BED="{{ run_dir }}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
     {% for contig in constants.phoenix.calling_contigs %}
@@ -45,7 +46,7 @@
 
     # Some settings are only configurable via tha ini file. Here
     # we generate this ini file and save it to the run dir.
-    MANTA_CONFIG="${RUN_DIR}/config.ini"
+    MANTA_CONFIG="{{ run_dir }}/config.ini"
     cat <<EOF > "${MANTA_CONFIG}"
     [manta]
     enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
@@ -59,29 +60,29 @@
       {% endif %}
       --callRegions "${MANTA_BED}.gz" \
       --config "${MANTA_CONFIG}" \
-      --normalBam "{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam" \
-      --tumorBam "{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam" \
+      --normalBam "{{ normal_bam }}" \
+      --tumorBam "{{ tumor_bam }}" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
-      --runDir "${RUN_DIR}"
+      --runDir "{{ run_dir }}"
 
     # Execute on the local machine with 19 parallel jobs
-    "${RUN_DIR}/runWorkflow.py" -m local -j 19
+    "{{ run_dir }}/runWorkflow.py" -m local -j 19
    
     # Save the evidence bams to the sample dir
-    mkdir -p "${PAIR_DIR}/evidence/"
-    mv "${RUN_DIR}/results/evidence/"* "${PAIR_DIR}/evidence/"
+    mkdir -p "{{ pair_dir }}/evidence/"
+    mv "{{ run_dir }}/results/evidence/"* "{{ pair_dir }}/evidence/"
 
     # Save all the vcs in the sample dir
-    mv "${RUN_DIR}/results/variants/candidateSmallIndels.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
-    mv "${RUN_DIR}/results/variants/candidateSmallIndels.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
-    mv "${RUN_DIR}/results/variants/candidateSV.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
-    mv "${RUN_DIR}/results/variants/candidateSV.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
-    mv "${RUN_DIR}/results/variants/diploidSV.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
-    mv "${RUN_DIR}/results/variants/diploidSV.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
-    mv "${RUN_DIR}/results/variants/somaticSV.vcf.gz" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz"
-    mv "${RUN_DIR}/results/variants/somaticSV.vcf.gz.tbi" "${PAIR_DIR}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
+    mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+    mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
+    mv "{{ run_dir }}/results/variants/candidateSV.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
+    mv "{{ run_dir }}/results/variants/candidateSV.vcf.gz.tbi" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
+    mv "{{ run_dir }}/results/variants/diploidSV.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
+    mv "{{ run_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
+    mv "{{ run_dir }}/results/variants/somaticSV.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz"
+    mv "{{ run_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
 
     # Remove the remaining files
-    rm -r "${RUN_DIR}"
+    rm -r "{{ run_dir }}"
 
 {% endmacro %}

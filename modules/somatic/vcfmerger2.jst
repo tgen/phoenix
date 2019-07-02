@@ -1,18 +1,24 @@
+{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
+
 {% macro vcfmerger2(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
+{% set merged_vcf %}{{ results_dir }}/{{ pair.name }}.merged.vcf{% endset %}
+{% set ann_vcf %}{{ results_dir }}/{{ pair.name }}.merged.ann.vcf.gz{% endset %}
 
-{% set bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
-{% set temp_dir %}temp/vcfmerger2/{{ pair.name }}{% endset %}
+{% set vcfs_to_merge=[] %}
 
-{% set vcfs=[] %}
-
+# Here we iterate over the callers for each pair calculating the necessary
+# paths. Callers add themselves to the pair object when their macro is used.
 {% for caller in pair.callers %}
 {% set bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set gzipped_path %}{{ pair.gltype }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
-{% set unzipped_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.vcf{% endset %}
-{% set prepped_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.prepz.vcf{% endset %}
-{% set filtered_path %}{{ temp_dir }}/{{ pair.name }}_{{ aligner }}_{{ caller }}.filt.vcf{% endset %}
-{% do vcfs.append({
-  'bam': bam,
+{% set unzipped_path %}{{ temp_dir }}/{{ caller }}.vcf{% endset %}
+{% set prepped_path %}{{ temp_dir }}/{{ caller }}.prepz.vcf{% endset %}
+{% set filtered_path %}{{ temp_dir }}/{{ caller }}.filt.vcf{% endset %}
+{% do vcfs_to_merge.append({
+  'normal_bam': normal_bam,
   'gzipped_path': gzipped_path, 
   'unzipped_path': unzipped_path,
   'prepped_path': prepped_path,
@@ -57,7 +63,6 @@
   walltime: "24:00:00"
   cmd: |
     set -uev
-
     module load {{ constants.tools.samtools_1_9.module }}
 
     bcftools filter \
@@ -75,32 +80,35 @@
   {% for caller in pair.callers %}
     - vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   {% endfor %}
+  output: {{ merged_vcf }}
   cpus: 4
   walltime: "24:00:00"
   cmd: |
     set -uev
-
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_3_6_0.module }}
     module load {{ constants.tools.bedtools_2_26_0.module }}
     module load {{ constants.tools.rstats_3_4_1.module }}
     module load {{ constants.tools.vcfmerger2_0_7_0.module }}
 
-    mkdir -p "{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}"
+    mkdir -p "{{ results_dir }}"
     
     vcfMerger2.py \
       --do-venn \
       --skip-prep-vcfs \
       --precedence "{{ pair.callers|join('|') }}" \
       --toolnames "{{ pair.callers|join('|') }}" \
-      --vcfs "{{ vcfs|map(attribute='filtered_path')|join('|') }}" \
+      --vcfs "{{ vcfs_to_merge|map(attribute='filtered_path')|join('|') }}" \
       -g "{{ constants.phoenix.reference_fasta }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
       -d "{{ temp_dir }}" \
-      -o "{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/{{ pair.name }}.merged.vcf"
+      -o "{{ merged_vcf }}"
 
     chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
-    mv "{{ temp_dir }}/venn"* "{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}/"
+    mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
+
+
+{{ snpeff(merged_vcf, ann_vcf) }}
 
 {% endmacro %}

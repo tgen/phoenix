@@ -84,7 +84,7 @@
     # Then filter out the passing variants to a separate file
     bcftools filter \
       -O z \
-      -i 'FILTER == "."' \
+      -i 'FILTER == "PASS"' \
       {% if sample.gltype|lower == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}

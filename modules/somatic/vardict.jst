@@ -2,13 +2,17 @@
 {% do pair.callers.append('vardict') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: vardict_somatic_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [vardict_somatic, {{ pair.gltype }}]
   input:
-    - {{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam
-    - {{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
   cpus: 8
   mem: 32G
   walltime: "12:00:00"
@@ -20,15 +24,14 @@
     module load {{ constants.tools.bedtools_2_26_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
     
-    mkdir -p "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/"
+    mkdir -p "{{ temp_dir }}"
 
     # Write out the regions in this batch to a file
     # Here we use bedtools to split each interval into smaller chunks
     # and the -s option to create overlaps in the chunks. This is due
     # to the VarDict memory usage spiking very high on larger intervals.
-    VARDICT_BED="temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ loop.index }}.bed"
     TAB=$'\t'
-    cat <<EOF | bedtools makewindows -w 20000 -s 19850 -b /dev/stdin > ${VARDICT_BED}
+    cat <<EOF | bedtools makewindows -w 20000 -s 19850 -b /dev/stdin > "{{ temp_dir }}/{{ loop.index }}.bed"
     {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
@@ -66,7 +69,7 @@
       -X 2 \
       -x 0 \
       -c 1 -S 2 -E 3 \
-      "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ loop.index }}.bed" \
+      "{{ temp_dir }}/{{ loop.index }}.bed" \
     | testsomatic.R \
     | var2vcf_paired.pl \
       -N "{{ pair.tumor.rgsm }}|{{ pair.normal.rgsm }}" \
@@ -84,7 +87,9 @@
       -o 1.5 \
     | bcftools view \
       -O z \
-      -o "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz"
+      -o "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
+    
+    bcftools index -tf "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
 
 {% endfor %}
 
@@ -92,28 +97,26 @@
 - name: vardict_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, concat, vardict_somatic, {{ pair.gltype }}]
   after-re: vardict_somatic_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
+  output: {{ all_vcf }}
   cpus: 4
   mem: 16G
   walltime: "12:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
-
-    mkdir -p "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/"
-
-    {% for b in constants.phoenix.calling_intervals %}
-    bcftools index -tf "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz"
-    {% endfor %}
-
+    
+    mkdir -p "{{ results_dir }}"
+    
     bcftools concat \
       --allow-overlaps \
       -O z \
-      -o "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
+      -o "{{ all_vcf }}" \
       {% for b in constants.phoenix.calling_intervals %}
-      "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/{{ pair.name }}_{{ loop.index }}.{{ aligner }}.vardict.vcf.gz" \
+      "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz" \
       {% endfor %}
-
+    
+    bcftools index -tf "{{ all_vcf }}"
+    
     {% if not debug %}
     rm -r "temp/{{ pair.name }}_{{ aligner }}_vardict_temp/"
     {% endif %}
@@ -121,18 +124,14 @@
 
 - name: vardict_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, filter, {{ pair.gltype }}]
-  input:
-    - {{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz
-  output:
-    - {{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz
+  after: vardict_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
+  output: {{ pass_vcf }}
   cpus: 2
   mem: 8G
   walltime: "12:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
-
-    bcftools index -tf "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz"
     
     bcftools filter \
       -O z \
@@ -140,10 +139,10 @@
       {% if pair.gltype|lower == 'exome' %}
       --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
-      "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz" \
-      > "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz"
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
      
-    bcftools index -t "{{ pair.gltype }}/somatic_variant_calls/vardict/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz"
+    bcftools index -tf "{{ pass_vcf }}"
 
 {% endmacro %}
 
