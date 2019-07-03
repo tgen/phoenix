@@ -2,6 +2,19 @@
 
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample) %}
+{% set sjdb_overhang = sample.read_length|default(100) - 1 %}
+{% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
+{% set star_index = constants.phoenix.star_indices[star_index_size] %}
+{% set star_finaldir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
+{% set star_finalcountsdir %}{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
+{% set star_tempdir %}temp/star/{{ sample.name }}{% endset %}
+{% set star_mkdup_tempdir %}{{ star_tempdir }}/markdup_temp/{% endset %}
+{% set star_bam_unsort %}{{ star_tempdir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
+{% set star_bam_transcript %}{{ star_tempdir }}/{{ sample.name }}.Aligned.toTranscriptome.out.bam{% endset %}
+{% set star_bam_md %}{{ star_tempdir }}/{{ sample.name }}.md.bam{% endset %}
+{% set star_bam_final %}{{ star_finaldir }}/{{ sample.name }}.star.bam{% endset %}
+
+# Here we build up lists of all the fastq files and rg lines for this sample
 {% set r1fqlist = [] %}
 {% set r2fqlist = [] %}
 {% set rglinelist = [] %}
@@ -19,20 +32,7 @@
   {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
   {% do r2fastq.update({"path": "temp/fastqs/" + r2fastq.basename}) %}
   {% do r2fqlist.append(r2fastq) %}
-
 {% endfor %}
-
-{% set sjdb_overhang = sample.read_length|default(100) - 1 %}
-{% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
-{% set star_index = constants.phoenix.star_indices[star_index_size] %}
-{% set star_finaldir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
-{% set star_finalcountsdir %}{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
-{% set star_tempdir %}temp/star/{{ sample.name }}{% endset %}
-{% set star_mkdup_tempdir %}{{ star_tempdir }}/markdup_temp/{% endset %}
-{% set star_bam_unsort %}{{ star_tempdir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
-{% set star_bam_transcript %}{{ star_tempdir }}/{{ sample.name }}.Aligned.toTranscriptome.out.bam{% endset %}
-{% set star_bam_md %}{{ star_tempdir }}/{{ sample.name }}.md.bam{% endset %}
-{% set star_bam_final %}{{ star_finaldir }}/{{ sample.name }}.star.bam{% endset %}
 
 - name: star_quant_{{ sample.name }}
   methods: >
@@ -166,6 +166,7 @@
       -l 5 \
       -m 1G \
       --threads 4 \
+      -T "{{ star_tempdir }}" \
       - |\
     samtools markdup \
       -s \
