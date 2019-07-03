@@ -246,6 +246,11 @@ constants:
         Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
+    vcfmerger2_0_7_0:
+      module: vcfmerger2/0.7.0
+      version: "0.7.0"
+      verbose: vcfMerger2 v0.7.0
+      website: https://github.com/tgen/vcfMerger2
     verifybamid2_1_0_5:
       module: verifybamID/1.0.5
       version: 1.0.5
@@ -320,23 +325,21 @@ constants:
       # by each capture kit. These are used for filtering variants and 
       # calculating coverage metrics.
       default:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.extended.bed
+      AG2:
+        targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/AG2_Ashion_GemExtra_V2/AG2_Ashion_GemExtra_V2.targets.interval_list
+        extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/AG2_Ashion_GemExtra_V2/AG2_Ashion_GemExtra_V2.extended.bed
       S5U:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs/S5U_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5_UTRs.extended.bed
       S5X:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5/S5X_Agilent_SureSelect_DNA_SureSelectXT_Human_All_Exon_V5.extended.bed
       S6U:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR/S6U_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_UTR.extended.bed
       S6X:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6/S6X_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6.extended.bed
       V6C:
@@ -344,17 +347,17 @@ constants:
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC/V6C_Agilent_SureSelect_DNA_SureSelect_Human_All_Exon_V6_COSMIC.extended.bed
       S7X:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/S7X_Agilent_SureSelect_DNA_Exome_V7/S7X_Agilent_SureSelect_DNA_Exome_V7.extended.bed
       STX:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome/STX_Agilent_SureSelect_DNA_SureSelect_V5_Strexome.extended.bed
       ST2:
-        source: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome/ST2_Agilent_SureSelect_DNA_SureSelect_V6_Strexome.extended.bed
+      STL:
+        targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.targets.interval_list
+        extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.extended.bed
     sequence_groupings:
       # Sequence groupings as per GATK for BQSR.
       - ['chr1']
@@ -609,7 +612,8 @@ constants:
       - - {"contig": "chr3", "length": 1468, "start": 91256422, "stop": 91257890}
         - {"contig": "chr3", "length": 5200, "start": 91260181, "stop": 91265381}
         - {"contig": "chr3", "length": 5180, "start": 91276995, "stop": 91282175}
-        - {"contig": "chr3", "length": 2372839, "start": 91282735, "stop": 93655574}
+        - {"contig": "chr3", "length": 2187625, "start": 91282735, "stop": 93470360}
+        - {"contig": "chr3", "length": 184773, "start": 93470801, "stop": 93655574}
       - - {"contig": "chr3", "length": 104529984, "start": 93705575, "stop": 198235559}
       - - {"contig": "chr4", "length": 1419357, "start": 10001, "stop": 1429358}
         - {"contig": "chr4", "length": 1587, "start": 1434207, "stop": 1435794}
@@ -932,7 +936,7 @@ constants:
         - {"contig": "chrY", "length": 4867932, "start": 21805282, "stop": 26673214}
         - {"contig": "chrY", "length": 98294, "start": 56673215, "stop": 56771509}
         - {"contig": "chrY", "length": 66392, "start": 56821510, "stop": 56887902}
-        - {"contig": "chr1_KI270706v1_random", "length": 175055, "start": 1, "stop": 175055}
+      - - {"contig": "chr1_KI270706v1_random", "length": 175055, "start": 1, "stop": 175055}
         - {"contig": "chr1_KI270707v1_random", "length": 32032, "start": 1, "stop": 32032}
         - {"contig": "chr1_KI270708v1_random", "length": 127682, "start": 1, "stop": 127682}
         - {"contig": "chr1_KI270709v1_random", "length": 66860, "start": 1, "stop": 66860}
@@ -950,7 +954,7 @@ constants:
         - {"contig": "chr9_KI270718v1_random", "length": 38054, "start": 1, "stop": 38054}
         - {"contig": "chr9_KI270719v1_random", "length": 176845, "start": 1, "stop": 176845}
         - {"contig": "chr9_KI270720v1_random", "length": 39050, "start": 1, "stop": 39050}
-        - {"contig": "chr11_KI270721v1_random", "length": 100316, "start": 1, "stop": 100316}
+      - - {"contig": "chr11_KI270721v1_random", "length": 100316, "start": 1, "stop": 100316}
         - {"contig": "chr14_GL000009v2_random", "length": 201709, "start": 1, "stop": 201709}
         - {"contig": "chr14_GL000225v1_random", "length": 211173, "start": 1, "stop": 211173}
         - {"contig": "chr14_KI270722v1_random", "length": 194050, "start": 1, "stop": 194050}
@@ -973,7 +977,7 @@ constants:
         - {"contig": "chr22_KI270737v1_random", "length": 103838, "start": 1, "stop": 103838}
         - {"contig": "chr22_KI270738v1_random", "length": 99375, "start": 1, "stop": 99375}
         - {"contig": "chr22_KI270739v1_random", "length": 73985, "start": 1, "stop": 73985}
-        - {"contig": "chrY_KI270740v1_random", "length": 37240, "start": 1, "stop": 37240}
+      - - {"contig": "chrY_KI270740v1_random", "length": 37240, "start": 1, "stop": 37240}
         - {"contig": "chrUn_KI270302v1", "length": 2274, "start": 1, "stop": 2274}
         - {"contig": "chrUn_KI270304v1", "length": 2165, "start": 1, "stop": 2165}
         - {"contig": "chrUn_KI270303v1", "length": 1942, "start": 1, "stop": 1942}
@@ -998,7 +1002,7 @@ constants:
         - {"contig": "chrUn_KI270423v1", "length": 981, "start": 1, "stop": 981}
         - {"contig": "chrUn_KI270425v1", "length": 1884, "start": 1, "stop": 1884}
         - {"contig": "chrUn_KI270429v1", "length": 1361, "start": 1, "stop": 1361}
-        - {"contig": "chrUn_KI270442v1", "length": 392061, "start": 1, "stop": 392061}
+      - - {"contig": "chrUn_KI270442v1", "length": 392061, "start": 1, "stop": 392061}
         - {"contig": "chrUn_KI270466v1", "length": 1233, "start": 1, "stop": 1233}
         - {"contig": "chrUn_KI270465v1", "length": 1774, "start": 1, "stop": 1774}
         - {"contig": "chrUn_KI270467v1", "length": 3920, "start": 1, "stop": 3920}
@@ -1021,7 +1025,7 @@ constants:
         - {"contig": "chrUn_KI270528v1", "length": 2983, "start": 1, "stop": 2983}
         - {"contig": "chrUn_KI270530v1", "length": 2168, "start": 1, "stop": 2168}
         - {"contig": "chrUn_KI270539v1", "length": 993, "start": 1, "stop": 993}
-        - {"contig": "chrUn_KI270538v1", "length": 91309, "start": 1, "stop": 91309}
+      - - {"contig": "chrUn_KI270538v1", "length": 91309, "start": 1, "stop": 91309}
         - {"contig": "chrUn_KI270544v1", "length": 1202, "start": 1, "stop": 1202}
         - {"contig": "chrUn_KI270548v1", "length": 1599, "start": 1, "stop": 1599}
         - {"contig": "chrUn_KI270583v1", "length": 1400, "start": 1, "stop": 1400}
@@ -1055,7 +1059,7 @@ constants:
         - {"contig": "chrUn_KI270390v1", "length": 2387, "start": 1, "stop": 2387}
         - {"contig": "chrUn_KI270387v1", "length": 1537, "start": 1, "stop": 1537}
         - {"contig": "chrUn_KI270395v1", "length": 1143, "start": 1, "stop": 1143}
-        - {"contig": "chrUn_KI270396v1", "length": 1880, "start": 1, "stop": 1880}
+      - - {"contig": "chrUn_KI270396v1", "length": 1880, "start": 1, "stop": 1880}
         - {"contig": "chrUn_KI270388v1", "length": 1216, "start": 1, "stop": 1216}
         - {"contig": "chrUn_KI270394v1", "length": 970, "start": 1, "stop": 970}
         - {"contig": "chrUn_KI270386v1", "length": 1788, "start": 1, "stop": 1788}
@@ -1082,7 +1086,7 @@ constants:
         - {"contig": "chrUn_KI270741v1", "length": 157432, "start": 1, "stop": 157432}
         - {"contig": "chrUn_GL000226v1", "length": 15008, "start": 1, "stop": 15008}
         - {"contig": "chrUn_GL000213v1", "length": 164239, "start": 1, "stop": 164239}
-        - {"contig": "chrUn_KI270743v1", "length": 210658, "start": 1, "stop": 210658}
+      - - {"contig": "chrUn_KI270743v1", "length": 210658, "start": 1, "stop": 210658}
         - {"contig": "chrUn_KI270744v1", "length": 168472, "start": 1, "stop": 168472}
         - {"contig": "chrUn_KI270745v1", "length": 41891, "start": 1, "stop": 41891}
         - {"contig": "chrUn_KI270746v1", "length": 66486, "start": 1, "stop": 66486}

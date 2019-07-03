@@ -1,6 +1,7 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro freebayes(sample, aligner='bwa') %}
+{% set all_vcf %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
 {% set ann_vcf %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.ann.vcf.gz{% endset %}
 
@@ -38,7 +39,7 @@
 - name: freebayes_merge_{{ sample.name }}_{{ aligner }}
   tags: [freebayes, bcftools, {{ sample.gltype }}]
   after-re: freebayes_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz
+  output: {{ all_vcf }}
   walltime: "24:00:00"
   cpus: 4
   mem: 16000
@@ -50,12 +51,12 @@
 
     bcftools concat \
       -O z \
-      -o "{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
+      -o "{{ all_vcf }}" \
       {% for batch in constants.phoenix.calling_intervals %}
       "temp/{{ sample.name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
       {% endfor %}  
 
-    bcftools index -t "{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz"
+    bcftools index -tf "{{ all_vcf }}"
     {% if not debug %}
     rm -r "temp/{{ sample.name }}_{{ aligner }}_freebayes/"
     {% endif %}
@@ -63,10 +64,8 @@
 
 - name: freebayes_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [freebayes, bcftools, filter, {{ sample.gltype }}]
-  input:
-    - {{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz
-  output:
-    - {{ pass_vcf }}
+  after: freebayes_merge_{{ sample.name }}_{{ aligner }}
+  output: {{ pass_vcf }}
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -81,12 +80,12 @@
       {% if sample.gltype|lower == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
-      "{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz" \
+      "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
 
-    bcftools index -t "{{ pass_vcf }}"
+    bcftools index -tf "{{ pass_vcf }}"
 
 
-{{- snpeff(pass_vcf, ann_vcf) }}
+{{ snpeff(pass_vcf, ann_vcf) }}
 
 {% endmacro %}

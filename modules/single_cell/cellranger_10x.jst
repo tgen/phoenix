@@ -7,6 +7,7 @@
 {% set assaycode = props.assayCode|default('unknown') %}
 {% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
 {% set outdir %}{{ props.gltype }}/quant/cellranger/{{ props.name }}/{% endset %}
+{% set templinks %}temp/cellranger/{{ props.name }}/{{ library }}/fastqs/{% endset %}
 
 {{ log('Cellranger library: {} assay: {} chemistry: {}'.format(library, assaycode, chemistry), 'CRITICAL') }}
 
@@ -23,11 +24,19 @@
     module load {{ constants.tools.cellranger_3_0_2.module }}
 
     mkdir -p "{{ outdir }}"
-    ##  TODO  make symlinks to  all fastqs for this library in a  tempdir
+    mkdir -p "{{ templinks }}"
+    
+    {% for file in datafiles %}
+    ln -s "temp/fastqs/{{ file.basename }}" "{{ templinks }}/{{ file.basename }}"
+    {% endfor %}
+
+    # TODO might need to actually rename the links with sample properties to
+    # make this agnostic to weird filenames
+    
     cellranger count \
       --localcores 12 \
       --localmem 48 \
-      --fastqs "temp/cellranger_fastq_symlinks/" \
+      --fastqs "{{ templinks }}" \
       --transcriptome "{{ constants.phoenix.cellranger_reference }}" \
       --chemistry "{{ chemistry }}" \
       --id "{{ props.name }}_{{ library }}" \

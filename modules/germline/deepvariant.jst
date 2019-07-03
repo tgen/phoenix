@@ -1,4 +1,10 @@
+{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
+
 {% macro deepvariant(sample, aligner='bwa') %}
+{% set all_vcf %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
+{% set ann_vcf %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.ann.vcf.gz{% endset %}
+
 {% set nshards=40 %}
 {% for i in range(nshards) %}
 - name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
@@ -9,7 +15,6 @@
   walltime: "24:00:00"
   cmd: |
     set -euv
-
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -38,7 +43,6 @@
   walltime: "24:00:00"
   cmd: |
     set -euv
-
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -58,14 +62,12 @@
 - name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
   tags: [deepvariant, {{ sample.gltype }}]
   after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
-  output:
-    - {{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz
+  output: {{ all_vcf }}
   cpus: 8
   mem: 64G
   walltime: "24:00:00"
   cmd: |
     set -euv
-    
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -74,14 +76,13 @@
     postprocess_variants \
         --ref "{{ constants.phoenix.reference_fasta }}" \
         --infile "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz" \
-        --outfile "$(pwd)/{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz"
+        --outfile "$(pwd)/{{ all_vcf }}"
 
 
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [deepvariant, bcftools, filter, {{ sample.gltype }}]
   after: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
-  output:
-    - {{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz
+  output: {{ pass_vcf }}
   cpus: 2
   mem: 4G
   walltime: "24:00:00"
@@ -89,7 +90,7 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    bcftools index -t "{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz"
+    bcftools index -tf "{{ all_vcf }}"
 
     # Then filter out the PASS variants to a separate file
     bcftools filter \
@@ -98,10 +99,12 @@
       {% if sample.gltype|lower == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
-      "{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz" \
-      > "{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz"
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
 
-    bcftools index -t "{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz"
+    bcftools index -tf "{{ pass_vcf }}"
 
+
+{{ snpeff(pass_vcf, ann_vcf) }}
 
 {% endmacro %}

@@ -1,4 +1,8 @@
 {% macro manta_constitutional(sample, aligner='bwa') %}
+
+{% set sample_dir %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
+{% set run_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
+
 - name: manta_constitutional_{{ sample.name }}_{{ aligner }}
   tags: [manta, manta-constitutional, {{ sample.gltype }}]
   methods: > 
@@ -7,9 +11,9 @@
   input:
     - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output:
-    - {{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
-    - {{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
-    - {{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
   cpus: 20
   walltime: "24:00:00"
   cmd: |
@@ -18,18 +22,15 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    SAMPLE_DIR="{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}"
-    RUN_DIR="${SAMPLE_DIR}/{{ sample.name }}_{{ aligner }}_run_dir"
-
     # Purge any existing run files prior to starting
-    rm -r "${RUN_DIR}" || true
-    mkdir -p "${RUN_DIR}"
+    rm -r "{{ run_dir }}" || true
+    mkdir -p "{{ run_dir }}"
 
     # In order to restrict calling to only the specified regions
     # Manta requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Manta.
-    MANTA_BED="${RUN_DIR}/callRegions.bed"
+    MANTA_BED="{{ run_dir }}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
     {% for contig in constants.phoenix.calling_contigs %}
@@ -49,25 +50,25 @@
       --callRegions "${MANTA_BED}.gz" \
       --bam "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
-      --runDir "${RUN_DIR}"
+      --runDir "{{ run_dir }}"
 
     # Execute on the local machine with 19 parallel jobs
-    "${RUN_DIR}/runWorkflow.py" -m local -j 19
+    "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
     # Save the evidence bams to the sample dir
     # these will only be generated for exome samples
-    mkdir -p "${SAMPLE_DIR}/evidence/"
-    mv "${RUN_DIR}/results/evidence/"* "${SAMPLE_DIR}/evidence/" || true
+    mkdir -p "{{ sample_dir }}/evidence/"
+    mv "{{ run_dir }}/results/evidence/"* "{{ sample_dir }}/evidence/" || true
 
     # Save all the vcs in the sample dir
-    mv "${RUN_DIR}/results/variants/candidateSmallIndels.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
-    mv "${RUN_DIR}/results/variants/candidateSmallIndels.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
-    mv "${RUN_DIR}/results/variants/candidateSV.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
-    mv "${RUN_DIR}/results/variants/candidateSV.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
-    mv "${RUN_DIR}/results/variants/diploidSV.vcf.gz" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
-    mv "${RUN_DIR}/results/variants/diploidSV.vcf.gz.tbi" "${SAMPLE_DIR}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
+    mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+    mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
+    mv "{{ run_dir }}/results/variants/candidateSV.vcf.gz" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
+    mv "{{ run_dir }}/results/variants/candidateSV.vcf.gz.tbi" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
+    mv "{{ run_dir }}/results/variants/diploidSV.vcf.gz" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
+    mv "{{ run_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
 
     # Remove the remaining files
-    rm -r "${RUN_DIR}"
+    rm -r "{{ run_dir }}"
 
 {% endmacro %}

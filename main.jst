@@ -44,13 +44,14 @@
 
 {% set samples = {} %}
 {% for file in dataFiles %}
+    {% set bn = file.fastqPath | basename %}
     {% if 'sampleMergeKey' in file %}
         {% set name = file.sampleMergeKey %}
     {% else %}
         {% set name = file.sampleName %}
     {% endif %}
-
     {% do file.update({'name': name}) %}
+    {% do file.update({'basename': bn}) %}
     {% do file.update({'gltype': file.glType.lower()}) %}
     {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
 
@@ -100,7 +101,7 @@
 - name: copy_fastqs_{{ loop.index }}
   output:
     {% for fq in batch %}
-    - temp/fastqs/{{ fq.fastqPath|basename }}
+    - temp/fastqs/{{ fq.basename }}
     {% endfor %}
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']
