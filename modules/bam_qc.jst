@@ -109,7 +109,11 @@
     gatk CollectMultipleMetrics \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
+      {% if aligner == 'star' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}"
+      {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
       --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --METRIC_ACCUMULATION_LEVEL SAMPLE \
@@ -135,8 +139,12 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk ConvertSequencingArtifactToOxoG \
-      -I "{{ stats_dir }}/{{ bam_path|basename }}" \
-      -R "{{ constants.phoenix.reference_fasta }}"
+      {% if aligner == 'star' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}"
+      {% elif aligner == 'bwa' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      --INPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
 
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
@@ -260,10 +268,6 @@
 
     mkdir -p "{{ stats_dir }}"
 
-    # TODO
-    # NONE
-    # FIRST_READ_TRANSCRIPTION_STRAND
-    # SECOND_READ_TRANSCRIPTION_STRAND
     gatk CollectRnaSeqMetrics \
       --IGNORE_SEQUENCE chrEBV \
       --STRAND_SPECIFICITY {{ constants.phoenix.strandedness_options[sample.strandedness].collectrnaseqmetrics }} \
