@@ -79,10 +79,6 @@
 
     bcftools index -tf "{{ all_vcf }}"
 
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
-
 
 - name: haplotypecaller_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [gatk, FilterVariantTranches, bcftools, filter, {{ sample.gltype }}]
@@ -118,8 +114,11 @@
       "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
       > "{{ pass_vcf }}"
 
-    rm "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz"
     bcftools index -tf "{{ pass_vcf }}"
+
+    {% if not debug %}
+    rm -r "{{ temp_dir }}"
+    {% endif %}
 
 
 {{ snpeff(pass_vcf, ann_vcf) }}

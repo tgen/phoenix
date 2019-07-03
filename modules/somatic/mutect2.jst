@@ -71,6 +71,8 @@
   cmd: |
     set -uev 
     module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ results_dir }}"
     
     gatk FilterMutectCalls \
       --java-options "-Xmx28G" \

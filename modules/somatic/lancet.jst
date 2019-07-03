@@ -48,8 +48,6 @@
       --INPUT "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf" \
       --OUTPUT "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
 
-    rm "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
-
 {% endfor %}
 
 
@@ -76,7 +74,7 @@
     bcftools index -tf "{{ all_vcf }}"
 
     {% if not debug %}
-    rm -r "temp/{{ pair.name }}_{{ aligner }}_lancet_vcf_chunks/"
+    rm -r "{{ temp_dir }}"
     # This version of Lancet leaves behind a config.txt file in the top 
     # of the project dir. This was patched in a later versions so that
     # we can remove later.
