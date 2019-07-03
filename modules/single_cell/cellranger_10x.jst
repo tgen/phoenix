@@ -1,6 +1,6 @@
 # Run 10X Cell Ranger pipeline
 {% macro cellranger_10x(files) %}
-{% set libraries = files|groupby('name') %}
+{% set libraries = files|groupby('rglb') %}
 
 {% for library, datafiles in libraries %}
 {% set props = datafiles[0] %}
@@ -40,11 +40,11 @@
     cellranger count \
       --localcores 12 \
       --localmem 48 \
-      --fastqs "{{ templinks }}" \
-      --transcriptome "{{ constants.phoenix.cellranger_reference }}" \
       --chemistry "{{ chemistry }}" \
       --id "{{ props.name }}_{{ library }}" \
+      --fastqs "{{ templinks }}" \
       --sample "{{ props.name }}" \
+      --transcriptome "{{ constants.phoenix.cellranger_reference }}" \
       --output "{{ outdir }}"
 
 {% endfor %}
