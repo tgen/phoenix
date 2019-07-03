@@ -74,7 +74,7 @@
     
     gatk FilterMutectCalls \
       --java-options "-Xmx28G" \
-      {% if pair.gltype|lower == 'genome' %}
+      {% if pair.gltype == 'genome' %}
       --strict-strand-bias true \
       {% endif %}
       --max-alt-allele-count 2 \
@@ -94,7 +94,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      {% if pair.gltype|lower == 'exome' %}
+      {% if pair.gltype == 'exome' %}
       --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \

@@ -15,6 +15,10 @@
   methods: >
     Transcript quantification for {{ props.name }} was performed with
     {{ constants.tools.cellranger_3_0_2.verbose }} using the cDNA index.
+  input:
+  {% for fq in datafiles %}
+   - temp/fastqs/{{ fq.basename }}
+  {% endfor %}
   output: {{ props.gltype }}/quant/cellranger/{{ props.name }}/
   cpus: 12
   mem: 48
@@ -30,8 +34,8 @@
     ln -s "temp/fastqs/{{ file.basename }}" "{{ templinks }}/{{ file.basename }}"
     {% endfor %}
 
-    # TODO might need to actually rename the links with sample properties to
-    # make this agnostic to weird filenames
+    # TODO might need to actually rename the links with sample properties so
+    # that cellranger will idenitfy them properly
     
     cellranger count \
       --localcores 12 \

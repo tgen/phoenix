@@ -1,21 +1,25 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro genotypegvcf(sample, aligner='bwa') %}
-{% set all_vcf %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz{% endset %}
-{% set ann_vcf %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.ann.vcf.gz{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}{% endset %}
+{% set gvcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz{% endset %}
+{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.ann.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, GenotypeGVCFs, {{ sample.gltype }}]
-  input: {{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz
+  input: {{ gvcf }}
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
   cmd: |
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
-    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/"
+    mkdir -p "{{ temp_dir }}"
 
     gatk GenotypeGVCFs \
       --tmp-dir "temp" \
@@ -24,8 +28,8 @@
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --variant "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz" \
-      --output "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz"
+      --variant "{{ gvcf }}" \
+      --output "{{ temp_dir }}/{{ loop.index }}.vcf.gz"
 
 
 - name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
@@ -38,7 +42,6 @@
     set -euv
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     source activate gatk
-    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/"
 
     gatk CNNScoreVariants \
       --java-options "-Xmx20G" \
@@ -47,9 +50,9 @@
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      --input "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      --variant "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/{{ loop.index }}.vcf.gz" \
-      --output "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz"
+      --input "{{ bam }}" \
+      --variant "{{ temp_dir }}/{{ loop.index }}.vcf.gz" \
+      --output "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz"
 
 {% endfor %}
 
@@ -65,20 +68,19 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}/"
+    mkdir -p "{{ results_dir }}"
 
     bcftools concat \
       -O z \
       -o "{{ all_vcf }}" \
       {% for batch in constants.phoenix.calling_intervals %}
-       "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/{{ loop.index }}.vcf.gz" \
+      "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz" \
       {% endfor %}
 
     bcftools index -tf "{{ all_vcf }}"
 
     {% if not debug %}
-    rm -r "temp/{{ sample.name }}_{{ aligner }}_hc_vcf_chunks/"
-    rm -r "temp/{{ sample.name }}_{{ aligner }}_hc_scoredvcf_chunks/"
+    rm -r "{{ temp_dir }}"
     {% endif %}
 
 
@@ -104,19 +106,19 @@
       --resource "{{ resource }}" \
       {% endfor %}
       --variant "{{ all_vcf }}" \
-      --output "temp/{{ sample.name }}.{{ aligner }}.hc.fvt.vcf.gz" \
+      --output "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
        
     # Then filter out the passing variants to a separate file
     bcftools filter \
       -O z \
       -i 'FILTER == "."' \
-      {% if sample.gltype|lower == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
-      "temp/{{ sample.name }}.{{ aligner }}.hc.fvt.vcf.gz" \
+      "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
       > "{{ pass_vcf }}"
 
-    rm "temp/{{ sample.name }}.{{ aligner }}.hc.fvt.vcf.gz"
+    rm "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz"
     bcftools index -tf "{{ pass_vcf }}"
 
 

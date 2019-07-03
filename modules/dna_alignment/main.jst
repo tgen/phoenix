@@ -11,7 +11,7 @@
   {% set chunking = chunking|default(True) %}
   {% set reads_per_chunk = reads_per_chunk|default(48000000) %}
 
-  {% for sample in samples.values() if sample.gltype|lower in ['genome', 'exome'] %}
+  {% for sample in samples.values() if sample.gltype in ['genome', 'exome'] %}
     {% do sample.update({'needs_split': False}) %}
     {% for rg in sample.read_groups.values() %}
       {% if rg.numberOfReads|default(0) > reads_per_chunk %}
@@ -36,13 +36,13 @@
       {{ raise('Unknown dnaAlignmentStyle: {}'.format(dnaAlignmentStyle)) }}
     {% endif %}
 
-    {% if sample.gltype|lower == 'genome' %}
+    {% if sample.gltype == 'genome' %}
       {% if tasks.Genome_base_recalibration_gatk_4_0_1_2 is defined and tasks.Genome_base_recalibration_gatk_4_0_1_2 %}
         {{- baserecalibration(sample, aligner='bwa') }}
       {% else %}
          {{- nobaserecalibration(sample, aligner='bwa') }}
       {% endif %}
-    {% elif sample.gltype|lower == 'exome' %}
+    {% elif sample.gltype == 'exome' %}
       {% if tasks.Exome_base_recalibration_gatk_4_0_1_2 is defined and tasks.Exome_base_recalibration_gatk_4_0_1_2 %}
           {{- baserecalibration(sample, aligner='bwa') }}
       {% else %}

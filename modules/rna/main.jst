@@ -5,13 +5,13 @@
 
 
 {% macro rna_fusion_detection(samples) %}
-{% for sample in samples.values() if sample.gltype|lower == 'rna' %}
+{% for sample in samples.values() if sample.gltype == 'rna' %}
     {{- star_fusion(sample) }}    
 {% endfor %}
 {% endmacro %}
 
 {% macro rna_quant(samples) %}
-{% for sample in samples.values() if sample.gltype|lower == 'rna' %}
+{% for sample in samples.values() if sample.gltype == 'rna' %}
     {{- salmon(sample) }}
     {{- star_quant(sample) }}
     {{- bam_qc(sample, aligner='star') }}

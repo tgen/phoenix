@@ -276,7 +276,7 @@
 {% endif %}
 
 {% if sample.subGroup|lower == 'constitutional' %}
-- name: verifybamid2_{{ sample.name }}
+- name: verifybamid2_{{ sample.name }}_{{ aligner }}
   tags: [qc, verifybamid2, {{ sample.gltype }}]
   input: {{ bam_path }}
   cpus: 1

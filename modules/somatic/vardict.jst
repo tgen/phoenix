@@ -136,7 +136,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS" & INFO/STATUS == "StrongSomatic"' \
-      {% if pair.gltype|lower == 'exome' %}
+      {% if pair.gltype == 'exome' %}
       --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \

@@ -1,14 +1,17 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro freebayes(sample, aligner='bwa') %}
-{% set all_vcf %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
-{% set ann_vcf %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.freebayes.ann.vcf.gz{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
+{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.ann.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [freebayes, {{ sample.gltype }}]
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  input: {{ bam }}
   walltime: "24:00:00"
   cpus: 4
   mem: 16000
@@ -16,22 +19,22 @@
     set -uev
     module load {{ constants.tools.freebayes_1_2.module }}
 
-    mkdir -p "temp/{{ sample.name }}_{{ aligner }}_freebayes/"
+    mkdir -p "{{ temp_dir }}"
 
     TAB=$'\t'
-    cat <<EOF > "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed"
+    cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
     {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
 
     freebayes \
-      -b "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      -b "{{ bam }}" \
       -f "{{ constants.phoenix.reference_fasta }}" \
-      -t "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.bed" \
+      -t "{{ temp_dir }}/{{ loop.index }}.bed" \
       --ploidy 2 \
       --min-repeat-entropy 1 \
-      > "temp/{{ sample.name }}_{{ aligner }}_freebayes/{{ loop.index }}.vcf"
+      > "{{ temp_dir }}/{{ loop.index }}.vcf"
 
 {% endfor %}
 
@@ -47,18 +50,19 @@
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}/"
+    mkdir -p "{{ results_dir }}"
 
     bcftools concat \
       -O z \
       -o "{{ all_vcf }}" \
       {% for batch in constants.phoenix.calling_intervals %}
-      "temp/{{ sample.name }}_{{ aligner }}_freebayes//{{ loop.index }}.vcf" \
+      "{{ temp_dir }}/{{ loop.index }}.vcf" \
       {% endfor %}  
 
     bcftools index -tf "{{ all_vcf }}"
+
     {% if not debug %}
-    rm -r "temp/{{ sample.name }}_{{ aligner }}_freebayes/"
+    rm -r "{{ temp_dir }}"
     {% endif %}
 
 
@@ -77,7 +81,7 @@
     bcftools filter \
       -O z \
       --include 'QUAL > 20' \
-      {% if sample.gltype|lower == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \

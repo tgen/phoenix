@@ -1,5 +1,5 @@
 {% macro manta_constitutional(sample, aligner='bwa') %}
-
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set sample_dir %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
 {% set run_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
 
@@ -8,13 +8,13 @@
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
     ({{ aligner }}) were called with {{ constants.tools.manta_1_4.verbose }}.
-  input:
-    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  input: {{ bam }}
   output:
     - {{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
     - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
   cpus: 20
+  mem: 80G
   walltime: "24:00:00"
   cmd: |
     set -euv
@@ -48,7 +48,7 @@
       --generateEvidenceBam \
       {% endif %}
       --callRegions "${MANTA_BED}.gz" \
-      --bam "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --bam "{{ bam }}" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
       --runDir "{{ run_dir }}"
 

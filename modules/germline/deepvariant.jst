@@ -1,17 +1,20 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro deepvariant(sample, aligner='bwa') %}
-{% set all_vcf %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
-{% set ann_vcf %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.deepvariant.ann.vcf.gz{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
+{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.ann.vcf.gz{% endset %}
 
 {% set nshards=40 %}
 {% for i in range(nshards) %}
 - name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   tags: [deepvariant, {{ sample.gltype }}]
-  input:
-    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  input: {{ bam }}
   cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -euv
@@ -19,17 +22,18 @@
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
 
-    mkdir -p "$(pwd)/temp/deepvariant/"
+    mkdir -p "{{ temp_dir }}"
 
     # Run make_examples
     # This function does not need to be run on a GPU
-    make_examples \
+    # cd here in order to prevent wild temp files from polluting the project
+    (cd "{{ temp_dir }}" && make_examples \
       --logging_level WARN \
       --mode calling \
       --task {{ i }} \
       --ref "{{ constants.phoenix.reference_fasta }}" \
-      --reads "$(pwd)/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      --examples "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.examples.tfrecord@{{ nshards }}.gz" \
+      --reads "${PWD}/{{ bam }}" \
+      --examples "${PWD}/{{ temp_dir }}/{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz")
       
 {% endfor %}
 
@@ -39,24 +43,25 @@
   {% for i in range(nshards) %}
     - deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   {% endfor %}
-  sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1', '-c', '10']
+  cpus: 10
+  mem: 40G
+  sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1']
   walltime: "24:00:00"
   cmd: |
     set -euv
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
-    mkdir -p "{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}/"
 
     # Run call_variants
     call_variants \
-      {% if sample.gltype|lower == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --checkpoint "{{ constants.phoenix.deepvariant_models.exome }}" \
       {% else %}
       --checkpoint  "{{ constants.phoenix.deepvariant_models.genome }}" \
       {% endif %}
-      --examples "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.examples.tfrecord@{{ nshards }}.gz" \
-      --outfile "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz"
+      --examples "${PWD}/{{ temp_dir }}/{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz" \
+      --outfile "${PWD}/{{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz"
 
 
 - name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
@@ -71,12 +76,13 @@
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
+    mkdir -p "{{ results_dir }}"
     
     # Run postprocess_variants` without gVCFs
     postprocess_variants \
         --ref "{{ constants.phoenix.reference_fasta }}" \
-        --infile "$(pwd)/temp/deepvariant/{{ sample.name }}_{{ aligner }}.cvo.tfrecord.gz" \
-        --outfile "$(pwd)/{{ all_vcf }}"
+        --infile "${PWD}/{{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz" \
+        --outfile "${PWD}/{{ all_vcf }}"
 
 
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
@@ -96,7 +102,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      {% if sample.gltype|lower == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \

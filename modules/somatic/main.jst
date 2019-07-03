@@ -31,14 +31,14 @@
     # this is likely NOT what you want to do, and pairs should be 
     # predefined in the config data. 
     {% set pairs = [] %}
-    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype|lower == 'exome' %}
-        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype|lower == 'exome' %}
+    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'exome' %}
+        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype == 'exome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
             {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
-    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype|lower == 'genome' %}
-        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype|lower == 'genome' %}
+    {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'genome' %}
+        {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype == 'genome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
             {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}

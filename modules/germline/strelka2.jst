@@ -1,11 +1,13 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
 {% macro strelka2_constitutional(sample, aligner='bwa') %}
-{% set all_vcf %}{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
-{% set ann_vcf %}{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.vcf.gz{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set indel_candidates %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
 {% set sample_dir %}{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}{% endset %}
 {% set run_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}{% endset %}
+{% set all_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
+{% set ann_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.vcf.gz{% endset %}
 
 - name: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
   tags: [strelka2, strelka2-germline, {{ sample.gltype }}]
@@ -13,8 +15,8 @@
     Germline variants for {{ sample.name }} ({{ aligner }}) were called with 
     {{ constants.tools.strelka_2_9_2.verbose }}.
   input:
-    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-    - {{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ bam }}
+    - {{ indel_candidates }}
   output: {{ all_vcf }}
   cpus: 20
   walltime: "24:00:00"
@@ -58,7 +60,7 @@
       --config "${STRELKA_CONFIG}" \
       --callRegions "${STRELKA_BED}.gz" \
       --bam "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
-      --indelCandidates "{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz" \
+      --indelCandidates "{{ indel_candidates }}" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "{{ run_dir }}"
 
@@ -90,7 +92,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      {% if sample.gltype|lower == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --regions-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
