@@ -7,7 +7,13 @@
 {% set assaycode = props.assayCode|default('unknown') %}
 {% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
 {% set outdir %}{{ props.gltype }}/quant/cellranger/{{ props.name }}/{% endset %}
-{% set templinks %}temp/cellranger/{{ props.name }}/{{ library }}/fastqs/{% endset %}
+{% set temp_dir %}temp/cellranger/{{ props.name }}/{{ library }}/fastqs/{% endset %}
+
+{% set samples_list = [] %}
+{% for rgpu, _ in files|groupby('rgpu') %}
+  {% set sample_string %}{{ props.name }}_{{ library }}_{{ rgpu[:-2] }}{% endset %}
+  {% do samples_list.append(sample_string) %}
+{% endfor %}
 
 {{ log('Cellranger library: {} assay: {} chemistry: {}'.format(library, assaycode, chemistry), 'CRITICAL') }}
 
@@ -21,31 +27,31 @@
   {% endfor %}
   output: {{ props.gltype }}/quant/cellranger/{{ props.name }}/
   cpus: 12
-  mem: 48
+  mem: 48G
   walltime: "24:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.cellranger_3_0_2.module }}
 
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ outdir }}"
-    mkdir -p "{{ templinks }}"
     
     {% for file in datafiles %}
-    ln -s "temp/fastqs/{{ file.basename }}" "{{ templinks }}/{{ file.basename }}"
+    ln -rs "temp/fastqs/{{ file.basename }}" "{{ temp_dir }}/{{ file.basename }}"
     {% endfor %}
 
     # TODO might need to actually rename the links with sample properties so
     # that cellranger will idenitfy them properly
     
-    cellranger count \
+    (cd "{{ temp_dir }}" && cellranger count \
       --localcores 12 \
       --localmem 48 \
       --chemistry "{{ chemistry }}" \
       --id "{{ props.name }}_{{ library }}" \
-      --fastqs "{{ templinks }}" \
-      --sample "{{ props.name }}" \
-      --transcriptome "{{ constants.phoenix.cellranger_reference }}" \
-      --output "{{ outdir }}"
+      --fastqs . \
+      --sample "{{ samples_list|join(',') }}" \
+      --transcriptome "{{ constants.phoenix.cellranger_reference }}")
 
 {% endfor %}
 {% endmacro %}
