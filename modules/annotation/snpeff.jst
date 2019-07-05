@@ -9,6 +9,7 @@
     set -euv
 
     module load {{ constants.tools.snpeff_4_3t.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     snpEff eff \
       -t \
@@ -16,5 +17,7 @@
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       "{{ constants.phoenix.snpeff_db }}" \
       "{{ input_vcf }}" > "{{ output_vcf }}"
+
+    samtools index -tf "{{ output_vcf }}"
 
 {% endmacro %}
