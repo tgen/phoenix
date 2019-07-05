@@ -4,7 +4,7 @@
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
-{% set merged_vcf %}{{ results_dir }}/{{ pair.name }}.merged.vcf{% endset %}
+{% set merged_vcf %}{{ temp_dir }}/{{ pair.name }}.merged.vcf{% endset %}
 {% set ann_vcf %}{{ results_dir }}/{{ pair.name }}.merged.ann.vcf.gz{% endset %}
 
 {% set vcfs_to_merge=[] %}
