@@ -1,0 +1,57 @@
+{% macro peddy(sample, aligner = "bwa") %}
+
+{% set temp %}{{ sample.gltype }}/qc/peddy/{{ sample.name }}{% endset %}
+
+- name: run_freebayes_{{ sample.name }}_{{ aligner }}
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf
+  cmd: |
+    set -v
+    module load freebayes/1.2
+    mkdir -p "{{ sample.gltype }}/qc/peddy/{{ sample.name }}"
+    freebayes \
+      "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      -f "{{ constants.phoenix.reference_fasta }}" \
+      -t /home/qzhu/toolkit/hg38.bed \
+      > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
+
+
+- name: run_bcftools_sort_index_{{ sample.name }}_{{ aligner }}
+  input: temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf
+  output:
+    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz
+    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz.tbi
+  cmd: |
+    set -v
+    module load {{ constants.tools.samtools_1_9.module }}
+    bcftools sort \
+      -O z \
+      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf" \
+      > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz"
+    bcftools index \
+      -f \
+      -t \
+      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz" \
+      > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz.tbi"
+
+
+- name: run_peddy_{{ sample.name }}_{{ aligner }}
+  input: 
+    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz
+    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz.tbi
+  cmd: |
+    set -v
+
+    TAB=$'\t'
+    cat <<EOF > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.bed"
+    {{ familyCode|default("0") }}${TAB}{{ sample.rgsm|default(sample.name) }}${TAB}0${TAB}0${TAB}{{ sex }}${TAB}-9
+    EOF
+
+    peddy \
+      --sites hg38 \
+      --prefix {{ sample.gltype }}/qc/peddy/{{ sample.name }}/{{ sample.name }} \
+      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz" \
+      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.bed"
+
+
+{% endmacro %}

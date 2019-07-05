@@ -1,8 +1,12 @@
 
-{% from 'modules/qc/<...jst>' import peddy with context %}
+{% from 'modules/qc/peddy.jst' import peddy with context %}
 
 {% macro qc(samples) %}
     {% for sample in samples.values() %}
-        {{- peddy(sample) }}
+        {% if sample.gltype == 'rna' %}
+            {{- peddy(sample, aligner='star') }}
+        {% elif sample.gltype in ('exome', 'genome') %}
+            {{- peddy(sample, aligner='bwa') }}
+        {% endif %}
     {% endfor %}
 {% endmacro %}
