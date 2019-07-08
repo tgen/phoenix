@@ -1,57 +1,58 @@
 {% macro peddy(sample, aligner = "bwa") %}
 
-{% set temp %}{{ sample.gltype }}/qc/peddy/{{ sample.name }}{% endset %}
+{% set temp %}temp/{{ sample.gltype }}/qc/peddy/{{ sample.name }}{% endset %}
+{% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set outdir %}{{ sample.gltype }}/qc/peddy/{{ sample.name }}/{{ sample.name }}{% endset %}
 
-- name: run_freebayes_{{ sample.name }}_{{ aligner }}
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf
+- name: freebayes_qc_{{ sample.name }}_{{ aligner }}
+  input: {{ bam }}
+  cpus: 4
   cmd: |
-    set -v
-    module load freebayes/1.2
-    mkdir -p "{{ sample.gltype }}/qc/peddy/{{ sample.name }}"
+    set -uev
+    module load {{ constants.tools.freebayes_1_2.module }}
+
+    mkdir -p "{{ temp }}"
+
     freebayes \
-      "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      -p 4 \
       -f "{{ constants.phoenix.reference_fasta }}" \
       -t /home/qzhu/toolkit/hg38.bed \
-      > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
+      "{{ bam }}" \
+      > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
 
 
-- name: run_bcftools_sort_index_{{ sample.name }}_{{ aligner }}
-  input: temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf
-  output:
-    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz
-    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz.tbi
+- name: bcftools_sort_index_freebayes_qc_{{ sample.name }}_{{ aligner }}
+  after: freebayes_qc_{{ sample.name }}_{{ aligner }}
   cmd: |
     set -v
     module load {{ constants.tools.samtools_1_9.module }}
+
     bcftools sort \
       -O z \
-      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf" \
-      > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz"
-    bcftools index \
-      -f \
-      -t \
-      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz" \
-      > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz.tbi"
+      "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf" \
+      > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.sort.vcf.gz"
+
+    bcftools index -tf "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.sort.vcf.gz"
 
 
-- name: run_peddy_{{ sample.name }}_{{ aligner }}
-  input: 
-    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz
-    - temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz.tbi
+- name: peddy_{{ sample.name }}_{{ aligner }}
+  after:  bcftools_sort_index_freebayes_qc_{{ sample.name }}_{{ aligner }}
   cmd: |
-    set -v
+    set -vue
+    module load {{ constants.tools.peddy_0_4_3.module }}
+
+    mkdir -p "{{ outdir }}"
 
     TAB=$'\t'
-    cat <<EOF > "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.bed"
-    {{ familyCode|default("0") }}${TAB}{{ sample.rgsm|default(sample.name) }}${TAB}0${TAB}0${TAB}{{ sex }}${TAB}-9
+    cat <<EOF > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.ped"
+    {{ familyCode|default("0") }}${TAB}{{ sample.rgsm|default(sample.name) }}${TAB}0${TAB}0${TAB}{{ sex|default('-9') }}${TAB}-9
     EOF
 
     peddy \
       --sites hg38 \
-      --prefix {{ sample.gltype }}/qc/peddy/{{ sample.name }}/{{ sample.name }} \
-      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz" \
-      "temp/{{ sample.name }}_{{ aligner }}_freebayes_qc.bed"
+      --prefix "{{ outdir }}" \
+      "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.sort.vcf.gz" \
+      "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.ped"
 
 
 {% endmacro %}

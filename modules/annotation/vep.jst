@@ -1,8 +1,10 @@
-{% macro vep(vcf, out) %}
-- name: vep_{{ vcf|sha256 }}
+{% macro vep(input_vcf, output_vcf) %}
+- name: vep_{{ input_vcf|sha256 }}
   tags: [vep, annotation]
-  input: {{ vcf }}
-  output: {{ out }}
+  input: {{ input_vcf }}
+  output: {{ output_vcf }}
+  walltime: "8:00:00"
+  cpus: 4
   cmd: |
     set -euv
 
