@@ -40,7 +40,7 @@
       --legacy \
       --annotations AD ADP AF \
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      --targets-file "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
       --reads "{{ normal_bam }}" "{{ tumor_bam }}" \
       --normal-sample "{{ pair.normal.rgsm }}" \
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \

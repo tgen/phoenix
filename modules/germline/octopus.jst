@@ -38,7 +38,7 @@
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
       --reads "{{ bam }}" \
-      --targets-file "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
       --bamout "{{ temp_dir }}/{{ loop.index }}.realigned.bam" \
       --output "{{ temp_dir }}/{{ loop.index }}.octopus.vcf"
 
