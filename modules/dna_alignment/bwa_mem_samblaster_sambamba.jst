@@ -1,0 +1,75 @@
+# Aligns fastqs for a sample using BWA MEM. Samples may have multiple read
+# groups.
+#
+#     ? ?
+#   ? -----fastqs--> temp/<sample.name>.bwa.bam
+#     ? ?
+#
+
+# This alignment command prefix is shared by all modules using bwa
+{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
+{% from 'modules/read_group_line.jst' import read_group_line %}
+
+# Replicating the exact workflow from Ashion into jst format
+
+{% macro bwa_mem_blaster_bamba(sample) %}
+
+{% set r_flag %}@RG\\tID:{{ sample.rglb }}\\tSM:{{ sample.rgsm|default(sample.name) }}\\tLB:{{ sample.rglb }}\\tPL:ILLUMINA\\tCN:TGen{% endset %}
+{% set fastqs_to_depend = [] %}
+{% set r1fastqs = [] %}
+{% set r2fastqs = [] %}
+
+{% for rgid, rg in sample.read_groups.items() %}
+  {% if rg.data_files|length != 2 %}
+      {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
+  {% endif %}
+
+  {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+  {% set r1fastq %}"temp/fastqs/{{ r1fastq.basename }}"{% endset %}
+  {% do r1fastqs.append(r1fastq) %}
+  {% do fastqs_to_depend.append(r1fastq) %}
+
+  {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+  {% set r2fastq %}"temp/fastqs/{{ r2fastq.basename }}"{% endset %}
+  {% do r2fastqs.append(r2fastq) %}
+  {% do fastqs_to_depend.append(r2fastq) %}
+{% endfor %}
+
+
+- name: cat_fastqs_{{ sample.name }}
+  input:
+  {% for fastq in fastqs_to_depend %}
+    - {{ fastq }}
+  {% endfor %}
+  walltime: "24:00:00"
+  cpus: 1
+  mem: 2G
+  cmd: |
+    cat {{ r1fastqs|join(' ') }} > temp/{{ sample.rglb }}_R1_merged.fastq.gz
+    cat {{ r2fastqs|join(' ') }} > temp/{{ sample.rglb }}_R2_merged.fastq.gz
+
+
+- name: bwa_mem_samblaster_sambamba_{{ sample.name }}
+  tags: [bwa, bwa-mem, samblaster, sambamba, sambamba-view, sambamba-sort]
+  after: cat_fastqs_{{ sample.name }}
+  walltime: "48:00:00"
+  cpus: 10
+  mem: 40G
+  cmd: |
+    set -euv
+    set -o pipefail
+    module load {{ constants.tools.bwa_0_7_17.module }}
+    module load {{ constants.tools.samblaster_0_1_24.module }}
+    module load {{ constants.tools.sambamba_0_7_0.module }}
+    
+    {{ bwa_mem(threads=9) }} \
+      -R "{{ r_flag }}" \
+      "{{ constants.phoenix.bwa_index }}" \
+      temp/{{ sample.rgsm }}_R1_merged.fastq.gz \
+      temp/{{ sample.rgsm }}_R2_merged.fastq.gz |\
+      samblaster |\
+      sambamba view -f bam -l 0 -S /dev/stdin |\
+      sambamba sort -m 8GB -t $threads -o $output --tmpdir=$work_dir /dev/stdin
+
+
+{% endmacro %}
