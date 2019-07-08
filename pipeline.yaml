@@ -150,6 +150,14 @@ constants:
       citation: >
         R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
         Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+    sambamba_0_7_0:
+      module: sambamba/0.7.0
+      version: 0.7.0
+      verbose: TODO
+    samblaster_0_1_24:
+      module: samblaster/0.1.24
+      version: 0.1.24
+      verbose: SaMBLAster TODO
     samtools_1_7:
       module: samtools/1.7
       version: "1.7"
