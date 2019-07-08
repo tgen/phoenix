@@ -28,7 +28,7 @@ constants:
       version: "3.0.2"
       verbose: 10X CellRanger v3.0.2
       website: https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger
-      citation: > 
+      citation: >
         TODO
     cuda_toolkit_10_0_0:
       module: cuda/cuda10/toolkit/10.0.0
@@ -40,7 +40,7 @@ constants:
       version: "0.7.0-gpu"
       verbose: DeepVariant 0.7.0-gpu
       website: https://github.com/google/deepvariant
-      citation: > 
+      citation: >
         Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
         Dijamco J, Nguyen N, Afshar PT, Gross SS, Dorfman L, McLean CY, DePristo MA. A
         universal SNP and small-indel variant caller using deep neural networks. Nat
@@ -115,9 +115,9 @@ constants:
       verbose: MultiQC v1.6
       website: https://multiqc.info
       citation: >
-          MultiQC\: Summarize analysis results for multiple tools and samples in a single report
-          Philip Ewels, Måns Magnusson, Sverker Lundin and Max Käller
-          Bioinformatics (2016)
+        MultiQC Summarize analysis results for multiple tools and samples in a single report
+        Philip Ewels, Måns Magnusson, Sverker Lundin and Max Käller
+        Bioinformatics (2016)
       doi: 10.1093/bioinformatics/btw354
       PMID: 27312411
     octopus_0_6_0b:
@@ -128,19 +128,27 @@ constants:
       citation: >
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
+    peddy_0_4_3:
+      module: python/3.6.0
+      version: 0.4.3
+      verbose: Peddy v0.4.3
+      website: https://github.com/brentp/peddy
+      citation: >
+        Pedersen and Quinlan, Who’s Who? Detecting and Resolving Sample Anomalies in Human DNA Sequencing Studies 
+        with Peddy, The American Journal of Human Genetics (2017), http://dx.doi.org/10.1016/j.ajhg.2017.01.017
     python_2_7_15:
       module: python/2.7.15
       version: 2.7.15
       verbose: Python v2.7.15
       website: https://www.python.org
-      citation: > 
+      citation: >
         Python Software Foundation. Python Language Reference, version 2.7.15. Available at http://www.python.org
     python_3_6_0:
       module: python/3.6.0
       version: 3.6.0
       verbose: Python v3.6.0
       website: https://www.python.org
-      citation: > 
+      citation: >
         Python Software Foundation. Python Language Reference, version 3.6.0. Available at http://www.python.org
     rstats_3_4_1:
       module: R/3.4.1
@@ -360,7 +368,7 @@ constants:
         targets_interval_list: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.targets.interval_list
         extended_bed: ${REF}/homo_sapiens/grch38_hg38/capture_kits/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite/STL_Agilent_SureSelect_DNA_SureSelect_V5_StrexomeLite.extended.bed
     sequence_groupings:
-      # Sequence groupings as per GATK for BQSR.
+      # Sequence groupings for BQSR (same groups as found in the GATK WDL example).
       - ['chr1']
       - ['chr2']
       - ['chr3']
