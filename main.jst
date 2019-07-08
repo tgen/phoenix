@@ -95,7 +95,7 @@
     {% do sample.update({'strandedness': strandedness}) %}
 {% endfor %}
 
-{{ log(samples|tojson(indent=4), level='CRITICAL') }}
+{% if debug %}{{ log(samples|tojson(indent=4), level='CRITICAL') }}{% endif %}
 
 {% for batch in dataFiles|batch(4) %}
 - name: copy_fastqs_{{ loop.index }}
