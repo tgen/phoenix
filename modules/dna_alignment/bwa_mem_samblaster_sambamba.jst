@@ -14,7 +14,7 @@
 
 {% macro bwa_mem_blaster_bamba(sample) %}
 
-{% set r_flag %}@RG\\tID:{{ sample.name}}\\tSM:{{ sample.rgsm|default(sample.name) }}\\tLB:{{ sample.rglb }}\\tPL:ILLUMINA\\tCN:TGen{% endset %}
+{% set r_flag %}@RG\\tID:{{ sample.rglb }}\\tSM:{{ sample.rgsm|default(sample.name) }}\\tLB:{{ sample.rglb }}\\tPL:ILLUMINA\\tCN:TGen{% endset %}
 {% set fastqs_to_depend = [] %}
 {% set r1fastqs = [] %}
 {% set r2fastqs = [] %}
@@ -33,7 +33,6 @@
   {% set r2fastq %}"temp/fastqs/{{ r2fastq.basename }}"{% endset %}
   {% do r2fastqs.append(r2fastq) %}
   {% do fastqs_to_depend.append(r2fastq) %}
-
 {% endfor %}
 
 
@@ -43,13 +42,11 @@
     - {{ fastq }}
   {% endfor %}
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 2G
   cmd: |
-    module load python
-
-    cat {{ r1fastqs|join(' ') }} > temp/{{ sample.rgsm }}_R1_merged.fastq.gz
-    cat {{ r2fastqs|join(' ') }} > temp/{{ sample.rgsm }}_R2_merged.fastq.gz
+    cat {{ r1fastqs|join(' ') }} > temp/{{ sample.rglb }}_R1_merged.fastq.gz
+    cat {{ r2fastqs|join(' ') }} > temp/{{ sample.rglb }}_R2_merged.fastq.gz
 
 
 - name: bwa_mem_samblaster_sambamba_{{ sample.name }}
@@ -64,10 +61,7 @@
     module load {{ constants.tools.bwa_0_7_17.module }}
     module load {{ constants.tools.samblaster_0_1_24.module }}
     module load {{ constants.tools.sambamba_0_7_0.module }}
-
-    DATETIME=$(python3 -c "from datetime import datetime; print(f'{datetime.utcnow().isoformat()}Z')")
-    r_flag = "{{ r_flag }}\\tDT${DATETIME}"
-
+    
     {{ bwa_mem(threads=9) }} \
       -R "{{ r_flag }}" \
       "{{ constants.phoenix.bwa_index }}" \
