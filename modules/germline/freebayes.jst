@@ -82,7 +82,7 @@
       -O z \
       --include 'QUAL > 20' \
       {% if sample.gltype == 'exome' %}
-      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"

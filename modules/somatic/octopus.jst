@@ -40,7 +40,7 @@
       --legacy \
       --annotations AD ADP AF \
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --targets-file "{{ temp_dir }}/{{ loop.index }}.bed" \
       --reads "{{ normal_bam }}" "{{ tumor_bam }}" \
       --normal-sample "{{ pair.normal.rgsm }}" \
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
@@ -89,7 +89,7 @@
       -O z \
       -i 'FILTER == "PASS"' \
       {% if pair.gltype == 'exome' %}
-      --regions-file "{{ pair.normal.capture_kit.extended_bed }}" \
+      --targets-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"

@@ -18,6 +18,6 @@
       "{{ constants.phoenix.snpeff_db }}" \
       "{{ input_vcf }}" > "{{ output_vcf }}"
 
-    samtools index -tf "{{ output_vcf }}"
+    bcftools index -tf "{{ output_vcf }}"
 
 {% endmacro %}

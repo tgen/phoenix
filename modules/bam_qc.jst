@@ -144,7 +144,7 @@
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      --INPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
+      --INPUT_BASE "{{ stats_dir }}/{{ bam_path|basename }}" \
 
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
@@ -162,7 +162,7 @@
       --min-MQ 0 \
       --min-BQ 13 \
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
-      --regions-file "{{ constants.phoenix.snpSniffer_sites }}" \
+      --targets-file "{{ constants.phoenix.snpSniffer_sites }}" \
       {{ bam_path }} \
       | \
     bcftools call \

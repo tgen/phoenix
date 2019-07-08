@@ -38,7 +38,7 @@
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
       --reads "{{ bam }}" \
-      --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --targets-file "{{ temp_dir }}/{{ loop.index }}.bed" \
       --bamout "{{ temp_dir }}/{{ loop.index }}.realigned.bam" \
       --output "{{ temp_dir }}/{{ loop.index }}.octopus.vcf"
 
@@ -87,7 +87,7 @@
       -O z \
       -i 'FILTER == "PASS"' \
       {% if sample.gltype == 'exome' %}
-      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"

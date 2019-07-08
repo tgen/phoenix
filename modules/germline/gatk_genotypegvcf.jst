@@ -109,7 +109,7 @@
       -O z \
       -i 'FILTER == "."' \
       {% if sample.gltype == 'exome' %}
-      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
       > "{{ pass_vcf }}"

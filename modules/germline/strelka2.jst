@@ -93,7 +93,7 @@
       -O z \
       -i 'FILTER == "PASS"' \
       {% if sample.gltype == 'exome' %}
-      --regions-file "{{ sample.capture_kit.extended_bed }}" \
+      --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
