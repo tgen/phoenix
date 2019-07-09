@@ -17,7 +17,11 @@
 
     samtools view \
       -C \
-      -T  "{{ constants.phoenix.reference_fasta }}" \
+      {% if aligner == 'star' %}
+      --reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
       "{{ bam_path }}" > "{{ cram_path }}"
 
     samtools index "{{ cram_path }}"
@@ -48,7 +52,11 @@
       --threads 2 \
       --remove-dups \
       --remove-overlaps \
-      --ref-seq "{{ constants.phoenix.reference_fasta }}" \
+      {% if aligner == 'star' %}
+      --reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
       > "{{ stats_dir }}/{{ bam_path|basename }}.{{ lb }}.bamstats.txt"
 
 {% endfor %}
@@ -110,7 +118,7 @@
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
       {% if aligner == 'star' %}
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}"
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
@@ -140,7 +148,7 @@
 
     gatk ConvertSequencingArtifactToOxoG \
       {% if aligner == 'star' %}
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}"
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
@@ -161,7 +169,11 @@
       --max-depth 5000 \
       --min-MQ 0 \
       --min-BQ 13 \
+      {% if aligner == 'star' %}
+      --fasta-ref "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
       --targets-file "{{ constants.phoenix.snpSniffer_sites }}" \
       {{ bam_path }} \
       | \
@@ -171,6 +183,38 @@
     bcftools sort \
       --output-type v \
       --output-file "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
+
+{% if sample.subGroup|lower == 'constitutional' %}
+- name: verifybamid2_{{ sample.name }}_{{ aligner }}
+  tags: [qc, verifybamid2, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  cpus: 1
+  mem: 4000M
+  walltime: "8:00:00"
+  cmd: |
+    set -uev
+    module load {{ constants.tools.verifybamid2_1_0_5.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    # Some resources are included in the VerifyBamID home dir
+    VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
+
+    VerifyBamID \
+      --NumThread 4 \
+      --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.UD" \
+      --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.mu" \
+      --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.bed" \
+      {% if aligner == 'star' %}
+      --Reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --Reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      "{{ constants.phoenix.reference_fasta }}" \
+      --BamFile "{{ bam_path }}" \
+      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2" || true
+
+{% endif %}
 
 
 {% if sample.gltype == 'genome' %}
@@ -279,32 +323,5 @@
 
 {% endif %}
 
-{% if sample.subGroup|lower == 'constitutional' %}
-- name: verifybamid2_{{ sample.name }}_{{ aligner }}
-  tags: [qc, verifybamid2, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  cpus: 1
-  mem: 4000M
-  walltime: "8:00:00"
-  cmd: |
-    set -uev
-    module load {{ constants.tools.verifybamid2_1_0_5.module }}
-
-    mkdir -p "{{ stats_dir }}"
-
-    # Some resources are included in the VerifyBamID home dir
-    VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
-
-    VerifyBamID \
-      --NumThread 4 \
-      --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.UD" \
-      --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.mu" \
-      --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.bed" \
-      --Reference "{{ constants.phoenix.reference_fasta }}" \
-      --BamFile "{{ bam_path }}" \
-      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
-
-
-{% endif %}
 
 {% endmacro %}
