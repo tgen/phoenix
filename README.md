@@ -13,6 +13,7 @@ cd jetstream_pipelines
 git clone https://github.com/tgen/phoenix
 ```
 //TODO - still working on install guide  
+From here and what I can tell, we should be able to run the pipeline within TGen, outsiders would almost definitely need to get every dependency we use and essentially replicate our structure to the T. I'm still working on ensuring that the pipeline is runnable, and from there I will likely be able to handle configurations to allow the pipeline to work anywhere, or at least give a guide to the bare minimum framework that is needed.
 
 ## Features
 
