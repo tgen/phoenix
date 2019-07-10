@@ -1,12 +1,18 @@
 # Phoenix
 
-# Notes for 0325 meeting
-
-- CNNScoreVariants Filter tranches?
-
-- Strexome liftover
-
-- Any other tasks that need toggles?
+## Install Guide
+First, jetstream must be installed, available [here](https://github.com/tgen/jetstream/tree/master). There is an install guide for jetstream available at the link provided, but the gist of the guide is to install using pip3 using a command similar to:  
+```bash
+pip3 install --upgrade --user git+https://github.com/tgen/jetstream.git@master
+```  
+Then the recommended install method for installing the phoenix pipeline is:
+```
+cd ~
+mkdir jetstream_pipelines
+cd jetstream_pipelines
+git clone https://github.com/tgen/phoenix
+```
+//TODO - still working on install guide  
 
 ## Features
 
