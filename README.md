@@ -62,28 +62,15 @@ tasks:
 ```
 We need to change the backend to be slurm for running at TGen and we also need to change the home location of our pipelines to the parent directory of the phoenix pipeline that we downloaded earlier. To do this, we simply need to edit the config.yaml file for jetstream or create the config file if it does not exist already. The location for this file is, by default, located in the .config/jetstream directory of our home directory. The following commands will allow you to find and edit/create this file:
 ```
-cd ~
-ls -a
-cd .config/jetstream/
-vim config.yaml
-```
-cd ~ <- changes our directory to home 
-ls -a <- shows all files present in our directory, including our .config folder hopefully
-cd .config/jetstream/ <- change to location of jetstream config.yaml
-vim config.yaml <- this will open prompt for editing the config file  
-The config.yaml needs to be modified to look similar to:
-```
-# Jetstream Common User Settings
-backend: slurm
-pipelines:
-  home: /home/tgenjetstream/jetstream_pipelines/:/home/tgenjetstream/jetstream_centro/
-```
+jetstream settings -c -b "slurm" -P "/home/bturner/jetstream_pipelines/"
+```  
 The home location will differ by install and should be the location of our downloaded pipelines. If you aren't sure where they are downloaded, use
 ```
 cd ~
 find . -name pipeline.yaml
 ```
-This may return more than one result.
+This may return more than one result. The one we are looking for should look similar to "./jetstream_pipelines/phoenix/pipeline.yaml". The ./ means that we have jetstream_pipelines in our current directory. Which means that the true path to our pipelines is /home/USER/jetstream_pipeline/. Note that USER is your username, within TGen this is generally your first initial and then last name.
+
 
 ## Features
 
