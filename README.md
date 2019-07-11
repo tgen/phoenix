@@ -11,9 +11,79 @@ cd ~
 mkdir jetstream_pipelines
 cd jetstream_pipelines
 git clone https://github.com/tgen/phoenix
+```  
+We're getting close to being able to easily run the pipeline now, and from this point you might be able to hack your way to make everything run. But it is recommended that you use similar settings to the ones detailed here in order to get the best support possible.  
+By running the following command you should be able to see the settings that jetstream is currently using:
 ```
-//TODO - still working on install guide  
-From here and what I can tell, we should be able to run the pipeline within TGen, outsiders would almost definitely need to get every dependency we use and essentially replicate our structure to the T. I'm still working on ensuring that the pipeline is runnable, and from there I will likely be able to handle configurations to allow the pipeline to work anywhere, or at least give a guide to the bare minimum framework that is needed.
+jetstream settings -v
+```
+The -v enables a verbose view. The important settings we need to change are slurm and pipelines home, by default they should look similar to this (please note that a bulk amount of settings were omitted from this block, only relevant settings are shown):
+```
+backend: local
+backends:
+  local:
+    (): jetstream.backends.local.LocalBackend
+    blocking_io_penalty: 30
+    cpus: null
+  slurm:
+    (): jetstream.backends.slurm.SlurmBackend
+    job_monitor_max_fails: 5
+    sacct_fields:
+    - JobID
+    - JobName
+    - Partition
+    - Account
+    - AllocCPUS
+    - State
+    - ExitCode
+    - Elapsed
+    - MaxRSS
+    sacct_frequency: 10
+.
+.
+.
+pipelines:
+  home: null
+projects:
+  history_filename: '%Y-%m-%dT%H-%M-%SZ.yaml'
+  history_max_tries: 10
+  id_format: p{id}
+  lock_timeout: 60
+runner:
+  autosave_max: 60
+  autosave_min: 5
+  id_format: js{id}
+  max_concurrency: null
+  throttle: 0.1
+tasks:
+  summary_fields:
+  - name
+  - state.status
+```
+We need to change the backend to be slurm for running at TGen and we also need to change the home location of our pipelines to the parent directory of the phoenix pipeline that we downloaded earlier. To do this, we simply need to edit the config.yaml file for jetstream or create the config file if it does not exist already. The location for this file is, by default, located in the .config/jetstream directory of our home directory. The following commands will allow you to find and edit/create this file:
+```
+cd ~
+ls -a
+cd .config/jetstream/
+vim config.yaml
+```
+cd ~ <- changes our directory to home 
+ls -a <- shows all files present in our directory, including our .config folder hopefully
+cd .config/jetstream/ <- change to location of jetstream config.yaml
+vim config.yaml <- this will open prompt for editing the config file  
+The config.yaml needs to be modified to look similar to:
+```
+# Jetstream Common User Settings
+backend: slurm
+pipelines:
+  home: /home/tgenjetstream/jetstream_pipelines/:/home/tgenjetstream/jetstream_centro/
+```
+The home location will differ by install and should be the location of our downloaded pipelines. If you aren't sure where they are downloaded, use
+```
+cd ~
+find . -name pipeline.yaml
+```
+This may return more than one result.
 
 ## Features
 
