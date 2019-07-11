@@ -14,7 +14,7 @@
   input: {{ bam }}
   walltime: "24:00:00"
   cpus: 4
-  mem: 16000
+  mem: 16G
   cmd: |
     set -uev
     module load {{ constants.tools.freebayes_1_2.module }}
@@ -45,7 +45,7 @@
   output: {{ all_vcf }}
   walltime: "24:00:00"
   cpus: 4
-  mem: 16000
+  mem: 16G
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9.module }}

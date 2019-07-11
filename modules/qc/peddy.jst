@@ -63,29 +63,33 @@
 {% endmacro %}
 
 {% macro peddy_cohort(samples) %}
-{% set outdir %}{{ sample.gltype }}/qc/peddy/{{ project }}{% endset %}
+{% set outdir %}qc/peddy/{{ project }}{% endset %}
 
 - name: peddy_cohort
   after-re: bcftools_sort_index_freebayes_qc_.*
   cmd: |
     set -vue
     module load {{ constants.tools.peddy_0_4_3.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ outdir }}"
 
     TAB=$'\t'
-    cat <<EOF > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.ped"
-    {% for sample in samples %}
+    cat <<EOF > "temp/{{ project }}_freebayes_qc.ped"
+    {% for sample in samples.values() %}
     {{ familyCode|default("0") }}${TAB}{{ sample.rgsm|default(sample.name) }}${TAB}0${TAB}0${TAB}{{ sex|default('-9') }}${TAB}-9
     {% endfor %}
     EOF
 
     VCFS=$(find . -name "*_freebayes_qc.vcf.gz")
 
+    bcftools merge --missing-to-ref -O z -o "{{ outdir }}/{{ project }}.qc.vcf.gz" ${VCFS}
+    bcftools index -tf "{{ outdir }}/{{ project }}.qc.vcf.gz"
+
     peddy \
       --sites hg38 \
       --prefix "{{ outdir }}/{{ project }}" \
-      ${VCFS} \
-      "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.ped"
+      "{{ outdir }}/{{ project }}.qc.vcf.gz" \
+      "temp/{{ project }}_freebayes_qc.ped"
 
 {% endmacro %}

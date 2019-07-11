@@ -27,7 +27,7 @@
     samtools index "{{ cram_path }}"
 
 
-{% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
+{% for lb, _ in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
   tags: [samtools, stats, {{ sample.gltype }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
@@ -43,9 +43,7 @@
 
     samtools view \
       -h \
-      {% for rg in rgs %}
-      -r "{{ rg.rgid }}" \
-      {% endfor %}
+      -l "{{ lb }}" \
       "{{ bam_path }}" \
       | \
     samtools stats \
@@ -93,7 +91,6 @@
 
     mkdir -p "{{ stats_dir }}"
 
-    samtools index "{{ bam_path }}"
     samtools idxstats \
       "{{ bam_path }}" >\
       "{{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt"

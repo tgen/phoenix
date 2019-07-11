@@ -1,5 +1,5 @@
-
 {% from 'modules/qc/peddy.jst' import peddy with context %}
+{% from 'modules/qc/peddy.jst' import peddy_cohort with context %}
 
 {% macro qc(samples) %}
     {% for sample in samples.values() %}
@@ -9,4 +9,7 @@
             {{- peddy(sample, aligner='bwa') }}
         {% endif %}
     {% endfor %}
+
+    {{- peddy_cohort(samples) }}
+    
 {% endmacro %}
