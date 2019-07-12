@@ -11,6 +11,7 @@
   output: {{ cram_path }}
   walltime: "8:00:00"
   cpus: 1
+  mem: 2G
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
@@ -34,7 +35,8 @@
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
-  cpus: 2
+  cpus: 4
+  mem: 8G
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
@@ -42,12 +44,12 @@
     mkdir -p "{{ stats_dir }}"
 
     samtools view \
+      --threads 4 \
       -h \
       -l "{{ lb }}" \
       "{{ bam_path }}" \
       | \
     samtools stats \
-      --threads 2 \
       --remove-dups \
       --remove-overlaps \
       {% if aligner == 'star' %}
@@ -65,7 +67,8 @@
     generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
-  cpus: 8
+  cpus: 4
+  mem: 8G
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
@@ -73,7 +76,7 @@
     mkdir -p "{{ stats_dir }}"
 
     samtools flagstat \
-      --threads 8 \
+      --threads 4 \
       "{{ bam_path }}" \
       > "{{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt"
 
@@ -85,6 +88,7 @@
   input: {{ bam_path }}
   walltime: "4:00:00"
   cpus: 1
+  mem: 2G
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
@@ -186,7 +190,7 @@
   tags: [qc, verifybamid2, {{ sample.gltype }}]
   input: {{ bam_path }}
   cpus: 1
-  mem: 4000M
+  mem: 4G
   walltime: "8:00:00"
   cmd: |
     set -uev
