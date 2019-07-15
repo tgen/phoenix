@@ -3,19 +3,20 @@
 ## Install Guide
 First, jetstream must be installed, available [here](https://github.com/tgen/jetstream/tree/master). There is an install guide for jetstream available at the link provided, but the gist of the guide is to install using pip3 using a command similar to:  
 ```bash
-pip3 install --upgrade --user git+https://github.com/tgen/jetstream.git@master
+$ pip3 install --upgrade --user git+https://github.com/tgen/jetstream.git@master
 ```  
 Then the recommended install method for installing the phoenix pipeline is:
-```
-cd ~
-mkdir jetstream_pipelines
-cd jetstream_pipelines
-git clone https://github.com/tgen/phoenix
+```bash
+$ cd ~
+$ mkdir jetstream_pipelines
+$ cd jetstream_pipelines
+$ git clone https://github.com/tgen/phoenix
 ```  
 We're getting close to being able to easily run the pipeline now, and from this point you might be able to hack your way to make everything run. But it is recommended that you use similar settings to the ones detailed here in order to get the best support possible.  
+
 By running the following command you should be able to see the settings that jetstream is currently using:
-```
-jetstream settings -v
+```bash
+$ jetstream settings -v
 ```
 The -v enables a verbose view. The important settings we need to change are slurm and pipelines home, by default they should look similar to this (please note that a bulk amount of settings were omitted from this block, only relevant settings are shown):
 ```
@@ -61,13 +62,13 @@ tasks:
   - state.status
 ```
 We need to change the backend to be slurm for running at TGen and we also need to change the home location of our pipelines to the parent directory of the phoenix pipeline that we downloaded earlier. To do this, we simply need to edit the config.yaml file for jetstream or create the config file if it does not exist already. The location for this file is, by default, located in the .config/jetstream directory of our home directory. The following commands will allow you to find and edit/create this file:
-```
-jetstream settings -c -b "slurm" -P "/home/USERNAME/jetstream_pipelines/"
+```bash
+$ jetstream settings -c -b "slurm" -P "/home/USERNAME/jetstream_pipelines/"
 ```  
 Note that USERNAME is replaced by your username, e.g. "/home/jsmith/jetstream_pipelines/" for a user name John Smith within TGen. Also, the home location will differ by install and should be the location of our downloaded pipelines. If you aren't sure where they are downloaded, use
-```
-cd ~
-find . -name pipeline.yaml
+```bash
+$ cd ~
+$ find . -name pipeline.yaml
 ```
 This may return more than one result. The one we are looking for should look similar to "./jetstream_pipelines/phoenix/pipeline.yaml". The ./ means that we have jetstream_pipelines in our current directory. Which means that the true path to our pipelines is /home/USER/jetstream_pipeline/. Note that USER is your username, within TGen this is generally your first initial and then last name. Like the John Smith example above.  
 
@@ -75,7 +76,7 @@ Congratulations! That's it! We now have jetstream and the phoenix pipeline insta
 
 ## Running from command line
 Now that we have phoenix installed and ready to run, we need to setup a project to run. To do so, we need to create a config file for our project. The general format is as follows:
-```
+```json
 {
   "project": "",
   "study": "",
@@ -92,7 +93,7 @@ Here is a larger example with actual data for running the phoenix pipeline on a 
   <p>
     
   ##### Some of this data has been modified to hide the identity of the original submitter(s)
-  ```bash
+  ```json
   {
     "cram": true,
     "dataFiles": [
@@ -412,6 +413,114 @@ Here is a larger example with actual data for running the phoenix pipeline on a 
 ```
   </p>
 </details>
+
+
+Once we have a config file for the project we're ready to initialize and launch the project. We can initialize a project via
+```bash
+$ jetstream init -h
+usage: jetstream init [-h] [-l] [-p PROJECT] [-f] [--project-id PROJECT_ID]
+                      [-c TYPE:KEY VALUE] [-C PATH]
+                      [path]
+
+Create or reinitialize a project This command is used to create a new
+Jetstream project directory. If no path is given, the current directory will
+be initialized. If config data options are given (-c/--config/--config-file),
+they will be added to the project config file.
+
+positional arguments:
+  path                  Path to a initialize a project
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l , --logging        set the logging profile
+  -p PROJECT, --project PROJECT
+                        path to a Jetstream project directory
+  -f, --force           Force overwrite of project.yaml
+  --project-id PROJECT_ID
+                        Force a project ID instead of using letting it be
+                        generated automatically
+
+template variables:
+  These options are used to add data that is available for rendering
+  templates. These arguments should follow the syntax "-c <[type:]key>
+  <value>". They can be used multiple times.
+
+  -c TYPE:KEY VALUE, --config TYPE:KEY VALUE
+                        add a single template variable
+  -C PATH, --config-file PATH
+                        load template variables from a file
+                        
+$ jetstream init GIAB -C GIAB_NA12878_24582bb3f7.json
+```
+
+This creates a jetstream project with the title of GIAB. Now in order to run the Phoenix pipeline on this project, we need to use:
+```bash
+$ jetstream pipelines -h
+usage: jetstream pipelines [-h] [-l] [-p PROJECT] [-o OUT] [-b] [-r]
+                           [--backend {local,slurm}]
+                           [--format {template,module,workflow}]
+                           [--reset-method {retry,resume,reset}]
+                           [--existing-workflow EXISTING_WORKFLOW]
+                           [--template-dir [SEARCH_PATH]] [-c TYPE:KEY VALUE]
+                           [-C PATH] [--pipelines-home PIPELINES_HOME] [-L]
+                           [path]
+
+Run a pipeline. Pipelines are Jetstream templates that have been documented
+with version information and added to the jetstream pipelines directory. This
+command allows pipelines to be referenced by name and automatically includes
+the pipeline scripts and constants in the run. Run Jetstream from a template,
+module, or workflow
+
+positional arguments:
+  path                  path to a template, module, or workflow file. (if
+                        using "pipelines" command, the name of the pipeline)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -l , --logging        set the logging profile
+  -p PROJECT, --project PROJECT
+                        path to a Jetstream project directory
+  -o OUT, --out OUT     path to save the workflow progress (this will be set
+                        automatically if working with a project) [None]
+  -b, --build-only      just render the template, build the workflow, and stop
+  -r, --render-only     just render the template and stop
+  --backend {local,slurm}
+                        runner backend name used for executing tasks [slurm]
+  --format {template,module,workflow}
+                        workflow format - if this is None, it will be inferred
+                        from the extension of the path [None]
+  --reset-method {retry,resume,reset}
+                        controls which tasks are reset prior to starting the
+                        run - "retry": pending and failed, "resume": pending,
+                        or "reset": all [retry]
+  --existing-workflow EXISTING_WORKFLOW
+                        path to an existing workflow file that will be merged
+                        into run (this will be set automatically if working
+                        with a project)
+  --template-dir [SEARCH_PATH]
+                        directory to add to search path for loading templates,
+                        this can be used multiple times
+
+template variables:
+  These options are used to add data that is available for rendering
+  templates. These arguments should follow the syntax "-c <[type:]key>
+  <value>". They can be used multiple times.
+
+  -c TYPE:KEY VALUE, --config TYPE:KEY VALUE
+                        add a single template variable
+  -C PATH, --config-file PATH
+                        load template variables from a file
+
+pipeline options:
+  --pipelines-home PIPELINES_HOME
+                        override path to the pipelines home
+  -L, --list            show a list of all the pipelines installed
+
+$ jetstream pipelines phoenix -p GIAB
+```  
+Now we wait for the pipeline to finish!
+
+
 
 
 ## Features
