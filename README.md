@@ -2,11 +2,11 @@
 
 ## Install Guide
 First, jetstream must be installed, available [here](https://github.com/tgen/jetstream/tree/master). There is an install guide for jetstream available at the link provided, but the gist of the guide is to install using pip3 using a command similar to:  
-```bash
+```
 $ pip3 install --upgrade --user git+https://github.com/tgen/jetstream.git@master
 ```  
 Then the recommended install method for installing the phoenix pipeline is:
-```bash
+```
 $ cd ~
 $ mkdir jetstream_pipelines
 $ cd jetstream_pipelines
@@ -15,7 +15,7 @@ $ git clone https://github.com/tgen/phoenix
 We're getting close to being able to easily run the pipeline now, and from this point you might be able to hack your way to make everything run. But it is recommended that you use similar settings to the ones detailed here in order to get the best support possible.  
 
 By running the following command you should be able to see the settings that jetstream is currently using:
-```bash
+```
 $ jetstream settings -v
 ```
 The -v enables a verbose view. The important settings we need to change are slurm and pipelines home, by default they should look similar to this (please note that a bulk amount of settings were omitted from this block, only relevant settings are shown):
@@ -62,11 +62,11 @@ tasks:
   - state.status
 ```
 We need to change the backend to be slurm for running at TGen and we also need to change the home location of our pipelines to the parent directory of the phoenix pipeline that we downloaded earlier. To do this, we simply need to edit the config.yaml file for jetstream or create the config file if it does not exist already. The location for this file is, by default, located in the .config/jetstream directory of our home directory. The following commands will allow you to find and edit/create this file:
-```bash
+```
 $ jetstream settings -c -b "slurm" -P "/home/USERNAME/jetstream_pipelines/"
 ```  
 Note that USERNAME is replaced by your username, e.g. "/home/jsmith/jetstream_pipelines/" for a user name John Smith within TGen. Also, the home location will differ by install and should be the location of our downloaded pipelines. If you aren't sure where they are downloaded, use
-```bash
+```
 $ cd ~
 $ find . -name pipeline.yaml
 ```
@@ -416,7 +416,7 @@ Here is a larger example with actual data for running the phoenix pipeline on a 
 
 
 Once we have a config file for the project we're ready to initialize and launch the project. We can initialize a project via
-```bash
+```
 $ jetstream init -h
 usage: jetstream init [-h] [-l] [-p PROJECT] [-f] [--project-id PROJECT_ID]
                       [-c TYPE:KEY VALUE] [-C PATH]
@@ -454,7 +454,7 @@ $ jetstream init GIAB -C GIAB_NA12878_24582bb3f7.json
 ```
 
 This creates a jetstream project with the title of GIAB. Now in order to run the Phoenix pipeline on this project, we need to use:
-```bash
+```
 $ jetstream pipelines -h
 usage: jetstream pipelines [-h] [-l] [-p PROJECT] [-o OUT] [-b] [-r]
                            [--backend {local,slurm}]
@@ -521,7 +521,7 @@ $ jetstream pipelines phoenix -p GIAB
 Now we wait for the pipeline to finish!
 
 
-
+___
 
 ## Features
 
