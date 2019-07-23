@@ -16,7 +16,7 @@
     freebayes \
       -p 4 \
       -f "{{ constants.phoenix.reference_fasta }}" \
-      -t /home/qzhu/toolkit/hg38.bed \
+      -@ /home/qzhu/toolkit/hg38.vcf \
       "{{ bam }}" \
       > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
 
