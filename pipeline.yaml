@@ -278,7 +278,7 @@ constants:
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
-    reference_fasta: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
+    reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_dict: ${REF}/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
     dbsnp: ${REF}/homo_sapiens/grch38_hg38/public_databases/dbsnp/b151/common_all_20180418.UCSC.vcf.gz
     cellranger_reference: ${REF}/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
