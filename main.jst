@@ -35,7 +35,7 @@
 {% if tasks is not defined %}{% set tasks = {} %}{% endif %}
 
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
-{% from 'modules/germline/main.jst' import germline_variant_calling with context %}
+{% from 'modules/constitutional/main.jst' import constitutional_variant_calling with context %}
 {% from 'modules/somatic/main.jst' import somatic_variant_calling with context %}
 {% from 'modules/rna/main.jst' import rna_quant with context %}
 {% from 'modules/rna/main.jst' import rna_fusion_detection with context %}
@@ -138,8 +138,8 @@
     {{- dna_alignment(samples) }}
 {% endif %}
 
-{% if tasks.germline_variant_calling|default(True) %}
-    {{- germline_variant_calling(samples) }}
+{% if tasks.constitutional_variant_calling|default(True) %}
+    {{- constitutional_variant_calling(samples) }}
 {% endif %}
 
 {% if tasks.somatic_variant_calling|default(True) %}

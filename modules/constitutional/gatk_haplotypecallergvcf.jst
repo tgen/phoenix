@@ -1,4 +1,4 @@
-# Call germline variants with haplotype caller. In order to call 
+# Call constitutional variants with haplotype caller. In order to call
 # variants, this step must be followed with genotype gvcfs task.
 {% macro haplotypecallergvcf(sample, aligner='bwa') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
