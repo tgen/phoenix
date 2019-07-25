@@ -12,7 +12,7 @@ $ mkdir jetstream_pipelines
 $ cd jetstream_pipelines
 $ git clone https://github.com/tgen/phoenix
 ```  
-We're getting close to being able to easily run the pipeline now, and from this point you might be able to hack your way to make everything run. But it is recommended that you use similar settings to the ones detailed here in order to get the best support possible.  
+We're getting close to being able to easily run the pipeline now, and from this point you might be able to hack your way to make everything run. But it is recommended that you use similar settings to the ones detailed here in order to get the best support possible.
 
 By running the following command you should be able to see the settings that jetstream is currently using:
 ```
@@ -71,6 +71,62 @@ $ cd ~
 $ find . -name pipeline.yaml
 ```
 This may return more than one result. The one we are looking for should look similar to "./jetstream_pipelines/phoenix/pipeline.yaml". The ./ means that we have jetstream_pipelines in our current directory. Which means that the true path to our pipelines is /home/USER/jetstream_pipeline/. Note that USER is your username, within TGen this is generally your first initial and then last name. Like the John Smith example above.  
+
+We're nearly done now. At the time of writing, jetstream/phoenix is not entirely environment agnostic. The phoenix pipeline currently looks for reference data within our /home/tgenref/ directory. If we have/want to use data not within /home/tgenref/ we simply need to modify the pipeline.yaml for phoenix. 
+We can view the pipeline.yaml by changing directories to where we downloaded the phoenix pipeline:  
+```
+$ cd ./jetstream_pipelines/phoenix/
+$ less pipeline.yaml
+```  
+The area that we are looking for is:
+```
+.
+.
+.
+phoenix:
+    species: Homo sapiens
+    genome_build: grch38_hg38
+    reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
+    reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
+    dbsnp: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b151/common_all_20180418.UCSC.vcf.gz
+    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
+    cellranger_chemistry:
+      X3SCR: SC3Pv1
+      XCSCR: SC3Pv2
+      X3SC3: SC3Pv3
+      X5SCR: SC5P-R2
+      unknown: auto
+    gatk_known_sites:
+      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
+      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
+      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+    gatk_cnn_resources:
+      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/hapmap_3.3.hg38.vcf.gz
+      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
+      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+    bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
+    gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.gtf
+    ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.refFlat.txt
+    ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.ribo.interval_list
+    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.transcriptome.fasta
+    salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
+    star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
+    star_indices:
+      # Multiple STAR references defined here in order to accommodate
+      # RNA data with different read lengths.
+      75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/75bpReads
+      100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
+      150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
+    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
+.
+.
+.
+```
+In order to change the location that phoenix looks for reference data, one can either manually modify each individual line, or as long as we have not left the phoenix directory, we can use:
+```
+sed -i 's|/home/tgenref|/home/newLocation|g' pipeline.yaml
+```
+To change all /home/tgenref text to /home/newLocation where /home/newLocation is the location of where our new references are. We can also use sed to replace more of the paths to reference data if needed simply by replicating the pattern above.  
 
 Congratulations! That's it! We now have jetstream and the phoenix pipeline installed. In the next section we will discuss how we can actually run the pipeline from the command line.  
 
@@ -548,9 +604,9 @@ _Click to show details_
 </details>
 
 <details>
-  <summary><b>Germline Variant Calling</b></summary>
+  <summary><b>Constitutional Variant Calling</b></summary>
   
-  Generates germline variant call files (VCF) with several callers. Additionally,
+  Generates constitutional variant call files (VCF) with several callers. Additionally,
   this will create a gVCF for each sample that can be used to jointly call large
   cohorts.
 
