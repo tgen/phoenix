@@ -8,7 +8,7 @@
 {% from 'modules/constitutional/broad_ichorcna.jst' import ichorcna with context %}
 
 # Constitutional tools generally operate on a single DNA samples and should not run
-# on "tumor" samples.
+# on "tumor" samples with the exception of ichor that cna be run on tumor or constitutional.
 
 {% macro constitutional_variant_calling(samples) %}
 {% for sample in samples.values() if sample.gltype == 'genome' %}

@@ -166,15 +166,6 @@ constants:
       module: samblaster/0.1.24
       version: 0.1.24
       verbose: SaMBLAster TODO
-    samtools_1_7:
-      module: samtools/1.7
-      version: "1.7"
-      verbose: SAMtools v1.7
-      website: http://www.htslib.org
-      citation: >
-        Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
-        Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
-        Bioinformatics (2009) 25(16) 2078-9 [19505943]
     samtools_1_9:
       module: samtools/1.9
       version: "1.9"
