@@ -145,7 +145,7 @@
   cmd: |
     set -uev
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_65_g1b72f1a.module }}
+    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
@@ -174,7 +174,7 @@
   cmd: |
     set -uev
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_65_g1b72f1a.module }}
+    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
