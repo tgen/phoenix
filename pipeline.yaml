@@ -129,7 +129,7 @@ constants:
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
     peddy_0_4_3:
-      module: python/3.6.0
+      module: python/3.6.2
       version: 0.4.3
       verbose: Peddy v0.4.3
       website: https://github.com/brentp/peddy

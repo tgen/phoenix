@@ -5,15 +5,27 @@
 
 
 {% macro rna_fusion_detection(samples) %}
+
 {% for sample in samples.values() if sample.gltype == 'rna' %}
-    {{- star_fusion(sample) }}    
+    {% if tasks.RNA_transcriptome_fusion_caller_STAR_Fusion|default(true) %}
+    {{- star_fusion(sample) }}
+    {% endif %}
 {% endfor %}
+
 {% endmacro %}
 
+
 {% macro rna_quant(samples) %}
+
 {% for sample in samples.values() if sample.gltype == 'rna' %}
+    {% if tasks.RNA_transcriptome_quantify_expression_salmon_fastqs|default(true) %}
     {{- salmon(sample) }}
+    {% endif %}
+
+    {% if tasks.RNA_alignment_rna_alignment_STAR|default(true) %}
     {{- star_quant(sample) }}
+    {% endif %}
+
     {{- bam_qc(sample, aligner='star') }}
 {% endfor %}
 

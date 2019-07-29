@@ -13,36 +13,36 @@
 {% macro constitutional_variant_calling(samples) %}
 {% for sample in samples.values() if sample.gltype == 'genome' %}
     {% if sample.subGroup|lower != 'tumor' %}
-        {% if tasks.Genome_hc_gvcf_gatk|default(True) %}
+        {% if tasks.Genome_constitutional_snp_indel_caller_gatk_HaplotypeCaller|default(true) %}
             {{- haplotypecallergvcf(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Genome_genotype_hc_gvcf_gatk|default(True) %}
+        {% if tasks.Genome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs|default(true) %}
             {{- genotypegvcf(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Genome_freebayes_freebayes|default(True) %}
+        {% if tasks.Genome_constitutional_snp_indel_caller_freebayes|default(true) %}
             {{- freebayes(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Genome_manta_manta|default(True) %}
+        {% if tasks.Genome_constitutional_structural_caller_manta|default(true) %}
             {{- manta_constitutional(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Genome_strelka2_strelka2|default(True) %}
+        {% if tasks.Genome_constitutional_snp_indel_caller_strelka2|default(true) %}
             {{- strelka2_constitutional(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Genome_deepvariant_deepvariant|default(True) %}
+        {% if tasks.Genome_constitutional_snp_indel_caller_deepvariant|default(true) %}
             {{- deepvariant(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Genome_octopus_octopus|default(True) %}
+        {% if tasks.Genome_constitutional_snp_indel_caller_octopus|default(true) %}
             {{- octopus_constitutional(sample, aligner='bwa') }}
         {% endif %}
     {% endif %}
 
-    {% if tasks.Genome_ichor_cna_ichor|default(True) %}
+    {% if tasks.Genome_constitutional_cna_caller_ichor|default(true) %}
         {{- ichorcna(sample, aligner='bwa') }}
     {% endif %}
 
@@ -51,31 +51,31 @@
 
 {% for sample in samples.values() if sample.gltype == 'exome' %}
     {% if sample.subGroup|lower != 'tumor' %}
-        {% if tasks.Exome_hc_gvcf_gatk|default(True) %}
+        {% if tasks.Exome_constitutional_snp_indel_caller_gatk_HaplotypeCaller|default(true) %}
             {{- haplotypecallergvcf(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Exome_genotype_hc_gvcf_gatk|default(True) %}
+        {% if tasks.Exome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs|default(true) %}
             {{- genotypegvcf(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Exome_freebayes_freebayes|default(True) %}
+        {% if tasks.Exome_constitutional_snp_indel_caller_freebayes|default(true) %}
             {{- freebayes(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Exome_manta_manta|default(True) %}
+        {% if tasks.Exome_constitutional_structural_caller_manta|default(true) %}
             {{- manta_constitutional(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Exome_strelka2_strelka2|default(True) %}
+        {% if tasks.Exome_constitutional_snp_indel_caller_strelka2|default(true) %}
             {{- strelka2_constitutional(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Exome_deepvariant_deepvariant|default(True) %}
+        {% if tasks.Exome_constitutional_snp_indel_caller_deepvariant|default(true) %}
             {{- deepvariant(sample, aligner='bwa') }}
         {% endif %}
 
-        {% if tasks.Exome_octopus_octopus|default(True) %}
+        {% if tasks.Exome_constitutional_snp_indel_caller_octopus|default(true) %}
             {{- octopus_constitutional(sample, aligner='bwa') }}
         {% endif %}
     {% endif %}

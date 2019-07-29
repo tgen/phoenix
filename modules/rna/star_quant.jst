@@ -125,7 +125,13 @@
       --chimMultimapScoreRange 10 \
       --chimNonchimScoreDropMin 10 \
       --chimOutJunctionFormat 1 \
+      {% if tasks.RNA_transcriptome_quantify_expression_salmon_bam or tasks.RNA_transcriptome_quantify_expression_RSEM %}
       --quantMode TranscriptomeSAM GeneCounts \
+      {% elif tasks.RNA_transcriptome_quantify_expression_RSEM is not defined %}
+      --quantMode TranscriptomeSAM GeneCounts \
+      {% else %}
+      --quantMode GeneCounts \
+      {% endif %}
       --outSAMattrRGline {{ rglinelist|join(' , ') }} \
       --sjdbOverhang "{{ sjdb_overhang }}" \
       --genomeDir "{{ star_index }}" \
@@ -193,7 +199,7 @@
     
     samtools index "{{ star_bam_final }}"
 
-
+{% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
 - name: htseq_{{ sample.name }}
   input: {{ star_bam_unsort }}
   output: {{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
@@ -230,8 +236,9 @@
       "{{ star_bam_unsort }}" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
+{% endif %}
 
-
+{% if tasks.RNA_transcriptome_quantify_expression_subread_featureCounts|default(true) %}
 - name: featurecounts_{{ sample.name }}
   input: {{ star_bam_unsort }}
   output: 
@@ -266,6 +273,6 @@
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
       "{{ star_bam_unsort }}"
-
+{% endif %}
 
 {% endmacro %}

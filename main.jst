@@ -134,23 +134,23 @@
 
 
 # Start of module calls
-{% if tasks.dna_alignment|default(True) %}
+{% if tasks.dna_alignment|default(true) %}
     {{- dna_alignment(samples) }}
 {% endif %}
 
-{% if tasks.constitutional_variant_calling|default(True) %}
+{% if tasks.constitutional_variant_calling|default(true) %}
     {{- constitutional_variant_calling(samples) }}
 {% endif %}
 
-{% if tasks.somatic_variant_calling|default(True) %}
+{% if tasks.somatic_variant_calling|default(true) %}
     {{- somatic_variant_calling(samples) }}
 {% endif %}
 
-{% if tasks.rna_quant|default(True) %}
+{% if tasks.rna_quant|default(true) %}
     {{- rna_quant(samples) }}
 {% endif %}
 
-{% if tasks.rna_fusion_detection|default(True) %}
+{% if tasks.rna_fusion_detection|default(true) %}
     {{- rna_fusion_detection(samples) }}
 {% endif %}
 
