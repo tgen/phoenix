@@ -1,4 +1,5 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
+{% from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
 
 {% macro strelka2_constitutional(sample, aligner='bwa') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
@@ -102,5 +103,6 @@
 
 
 {{ snpeff(pass_vcf, ann_vcf) }}
+{{ bcftools_annotate(ann_vcf, ann_vcf'.temp', 'dbsnp', 'DBSNPv151') }}
 
 {% endmacro %}

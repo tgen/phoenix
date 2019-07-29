@@ -1,0 +1,29 @@
+{% macro bcftools_annotate(input_bcf, output_bcf, db, mark_sites) %}
+
+- name: bcftools_annotate_{{ input_bcf|sha256 }}
+  tags: [bcftools, annotation]
+  input:
+    - {{ input_bcf }}
+    - {{ db }}
+    - {{ mark_sites }}
+  output: {{ output_bcf }}
+  walltime: "8:00:00"
+  cpus: 4
+  cmd: |
+    set -euv
+    set -o pipefail
+
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    bcftools annotate \
+      --threads 4 \
+      -a "{{ constants.phoenix.[db] }}" \
+      -m "{{ mark_sites }}" \
+      -O b \
+      -o "{{ output_bcf }}" \
+      "{{ input_bcf }}"
+
+    mv "{{ output_bcf }}" {{ input_bcf }}"
+    bcftools index -tf "{{ input_bcf }}"
+
+{% endmacro %}
