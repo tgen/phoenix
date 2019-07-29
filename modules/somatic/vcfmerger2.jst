@@ -111,6 +111,6 @@
 
 
 {{ snpeff(merged_vcf, ann_vcf) }}
-{{ bcftools_annotate(ann_vcf, ann_vcf'.temp', 'dbsnp', 'DBSNPv151') }}
+{{ bcftools_annotate(ann_vcf, 'temp.bcf', 'dbsnp', 'DBSNPv151') }}
 
 {% endmacro %}
