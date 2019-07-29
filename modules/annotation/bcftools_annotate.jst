@@ -17,7 +17,7 @@
 
     bcftools annotate \
       --threads 4 \
-      -a "{{ constants.phoenix.[db] }}" \
+      -a "{{ constants.phoenix[db] }}" \
       -m "{{ mark_sites }}" \
       -O b \
       -o "{{ output_bcf }}" \
