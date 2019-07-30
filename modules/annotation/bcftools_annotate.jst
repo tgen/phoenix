@@ -23,7 +23,6 @@
       -o "{{ output_bcf }}" \
       "{{ input_bcf }}"
 
-    mv "{{ output_bcf }}" "{{ input_bcf }}"
-    bcftools index -tf "{{ input_bcf }}"
+    bcftools index -tf "{{ output_bcf }}"
 
 {% endmacro %}
