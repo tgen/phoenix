@@ -1,6 +1,6 @@
 {% macro bcftools_annotate(input_bcf, output_bcf, db, mark_sites) %}
 
-- name: bcftools_annotate_{{ input_bcf|sha256 }}
+- name: bcftools_annotate_{{ input_bcf }}_{{ db }}
   tags: [bcftools, annotation]
   input:
     - {{ input_bcf }}
@@ -23,7 +23,7 @@
       -o "{{ output_bcf }}" \
       "{{ input_bcf }}"
 
-    mv "{{ output_bcf }}" {{ input_bcf }}"
+    mv "{{ output_bcf }}" "{{ input_bcf }}"
     bcftools index -tf "{{ input_bcf }}"
 
 {% endmacro %}
