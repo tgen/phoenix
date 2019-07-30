@@ -1,6 +1,6 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 
-{% macro deepvariant(sample, aligner='bwa') %}
+{% macro deepvariant(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}{% endset %}

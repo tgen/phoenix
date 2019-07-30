@@ -1,7 +1,7 @@
 {% from 'modules/annotation/snpeff.jst' import snpeff with context %}
 {% from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
 
-{% macro vcfmerger2(pair, aligner='bwa') %}
+{% macro vcfmerger2(pair, aligner='bwa', taskPrefix='Genome') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
@@ -109,8 +109,12 @@
     chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
     mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
 
+{% if tasks[taskPrefix+"_somatic_annotate_vcfs_snpEff_ann"]|default(true) %}
+    {{ snpeff(merged_vcf, ann_vcf) }}
+{% endif %}
 
-{{ snpeff(merged_vcf, ann_vcf) }}
-{{ bcftools_annotate(ann_vcf, 'temp.bcf', 'dbsnp', 'DBSNPv151') }}
+{% if tasks[taskPrefix+"_somatic_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
+    {{ bcftools_annotate(ann_vcf, 'temp.bcf', 'dbsnp', 'DBSNPv151') }}
+{% endif %}
 
 {% endmacro %}

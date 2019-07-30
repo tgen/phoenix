@@ -53,68 +53,45 @@
 {% for pair in pairs %}{% do pair.update({'callers': []}) %}{% endfor %}
 
 # Start of the macro calls that will actually add the tasks to the workflow
-{% for pair in pairs if pair.gltype == 'genome' %}
-    {% if tasks.Genome_somatic_snp_indel_caller_gatk_mutect2|default(true) %}
-        {{- mutect2(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Genome_somatic_snp_indel_caller_lancet|default(true) %}
-        {{- lancet(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Genome_somatic_structural_caller_manta|default(true) %}
-        {{- manta_somatic(pair, aligner='bwa') }}
-    {% endif %}
-    
-    {% if tasks.Genome_somatic_snp_indel_caller_strelka2|default(true) %}
-        {{- strelka2_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Genome_somatic_snp_indel_caller_octopus|default(true) %}
-        {{- octopus_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Genome_somatic_snp_indel_caller_VarDict|default(true) %}
-        {{- vardict_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Genome_somatic_cna_caller_tCoNuT|default(true) %}
-        {{- tconut(pair, aligner='bwa') }}
-    {% endif %}
-{% endfor %}
-
-{% for pair in pairs if pair.gltype == 'exome' %}
-    {% if tasks.Exome_somatic_snp_indel_caller_gatk_mutect2|default(true) %}
-        {{- mutect2(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Exome_somatic_snp_indel_caller_lancet|default(true) %}
-        {{- lancet(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Exome_somatic_structural_caller_manta|default(true) %}
-        {{- manta_somatic(pair, aligner='bwa') }}
-    {% endif %}
-    
-    {% if tasks.Exome_somatic_snp_indel_caller_strelka2|default(true) %}
-        {{- strelka2_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Exome_somatic_snp_indel_caller_octopus|default(true) %}
-        {{- octopus_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Exome_somatic_snp_indel_caller_VarDict|default(true) %}
-        {{- vardict_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.Exome_somatic_cna_caller_tCoNuT|default(true) %}
-        {{- tconut(pair, aligner='bwa') }}
-    {% endif %}
-{% endfor %}
-
 {% for pair in pairs %}
-    {{- vcfmerger2(pair, aligner='bwa') }}
+    {% if pair.gltype in 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+    {% elif pair.gltype in 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_gatk_mutect2"]|default(true) %}
+        {{- mutect2(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_lancet"]|default(true) %}
+        {{- lancet(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_structural_caller_manta"]|default(true) %}
+        {{- manta_somatic(pair, aligner='bwa') }}
+    {% endif %}
+    
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_strelka2"]|default(true) %}
+        {{- strelka2_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_octopus"]|default(true) %}
+        {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_VarDict"]|default(true) %}
+        {{- vardict_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_cna_caller_tCoNuT"]|default(true) %}
+        {{- tconut(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
+        {{- vcfmerger2(pair, aligner='bwa', taskPrefix=taskPrefix) }}
+    {% endif %}
+
 {% endfor %}
 
 {% endmacro %}
