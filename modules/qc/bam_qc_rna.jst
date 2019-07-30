@@ -1,0 +1,27 @@
+# These macros are run on rna bams from the star_quant module.
+
+{% macro bam_qc_gatk_collectrnaseqmetrics(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "8:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectRnaSeqMetrics \
+      --IGNORE_SEQUENCE chrEBV \
+      --STRAND_SPECIFICITY {{ constants.phoenix.strandedness_options[sample.strandedness].collectrnaseqmetrics }} \
+      --VALIDATION_STRINGENCY LENIENT \
+      --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
+      --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
+
+{% endmacro %}

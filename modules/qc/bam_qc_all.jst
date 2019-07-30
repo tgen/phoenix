@@ -1,10 +1,10 @@
-# This macro adds tasks for running BAM qc steps with samtools and gatk.
-# Currently supports any sample but with special tasks added when the sample
-# gltypes is 'genome' or 'exome'
-{% macro bam_qc(sample, aligner='bwa') %}
+# These macros are run on bams from the dna_alignment and the star_quant modules.
+# A cram is made for each bam followed by running BAM qc steps with samtools and gatk.
+# Currently supports any sample.
+
+{% macro bam_to_cram(sample, aligner='bwa') %}
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: bam_cram_thank_you_mam_{{ sample.name }}_{{ aligner }}
   input: {{ bam_path }}
@@ -27,6 +27,12 @@
 
     samtools index "{{ cram_path }}"
 
+{% endmacro %}
+
+
+{% macro bam_qc_samtools_stats(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 {% for lb, _ in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
@@ -58,8 +64,14 @@
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       > "{{ stats_dir }}/{{ bam_path|basename }}.{{ lb }}.bamstats.txt"
-
 {% endfor %}
+
+{% endmacro %}
+
+
+{% macro bam_qc_samtools_flagstat(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
   tags: [samtools, flagstat, {{ sample.gltype }}]
@@ -80,6 +92,11 @@
       "{{ bam_path }}" \
       > "{{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt"
 
+{% endmacro %}
+
+{% macro bam_qc_samtools_idxstats(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
   tags: [samtools, idxstats, {{ sample.gltype }}]
@@ -99,6 +116,12 @@
       "{{ bam_path }}" >\
       "{{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt"
 
+{% endmacro %}
+
+
+{% macro bam_qc_gatk_collectmultiplemetrics(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, collectmultiplemetrics, {{ sample.gltype }}]
@@ -114,7 +137,7 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
-    
+
     gatk CollectMultipleMetrics \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
@@ -136,6 +159,12 @@
       --PROGRAM CollectSequencingArtifactMetrics \
       --PROGRAM CollectQualityYieldMetrics
 
+{% endmacro %}
+
+
+{% macro bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
   tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample.gltype }}]
@@ -153,8 +182,14 @@
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      --INPUT_BASE "{{ stats_dir }}/{{ bam_path|basename }}" \
+      --INPUT_BASE "{{ stats_dir }}/{{ bam_path|basename }}"
 
+{% endmacro %}
+
+
+{% macro bam_qc_snpsniffer_geno(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
   tags: [snpSniffer, {{ sample.gltype }}]
@@ -184,6 +219,12 @@
     bcftools sort \
       --output-type v \
       --output-file "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
+
+{% endmacro %}
+
+{% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 {% if sample.subGroup|lower == 'constitutional' %}
 - name: verifybamid2_{{ sample.name }}_{{ aligner }}
@@ -216,113 +257,5 @@
       --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2" || true
 
 {% endif %}
-
-
-{% if sample.gltype == 'genome' %}
-- name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetrics, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  walltime: "24:00:00"
-  cpus: 16
-  cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
-
-    mkdir -p "{{ stats_dir }}"
-
-    gatk CollectWgsMetrics \
-      --USE_FAST_ALGORITHM true \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_metrics.txt" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
-
-
-- name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  walltime: "24:00:00"
-  cpus: 16
-  cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
-
-    mkdir -p "{{ stats_dir }}"
-
-    gatk CollectWgsMetricsWithNonZeroCoverage \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.txt" \
-      --CHART_OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.pdf" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
-
-
-- name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  walltime: "24:00:00"
-  cpus: 16
-  cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
-
-    mkdir -p "{{ stats_dir }}"
-
-    gatk CollectRawWgsMetrics \
-      --USE_FAST_ALGORITHM true \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_raw_metrics.txt" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
-      --INCLUDE_BQ_HISTOGRAM true
-
-
-{% elif sample.gltype == 'exome' %}
-- name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collecthsmetrics, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  walltime: "8:00:00"
-  cpus: 16
-  cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
-
-    mkdir -p "{{ stats_dir }}"
-
-    gatk CollectHsMetrics \
-      --METRIC_ACCUMULATION_LEVEL null \
-      --METRIC_ACCUMULATION_LEVEL ALL_READS \
-      --METRIC_ACCUMULATION_LEVEL LIBRARY \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
-      --TARGET_INTERVALS "{{ sample.capture_kit.targets_interval_list }}" \
-      {% if sample.capture_kit.baits_interval_list is defined %}
-      --BAIT_INTERVALS "{{ sample.capture_kit.baits_interval_list }}"
-      {% else %}
-      --BAIT_INTERVALS  "{{ sample.capture_kit.targets_interval_list }}"
-      {% endif %}
-
-
-{% elif sample.gltype == 'rna' %}
-- name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  walltime: "8:00:00"
-  cpus: 16
-  cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
-
-    mkdir -p "{{ stats_dir }}"
-
-    gatk CollectRnaSeqMetrics \
-      --IGNORE_SEQUENCE chrEBV \
-      --STRAND_SPECIFICITY {{ constants.phoenix.strandedness_options[sample.strandedness].collectrnaseqmetrics }} \
-      --VALIDATION_STRINGENCY LENIENT \
-      --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
-      --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
-
-{% endif %}
-
 
 {% endmacro %}

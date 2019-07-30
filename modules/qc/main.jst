@@ -1,15 +1,115 @@
+# Adds bam_to_cram, bam_qc and other quality control tasks
+
+# Performed on all bams
+{% from 'modules/qc/bam_qc_all.jst' import bam_to_cram with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_stats with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_flagstat with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_idxstats with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_collectmultiplemetrics with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_convertsequencingarrtifacttooxog with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_snpsniffer_geno with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_verifybamid2 with context %}
+
+# Performed on genomes
+{% from 'modules/qc/bam_qc_genome.jst' import bam_qc_gatk_collectwgsmetrics with context %}
+{% from 'modules/qc/bam_qc_genome.jst' import bam_qc_gatk_collectwgsmetricswithnonzerocoverage with context %}
+{% from 'modules/qc/bam_qc_genome.jst' import bam_qc_gatk_collectrawwgsmetrics with context %}
+
+# Performed on exomes
+{% from 'modules/qc/bam_qc_exome.jst' import bam_qc_gatk_collecthsmetrics with context %}
+
+# Performed on rna
+{% from 'modules/qc/bam_qc_rna.jst' import bam_qc_gatk_collectrnaseqmetrics with context %}
+
 {% from 'modules/qc/peddy.jst' import peddy with context %}
 {% from 'modules/qc/peddy.jst' import peddy_cohort with context %}
+
+{% macro bam_qc(sample, aligner='bwa') %}
+
+    {{- bam_to_cram(sample, aligner=aligner) }}
+
+    # General Library type specific tasks
+    {% if sample.gltype == 'rna' %}
+        {% set taskPrefix = 'RNA' %}
+
+        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectRnaSeqMetrics"]|default(true) %}
+            {{- bam_qc_gatk_collectrnaseqmetrics(sample, aligner=aligner) }}
+        {% endif %}
+
+    {% elif sample.gltype == 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+
+        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectHsMetrics"]|default(true) %}
+            {{- bam_qc_gatk_collecthsmetrics(sample, aligner=aligner) }}
+        {% endif %}
+
+    {% elif sample.gltype == 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+
+        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectWgsMetrics"]|default(true) %}
+            {{- bam_qc_gatk_collectwgsmetrics(sample, aligner=aligner) }}
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectWgsMetricsWithNonZeroCoverage"]|default(true) %}
+            {{- bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, aligner=aligner) }}
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectRawWgsMetrics"]|default(true) %}
+            {{- bam_qc_gatk_collectrawwgsmetrics(sample, aligner=aligner) }}
+        {% endif %}
+
+    {% endif %}
+
+    # Tasks performed on all bams
+    {% if tasks[taskPrefix+"_quality_control_stats_samtools_stats"]|default(true) %}
+        {{- bam_qc_samtools_stats(sample, aligner=aligner) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_quality_control_stats_samtools_flagstat"]|default(true) %}
+        {{- bam_qc_samtools_flagstat(sample, aligner=aligner) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_quality_control_stats_samtools_idxstats"]|default(true) %}
+        {{- bam_qc_samtools_idxstats(sample, aligner=aligner) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"]|default(true) %}
+        {{- bam_qc_gatk_collectmultiplemetrics(sample, aligner=aligner) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG"]|default(true) %}
+        {{- bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner=aligner) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_quality_control_genotype_concordance_snpSniffer"]|default(true) %}
+        {{- bam_qc_snpsniffer_geno(sample, aligner=aligner) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
+        {{- bam_qc_verifybamid2(sample, aligner=aligner) }}
+    {% endif %}
+
+{% endmacro %}
 
 {% macro qc(samples) %}
     {% for sample in samples.values() %}
         {% if sample.gltype == 'rna' %}
-            {{- peddy(sample, aligner='star') }}
-        {% elif sample.gltype in ('exome', 'genome') %}
-            {{- peddy(sample, aligner='bwa') }}
+            {% set taskPrefix = 'RNA' %}
+            {% set aligner = 'star' %}
+        {% elif sample.gltype in 'exome' %}
+            {% set taskPrefix = 'Exome' %}
+            {% set aligner = 'bwa' %}
+        {% elif sample.gltype in 'genome' %}
+            {% set taskPrefix = 'Genome' %}
+            {% set aligner = 'bwa' %}
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_quality_control_gender_ethnicity_relatedness_check_peddy"]|default(true) %}
+            {{- peddy(sample, aligner=aligner) }}
         {% endif %}
     {% endfor %}
 
-    {{- peddy_cohort(samples) }}
-    
+    {% if tasks.Exome_quality_control_gender_ethnicity_relatedness_check_peddy or tasks.Genome_quality_control_gender_ethnicity_relatedness_check_peddy or tasks.RNA_quality_control_gender_ethnicity_relatedness_check_peddy |default(true) %}
+        {{- peddy_cohort(samples) }}
+    {% endif %}
 {% endmacro %}

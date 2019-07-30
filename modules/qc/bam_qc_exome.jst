@@ -1,0 +1,32 @@
+# These macros are run on exome bams from the dna_alignment module.
+
+{% macro bam_qc_gatk_collecthsmetrics(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collecthsmetrics, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "8:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectHsMetrics \
+      --METRIC_ACCUMULATION_LEVEL null \
+      --METRIC_ACCUMULATION_LEVEL ALL_READS \
+      --METRIC_ACCUMULATION_LEVEL LIBRARY \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      --TARGET_INTERVALS "{{ sample.capture_kit.targets_interval_list }}" \
+      {% if sample.capture_kit.baits_interval_list is defined %}
+      --BAIT_INTERVALS "{{ sample.capture_kit.baits_interval_list }}"
+      {% else %}
+      --BAIT_INTERVALS  "{{ sample.capture_kit.targets_interval_list }}"
+      {% endif %}
+
+{% endmacro %}

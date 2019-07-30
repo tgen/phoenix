@@ -1,0 +1,73 @@
+# These macros are run on genome bams from the dna_alignment module.
+
+{% macro bam_qc_gatk_collectwgsmetrics(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectwgsmetrics, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectWgsMetrics \
+      --USE_FAST_ALGORITHM true \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
+
+{% endmacro %}
+
+
+{% macro bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectWgsMetricsWithNonZeroCoverage \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.txt" \
+      --CHART_OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.pdf" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
+
+{% endmacro %}
+
+
+{% macro bam_qc_gatk_collectrawwgsmetrics(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "24:00:00"
+  cpus: 16
+  cmd: |
+    set -uev
+    module load {{ constants.tools.gatk_4_1_0_0.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    gatk CollectRawWgsMetrics \
+      --USE_FAST_ALGORITHM true \
+      --INPUT "{{ bam_path }}" \
+      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_raw_metrics.txt" \
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      --INCLUDE_BQ_HISTOGRAM true
+
+{% endmacro %}
