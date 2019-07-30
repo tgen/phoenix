@@ -1,6 +1,6 @@
-{% macro bcftools_annotate(input_bcf, output_bcf, db, mark_sites) %}
+{% macro bcftools_annotate(input_bcf, output_bcf, sample, db, mark_sites) %}
 
-- name: bcftools_annotate_{{ input_bcf }}_{{ db }}
+- name: bcftools_annotate_{{ sample }}_{{ db }}
   tags: [bcftools, annotation]
   input:
     - {{ input_bcf }}

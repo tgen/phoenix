@@ -106,7 +106,7 @@
 {% endif %}
 
 {% if tasks[taskPrefix+"_constitutional_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
-    {{ bcftools_annotate(ann_vcf, ann_vcf|replace('vcf.gz','bcf'), 'dbsnp', 'DBSNPv151') }}
+    {{ bcftools_annotate(ann_vcf, ann_vcf|replace('vcf.gz','bcf'), sample.name, 'dbsnp', 'DBSNPv151') }}
 {% endif %}
 
 {% endmacro %}
