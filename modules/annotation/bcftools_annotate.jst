@@ -19,6 +19,9 @@
       --threads 4 \
       -a "{{ constants.phoenix[db] }}" \
       -m "{{ mark_sites }}" \
+      {% if db == 'dbsnp' %}
+      --columns ID \
+      {% endif %}
       -O b \
       -o "{{ output_bcf }}" \
       "{{ input_bcf }}"
