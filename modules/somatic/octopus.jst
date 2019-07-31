@@ -73,7 +73,7 @@
     bcftools index -t "{{ all_vcf }}"
 
     {% if not debug %}
-    rm -r "temp/{{ pair.name }}_{{ aligner }}_octopus_somatic_vcf_chunks/"
+    rm -r "temp/{{ pair.gltype }}/somatic_variant_calls/octopus/{{ pair.name }}_{{ aligner }}/"
     {% endif %}
 
 

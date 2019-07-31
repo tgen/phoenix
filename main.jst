@@ -130,7 +130,7 @@
     
     mkdir -p qc
     multiqc -o qc .
-    sendqc qc/multiqc_data.json
+    sendqc qc/multiqc_data/multiqc_data.json {{ email }}
 
 
 # Start of module calls
