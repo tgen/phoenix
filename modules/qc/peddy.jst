@@ -14,9 +14,10 @@
     mkdir -p "{{ temp }}"
 
     freebayes \
-      -p 4 \
-      -f "{{ constants.phoenix.reference_fasta }}" \
-      -@ /home/qzhu/toolkit/hg38.vcf \
+      --ploidy 4 \
+      --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
+      --variant-input /home/qzhu/toolkit/hg38.vcf \
+      --only-use-input-alleles \
       "{{ bam }}" \
       > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
 
