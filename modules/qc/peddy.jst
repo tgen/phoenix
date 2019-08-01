@@ -14,7 +14,7 @@
     mkdir -p "{{ temp }}"
 
     freebayes \
-      --ploidy 4 \
+      --ploidy 2 \
       --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
       --variant-input /home/qzhu/toolkit/hg38.vcf \
       --only-use-input-alleles \

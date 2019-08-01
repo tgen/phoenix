@@ -56,7 +56,6 @@
     configManta.py \
       {% if pair.gltype == 'exome' %}
       --exome \
-      --generateEvidenceBam \
       {% endif %}
       --callRegions "${MANTA_BED}.gz" \
       --config "${MANTA_CONFIG}" \
@@ -67,12 +66,10 @@
 
     # Execute on the local machine with 19 parallel jobs
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
-   
-    # Save the evidence bams to the sample dir if there are any files that have been output to the evidence directory.
-    mkdir -p "{{ pair_dir }}/evidence/"
-    mv "{{ run_dir }}/results/evidence/"* "{{ pair_dir }}/evidence/" || true
 
     # Save all the vcs in the sample dir
+    mkdir -p "{{ sample_dir }}" || true
+
     mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
     mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
     mv "{{ run_dir }}/results/variants/candidateSV.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
