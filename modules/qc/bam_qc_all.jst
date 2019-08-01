@@ -34,13 +34,13 @@
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
-{% for lb, _ in sample.read_groups.values()|groupby('rglb') %}
+{% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
   tags: [samtools, stats, {{ sample.gltype }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  walltime: "8:00:00"
+  walltime: "4:00:00"
   cpus: 4
   mem: 8G
   cmd: |
@@ -52,7 +52,9 @@
     samtools view \
       --threads 4 \
       -h \
-      -l "{{ lb }}" \
+      {% for rg in rgs %}
+      -r "{{ rg.rgid }}" \
+      {% endfor %}
       "{{ bam_path }}" \
       | \
     samtools stats \
