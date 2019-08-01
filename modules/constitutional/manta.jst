@@ -55,6 +55,8 @@
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
     # Save all the vcs in the sample dir
+    mkdir -p "{{ sample_dir }}" || true
+
     mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
     mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
     mv "{{ run_dir }}/results/variants/candidateSV.vcf.gz" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
