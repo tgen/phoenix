@@ -10,36 +10,20 @@
 
 ### Testing: 4 CPU job request, K1IDT exome
 
-# Load required modules
-module load samtools/1.9
-module load BEDTools/2.26.0
-module load freebayes/1.2
+- name: rna_check_variant_{{ sample }}
+  tags: [bcftools, annotation]
+  input:
+    - {{  }}
+  output: {{  }}
+  walltime: "8:00:00"
+  cpus: 4
+  cmd: |
+  # Load required modules
+  module load {{ constants.tools.samtools_1_9.module }}
+  module load {{ constants.tools.bedtools_2_26_0.module }}
+  module load {{ constants.tools.freebayes_1_2.module }}
 
-# Testing Variables
-REFERENCE=/home/tgenref/homo_sapiens/grch37_hg19/hs37d5_tgen/genome_reference/hs37d5_plusRibo_plusOncoViruses_plusERCC.fa
-REFERENCE_FAI_INDEX=/home/tgenref/homo_sapiens/grch37_hg19/hs37d5_tgen/genome_reference/hs37d5_plusRibo_plusOncoViruses_plusERCC.fa.fai
-## Needs to be bgzip compressed and with index
-MERGE_VCF=C038_0019_008279_PB_Whole_C2_K1ID2_A43879-C038_0019_008279_LN_Whole_T3_K1ID2_A43878.merged.vcf.gz
-RNA_BAM=C038_0019_008279_LN_Whole_T3_K1RIB_A43762.starAligned.final.bam
-
-# Use the RNA BAM basename to define the output VCF (In pipeline this will be a known variable)
-RNA_BASENAME=`basename ${RNA_BAM} ".starAligned.final.bam"`
-MATCHED_RNA=Yes
-
-## TGenRef Requirement - to add and define in constants like ref.fa ref.dict ref.fai
-# bedtools slop requires a file, should be the .dict, but needs a format of two tab seperated columns with CONTIG<tab>CONTIG_LENGTH
-cut -f2,3 /home/tgenref/homo_sapiens/grch37_hg19/hs37d5_tgen/genome_reference/hs37d5_plusRibo_plusOncoViruses_plusERCC.dict | awk 'NR>1' | sed 's/SN://g' | sed 's/LN://g' > contig_lengths.txt
-# Thus this becomes a required variable to be passed by the pipeline recipe
-CONTIG_LENGTHS=contig_lengths.txt
-
-
-#########################################
-## Parameterized Code
-#########################################
-
-if [ ${MATCHED_RNA} = "No" ]
-then
-
+  {{ if MATCHED_RNA|default(true) }}
     echo "Adding RNA header lines to the merged VCF file"
 
     # Write the needed header lines to a temporary file, which will be inserted into the VCF
@@ -60,7 +44,7 @@ then
         --tbi \
         Merged_VCF_final.vcf.gz
 
-elif [ ${MATCHED_RNA} = "Yes" ]
+  elif [ ${MATCHED_RNA} = "Yes" ]
 then
 
     echo "Calculating and adding RNA information to the merged VCF file"
