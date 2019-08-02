@@ -99,7 +99,7 @@
 {{ snpeff(pass_vcf, ann_vcf) }}
 
 {% if tasks[taskPrefix+"_constitutional_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
-    {{ bcftools_annotate(ann_vcf, ann_vcf, pair.name, 'constitutional', taskPrefix) }}
+    {{ bcftools_annotate(ann_vcf, ann_vcf, sample.name, 'constitutional', taskPrefix) }}
 {% endif %}
 
 {% endmacro %}
