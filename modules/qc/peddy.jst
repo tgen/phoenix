@@ -16,8 +16,7 @@
     freebayes \
       --ploidy 2 \
       --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
-      --variant-input /home/qzhu/toolkit/hg38.vcf \
-      --only-use-input-alleles \
+      --targets /home/tgenjetstream/dev_binaries_and_databases/hg38.bed \
       "{{ bam }}" \
       > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
 
