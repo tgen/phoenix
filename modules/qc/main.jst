@@ -1,7 +1,6 @@
 # Adds bam_to_cram, bam_qc and other quality control tasks
 
 # Performed on all bams
-{% from 'modules/qc/bam_qc_all.jst' import bam_to_cram with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_stats with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_flagstat with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_idxstats with context %}
@@ -25,8 +24,6 @@
 {% from 'modules/qc/peddy.jst' import peddy_cohort with context %}
 
 {% macro bam_qc(sample, aligner='bwa') %}
-
-    {{- bam_to_cram(sample, aligner=aligner) }}
 
     # General Library type specific tasks
     {% if sample.gltype == 'rna' %}

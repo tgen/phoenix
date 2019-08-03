@@ -1,6 +1,7 @@
 {% from 'modules/rna/star_fusion.jst' import star_fusion with context %}
 {% from 'modules/rna/salmon.jst' import salmon with context %}
 {% from 'modules/rna/star_quant.jst' import star_quant with context %}
+{% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
 {% from 'modules/qc/main.jst' import bam_qc with context %}
 
 
@@ -25,6 +26,8 @@
     {% if tasks.RNA_alignment_rna_alignment_STAR|default(true) %}
     {{- star_quant(sample) }}
     {% endif %}
+
+    {{- bam_to_cram(sample, aligner='star') }}
 
     {{- bam_qc(sample, aligner='star') }}
 {% endfor %}

@@ -2,34 +2,6 @@
 # A cram is made for each bam followed by running BAM qc steps with samtools and gatk.
 # Currently supports any sample.
 
-{% macro bam_to_cram(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
-
-- name: bam_cram_thank_you_mam_{{ sample.name }}_{{ aligner }}
-  input: {{ bam_path }}
-  output: {{ cram_path }}
-  walltime: "8:00:00"
-  cpus: 1
-  mem: 3G
-  cmd: |
-    set -uev
-    module load {{ constants.tools.samtools_1_9.module }}
-
-    samtools view \
-      -C \
-      {% if aligner == 'star' %}
-      --reference "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
-      --reference "{{ constants.phoenix.reference_fasta }}" \
-      {% endif %}
-      "{{ bam_path }}" > "{{ cram_path }}"
-
-    samtools index "{{ cram_path }}"
-
-{% endmacro %}
-
-
 {% macro bam_qc_samtools_stats(sample, aligner='bwa') %}
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
