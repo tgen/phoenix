@@ -1,6 +1,6 @@
-{% macro snpeff(sample_dir, bcftools_bcf, output_vcf, variant_caller) %}
+{% macro snpeff(sample_dir, bcftools_bcf, output_vcf, variant_caller, sample) %}
 
-- name: snpeff_{{ variant_caller }}_{{ bcftools_bcf }}
+- name: snpeff_{{ variant_caller }}_{{ sample }}
   tags: [snpeff, annotation]
   input: {{ bcftools_bcf }}
   output: {{ output_vcf }}

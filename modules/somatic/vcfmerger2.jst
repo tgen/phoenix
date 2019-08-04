@@ -110,10 +110,10 @@
     mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
 
 
-{{ bcftools_annotate(results_dir, merged_vcf, ann_bcf, ann_vcf, 'somatic', taskPrefix, 'vcfmerger2') }}
+{{ bcftools_annotate(results_dir, merged_vcf, ann_bcf, ann_vcf, 'somatic', taskPrefix, 'vcfmerger2', pair.name) }}
 
 {% if tasks[taskPrefix+"_somatic_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(results_dir, ann_bcf , ann_vcf, 'vcfmerger2') }}
+    {{ snpeff(results_dir, ann_bcf , ann_vcf, 'vcfmerger2', pair.name) }}
 {% endif %}
 
 

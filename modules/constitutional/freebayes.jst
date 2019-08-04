@@ -92,10 +92,10 @@
     bcftools index -tf "{{ pass_vcf }}"
 
 
-{{ bcftools_annotate(results_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'strelka2') }}
+{{ bcftools_annotate(results_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'strelka2', sample.name) }}
 
 {% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(results_dir, ann_bcf, ann_vcf, 'freebayes') }}
+    {{ snpeff(results_dir, ann_bcf, ann_vcf, 'freebayes', sample.name) }}
 {% endif %}
 
 {% endmacro %}
