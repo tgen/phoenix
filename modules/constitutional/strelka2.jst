@@ -2,12 +2,14 @@
 {% from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
 
 {% macro strelka2_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
+
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set indel_candidates %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
 {% set sample_dir %}{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}{% endset %}
 {% set run_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}{% endset %}
 {% set all_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
+{% set ann_bcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.bcf{% endset %}
 {% set ann_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.vcf.gz{% endset %}
 
 - name: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
@@ -101,12 +103,11 @@
 
     bcftools index -tf "{{ pass_vcf }}"
 
-{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(pass_vcf, ann_vcf) }}
-{% endif %}
 
-{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
-    {{ bcftools_annotate(ann_vcf, ann_vcf, sample.name, 'constitutional', taskPrefix) }}
+{{ bcftools_annotate(sample_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'strelka2') }}
+
+{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
+    {{ snpeff(sample_dir, ann_bcf, ann_vcf, 'strelka2') }}
 {% endif %}
 
 {% endmacro %}

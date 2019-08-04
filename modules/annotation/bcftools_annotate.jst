@@ -1,10 +1,10 @@
-{% macro bcftools_annotate(input_vcf, output_vcf, sample, subtype, prefix) %}
+{% macro bcftools_annotate(sample_dir, input_vcf, output_bcf, output_vcf, subtype, prefix, caller) %}
 
-- name: bcftools_annotate_{{ sample }}
+- name: bcftools_annotate_{{ caller }}_{{ input_vcf }}
   tags: [bcftools, annotation]
   input:
     - {{ input_vcf }}
-  output: {{ output_vcf }}
+  output: {{ output_bcf }}
   walltime: "8:00:00"
   cpus: 4
   cmd: |
@@ -18,11 +18,10 @@
     bcftools view \
       --threads 4 \
       --output-type b \
-      --output tempout.bcf \
-      {{ input_vcf }}
+      --output "{{ output_bcf }}" \
+      "{{ input_vcf }}"
 
-    # move tempout to tempin for next step
-    mv tempout.bcf tempin.bcf
+    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
 
     {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
     # annotate with dbsnp
@@ -32,77 +31,77 @@
       --mark-sites DBSNPv152 \
       --columns ID \
       --output-type b \
-      --output tempout.bcf \
-      tempin.bcf
+      --output "{{ sample_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv tempout.bcf tempin.bcf
+    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force tempin.bcf
+    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_gnomad"]|default(true) %}
+    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_gnomad_exome"]|default(true) %}
     # annotate with gnomad exome
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_exome }}" \
       --mark-sites GNOMAD_EXOME \
       --output-type b \
-      --output tempout.bcf \
-      tempin.bcf
+      --output "{{ sample_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv tempout.bcf tempin.bcf
+    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force tempin.bcf
+    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_gnomad"]|default(true) %}
+    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_gnomad_genome"]|default(true) %}
     # annotate with gnomad genome
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_genome }}" \
       --mark-sites GNOMAD_GENOME \
       --output-type b \
-      --output tempout.bcf \
-      tempin.bcf
+      --output "{{ sample_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv tempout.bcf tempin.bcf
+    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force tempin.bcf
+    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_cosmic"]|default(true) %}
+    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_cosmic_coding"]|default(true) %}
     # annotate with cosmic
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.cosmic }}" \
       --mark-sites COSMIC \
       --output-type b \
-      --output tempout.bcf \
-      tempin.bcf
+      --output "{{ sample_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv tempout.bcf tempin.bcf
+    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force tempin.bcf
+    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_cosmic_nc"]|default(true) %}
+    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_cosmic_noncoding"]|default(true) %}
     # annotate with cosmic_nc
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.cosmic_nc }}" \
       --mark-sites COSMIC_NC \
       --output-type b \
-      --output tempout.bcf \
-      tempin.bcf
+      --output "{{ sample_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv tempout.bcf tempin.bcf
+    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force tempin.bcf
+    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_clinvar"]|default(true) %}
@@ -112,26 +111,22 @@
       --annotations "{{ constants.phoenix.clinvar }}" \
       --mark-sites CLINVAR \
       --output-type b \
-      --output tempout.bcf \
-      tempin.bcf
+      --output "{{ sample_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv tempout.bcf tempin.bcf
+    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force tempin.bcf
+    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
-
-    # no matter where we end in the series of annotations
-    # we need to output the same output. The default is
-    # outputting {{ sample }}.bcf and tbi
-    mv tempin.bcf {{ sample }}.bcf
-    mv tempin.bcf.tbi {{ sample }}.bcf.tbi
 
     # convert back to vcf.gz for the average users
     bcftools view \
     --threads 4 \
     --output-type z \
-    --output {{ output_vcf }}
-    {{ sample }}.bcf
+    --output "{{ output_vcf }}"
+    "{{ output_bcf }}"
+
+    bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
 
 {% endmacro %}

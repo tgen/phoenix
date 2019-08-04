@@ -1,8 +1,8 @@
-{% macro snpeff(input_vcf, output_vcf) %}
+{% macro snpeff(sample_dir, bcftools_bcf, output_vcf, caller) %}
 
-- name: snpeff_{{ input_vcf|sha256 }}
+- name: snpeff_{{ caller }}_{{ bcftools_bcf }}
   tags: [snpeff, annotation]
-  input: {{ input_vcf }}
+  input: {{ bcftools_bcf }}
   output: {{ output_vcf }}
   walltime: "8:00:00"
   cpus: 4
@@ -18,9 +18,11 @@
       -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       "{{ constants.phoenix.snpeff_db }}" \
-      "{{ input_vcf }}" |\
-    bcftools view -O z - -o "{{ output_vcf }}"
+      "{{ output_vcf }}" |\
+    bcftools view -O z - -o "{{ sample_dir }}/tempout.vcf.gz"
 
-    bcftools index -tf "{{ output_vcf }}"
+    mv "{{ sample_dir }}/tempout.vcf.gz" "{{ output_vcf }}"
+
+    bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
 
 {% endmacro %}

@@ -122,10 +122,10 @@
     {% endif %}
 
 
-{{ snpeff(pass_vcf, ann_vcf) }}
+{{ bcftools_annotate(sample_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'strelka2') }}
 
-{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
-    {{ bcftools_annotate(ann_vcf, ann_vcf, sample.name, 'constitutional', taskPrefix) }}
+{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
+    {{ snpeff(sample_dir, ann_bcf, ann_vcf, 'genotypegvcf') }}
 {% endif %}
 
 {% endmacro %}
