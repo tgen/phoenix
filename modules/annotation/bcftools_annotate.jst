@@ -1,4 +1,4 @@
-{% macro bcftools_annotate(sample_dir, input_vcf, output_bcf, output_vcf, subtype, prefix, variant_caller) %}
+{% macro bcftools_annotate(results_dir, input_vcf, output_bcf, output_vcf, subtype, prefix, variant_caller) %}
 
 - name: bcftools_annotate_{{ variant_caller }}_{{ input_vcf }}
   tags: [bcftools, annotation]
@@ -31,11 +31,11 @@
       --mark-sites DBSNPv152 \
       --columns ID \
       --output-type b \
-      --output "{{ sample_dir }}/tempout.bcf" \
+      --output "{{ results_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
+    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
@@ -47,11 +47,11 @@
       --annotations "{{ constants.phoenix.gnomad_exome }}" \
       --mark-sites GNOMAD_EXOME \
       --output-type b \
-      --output "{{ sample_dir }}/tempout.bcf" \
+      --output "{{ results_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
+    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
@@ -63,11 +63,11 @@
       --annotations "{{ constants.phoenix.gnomad_genome }}" \
       --mark-sites GNOMAD_GENOME \
       --output-type b \
-      --output "{{ sample_dir }}/tempout.bcf" \
+      --output "{{ results_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
+    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
@@ -79,11 +79,11 @@
       --annotations "{{ constants.phoenix.cosmic }}" \
       --mark-sites COSMIC \
       --output-type b \
-      --output "{{ sample_dir }}/tempout.bcf" \
+      --output "{{ results_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
+    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
@@ -95,11 +95,11 @@
       --annotations "{{ constants.phoenix.cosmic_nc }}" \
       --mark-sites COSMIC_NC \
       --output-type b \
-      --output "{{ sample_dir }}/tempout.bcf" \
+      --output "{{ results_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
+    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
@@ -111,11 +111,11 @@
       --annotations "{{ constants.phoenix.clinvar }}" \
       --mark-sites CLINVAR \
       --output-type b \
-      --output "{{ sample_dir }}/tempout.bcf" \
+      --output "{{ results_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ sample_dir }}/tempout.bcf" "{{ output_bcf }}"
+    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}

@@ -5,12 +5,12 @@
 
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set indel_candidates %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
-{% set sample_dir %}{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}{% endset %}
 {% set run_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/strelka2/{{ sample.name }}_{{ aligner }}{% endset %}
-{% set all_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
-{% set ann_bcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.bcf{% endset %}
-{% set ann_vcf %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.vcf.gz{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
+{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.bcf{% endset %}
+{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.ann.vcf.gz{% endset %}
 
 - name: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
   tags: [strelka2, strelka2-constitutional, {{ sample.gltype }}]
@@ -71,9 +71,9 @@
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
      # Move and rename the evidence bams
-    mkdir -p "{{ sample_dir }}/evidence"
-    mv "{{ run_dir }}/results/realigned/realigned.S1.bam" "{{ sample_dir }}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam"
-    mv "{{ run_dir }}/results/realigned/realigned.S1.bam.bai" "{{ sample_dir }}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    mkdir -p "{{ results_dir }}/evidence"
+    mv "{{ run_dir }}/results/realigned/realigned.S1.bam" "{{ results_dir }}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "{{ run_dir }}/results/realigned/realigned.S1.bam.bai" "{{ results_dir }}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
 
     # Move and rename the the vcfs out of their generic location
     mv "{{ run_dir }}/results/variants/variants.vcf.gz" "{{ all_vcf }}"
@@ -104,10 +104,10 @@
     bcftools index -tf "{{ pass_vcf }}"
 
 
-{{ bcftools_annotate(sample_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'strelka2') }}
+{{ bcftools_annotate(results_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'strelka2') }}
 
 {% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(sample_dir, ann_bcf, ann_vcf, 'strelka2') }}
+    {{ snpeff(results_dir, ann_bcf, ann_vcf, 'strelka2') }}
 {% endif %}
 
 {% endmacro %}
