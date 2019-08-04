@@ -7,6 +7,7 @@
 {% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}{% endset %}
 {% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
+{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.ann.bcf{% endset %}
 {% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.ann.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}

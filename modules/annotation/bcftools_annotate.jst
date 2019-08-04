@@ -1,6 +1,6 @@
-{% macro bcftools_annotate(sample_dir, input_vcf, output_bcf, output_vcf, subtype, prefix, caller) %}
+{% macro bcftools_annotate(sample_dir, input_vcf, output_bcf, output_vcf, subtype, prefix, variant_caller) %}
 
-- name: bcftools_annotate_{{ caller }}_{{ input_vcf }}
+- name: bcftools_annotate_{{ variant_caller }}_{{ input_vcf }}
   tags: [bcftools, annotation]
   input:
     - {{ input_vcf }}

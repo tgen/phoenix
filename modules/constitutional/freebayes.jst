@@ -7,7 +7,8 @@
 {% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}{% endset %}
 {% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
-{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.ann.vcf.gz{% endset %}
+{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.ann.bcf{% endset %}
+{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.ann.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}

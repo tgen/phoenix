@@ -7,7 +7,8 @@
 {% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}{% endset %}
 {% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
-{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.ann.vcf.gz{% endset %}
+{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.ann.bcf{% endset %}
+{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.ann.vcf.gz{% endset %}
 
 {% set nshards=40 %}
 {% for i in range(nshards) %}

@@ -8,6 +8,7 @@
 {% set gvcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz{% endset %}
 {% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz{% endset %}
+{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.ann.bcf{% endset %}
 {% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.ann.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}

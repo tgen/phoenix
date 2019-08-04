@@ -109,12 +109,12 @@
     chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
     mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
 
+
+{{ bcftools_annotate(results_dir, merged_vcf, ann_bcf, ann_vcf, 'somatic', taskPrefix, 'vcfmerger2') }}
+
 {% if tasks[taskPrefix+"_somatic_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(merged_vcf, ann_vcf) }}
+    {{ snpeff(results_dir, ann_bcf , ann_vcf, 'vcfmerger2') }}
 {% endif %}
 
-{% if tasks[taskPrefix+"_somatic_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
-    {{ bcftools_annotate(ann_vcf, ann_vcf, pair.name, 'somatic', taskPrefix) }}
-{% endif %}
 
 {% endmacro %}
