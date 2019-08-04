@@ -2,7 +2,8 @@
 
 - name: snpeff_{{ variant_caller }}_{{ sample }}
   tags: [snpeff, annotation]
-  input: {{ bcftools_bcf }}
+  input:
+    - {{ bcftools_bcf }}
   output: {{ output_vcf }}
   walltime: "8:00:00"
   cpus: 4
