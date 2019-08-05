@@ -8,7 +8,7 @@
 
 # This alignment command prefix is shared by all modules using bwa
 {% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
-{% from 'modules/read_group_line.jst' import read_group_line %}
+{% from 'utilities/read_group_line.jst' import read_group_line %}
 
 # Markdups task is used by chunking and non-chunking alignments
 {% macro samtools_markdup(sample) %}
