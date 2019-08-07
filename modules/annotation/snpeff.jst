@@ -13,13 +13,35 @@
     module load {{ constants.tools.snpeff_4_3t.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
+    # Generate full annotation set
     snpEff ann \
       -t \
       -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
+      -hgvs \
+      -lof \
       "{{ constants.phoenix.snpeff_db }}" \
-      "{{ input_vcf }}" |\
-    bcftools view -O z - -o "{{ results_dir }}/tempout.vcf.gz"
+      "{{ input_vcf }}" \
+      | \
+      bcftools view --output-type z --output-file "{{ results_dir }}/tempout.vcf.gz"
+
+    mv "{{ results_dir }}/tempout.vcf.gz" "{{ output_vcf }}"
+
+    bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
+
+
+    # Generate canonical annotation set
+    snpEff ann \
+      -t \
+      -c "{{ constants.phoenix.snpeff_config }}" \
+      -dataDir "{{ constants.phoenix.snpeff_data }}" \
+      -canon \
+      -hgvs \
+      -lof \
+      "{{ constants.phoenix.snpeff_db }}" \
+      "{{ input_vcf }}" \
+      | \
+      bcftools view --output-type z --output-file "{{ results_dir }}/tempout.vcf.gz"
 
     mv "{{ results_dir }}/tempout.vcf.gz" "{{ output_vcf }}"
 
