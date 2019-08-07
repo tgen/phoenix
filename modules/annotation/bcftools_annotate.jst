@@ -1,10 +1,9 @@
-{% macro bcftools_annotate(results_dir, input_vcf, output_bcf, output_vcf, subtype, prefix, variant_caller, sample) %}
 
-- name: bcftools_annotate_{{ variant_caller }}_{{ sample }}
+{%- macro bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, snpeff_flag, vep_flag) %}
+{%- set output_bcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.ann.bcf{% endset %}
+- name: bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [bcftools, annotation]
-  input:
-    - {{ input_vcf }}
-  output: {{ output_bcf }}
+  after: {{ after_task }}
   walltime: "8:00:00"
   cpus: 4
   cmd: |
@@ -18,12 +17,12 @@
     bcftools view \
       --threads 4 \
       --output-type b \
-      --output "{{ output_bcf }}" \
+      --output-file "{{ output_bcf }}" \
       "{{ input_vcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_dbsnp"]|default(true) %}
     # annotate with dbsnp
     bcftools annotate \
       --threads 4 \
@@ -31,102 +30,115 @@
       --mark-sites DBSNPv152 \
       --columns ID \
       --output-type b \
-      --output "{{ results_dir }}"/tempout.bcf \
+      --output-file "{{ temp_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
+    mv "{{ temp_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_gnomad_exome"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_exome"]|default(true) %}
     # annotate with gnomad exome
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_exome }}" \
       --mark-sites GNOMAD_EXOME \
       --output-type b \
-      --output "{{ results_dir }}"/tempout.bcf \
+      --output-file "{{ temp_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
+    mv "{{ temp_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_gnomad_genome"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome"]|default(true) %}
     # annotate with gnomad genome
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_genome }}" \
       --mark-sites GNOMAD_GENOME \
       --output-type b \
-      --output "{{ results_dir }}"/tempout.bcf \
+      --output-file "{{ temp_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
+    mv "{{ temp_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_cosmic_coding"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_coding"]|default(true) %}
     # annotate with cosmic
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.cosmic }}" \
       --mark-sites COSMIC \
       --output-type b \
-      --output "{{ results_dir }}"/tempout.bcf \
+      --output-file "{{ temp_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
+    mv "{{ temp_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_cosmic_noncoding"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_noncoding"]|default(true) %}
     # annotate with cosmic_nc
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.cosmic_nc }}" \
       --mark-sites COSMIC_NC \
       --output-type b \
-      --output "{{ results_dir }}"/tempout.bcf \
+      --output-file "{{ temp_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
+    mv "{{ temp_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[prefix+"_"+subtype+"_annotate_vcfs_bcftools_clinvar"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_clinvar"]|default(true) %}
     # annotate with clinvar
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.clinvar }}" \
       --mark-sites CLINVAR \
       --output-type b \
-      --output "{{ results_dir }}"/tempout.bcf \
+      --output-file "{{ temp_dir }}"/tempout.bcf \
       "{{ output_bcf }}"
 
     # move tempout to tempin for next step
-    mv "{{ results_dir }}"/tempout.bcf "{{ output_bcf }}"
+    mv "{{ temp_dir }}"/tempout.bcf "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
     {% endif %}
 
     # convert back to vcf.gz for the average users
+    {% if snpeff_flag or vep_flag %}
+
     bcftools view \
     --threads 4 \
     --output-type z \
-    --output "{{ output_vcf }}"
+    --output-file "{{ temp_vcf }}"
+    "{{ output_bcf }}"
+
+    bcftools index --threads 4 --tbi --force "{{ temp_vcf }}"
+
+    {% else %}
+
+    bcftools view \
+    --threads 4 \
+    --output-type z \
+    --output-file "{{ output_vcf }}"
     "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
 
-{% endmacro %}
+    {% endif -%}
+{% endmacro -%}

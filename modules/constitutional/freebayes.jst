@@ -1,16 +1,14 @@
-{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
-{% from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
 
-{% macro freebayes(sample, aligner='bwa', taskPrefix='Genome') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}_{{ aligner }}{% endset %}
-{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}{% endset %}
-{% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
-{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.ann.bcf{% endset %}
-{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.ann.vcf.gz{% endset %}
+{%- macro freebayes(sample, aligner='bwa', taskPrefix='Genome') %}
 
-{% for batch in constants.phoenix.calling_intervals %}
+{%- set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{%- set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}_{{ aligner }}{% endset %}
+{%- set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/freebayes/{{ sample.name }}{% endset %}
+{%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz{% endset %}
+{%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
+
+{%- for batch in constants.phoenix.calling_intervals %}
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [freebayes, {{ sample.gltype }}]
   input: {{ bam }}
@@ -63,7 +61,7 @@
 
     bcftools index -tf "{{ all_vcf }}"
 
-    {% if not debug %}
+    {%- if not debug %}
     rm -r "{{ temp_dir }}"
     {% endif %}
 
@@ -91,11 +89,6 @@
 
     bcftools index -tf "{{ pass_vcf }}"
 
-
-{{ bcftools_annotate(results_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'freebayes', sample.name) }}
-
-{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(results_dir, ann_bcf, ann_vcf, 'freebayes', sample.name) }}
-{% endif %}
-
+{%- set after_task = 'freebayes_filter_variants_'+sample.name+'_'+aligner %}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'freebayes', 'constitutional') }}
 {% endmacro %}

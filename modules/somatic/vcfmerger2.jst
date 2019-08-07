@@ -1,11 +1,12 @@
-{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
-{% from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
 
 {% macro vcfmerger2(pair, aligner='bwa', taskPrefix='Genome') %}
+
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
 {% set merged_vcf %}{{ temp_dir }}/{{ pair.name }}.merged.vcf{% endset %}
+{% set merged_rna_vcf %}{{ results_dir }}/{{ pair.name }}.merged.vcf{% endset %}
 {% set ann_vcf %}{{ results_dir }}/{{ pair.name }}.merged.ann.vcf.gz{% endset %}
 
 {% set vcfs_to_merge=[] %}
@@ -109,12 +110,12 @@
     chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
     mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
 
+    #TODO add rna header to vcf and rna counts if available
+    mv "{{ merged_vcf }}" "{{ merged_rna_vcf }}"
 
-{{ bcftools_annotate(results_dir, merged_vcf, ann_bcf, ann_vcf, 'somatic', taskPrefix, 'vcfmerger2', pair.name) }}
 
-{% if tasks[taskPrefix+"_somatic_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(results_dir, ann_bcf , ann_vcf, 'vcfmerger2', pair.name) }}
-{% endif %}
+{% set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
 
+{{ annotate_vcfs(sample, temp_dir, results_dir, after_task, merged_rna_vcf, taskPrefix, aligner, 'merged.rna', 'somatic') }}
 
 {% endmacro %}

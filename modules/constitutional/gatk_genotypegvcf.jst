@@ -1,17 +1,15 @@
-{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
-{% from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
 
-{% macro genotypegvcf(sample, aligner='bwa', taskPrefix='Genome') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}_{{ aligner }}{% endset %}
-{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}{% endset %}
-{% set gvcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz{% endset %}
-{% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz{% endset %}
-{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.ann.bcf{% endset %}
-{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.ann.vcf.gz{% endset %}
+{%- macro genotypegvcf(sample, aligner='bwa', taskPrefix='Genome') %}
 
-{% for batch in constants.phoenix.calling_intervals %}
+{%- set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{%- set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}_{{ aligner }}{% endset %}
+{%- set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}{% endset %}
+{%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.all.vcf.gz{% endset %}
+{%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz{% endset %}
+{%- set gvcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz{% endset %}
+
+{%- for batch in constants.phoenix.calling_intervals %}
 - name: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, GenotypeGVCFs, {{ sample.gltype }}]
   input: {{ gvcf }}
@@ -27,7 +25,7 @@
       --tmp-dir "temp" \
       --java-options "-Xmx14G" \
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      {% for interval in batch %}
+      {%- for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --variant "{{ gvcf }}" \
@@ -48,7 +46,7 @@
     gatk CNNScoreVariants \
       --java-options "-Xmx20G" \
       --tensor-type read_tensor \
-      {% for interval in batch %}
+      {%- for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
@@ -75,7 +73,7 @@
     bcftools concat \
       -O z \
       -o "{{ all_vcf }}" \
-      {% for batch in constants.phoenix.calling_intervals %}
+      {%- for batch in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz" \
       {% endfor %}
 
@@ -100,7 +98,7 @@
       --info-key CNN_2D \
       --snp-tranche 99.9 \
       --indel-tranche 99.5 \
-      {% for resource in constants.phoenix.gatk_cnn_resources %}
+      {%- for resource in constants.phoenix.gatk_cnn_resources %}
       --resource "{{ resource }}" \
       {% endfor %}
       --variant "{{ all_vcf }}" \
@@ -110,7 +108,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "."' \
-      {% if sample.gltype == 'exome' %}
+      {%- if sample.gltype == 'exome' %}
       --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
@@ -118,16 +116,11 @@
 
     bcftools index -tf "{{ pass_vcf }}"
 
-    {% if not debug %}
+    {%- if not debug %}
     rm -r "{{ temp_dir }}"
     {% endif %}
 
-
-{{ bcftools_annotate(results_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'genotypegvcf', sample.name) }}
-
-{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(results_dir, ann_bcf, ann_vcf, 'genotypegvcf', sample.name) }}
-{% endif %}
-
+{%- set after_task = 'haplotypecaller_filter_variants_'+sample.name+'_'+aligner %}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'hc', 'constitutional') }}
 {% endmacro %}
 

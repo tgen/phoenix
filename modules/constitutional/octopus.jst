@@ -1,16 +1,13 @@
-{% from 'modules/annotation/snpeff.jst' import snpeff with context %}
-{% from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
 
-{% macro octopus_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}_{{ aligner }}{% endset %}
-{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}{% endset %}
-{% set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
-{% set ann_bcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.ann.bcf{% endset %}
-{% set ann_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.ann.vcf.gz{% endset %}
+{%- macro octopus_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
+{%- set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{%- set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}_{{ aligner }}{% endset %}
+{%- set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}{% endset %}
+{%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
+{%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
 
-{% for batch in constants.phoenix.calling_intervals %}
+{%- for batch in constants.phoenix.calling_intervals %}
 - name: octopus_constitutional_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input: {{ bam }}
   walltime: "24:00:00"
@@ -25,7 +22,7 @@
     # Write out the regions in this batch to a file
     TAB=$'\t'
     cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
-    {% for interval in batch %}
+    {%- for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
@@ -46,7 +43,6 @@
 
 {% endfor %}
 
-
 - name: octopus_constitutional_merge_{{ sample.name }}_{{ aligner }}
   after-re: octopus_constitutional_{{ sample.name }}_{{ aligner }}_.*
   output: {{ all_vcf }}
@@ -62,13 +58,13 @@
     bcftools concat \
       -O z \
       -o "{{ all_vcf }}" \
-      {% for b in constants.phoenix.calling_intervals %}
+      {%- for b in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
       {% endfor %}
 
     bcftools index -tf "{{ all_vcf }}"
 
-    {% if not debug %}
+    {%- if not debug %}
     rm -r "{{ temp_dir }}"
     {% endif %}
 
@@ -88,7 +84,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      {% if sample.gltype == 'exome' %}
+      {%- if sample.gltype == 'exome' %}
       --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
@@ -96,11 +92,6 @@
 
     bcftools index -tf "{{ pass_vcf }}"
 
-
-{{ bcftools_annotate(results_dir, pass_vcf, ann_bcf, ann_vcf , 'constitutional', taskPrefix, 'octopus', sample.name) }}
-
-{% if tasks[taskPrefix+"_constitutional_annotate_vcfs_snpEff_ann"]|default(true) %}
-    {{ snpeff(results_dir, ann_bcf, ann_vcf, 'octopus', sample.name) }}
-{% endif %}
-
-{% endmacro %}
+{%- set after_task = 'octopus_constitutional_filter_variants_'+sample.name+'_'+aligner %}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional') }}
+{% endmacro -%}
