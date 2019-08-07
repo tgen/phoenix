@@ -29,8 +29,7 @@
 
 - name: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [vcfMerger2, {{ pair.name }}]
-  input: 
-    - {{ gzipped_path }}
+  input: {{ gzipped_path }}
   cpus: 2
   walltime: "4:00:00"
   cmd: |
@@ -114,8 +113,6 @@
     mv "{{ merged_vcf }}" "{{ merged_rna_vcf }}"
 
 
-{% set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
-
-{{ annotate_vcfs(sample, temp_dir, results_dir, after_task, merged_rna_vcf, taskPrefix, aligner, 'merged.rna', 'somatic') }}
-
+{%- set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, merged_rna_vcf, taskPrefix, aligner, 'merged.rna', 'somatic') }}
 {% endmacro %}

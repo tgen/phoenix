@@ -22,7 +22,7 @@
     # Write out the regions in this batch to a file
     TAB=$'\t'
     cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
-    {%- for interval in batch %}
+    {% for interval in batch %}
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
@@ -58,7 +58,7 @@
     bcftools concat \
       -O z \
       -o "{{ all_vcf }}" \
-      {%- for b in constants.phoenix.calling_intervals %}
+      {% for b in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
       {% endfor %}
 

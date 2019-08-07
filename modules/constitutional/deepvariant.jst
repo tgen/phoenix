@@ -42,7 +42,7 @@
 - name: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
   tags: [deepvariant, {{ sample.gltype }}]
   after:
-  {%- for i in range(nshards) %}
+  {% for i in range(nshards) %}
     - deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   {% endfor %}
   cpus: 10

@@ -98,7 +98,7 @@
       --info-key CNN_2D \
       --snp-tranche 99.9 \
       --indel-tranche 99.5 \
-      {%- for resource in constants.phoenix.gatk_cnn_resources %}
+      {% for resource in constants.phoenix.gatk_cnn_resources %}
       --resource "{{ resource }}" \
       {% endfor %}
       --variant "{{ all_vcf }}" \

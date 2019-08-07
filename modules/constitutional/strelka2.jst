@@ -9,7 +9,6 @@
 {%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
-
 - name: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
   tags: [strelka2, strelka2-constitutional, {{ sample.gltype }}]
   methods: > 
@@ -38,7 +37,7 @@
     STRELKA_BED="{{ temp_dir }}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${STRELKA_BED}"
-    {%- for contig in constants.phoenix.calling_contigs %}
+    {% for contig in constants.phoenix.calling_contigs %}
     {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
     {% endfor %}
     EOF
