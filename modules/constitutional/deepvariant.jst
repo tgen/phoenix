@@ -9,7 +9,7 @@
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
 
 {%- set nshards=40 %}
-{%- for i in range(nshards) %}
+{% for i in range(nshards) %}
 
 - name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   tags: [deepvariant, {{ sample.gltype }}]
@@ -58,7 +58,7 @@
 
     # Run call_variants
     call_variants \
-      {%- if sample.gltype == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --checkpoint "{{ constants.phoenix.deepvariant_models.exome }}" \
       {% else %}
       --checkpoint  "{{ constants.phoenix.deepvariant_models.genome }}" \

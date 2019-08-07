@@ -9,7 +9,8 @@
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.pass.vcf.gz{% endset %}
 {%- set gvcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz{% endset %}
 
-{%- for batch in constants.phoenix.calling_intervals %}
+{% for batch in constants.phoenix.calling_intervals %}
+
 - name: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [gatk, GenotypeGVCFs, {{ sample.gltype }}]
   input: {{ gvcf }}
@@ -25,7 +26,7 @@
       --tmp-dir "temp" \
       --java-options "-Xmx14G" \
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      {%- for interval in batch %}
+      {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --variant "{{ gvcf }}" \
@@ -46,7 +47,7 @@
     gatk CNNScoreVariants \
       --java-options "-Xmx20G" \
       --tensor-type read_tensor \
-      {%- for interval in batch %}
+      {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
@@ -73,7 +74,7 @@
     bcftools concat \
       -O z \
       -o "{{ all_vcf }}" \
-      {%- for batch in constants.phoenix.calling_intervals %}
+      {% for batch in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz" \
       {% endfor %}
 
@@ -108,7 +109,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "."' \
-      {%- if sample.gltype == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
@@ -116,7 +117,7 @@
 
     bcftools index -tf "{{ pass_vcf }}"
 
-    {%- if not debug %}
+    {% if not debug %}
     rm -r "{{ temp_dir }}"
     {% endif %}
 

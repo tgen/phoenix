@@ -54,7 +54,7 @@
     EOF
 
     configureStrelkaGermlineWorkflow.py \
-      {%- if sample.gltype == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --exome \
       {% endif %}
       --config "${STRELKA_CONFIG}" \
@@ -92,7 +92,7 @@
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
-      {%- if sample.gltype == 'exome' %}
+      {% if sample.gltype == 'exome' %}
       --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \

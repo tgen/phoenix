@@ -8,7 +8,8 @@
 {%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.all.vcf.gz{% endset %}
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.freebayes.pass.vcf.gz{% endset %}
 
-{%- for batch in constants.phoenix.calling_intervals %}
+{% for batch in constants.phoenix.calling_intervals %}
+
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [freebayes, {{ sample.gltype }}]
   input: {{ bam }}
@@ -61,7 +62,7 @@
 
     bcftools index -tf "{{ all_vcf }}"
 
-    {%- if not debug %}
+    {% if not debug %}
     rm -r "{{ temp_dir }}"
     {% endif %}
 
