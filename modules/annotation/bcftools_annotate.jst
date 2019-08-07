@@ -12,6 +12,8 @@
 
     module load {{ constants.tools.samtools_1_9.module }}
 
+    mkdir -p "{{ temp_dir }}"
+
     # we need to convert whatever vcf type we are given into a bcf (bcftools loves bcfs)
     # also create a temp bcf that we will use for all annotation runs
     bcftools view \
