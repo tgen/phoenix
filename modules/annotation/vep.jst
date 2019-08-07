@@ -9,9 +9,86 @@
     set -euv
 
     module load {{ constants.tools.perlvepTODO }}
-   
-    vep \
-      -I "{{ vcf }}" \
-      -O "{{ out }}" 
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    # Use VEP to create full annotation file with all transcripts
+    vep --fork 4 \
+        --input_file ${INPUT_VCF} \
+        --format vcf \
+        --output_file ${OUTPUT_BASE}_vep_full.vcf \
+        --vcf \
+        --vcf_info_field CSQ \
+        --species homo_sapiens \
+        --force_overwrite \
+        --no_stats \
+        --cache \
+        --dir_cache ${DATABASE_PATH} \
+        --cache_version 97 \
+        --offline \
+        --fasta ${REFERENCE} \
+        --buffer_size 10000 \
+        --terms SO \
+        --hgvs \
+        --hgvsg \
+        --symbol \
+        --sift b \
+        --polyphen b \
+        --humdiv \
+        --uniprot \
+        --domains \
+        --canonical \
+        --flag_pick_allele_gene \
+        --pick_order canonical,appris,tsl,biotype,rank,ccds,length
+
+    # Convert to compressed VCF
+    bcftools view \
+        --threads 4 \
+        --tbi \
+        --output-type z \
+        --output-file ${OUTPUT_BASE}_vep_full.vcf.gz \
+        ${OUTPUT_BASE}_vep_full.vcf
+
+    bcftools index --threads 4 --force --tbi ${OUTPUT_BASE}_vep_full.vcf.gz
+
+
+    # Use VEP to create full annotation file with all transcripts
+    vep --fork 4 \
+        --input_file ${INPUT_VCF} \
+        --format vcf \
+        --output_file ${OUTPUT_BASE}_vep_pick.vcf \
+        --vcf \
+        --vcf_info_field CSQ \
+        --species homo_sapiens \
+        --force_overwrite \
+        --no_stats \
+        --cache \
+        --dir_cache ${DATABASE_PATH} \
+        --cache_version 97 \
+        --offline \
+        --fasta ${REFERENCE} \
+        --buffer_size 10000 \
+        --terms SO \
+        --hgvs \
+        --hgvsg \
+        --symbol \
+        --sift b \
+        --polyphen b \
+        --humdiv \
+        --uniprot \
+        --domains \
+        --canonical \
+        --pick_allele_gene \
+        --pick_order canonical,appris,tsl,biotype,rank,ccds,length
+
+    # Convert to compressed VCF
+    bcftools view \
+        --threads 4 \
+        --tbi \
+        --output-type z \
+        --output-file ${OUTPUT_BASE}_vep_pick.vcf.gz \
+        ${OUTPUT_BASE}_vep_full.vcf
+
+    bcftools index --threads 4 --force --tbi ${OUTPUT_BASE}_vep_pick.vcf.gz
+
 
 {% endmacro %}
