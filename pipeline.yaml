@@ -272,8 +272,8 @@ constants:
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
     dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
-    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/exomes/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
-    gnomad_genome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/genomes/gnomad.genomes.r2.1.1.sites.liftover_grch38.noINFO.bcf
+    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
+    gnomad_genome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.genomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
     cosmic_coding_v89: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v89/CosmicCodingMuts_v89_hg38tgen.bcf
     cosmic_noncoding_v89: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v89/CosmicNonCodingMuts_v89_hg38tgen.bcf
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
