@@ -112,5 +112,5 @@
 
 
 {%- set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, output_vcf, taskPrefix, aligner, 'merged', 'somatic') }}
+{{- annotate_vcfs(pair, temp_dir, results_dir, after_task, output_vcf, taskPrefix, aligner, 'merged', 'somatic') }}
 {% endmacro %}
