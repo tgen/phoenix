@@ -5,7 +5,8 @@
   tags: [bcftools, annotation]
   after: {{ after_task }}
   walltime: "8:00:00"
-  cpus: 4
+  cpus: 6
+  mem: 28G
   cmd: |
     set -euv
     set -o pipefail
@@ -127,7 +128,7 @@
     bcftools view \
     --threads 4 \
     --output-type z \
-    --output-file "{{ temp_vcf }}"
+    --output-file "{{ temp_vcf }}" \
     "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ temp_vcf }}"
@@ -137,7 +138,7 @@
     bcftools view \
     --threads 4 \
     --output-type z \
-    --output-file "{{ output_vcf }}"
+    --output-file "{{ output_vcf }}" \
     "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
