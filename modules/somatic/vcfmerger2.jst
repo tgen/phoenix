@@ -3,6 +3,7 @@
 {% macro vcfmerger2(pair, aligner='bwa', taskPrefix='Genome') %}
 
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
 {% set merged_vcf %}{{ temp_dir }}/{{ pair.name }}.merged.vcf{% endset %}
@@ -13,13 +14,14 @@
 # Here we iterate over the callers for each pair calculating the necessary
 # paths. Callers add themselves to the pair object when their macro is used.
 {% for caller in pair.callers %}
-{% set bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set gzipped_path %}{{ pair.gltype }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
 {% set unzipped_path %}{{ temp_dir }}/{{ caller }}.vcf{% endset %}
 {% set prepped_path %}{{ temp_dir }}/{{ caller }}.prepz.vcf{% endset %}
 {% set filtered_path %}{{ temp_dir }}/{{ caller }}.filt.vcf{% endset %}
 {% do vcfs_to_merge.append({
   'normal_bam': normal_bam,
+  'tumor_bam': tumor_bam,
   'gzipped_path': gzipped_path, 
   'unzipped_path': unzipped_path,
   'prepped_path': prepped_path,
@@ -33,20 +35,18 @@
   walltime: "4:00:00"
   cmd: |
     set -uev
-    module load {{ constants.tools.samtools_1_9.module }}
-    module load {{ constants.tools.python_3_6_0.module }}
-    module load {{ constants.tools.bedtools_2_26_0.module }}
-    module load {{ constants.tools.rstats_3_4_1.module }}
-    module load {{ constants.tools.vcfmerger2_0_7_0.module }}
+
+    module load {{ constants.tools.vcfmerger2_0_7_5.module }}
     
     mkdir -p "{{ temp_dir }}"
     gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
 
     # Locate the prep_vcf.sh script relative to vcfMerger2.py
-    PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs/prep_vcf.sh
-    
+    PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
+
     ${PREPVCF} \
       -g "{{ constants.phoenix.reference_fasta }}" \
+      --dict "{{ constants.phoenix.reference_dict }}" \
       -d "{{ temp_dir }}" \
       --bam "{{ bam }}" \
       --toolname "{{ caller }}" \
@@ -60,7 +60,7 @@
   tags: [vcfMerger2, {{ pair.name }}]
   after: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
   cpus: 2
-  walltime: "24:00:00"
+  walltime: "4:00:00"
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
@@ -82,24 +82,23 @@
   {% endfor %}
   output: {{ output_vcf }}
   cpus: 4
-  walltime: "24:00:00"
+  walltime: "4:00:00"
   cmd: |
     set -uev
-    module load {{ constants.tools.samtools_1_9.module }}
-    module load {{ constants.tools.python_3_6_0.module }}
-    module load {{ constants.tools.bedtools_2_26_0.module }}
-    module load {{ constants.tools.rstats_3_4_1.module }}
-    module load {{ constants.tools.vcfmerger2_0_7_0.module }}
+
+    module load {{ constants.tools.vcfmerger2_0_7_5.module }}
 
     mkdir -p "{{ results_dir }}"
     
     vcfMerger2.py \
       --do-venn \
+      --venn-title "{{ pair.name }}" \
       --skip-prep-vcfs \
       --precedence "{{ pair.callers|join('|') }}" \
       --toolnames "{{ pair.callers|join('|') }}" \
       --vcfs "{{ vcfs_to_merge|map(attribute='filtered_path')|join('|') }}" \
       -g "{{ constants.phoenix.reference_fasta }}" \
+      --dict "{{ constants.phoenix.reference_dict }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
       -d "{{ temp_dir }}" \
