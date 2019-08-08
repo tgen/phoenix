@@ -42,7 +42,6 @@
     # Convert to compressed VCF
     bcftools view \
         --threads 4 \
-        --tbi \
         --output-type z \
         --output-file "{{ final_vcf_prefix }}.vep.full.vcf.gz" \
         "{{ final_vcf_prefix }}.vep.full.vcf"
@@ -50,6 +49,7 @@
     rm  "{{ final_vcf_prefix }}.vep.full.vcf"
 
     bcftools index --threads 4 --force --tbi "{{ final_vcf_prefix }}.vep.full.vcf.gz"
+    bcftools index --threads 4 --force "{{ final_vcf_prefix }}.vep.full.vcf.gz"
 
 - name: vep_con_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [vep, annotation]
@@ -94,7 +94,6 @@
     # Convert to compressed VCF
     bcftools view \
         --threads 4 \
-        --tbi \
         --output-type z \
         --output-file "{{ final_vcf_prefix }}.vep.pick.vcf.gz" \
         "{{ final_vcf_prefix }}.vep.pick.vcf"
@@ -102,5 +101,6 @@
     rm "{{ final_vcf_prefix }}.vep.pick.vcf"
 
     bcftools index --threads 4 --force --tbi "{{ final_vcf_prefix }}.vep.pick.vcf.gz"
+    bcftools index --threads 4 --force "{{ final_vcf_prefix }}.vep.pick.vcf.gz"
 
 {% endmacro %}

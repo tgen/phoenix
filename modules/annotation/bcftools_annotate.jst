@@ -5,8 +5,7 @@
   tags: [bcftools, annotation]
   after: {{ after_task }}
   walltime: "8:00:00"
-  cpus: 6
-  mem: 28G
+  cpus: 4
   cmd: |
     set -euv
     set -o pipefail
@@ -23,7 +22,7 @@
       --output-file "{{ output_bcf }}" \
       "{{ input_vcf }}"
 
-    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
+    bcftools index --threads 4 --force "{{ output_bcf }}"
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_dbsnp_v152"]|default(true) %}
     # annotate with dbsnp
@@ -39,7 +38,7 @@
     # move tempout to tempin for next step
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
+    bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover"]|default(true) %}
@@ -55,7 +54,7 @@
     # move tempout to tempin for next step
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
+    bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome_v2_1_1_liftover"]|default(true) %}
@@ -71,7 +70,7 @@
     # move tempout to tempin for next step
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
+    bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_coding_v89"]|default(true) %}
@@ -87,7 +86,7 @@
     # move tempout to tempin for next step
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
+    bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_noncoding_v89"]|default(true) %}
@@ -103,7 +102,7 @@
     # move tempout to tempin for next step
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
+    bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_clinvar_20190715"]|default(true) %}
@@ -119,7 +118,7 @@
     # move tempout to tempin for next step
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
-    bcftools index --threads 4 --tbi --force "{{ output_bcf }}"
+    bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     # convert back to vcf.gz for the average users
@@ -132,6 +131,7 @@
     "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ temp_vcf }}"
+    bcftools index --threads 4 --force "{{ temp_vcf }}"
 
     {% else %}
 
@@ -142,6 +142,7 @@
     "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
+    bcftools index --threads 4 --force "{{ output_vcf }}"
 
     {% endif -%}
 {% endmacro -%}

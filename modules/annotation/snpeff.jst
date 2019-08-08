@@ -26,6 +26,7 @@
       bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
     bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
+    bcftools index --threads 4 --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
 
     # Generate canonical annotation set
@@ -42,5 +43,6 @@
       bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
 
     bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
+    bcftools index --threads 4 --force "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
 
 {% endmacro %}
