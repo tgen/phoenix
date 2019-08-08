@@ -4,9 +4,17 @@
 
 {%- macro annotate_vcfs(sample_or_pair, temp_dir, results_dir, after_task, input_vcf, taskPrefix, aligner, variant_caller, analysis_type) %}
 
+{% if variant_caller == 'merged' %}
+  {%- set output_vcf %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.vcf.gz{% endset %}
+  {%- set temp_vcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.vcf.gz{% endset %}
+  {%- set final_vcf_prefix %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}{% endset %}
+{% else %}
+  {%- set output_vcf %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass.db.vcf.gz{% endset %}
+  {%- set temp_vcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass.db.vcf.gz{% endset %}
+  {%- set final_vcf_prefix %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass{% endset %}
+{% endif %}
+
 {%- set annotate_task_prefix = taskPrefix+'_'+analysis_type+'_annotate_vcfs_bcftools_' %}
-{%- set output_vcf %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass.ann.vcf.gz{% endset %}
-{%- set temp_vcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass.ann.vcf.gz{% endset %}
 {%- set bcftools_task %}bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}{% endset %}
 
 {%- set flags = namespace({ 'bcftools': none, 'snpeff': none, 'vep': none }) %}
@@ -40,23 +48,28 @@
 {% endif %}
 
 {%- if flags.bcftools is sameas true %}
-  {{- bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, flags.snpeff, vep_flag ) }}
+
+  {{- bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, flags.snpeff, flags.vep ) }}
+
   {%- if flags.snpeff %}
-    {{- snpeff(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, output_vcf, aligner) }}
+    {{- snpeff(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner) }}
   {% endif %}
+
   {#
-  -{%- if vep_flag %}
-    {{ vep(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, output_vcf, aligner) }}
+  {%- if flags.vep %}
+    {{- vep(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner) }}
   {% endif %}
   #}
 {% else %}
+
   {%- if flags.snpeff %}
-    {{- snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, output_vcf, aligner) }}
+    {{- snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner) }}
   {% endif %}
-{#-
-  {%- if vep_flag %}
-    {{ vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, output_vcf, aligner) }}
+
+  {#
+  {%- if flags.vep %}
+    {{- vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner) }}
   {% endif %}
-#}
+  #}
 {% endif %}
 {% endmacro %}

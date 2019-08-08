@@ -1,21 +1,20 @@
-{% macro vep(input_vcf, output_vcf) %}
-- name: vep_{{ input_vcf|sha256 }}
+{% macro vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner ) %}
+- name: vep_all_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [vep, annotation]
-  input: {{ input_vcf }}
-  output: {{ output_vcf }}
+  after: {{ after_task }}
   walltime: "8:00:00"
   cpus: 4
   cmd: |
     set -euv
 
-    module load {{ constants.tools.perlvepTODO }}
+    module load {{ constants.tools.vep }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Use VEP to create full annotation file with all transcripts
     vep --fork 4 \
-        --input_file ${INPUT_VCF} \
+        --input_file "{{ input_vcf }}" \
         --format vcf \
-        --output_file ${OUTPUT_BASE}_vep_full.vcf \
+        --output_file "{{ final_vcf_prefix }}.vep.full.vcf" \
         --vcf \
         --vcf_info_field CSQ \
         --species homo_sapiens \
@@ -25,7 +24,7 @@
         --dir_cache ${DATABASE_PATH} \
         --cache_version 97 \
         --offline \
-        --fasta ${REFERENCE} \
+        --fasta "{{ constants.phoenix.reference_fasta }}" \
         --buffer_size 10000 \
         --terms SO \
         --hgvs \
@@ -45,17 +44,29 @@
         --threads 4 \
         --tbi \
         --output-type z \
-        --output-file ${OUTPUT_BASE}_vep_full.vcf.gz \
-        ${OUTPUT_BASE}_vep_full.vcf
+        --output-file "{{ final_vcf_prefix }}.vep.full.vcf.gz" \
+        "{{ final_vcf_prefix }}.vep.full.vcf"
 
-    bcftools index --threads 4 --force --tbi ${OUTPUT_BASE}_vep_full.vcf.gz
+    rm  "{{ final_vcf_prefix }}.vep.full.vcf"
 
+    bcftools index --threads 4 --force --tbi "{{ final_vcf_prefix }}.vep.full.vcf.gz"
+
+- name: vep_con_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
+  tags: [vep, annotation]
+  after: {{ after_task }}
+  walltime: "8:00:00"
+  cpus: 4
+  cmd: |
+    set -euv
+
+    module load {{ constants.tools.perlvepTODO }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     # Use VEP to create full annotation file with all transcripts
     vep --fork 4 \
-        --input_file ${INPUT_VCF} \
+        --input_file "{{ input_vcf }}" \
         --format vcf \
-        --output_file ${OUTPUT_BASE}_vep_pick.vcf \
+        --output_file "{{ final_vcf_prefix }}.vep.pick.vcf" \
         --vcf \
         --vcf_info_field CSQ \
         --species homo_sapiens \
@@ -65,7 +76,7 @@
         --dir_cache ${DATABASE_PATH} \
         --cache_version 97 \
         --offline \
-        --fasta ${REFERENCE} \
+        --fasta "{{ constants.phoenix.reference_fasta }}" \
         --buffer_size 10000 \
         --terms SO \
         --hgvs \
@@ -85,10 +96,11 @@
         --threads 4 \
         --tbi \
         --output-type z \
-        --output-file ${OUTPUT_BASE}_vep_pick.vcf.gz \
-        ${OUTPUT_BASE}_vep_full.vcf
+        --output-file "{{ final_vcf_prefix }}.vep.pick.vcf.gz" \
+        "{{ final_vcf_prefix }}.vep.pick.vcf"
 
-    bcftools index --threads 4 --force --tbi ${OUTPUT_BASE}_vep_pick.vcf.gz
+    rm "{{ final_vcf_prefix }}.vep.pick.vcf"
 
+    bcftools index --threads 4 --force --tbi "{{ final_vcf_prefix }}.vep.pick.vcf.gz"
 
 {% endmacro %}

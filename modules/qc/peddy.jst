@@ -76,7 +76,7 @@
 
     TAB=$'\t'
     cat <<EOF > "temp/{{ project }}_freebayes_qc.ped"
-    {% for sample in samples.values() %}
+    {% for sample in samples.values() if sample.gltype != 'singlecellrna' %}
     {{ familyCode|default("0") }}${TAB}{{ sample.rgsm|default(sample.name) }}${TAB}0${TAB}0${TAB}{{ sex|default('-9') }}${TAB}-9
     {% endfor %}
     EOF

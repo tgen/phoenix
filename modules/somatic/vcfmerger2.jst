@@ -6,8 +6,7 @@
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
 {% set merged_vcf %}{{ temp_dir }}/{{ pair.name }}.merged.vcf{% endset %}
-{% set merged_rna_vcf %}{{ results_dir }}/{{ pair.name }}.merged.vcf{% endset %}
-{% set ann_vcf %}{{ results_dir }}/{{ pair.name }}.merged.ann.vcf.gz{% endset %}
+{% set output_vcf %}{{ results_dir }}/{{ pair.name }}.merged.vcf{% endset %}
 
 {% set vcfs_to_merge=[] %}
 
@@ -81,7 +80,7 @@
   {% for caller in pair.callers %}
     - vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   {% endfor %}
-  output: {{ merged_vcf }}
+  output: {{ output_vcf }}
   cpus: 4
   walltime: "24:00:00"
   cmd: |
@@ -110,9 +109,9 @@
     mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
 
     #TODO add rna header to vcf and rna counts if available
-    mv "{{ merged_vcf }}" "{{ merged_rna_vcf }}"
+    mv "{{ merged_vcf }}" "{{ output_vcf }}"
 
 
 {%- set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, merged_rna_vcf, taskPrefix, aligner, 'merged.rna', 'somatic') }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, output_vcf, taskPrefix, aligner, 'merged', 'somatic') }}
 {% endmacro %}

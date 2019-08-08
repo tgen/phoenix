@@ -1,5 +1,5 @@
 
-{%- macro snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, output_vcf, aligner) %}
+{%- macro snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner ) %}
 
 - name: snpeff_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [snpeff, annotation]
@@ -23,11 +23,9 @@
       "{{ constants.phoenix.snpeff_db }}" \
       "{{ input_vcf }}" \
       | \
-      bcftools view --output-type z --output-file "{{ results_dir }}/tempout.vcf.gz"
+      bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
-    mv "{{ results_dir }}/tempout.vcf.gz" "{{ output_vcf }}"
-
-    bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
+    bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
 
     # Generate canonical annotation set
@@ -41,10 +39,8 @@
       "{{ constants.phoenix.snpeff_db }}" \
       "{{ input_vcf }}" \
       | \
-      bcftools view --output-type z --output-file "{{ results_dir }}/tempout.vcf.gz"
+      bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
 
-    mv "{{ results_dir }}/tempout.vcf.gz" "{{ output_vcf }}"
-
-    bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
+    bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
 
 {% endmacro %}

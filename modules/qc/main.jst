@@ -89,15 +89,18 @@
 {% endmacro %}
 
 {% macro qc(samples) %}
-    {% for sample in samples.values() %}
+    {% for sample in samples.values() if sample.gltype != 'singlecellrna' %}
         {% if sample.gltype == 'rna' %}
             {% set taskPrefix = 'RNA' %}
             {% set aligner = 'star' %}
-        {% elif sample.gltype in 'exome' %}
+        {% elif sample.gltype == 'exome' %}
             {% set taskPrefix = 'Exome' %}
             {% set aligner = 'bwa' %}
-        {% elif sample.gltype in 'genome' %}
+        {% elif sample.gltype == 'genome' %}
             {% set taskPrefix = 'Genome' %}
+            {% set aligner = 'bwa' %}
+        {% elif sample.gltype == 'singlecellrna' %}
+            {% set taskPrefix = 'SingleCellRNA' %}
             {% set aligner = 'bwa' %}
         {% endif %}
 
@@ -107,6 +110,8 @@
     {% endfor %}
 
     {% if tasks.Exome_quality_control_gender_ethnicity_relatedness_check_peddy or tasks.Genome_quality_control_gender_ethnicity_relatedness_check_peddy or tasks.RNA_quality_control_gender_ethnicity_relatedness_check_peddy |default(true) %}
+        {#
         {{- peddy_cohort(samples) }}
+        #}
     {% endif %}
 {% endmacro %}
