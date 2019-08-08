@@ -7,7 +7,7 @@
   cmd: |
     set -euv
 
-    module load {{ constants.tools.vep }}
+    module load {{ constants.tools.vep_97_3.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Use VEP to create full annotation file with all transcripts
@@ -21,7 +21,7 @@
         --force_overwrite \
         --no_stats \
         --cache \
-        --dir_cache ${DATABASE_PATH} \
+        --dir_cache "{{ constants.phoenix.vep_data }}" \
         --cache_version 97 \
         --offline \
         --fasta "{{ constants.phoenix.reference_fasta }}" \
@@ -59,7 +59,7 @@
   cmd: |
     set -euv
 
-    module load {{ constants.tools.perlvepTODO }}
+    module load {{ constants.tools.vep_97_3.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Use VEP to create full annotation file with all transcripts
@@ -73,7 +73,7 @@
         --force_overwrite \
         --no_stats \
         --cache \
-        --dir_cache ${DATABASE_PATH} \
+        --dir_cache "{{ constants.phoenix.vep_data }}" \
         --cache_version 97 \
         --offline \
         --fasta "{{ constants.phoenix.reference_fasta }}" \

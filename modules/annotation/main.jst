@@ -55,21 +55,19 @@
     {{- snpeff(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner) }}
   {% endif %}
 
-  {#
   {%- if flags.vep %}
     {{- vep(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner) }}
   {% endif %}
-  #}
+
 {% else %}
 
   {%- if flags.snpeff %}
     {{- snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner) }}
   {% endif %}
 
-  {#
   {%- if flags.vep %}
     {{- vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner) }}
   {% endif %}
-  #}
+
 {% endif %}
 {% endmacro %}

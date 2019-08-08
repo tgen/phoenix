@@ -266,6 +266,16 @@ constants:
         Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
         Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
         sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
+    vep_97_3:
+      module: vep/97
+      version: "97.3"
+      verbose: ensembl-vep release 97.3
+      website: https://github.com/Ensembl/ensembl-vep
+      citation: >
+        McLaren W, Gil L, Hunt SE, Riat HS, Ritchie GR, Thormann A, Flicek P, Cunningham F.
+        The Ensembl Variant Effect Predictor.
+        Genome Biology Jun 6;17(1):122. (2016)
+        doi:10.1186/s13059-016-0974-4
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
@@ -329,6 +339,7 @@ constants:
     snpeff_data: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
     snpeff_db: GRCh38.95
     snpSniffer_sites: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/snpSniffer/positions_387_hg38_ucsc.txt
+    vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v97/
     deepvariant_models:
       exome: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wes_standard/model.ckpt
       genome: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt
