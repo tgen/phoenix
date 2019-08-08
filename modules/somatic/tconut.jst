@@ -66,7 +66,7 @@
     bcftools annotate \
       --threads 2 \
       -O z \
-      -a "{{ constants.phoenix.dbsnp }}" \
+      -a "{{ constants.phoenix.dbsnp_v152 }}" \
       -c "ID,+INFO" \
       "{{ run_dir }}/results/variants/variants.vcf.gz" \
       -o "{{ tconut_vcf }}"
