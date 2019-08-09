@@ -130,8 +130,10 @@
     
     mkdir --parents qc
     multiqc --force --outdir qc .
-    sendqc qc/multiqc_data/multiqc_data.json {{ email }}
-
+    if [ -f qc/multiqc_data/multiqc_data.json ]
+    then
+      sendqc qc/multiqc_data/multiqc_data.json {{ email }}
+    fi
 
 # Start of module calls
 {% if tasks.dna_alignment|default(true) %}

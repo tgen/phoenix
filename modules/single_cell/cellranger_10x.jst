@@ -53,6 +53,8 @@
       --sample "{{ samples_list|join(',') }}" \
       --transcriptome "{{ constants.phoenix.cellranger_reference }}")
 
+    mv "{{ temp_dir }}{{ props.name }}_{{ library }}/*" "{{ outdir }}"
+
 {% endfor %}
 {% endmacro %}
 
