@@ -50,9 +50,9 @@
     PREPVCF="/home/tgenjetstream/dev_binaries_and_databases/0.7.5/prep_vcfs_somatic/prep_vcf_somatic.sh"
 
     ${PREPVCF} \
-      -g "{{ constants.phoenix.reference_fasta }}" \
-      --dict "{{ constants.phoenix.reference_dict }}" \
-      -d "{{ temp_dir }}" \
+      --ref-genome "{{ constants.phoenix.reference_fasta }}" \
+      --contigs-file "{{ constants.phoenix.reference_dict }}" \
+      --dir-work "{{ temp_dir }}" \
       --bam "{{ bam }}" \
       --toolname "{{ caller }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
