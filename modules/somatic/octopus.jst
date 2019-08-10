@@ -7,7 +7,7 @@
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
-- name: octopus_somatic_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+- name: octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [octopus_somatic, {{ pair.gltype }}]
   input:
     - {{ normal_bam }}
@@ -50,9 +50,9 @@
 {% endfor %}
 
 
-- name: octopus_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
+- name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, concat, octopus_somatic, {{ pair.gltype }}]
-  after-re: octopus_somatic_{{ pair.name }}_{{ aligner }}_.*
+  after-re: octopus_{{ pair.name }}_{{ aligner }}_.*
   output: {{ all_vcf }}
   cpus: 4
   mem: 16G
@@ -77,9 +77,9 @@
     {% endif %}
 
 
-- name: octopus_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
+- name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [bcftools, filter, {{ pair.gltype }}]
-  after: octopus_somatic_merge_chunks_{{ pair.name }}_{{ aligner }}
+  after: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |
     set -euv

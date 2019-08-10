@@ -8,7 +8,7 @@
 {% set all_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
-- name: strelka2_somatic_{{ pair.name }}_{{ aligner }}
+- name: strelka2_{{ pair.name }}_{{ aligner }}
   tags: [strelka2, strelka2-somatic, {{ pair.gltype }}]
   methods: > 
     Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
@@ -67,9 +67,9 @@
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
 
-- name: strelka2_somatic_filter_variants_{{ pair.name }}_{{ aligner }}
+- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [strelka2, strelka2-somatic, bcftools, filter, {{ pair.gltype }}]
-  after: strelka2_somatic_{{ pair.name }}_{{ aligner }}
+  after: strelka2_{{ pair.name }}_{{ aligner }}
   output:
     - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
     - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz

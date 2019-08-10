@@ -9,7 +9,7 @@
 {%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
-- name: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
+- name: strelka2_{{ sample.name }}_{{ aligner }}
   tags: [strelka2, strelka2-constitutional, {{ sample.gltype }}]
   methods: > 
     Constitutional variants for {{ sample.name }} ({{ aligner }}) were called with
@@ -80,9 +80,9 @@
     rm -r "{{ temp_dir }}"
 
 
-- name: strelka2_constitutional_filter_variants_{{ sample.name }}_{{ aligner }}
+- name: strelka2_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [strelka2, strelka2-constitutional, bcftools, filter, {{ sample.gltype }}]
-  after: strelka2_constitutional_{{ sample.name }}_{{ aligner }}
+  after: strelka2_{{ sample.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |
     set -euv

@@ -9,7 +9,7 @@
 
 {% for batch in constants.phoenix.calling_intervals %}
 
-- name: octopus_constitutional_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+- name: octopus_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input: {{ bam }}
   walltime: "24:00:00"
   cpus: 8
@@ -44,8 +44,8 @@
 
 {% endfor %}
 
-- name: octopus_constitutional_merge_{{ sample.name }}_{{ aligner }}
-  after-re: octopus_constitutional_{{ sample.name }}_{{ aligner }}_.*
+- name: octopus_merge_{{ sample.name }}_{{ aligner }}
+  after-re: octopus_{{ sample.name }}_{{ aligner }}_.*
   output: {{ all_vcf }}
   walltime: "24:00:00"
   cpus: 4
@@ -70,9 +70,9 @@
     {% endif %}
 
 
-- name: octopus_constitutional_filter_variants_{{ sample.name }}_{{ aligner }}
+- name: octopus_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [octopus, bcftools, filter, {{ sample.gltype }}]
-  after: octopus_constitutional_merge_{{ sample.name }}_{{ aligner }}
+  after: octopus_merge_{{ sample.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   walltime: "24:00:00"
   cpus: 4

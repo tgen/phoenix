@@ -4,7 +4,7 @@
 {% set pair_dir %}{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
 {% set run_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
 
-- name: manta_somatic_{{ pair.name }}_{{ aligner }}
+- name: manta_{{ pair.name }}_{{ aligner }}
   tags: [manta, manta-somatic, {{ pair.gltype }}]
   methods: > 
     Somatic structural variants and indels for {{ pair.name }} ({{ aligner }}) 

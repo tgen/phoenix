@@ -3,7 +3,7 @@
 {% set sample_dir %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
 {% set run_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
 
-- name: manta_constitutional_{{ sample.name }}_{{ aligner }}
+- name: manta_{{ sample.name }}_{{ aligner }}
   tags: [manta, manta-constitutional, {{ sample.gltype }}]
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
