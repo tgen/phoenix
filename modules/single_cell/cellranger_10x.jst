@@ -6,7 +6,7 @@
 {% set props = datafiles[0] %}
 {% set assaycode = props.assayCode|default('unknown') %}
 {% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
-{% set outdir %}{{ props.gltype }}/quant/cellranger/{{ props.name }}/{% endset %}
+{% set outdir %}{{ props.gltype }}/quant/cellranger/{{ props.name }}_{{ library }}/{% endset %}
 {% set temp_dir %}temp/cellranger/{{ props.name }}/{{ library }}/fastqs/{% endset %}
 
 {% set samples_list = [] %}
