@@ -47,9 +47,7 @@
     # Locate the prep_vcf.sh script relative to vcfMerger2.py
     PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
     #TODO remove this step after HPC changes the permissions back to being executable
-    cp ${PREPVCF} .
-    chmod 750 prep_vcf_somatic.sh
-    PREPVCF="./prep_vcf_somatic.sh"
+    PREPVCF="/home/tgenjetstream/dev_binaries_and_databases/0.7.5/prep_vcfs_somatic/prep_vcf_somatic.sh"
 
     ${PREPVCF} \
       -g "{{ constants.phoenix.reference_fasta }}" \
