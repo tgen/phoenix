@@ -93,6 +93,6 @@
 
     bcftools index -tf "{{ pass_vcf }}"
 
-{%- set after_task = 'octopus_constitutional_filter_variants_'+sample.name+'_'+aligner %}
+{%- set after_task = 'octopus_filter_variants_'+sample.name+'_'+aligner %}
 {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional') }}
 {% endmacro -%}
