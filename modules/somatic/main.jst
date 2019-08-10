@@ -21,6 +21,16 @@
         {% set tumor = samples[pair.tumor] %}
         {% set normal = samples[pair.normal] %}
         {% set pair_name = normal.name + '-' + tumor.name %}
+
+        {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+            {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+                {% if 'rna_samples' not in tumor %}
+                   {% do tumor.update({'rna_samples': []}) %}
+                {% endif %}
+                {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+           {% endfor %}
+        {% endif %}
+
         {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
     {% endfor %}
 {% else %}
@@ -32,12 +42,30 @@
     # predefined in the config data. 
     {% set pairs = [] %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'exome' %}
+        {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+            {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+                {% if 'rna_samples' not in tumor %}
+                   {% do tumor.update({'rna_samples': []}) %}
+                {% endif %}
+                {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+           {% endfor %}
+        {% endif %}
+
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype == 'exome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
             {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'genome' %}
+        {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+            {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+                {% if 'rna_samples' not in tumor %}
+                   {% do tumor.update({'rna_samples': []}) %}
+                {% endif %}
+                {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+           {% endfor %}
+        {% endif %}
+
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype == 'genome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
             {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}

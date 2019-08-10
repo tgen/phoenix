@@ -1,4 +1,6 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'modules/somatic/rna_variant_check.jst' import add_rna_header_to_vcf with context %}
+{% from 'modules/somatic/rna_variant_check.jst' import add_matched_rna with context %}
 
 {% macro vcfmerger2(pair, aligner='bwa', taskPrefix='Genome') %}
 
@@ -7,7 +9,8 @@
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
 {% set merged_vcf %}{{ temp_dir }}/{{ pair.name }}.merged.vcf{% endset %}
-{% set output_vcf %}{{ results_dir }}/{{ pair.name }}.merged.vcf{% endset %}
+{% set merged_vcf_gz %}{{ temp_dir }}/{{ pair.name }}.merged.vcf.gz{% endset %}
+{% set output_vcf %}{{ results_dir }}/{{ pair.name }}.merged.vcf.gz{% endset %}
 
 {% set vcfs_to_merge=[] %}
 
@@ -107,10 +110,20 @@
     chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
     mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
 
-    #TODO add rna header to vcf and rna counts if available
-    mv "{{ merged_vcf }}" "{{ output_vcf }}"
+{% set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
 
+{% if 'rna_samples' in pair.tumor %}
 
-{%- set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
+  {{- add_matched_rna(merged_vcf_gz, output_vcf, after_task, pair, aligner, temp_dir) }}
+  {% set after_task = 'add_matched_rna_'+pair.name+'_'+aligner %}
+
+{% else %}
+
+  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, after_task, pair, aligner , temp_dir)  }}
+  {% set after_task = 'add_rna_header_to_vcf_'+pair.name+'_'+aligner %}
+
+{% endif %}
+
 {{- annotate_vcfs(pair, temp_dir, results_dir, after_task, output_vcf, taskPrefix, aligner, 'merged', 'somatic') }}
+
 {% endmacro %}
