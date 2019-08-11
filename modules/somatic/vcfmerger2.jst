@@ -48,12 +48,13 @@
     PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
     #TODO remove this step after HPC changes the permissions back to being executable
     PREPVCF="/home/tgenjetstream/dev_binaries_and_databases/0.7.5/prep_vcfs_somatic/prep_vcf_somatic.sh"
+    WORKDIR=`pwd`
 
     ${PREPVCF} \
       --ref-genome "{{ constants.phoenix.reference_fasta }}" \
       --contigs-file "{{ constants.phoenix.reference_dict }}" \
       --dir-work "{{ temp_dir }}" \
-      --bam "{{ bam }}" \
+      --bam ${WORKDIR}/{{ bam }} \
       --toolname "{{ caller }}" \
       --normal-sname "{{ pair.normal.rgsm }}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
