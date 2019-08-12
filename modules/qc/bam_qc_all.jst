@@ -226,9 +226,8 @@
       {% elif aligner == 'bwa' %}
       --Reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      "{{ constants.phoenix.reference_fasta }}" \
       --BamFile "{{ bam_path }}" \
-      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2" || true
+      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
 
 {% endif %}
 

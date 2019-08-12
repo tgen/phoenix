@@ -132,7 +132,7 @@
     multiqc --force --outdir qc .
     if [ -f qc/multiqc_data/multiqc_data.json ]
     then
-      sendqc qc/multiqc_data/multiqc_data.json {{ email }}
+      sendqc qc/multiqc_data/multiqc_data.json {{ email }} 'Warning!!! Project {{ project }} failed a QC check.'
     fi
 
 # Start of module calls
