@@ -128,6 +128,21 @@ constants:
       citation: >
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
+    phaser_1_1_1:
+      module: phASER/1.1.1
+      version: 1.1.1
+      website: https://github.com/secastel/phaser
+      citation: >
+        Rare variant phasing and haplotypic expression from RNA sequencing with phASER
+        Stephane E. Castel1,2, Pejman Mohammadi1,2, Wendy K. Chung3, Yufeng Shen2,4 & Tuuli Lappalainen1,2
+        Nature Communications volume 7, Article number: 12817 (2016)
+    python_2_7_13:
+      module: python/2.7.13
+      version: 2.7.13
+      verbose: Python v2.7.13
+      website: https://www.python.org
+      citation: >
+        Python Software Foundation. Python Language Reference, version 2.7.13. Available at http://www.python.org
     python_2_7_15:
       module: python/2.7.15
       version: 2.7.15
