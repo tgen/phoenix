@@ -1,0 +1,71 @@
+# These macros are run on constitutional dna bams from the dna_alignment modules.
+
+{% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: verifybamid2_{{ sample.name }}_{{ aligner }}
+  tags: [qc, verifybamid2, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  cpus: 1
+  mem: 4G
+  walltime: "8:00:00"
+  cmd: |
+    set -uev
+    module load {{ constants.tools.verifybamid2_1_0_5.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    # Some resources are included in the VerifyBamID home dir
+    VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
+
+    VerifyBamID \
+      --NumThread 4 \
+      --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.UD" \
+      --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.mu" \
+      --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.bed" \
+      {% if aligner == 'star' %}
+      --Reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --Reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      --BamFile "{{ bam_path }}" \
+      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
+
+{% endmacro %}
+
+
+{% macro freebayes_genotype_qc_vcf(sample, aligner='bwa') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set temp %}temp/{{ sample.gltype }}/qc/freebayes_genotype/{{ sample.name }}{% endset %}
+{% set outdir %}{{ sample.gltype }}/qc/freebayes_genotype/{{ sample.name }}{% endset %}
+
+- name: freebayes_genotype_qc_vcf_{{ sample.name }}_{{ aligner }}
+  input: {{ bam_path }}
+  cpus: 4
+  cmd: |
+    set -uev
+    module load {{ constants.tools.freebayes_1_2.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ temp }}/temp"
+    mkdir -p "{{ outdir }}"
+
+    freebayes \
+      --ploidy 2 \
+      --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
+      --targets /home/tgenjetstream/dev_binaries_and_databases/hg38.bed \
+      "{{ bam_path }}" \
+      > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
+
+    bcftools sort \
+      --max-mem 768M \
+      --temp-dir {{ temp }}/temp/ \
+      --output-type z \
+      --output-file "{{ outdir }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz" \
+      "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
+
+    bcftools index --threads 4 --tbi --force "{{ outdir }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz"
+
+
+{% endmacro %}

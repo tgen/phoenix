@@ -128,14 +128,6 @@ constants:
       citation: >
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
-    peddy_0_4_3:
-      module: python/3.6.2
-      version: 0.4.3
-      verbose: Peddy v0.4.3
-      website: https://github.com/brentp/peddy
-      citation: >
-        Pedersen and Quinlan, Who’s Who? Detecting and Resolving Sample Anomalies in Human DNA Sequencing Studies 
-        with Peddy, The American Journal of Human Genetics (2017), http://dx.doi.org/10.1016/j.ajhg.2017.01.017
     python_2_7_15:
       module: python/2.7.15
       version: 2.7.15

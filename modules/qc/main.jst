@@ -7,7 +7,6 @@
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_collectmultiplemetrics with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_convertsequencingarrtifacttooxog with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_snpsniffer_geno with context %}
-{% from 'modules/qc/bam_qc_all.jst' import bam_qc_verifybamid2 with context %}
 
 # Performed on genomes
 {% from 'modules/qc/bam_qc_genome.jst' import bam_qc_gatk_collectwgsmetrics with context %}
@@ -20,8 +19,9 @@
 # Performed on rna
 {% from 'modules/qc/bam_qc_rna.jst' import bam_qc_gatk_collectrnaseqmetrics with context %}
 
-{% from 'modules/qc/peddy.jst' import peddy with context %}
-{% from 'modules/qc/peddy.jst' import peddy_cohort with context %}
+# Performed on constitutional dna
+{% from 'modules/qc/bam_qc_constitutional_dna.jst' import bam_qc_verifybamid2 with context %}
+{% from 'modules/qc/bam_qc_constitutional_dna.jst' import freebayes_genotype_qc_vcf with context %}
 
 {% macro bam_qc(sample, aligner='bwa') %}
 
@@ -57,6 +57,17 @@
 
     {% endif %}
 
+    {% if sample.subGroup|lower == 'constitutional' and ( sample.gltype|lower == 'genome' or sample.gltype|lower == 'exome' )  %}
+    # Cnstitutional dna specific tasks
+        {% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
+           {{- bam_qc_verifybamid2(sample, aligner=aligner) }}
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_quality_control_constitutional_genotype_vcf_freebayes"]|default(true) %}
+           {{- freebayes_genotype_qc_vcf(sample, aligner=aligner) }}
+        {% endif %}
+     {% endif %}
+
     # Tasks performed on all bams
     {% if tasks[taskPrefix+"_quality_control_stats_samtools_stats"]|default(true) %}
         {{- bam_qc_samtools_stats(sample, aligner=aligner) }}
@@ -82,36 +93,5 @@
         {{- bam_qc_snpsniffer_geno(sample, aligner=aligner) }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
-        {{- bam_qc_verifybamid2(sample, aligner=aligner) }}
-    {% endif %}
-
 {% endmacro %}
 
-{% macro qc(samples) %}
-    {% for sample in samples.values() if sample.gltype != 'singlecellrna' %}
-        {% if sample.gltype == 'rna' %}
-            {% set taskPrefix = 'RNA' %}
-            {% set aligner = 'star' %}
-        {% elif sample.gltype == 'exome' %}
-            {% set taskPrefix = 'Exome' %}
-            {% set aligner = 'bwa' %}
-        {% elif sample.gltype == 'genome' %}
-            {% set taskPrefix = 'Genome' %}
-            {% set aligner = 'bwa' %}
-        {% elif sample.gltype == 'singlecellrna' %}
-            {% set taskPrefix = 'SingleCellRNA' %}
-            {% set aligner = 'bwa' %}
-        {% endif %}
-
-        {% if tasks[taskPrefix+"_quality_control_gender_ethnicity_relatedness_check_peddy"]|default(true) %}
-            {{- peddy(sample, aligner=aligner) }}
-        {% endif %}
-    {% endfor %}
-
-    {% if tasks.Exome_quality_control_gender_ethnicity_relatedness_check_peddy or tasks.Genome_quality_control_gender_ethnicity_relatedness_check_peddy or tasks.RNA_quality_control_gender_ethnicity_relatedness_check_peddy |default(true) %}
-        {#
-        {{- peddy_cohort(samples) }}
-        #}
-    {% endif %}
-{% endmacro %}

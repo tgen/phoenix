@@ -68,6 +68,7 @@
 
 {% endmacro %}
 
+
 {% macro bam_qc_samtools_idxstats(sample, aligner='bwa') %}
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
@@ -196,39 +197,3 @@
 
 {% endmacro %}
 
-{% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-
-{% if sample.subGroup|lower == 'constitutional' %}
-- name: verifybamid2_{{ sample.name }}_{{ aligner }}
-  tags: [qc, verifybamid2, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  cpus: 1
-  mem: 4G
-  walltime: "8:00:00"
-  cmd: |
-    set -uev
-    module load {{ constants.tools.verifybamid2_1_0_5.module }}
-
-    mkdir -p "{{ stats_dir }}"
-
-    # Some resources are included in the VerifyBamID home dir
-    VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
-
-    VerifyBamID \
-      --NumThread 4 \
-      --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.UD" \
-      --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.mu" \
-      --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.100k.b38.vcf.gz.dat.bed" \
-      {% if aligner == 'star' %}
-      --Reference "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
-      --Reference "{{ constants.phoenix.reference_fasta }}" \
-      {% endif %}
-      --BamFile "{{ bam_path }}" \
-      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
-
-{% endif %}
-
-{% endmacro %}
