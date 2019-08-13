@@ -176,7 +176,8 @@
 - name: markduplicates_star_{{ sample.name }}
   input: {{ star_bam_unsort }}
   output: {{ star_bam_final }}
-  cpus: 12
+  cpus: 10
+  mem: 38G
   cmd: |
     set -uev
     set -o pipefail
