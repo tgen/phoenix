@@ -119,8 +119,14 @@
       -d "{{ temp_dir }}" \
       -o "{{ merged_vcf }}"
 
-    chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
-    mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
+    {% if pair.callers|length > 4 %}
+      mv "{{ temp_dir }}/upsetPlot_5_tools_Indels" "{{ results_dir }}/"
+      mv "{{ temp_dir }}/upsetPlot_5_tools_Snvs" "{{ results_dir }}/"
+      mv "{{ temp_dir }}/upsetPlot_5_tools_Snvs_and_Indels" "{{ results_dir }}/"
+    {% else %}
+      chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
+      mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
+    {% endif %}
 
 {% set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
 
