@@ -90,7 +90,7 @@
   {% for caller in pair.callers %}
     - vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   {% endfor %}
-  output: {{ output_vcf }}
+  output: {{ merged_vcf_gz }}
   cpus: 4
   walltime: "4:00:00"
   cmd: |
@@ -108,8 +108,6 @@
     mkdir -p "{{ results_dir }}"
     
     vcfMerger2.py \
-      --do-venn \
-      --venn-title "{{ pair.name }}" \
       --skip-prep-vcfs \
       --precedence "{{ pair.callers|join('|') }}" \
       --toolnames "{{ pair.callers|join('|') }}" \
@@ -121,25 +119,15 @@
       -d "{{ temp_dir }}" \
       -o "{{ merged_vcf }}"
 
-    {% if pair.callers|length > 4 %}
-      mv "{{ temp_dir }}/upsetPlot_5_tools_Indels" "{{ results_dir }}/"
-      mv "{{ temp_dir }}/upsetPlot_5_tools_Snvs" "{{ results_dir }}/"
-      mv "{{ temp_dir }}/upsetPlot_5_tools_Snvs_and_Indels" "{{ results_dir }}/"
-    {% else %}
-      chmod -R 755 "{{ temp_dir }}/venn"*"/sets"
-      mv "{{ temp_dir }}/venn"* "{{ results_dir }}"
-    {% endif %}
-
-{% set after_task = 'vcfmerger2_'+pair.name+'_'+aligner %}
 
 {% if 'rna_samples' in pair.tumor %}
 
-  {{- add_matched_rna(merged_vcf_gz, output_vcf, after_task, pair, aligner, temp_dir) }}
+  {{- add_matched_rna(merged_vcf_gz, output_vcf, pair, aligner, temp_dir) }}
   {% set after_task = 'add_matched_rna_'+pair.name+'_'+aligner %}
 
 {% else %}
 
-  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, after_task, pair, aligner , temp_dir)  }}
+  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
   {% set after_task = 'add_rna_header_to_vcf_'+pair.name+'_'+aligner %}
 
 {% endif %}

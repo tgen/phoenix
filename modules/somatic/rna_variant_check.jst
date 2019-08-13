@@ -1,8 +1,8 @@
 
-{% macro add_rna_header_to_vcf(input_vcf, output_vcf, after_task, pair, aligner, temp_dir) %}
+{% macro add_rna_header_to_vcf(input_vcf, output_vcf, pair, aligner, temp_dir) %}
 
 - name: add_rna_header_to_vcf_{{ pair.name }}_{{ aligner }}
-  after: {{ after_task }}
+  input: {{ input_vcf }}
   output: {{ output_vcf }}
   walltime: "8:00:00"
   cpus: 4
@@ -39,13 +39,14 @@
 {% endmacro %}
 
 
-{% macro add_matched_rna(input_vcf, output_vcf, after_task, pair, aligner, temp_dir) %}
+{% macro add_matched_rna(input_vcf, output_vcf, pair, aligner, temp_dir) %}
 {% set rna_sample = pair.tumor.rna_samples[0].rna_name %}
 {% set star_bam_final %}rna/alignment/star/{{ rna_sample }}/{{ rna_sample }}.star.bam{% endset %}
 
 - name: add_matched_rna_{{ pair.name }}_{{ aligner }}
-  after: {{ after_task }}
-  input: {{ star_bam_final }}
+  input:
+    - {{ input_vcf }}
+    - {{ star_bam_final }}
   output: {{ output_vcf }}
   walltime: "8:00:00"
   cpus: 4
