@@ -26,8 +26,8 @@
    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
   output: {{ props.gltype }}/cellranger/{{ props.name }}_{{ library }}/
-  cpus: 12
-  mem: 64G
+  cpus: 16
+  mem: 128G
   walltime: "24:00:00"
   cmd: |
     set -uev
@@ -43,10 +43,12 @@
 
     # TODO might need to actually rename the links with sample properties so
     # that cellranger will idenitfy them properly
-    
+
+    # Cell Ranger recommended settings online are at least 8 cores and 6Gb of RAM per core
+    # We are using 16 cores and therefore a 96Gb RAM pool is recommended
     (cd "{{ temp_dir }}" && cellranger count \
-      --localcores 12 \
-      --localmem 48 \
+      --localcores 16 \
+      --localmem 96 \
       --chemistry "{{ chemistry }}" \
       --id "{{ props.name }}_{{ library }}" \
       --fastqs . \
