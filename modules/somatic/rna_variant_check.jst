@@ -45,6 +45,7 @@
 
 - name: add_matched_rna_{{ pair.name }}_{{ aligner }}
   after: {{ after_task }}
+  input: {{ star_bam_final }}
   output: {{ output_vcf }}
   walltime: "8:00:00"
   cpus: 4
