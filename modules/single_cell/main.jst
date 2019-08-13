@@ -2,6 +2,8 @@
 
 {% macro single_cell_rna(dataFiles) %}
     {% for sample, files in dataFiles|groupby('name') if files[0].gltype == 'singlecellrna' %}
-        {{- cellranger_10x(files) }}
+        {% if tasks["SingleCellRNA_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
+            {{- cellranger_10x(files) }}
+        {% endif %}
     {% endfor %}
 {% endmacro %}
