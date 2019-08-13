@@ -5,6 +5,7 @@
 {% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
 
 - name: bam_to_cram_{{ sample.name }}_{{ aligner }}
+  tags: [{{ study }}, {{ project }}, {{ sample.name }}, bam_to_cram, samtools-view, samtools-index ]
   input: {{ bam_path }}
   output: {{ cram_path }}
   walltime: "8:00:00"
