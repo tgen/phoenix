@@ -17,7 +17,7 @@
 - name: salmon_quant_cdna_{{ sample.name }}
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
-    {{ constants.tools.salmon_0_12_0.verbose }} using the cDNA index.
+    {{ constants.tools.salmon_0_14_1.verbose }} using the cDNA index.
   input:
   {% for fq in r1fqlist %} 
     - {{ fq }}
