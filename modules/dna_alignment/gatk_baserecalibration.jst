@@ -103,7 +103,7 @@
       --INPUT "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
       {% endfor %}
 
-    samtools index "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+    samtools index -@ 4 "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
     # Cleanup the tempfiles
     {% if not debug %}
@@ -120,8 +120,8 @@
 - name: no_baserecalibration_{{ sample.name }}_{{ aligner }}
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
   output: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  walltime: "24:00:00"
-  cpus: 1
+  walltime: "1:00:00"
+  cpus: 10
   cmd: |
     set -uev
     module load {{ constants.tools.samtools_1_9.module }}
@@ -131,6 +131,6 @@
       "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
-    samtools index "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+    samtools index -@ 10 "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
 {% endmacro %}

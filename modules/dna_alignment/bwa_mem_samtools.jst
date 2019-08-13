@@ -19,8 +19,8 @@
   input: temp/{{ sample.name }}.bwa.bam
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "48:00:00"
-  cpus: 16
-  mem: 64G
+  cpus: 10
+  mem: 40G
   cmd: |
     set -euv
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
@@ -35,13 +35,13 @@
     samtools markdup \
       -S \
       -s \
-      --threads 4 \
+      --threads 10 \
       -T "temp/markdup_{{ sample.name }}_bwa/" \
       "temp/{{ sample.name }}.bwa.bam" \
       "temp/{{ sample.name }}.bwa.md.bam" \
       2> "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
 
-    samtools index "temp/{{ sample.name }}.bwa.md.bam"
+    samtools index -@ 10 "temp/{{ sample.name }}.bwa.md.bam"
     rm -r "temp/markdup_{{ sample.name }}_bwa/"
 
 {% endmacro %}
