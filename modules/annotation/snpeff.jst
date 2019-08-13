@@ -2,7 +2,7 @@
 {%- macro snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner ) %}
 
 - name: snpeff_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
-  tags: [snpeff, annotation]
+  tags: [{{ study }}, {{ project }}, {{ sample_or_pair.name }}, snpeff, annotate, bcftools, bcftools-view, bcftools-index]
   after: {{ after_task }}
   walltime: "8:00:00"
   cpus: 4
