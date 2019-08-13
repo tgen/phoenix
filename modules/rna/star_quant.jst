@@ -192,13 +192,13 @@
 
     samtools markdup \
       -s \
-      --threads 7 \
+      --threads 10 \
       -T "{{ star_tempdir }}/markdup" \
       "{{ star_bam_sorted }}" \
       "{{ star_bam_final }}" \
       2> "{{ star_finaldir }}/stats/{{ sample.name }}.star.bam.markdup.txt"
     
-    samtools index "{{ star_bam_final }}"
+    samtools index -@ 10 "{{ star_bam_final }}"
 
 {% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
 - name: htseq_{{ sample.name }}
