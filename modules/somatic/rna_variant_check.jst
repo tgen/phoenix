@@ -195,37 +195,26 @@
 
     # Compress and index to prepare for annotation step
     bcftools view \
-      --threads 4 \
-      --output-type b \
-      --output-file {{ temp_dir }}/temp_RNA.bcf \
+      --threads 2 \
+      --output-type z \
+      --output-file {{ temp_dir }}/temp_RNA.vcf.gz \
       {{ temp_dir }}/temp_RNA.vcf
 
     bcftools index \
-      --threads 4 \
+      --threads 2 \
+      --tbi \
       --force \
-      {{ temp_dir }}/temp_RNA.bcf
-
-    bcftools view \
-      --threads 4 \
-      --output-type b \
-      --output-file {{ temp_dir }}/temp_input.bcf \
-      {{ input_vcf }}
-
-    bcftools index \
-      --threads 4 \
-      --force \
-      {{ temp_dir }}/temp_input.bcf
-
+      {{ temp_dir }}/temp_RNA.vcf.gz
 
     # Annotate the original mergeVCF output with the RNA INFO keys
     # Since the annotation VCF only has the 3 INFO keys of interest, the field definition is all INFO keys
     bcftools annotate \
       --threads 4 \
-      --annotations {{ temp_dir }}/temp_RNA.bcf \
+      --annotations {{ temp_dir }}/temp_RNA.vcf.gz \
       --columns "INFO" \
       --output-type z \
       --output {{ output_vcf }} \
-      {{ temp_dir }}/temp_input.bcf
+      {{ input_vcf }}
 
     bcftools index \
       --threads 4 \
