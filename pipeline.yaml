@@ -283,6 +283,11 @@ constants:
         The Ensembl Variant Effect Predictor.
         Genome Biology Jun 6;17(1):122. (2016)
         doi:10.1186/s13059-016-0974-4
+    vt_0_57721:
+      module: vt/0.57721
+      version: "0.57721"
+      verbose: normalize v0.5
+      website: https://genome.sph.umich.edu/wiki/Vt#Normalization
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
