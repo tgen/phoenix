@@ -6,7 +6,7 @@
 {% set props = datafiles[0] %}
 {% set assaycode = props.assayCode|default('unknown') %}
 {% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
-{% set outdir %}{{ props.gltype }}/quant/cellranger/{{ props.name }}_{{ library }}/{% endset %}
+{% set outdir %}{{ props.gltype }}/cellranger/{{ props.name }}_{{ library }}/{% endset %}
 {% set temp_dir %}temp/cellranger/{{ props.name }}/{{ library }}/fastqs/{% endset %}
 
 {% set samples_list = [] %}
@@ -25,7 +25,7 @@
   {% for fq in datafiles %}
    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ props.gltype }}/quant/cellranger/{{ props.name }}/
+  output: {{ props.gltype }}/cellranger/{{ props.name }}_{{ library }}/
   cpus: 12
   mem: 64G
   walltime: "24:00:00"
@@ -53,7 +53,18 @@
       --sample "{{ samples_list|join(',') }}" \
       --transcriptome "{{ constants.phoenix.cellranger_reference }}")
 
-    mv {{ temp_dir }}{{ props.name }}_{{ library }}/* {{ outdir }}
+    # Renaming all output files, could be cleaned up a bit using 'rename' commands, might only remove one line or so
+    {% set cellranger_out %}{{ temp_dir }}{{ props.name }}_{{ library }}/outs{% endset %}
+    mv {{ cellranger_out }}/possorted_genome_bam.bam {{ cellranger_out }}/{{ props.name }}_{{ library }}.bam
+    mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ cellranger_out }}/{{ props.name }}_{{ library }}.bam.bai
+    mv {{ cellranger_out }}/cloupe.cloupe {{ cellranger_out }}/{{ props.name }}_{{ library }}.cloupe
+    mv {{ cellranger_out }}/filtered_feature_bc_matrix.h5 {{ cellranger_out }}/{{ props.name }}_{{ library }}.filtered_feature_bc_matrix.h5
+    mv {{ cellranger_out }}/metrics_summary.csv {{ cellranger_out }}/{{ props.name }}_{{ library }}.metrics_summary.csv
+    mv {{ cellranger_out }}/molecule_info.h5 {{ cellranger_out }}/{{ props.name }}_{{ library }}.molecule_info.h5
+    mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ cellranger_out }}/{{ props.name }}_{{ library }}.raw_feature_bc_matrix.h5
+    mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ props.name }}_{{ library }}.web_summary.html
+
+    mv {{ cellranger_out }}/* {{ outdir }}
 
 {% endfor %}
 {% endmacro %}
