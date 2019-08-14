@@ -61,7 +61,7 @@ gatk SortSam \
   cpus: 10
   mem: 40G
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
     module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
@@ -87,7 +87,8 @@ gatk SortSam \
   cpus: 16
   mem: 64G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
@@ -108,7 +109,8 @@ gatk SortSam \
   cpus: 16
   mem: 64G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     {{ sortsam()|indent(4) }} \
@@ -144,7 +146,7 @@ gatk SortSam \
   cpus: 1
   walltime: "4:00:00"
   cmd: |
-    set -uev
+    set -eu
     set -o pipefail
 
     rm -r "temp/{{ rgid }}/{{ fastq.basename }}/" || true
@@ -178,7 +180,7 @@ gatk SortSam \
   cpus: 10
   mem: 40G
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
     module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
@@ -203,7 +205,8 @@ gatk SortSam \
   cpus: 16
   mem: 64G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
@@ -234,7 +237,8 @@ gatk SortSam \
   cpus: 16
   mem: 64G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     {{ sortsam()|indent(4) }} \

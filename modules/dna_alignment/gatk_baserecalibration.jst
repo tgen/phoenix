@@ -9,7 +9,8 @@
   walltime: "4:00:00"
   cpus: 4
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk \
@@ -38,7 +39,8 @@
   walltime: "4:00:00"
   cpus: 4
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk \
@@ -60,7 +62,8 @@
   walltime: "4:00:00"
   cpus: 8
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk ApplyBQSR \
@@ -91,7 +94,8 @@
   walltime: "4:00:00"
   cpus: 4
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
@@ -125,7 +129,8 @@
   walltime: "1:00:00"
   cpus: 10
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/"

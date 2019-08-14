@@ -22,7 +22,8 @@
   cpus: 10
   mem: 40G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
     # If this task was interrupted previously, temp files may exist
@@ -65,7 +66,7 @@
   cpus: 10
   mem: 40G
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
     module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
@@ -101,7 +102,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     {% if sample.read_groups | length > 1 %}
@@ -156,7 +158,7 @@
   cpus: 1
   walltime: "4:00:00"
   cmd: |
-    set -uev
+    set -eu
     set -o pipefail
 
     rm -r "temp/{{ rgid }}/{{ fastq.basename }}/" || true
@@ -190,7 +192,7 @@
   cpus: 10
   mem: 40G
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
     module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
@@ -231,7 +233,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     samtools merge \

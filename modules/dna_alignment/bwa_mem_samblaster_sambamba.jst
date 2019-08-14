@@ -46,6 +46,8 @@
   cpus: 1
   mem: 2G
   cmd: |
+    set -eu
+    set -o pipefail
     mkdir -p "temp/{{ sample.rglb }}"
 
     cat {{ r1fastqs|join(' ') }} > temp/{{ sample.rglb }}/{{ sample.rglb }}_R1_merged.fastq.gz
@@ -61,7 +63,7 @@
   cpus: 10
   mem: 40G
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
     module load {{ constants.tools.bwa_0_7_17.module }}
     module load {{ constants.tools.samblaster_0_1_24.module }}
