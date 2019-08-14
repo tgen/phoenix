@@ -1,5 +1,5 @@
 {% from 'modules/single_cell/cellranger_10x.jst' import cellranger_10x with context %}
-{% from 'modules/single_cell/starsolo.jst' import starsolo with context %}
+{#  {% from 'modules/single_cell/starsolo.jst' import starsolo with context %}#}
 
 {% macro single_cell_rna(dataFiles) %}
     {% for sample, files in dataFiles|groupby('name') if files[0].gltype == 'singlecellrna' %}
