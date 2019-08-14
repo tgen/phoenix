@@ -16,7 +16,8 @@
   cpus: 4
   walltime: "24:00:00"
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
 
     module load {{ constants.tools.lancet_1_0_7.module }}
     module load {{ constants.tools.gatk_4_1_0_0.module }}
@@ -59,7 +60,8 @@
   mem: 16G
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -87,7 +89,8 @@
   after: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     bcftools filter \

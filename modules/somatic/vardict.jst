@@ -17,7 +17,7 @@
   mem: 32G
   walltime: "12:00:00"
   cmd: |
-    set -uev
+    set -eu
     set -o pipefail
     module load {{ constants.tools.rstats_3_4_1.module }}
     module load {{ constants.tools.vardict_1_6_0.module }}
@@ -102,7 +102,8 @@
   mem: 16G
   walltime: "12:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
     
     mkdir -p "{{ results_dir }}"
@@ -130,7 +131,8 @@
   mem: 8G
   walltime: "12:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
     
     bcftools filter \

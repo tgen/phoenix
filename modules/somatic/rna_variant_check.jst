@@ -9,7 +9,8 @@
   cpus: 4
   mem: 3G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
 
     module load {{ constants.tools.samtools_1_9.module }}
 
@@ -54,7 +55,8 @@
   cpus: 4
   mem: 3G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
 
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.bedtools_2_26_0.module }}

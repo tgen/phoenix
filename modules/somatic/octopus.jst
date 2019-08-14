@@ -17,7 +17,8 @@
   mem: 32G
   walltime: "24:00:00"
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.octopus_0_6_0b.module }}
     
     mkdir -p "{{ temp_dir }}"
@@ -59,7 +60,8 @@
   mem: 16G
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -83,7 +85,8 @@
   after: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     bcftools filter \
