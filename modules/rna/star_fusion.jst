@@ -14,7 +14,7 @@
 {% endfor %}
 
 - name: star_fusion_{{ sample.name }}
-  tags: [{{ sample.gltype }}, star-fusion]
+  tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
   input:
   {% for fq in r1fqlist %}
     - temp/fastqs/{{ fq.basename }}

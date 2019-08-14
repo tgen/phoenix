@@ -15,6 +15,7 @@
 {% endfor %}
 
 - name: salmon_quant_cdna_{{ sample.name }}
+  tags: [{{ sample.gltype }}, transcriptome, quantify_expression, salmon_fastqs, {{ sample.name }}]
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.salmon_0_14_1.verbose }} using the cDNA index.
