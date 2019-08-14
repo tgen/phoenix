@@ -13,7 +13,7 @@
 # Markdups task is used by chunking and non-chunking alignments
 {% macro samtools_markdup(sample) %}
 - name: samtools_markdup_{{ sample.name }}_bwa
-  tags: [samtools, samtools-markdup, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools_1_9_92_gcb6b3b5.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
@@ -57,7 +57,7 @@
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
 - name: bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}
-  tags: [bwa, samtools, samtools-fixmate, samtools-sort, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   input:
     - temp/fastqs/{{ r1fastq.basename }}
     - temp/fastqs/{{ r2fastq.basename }}
@@ -94,7 +94,7 @@
 
 
 - name: samtools_merge_rg_bams_{{ sample.name }}_bwa
-  tags: [samtools, samtools-merge, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   after-re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "48:00:00"
@@ -149,6 +149,7 @@
 
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, split, {{ sample.name }}]
   tags: [split, {{ sample.gltype }}]
   input:
     - temp/fastqs/{{ fastq.basename }}
@@ -181,7 +182,7 @@
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
-  tags: [bwa, bwa-mem, samtools-fixmate, samtools-sort, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
@@ -223,7 +224,7 @@
 {% endfor %}
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
-  tags: [samtools, samtools-merge, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.name }}.bwa.bam
   walltime: "48:00:00"

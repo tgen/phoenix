@@ -4,7 +4,7 @@
 
 {% for batch in constants.phoenix.sequence_groupings %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [gatk, gatk-BaseRecalibrator, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
   walltime: "4:00:00"
   cpus: 4
@@ -32,6 +32,7 @@
 {% endfor %}
 
 - name: gather_bqsr_reports_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
   tags: [gatk, gatk-GatherBQSRReports, {{ sample.gltype }}]
   after-re: baserecalibration_table_{{ sample.name }}_{{ aligner }}_.*
   walltime: "4:00:00"
@@ -51,7 +52,7 @@
 
 {% for batch in constants.phoenix.sequence_groupings %}
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [gatk, gatk-ApplyBQSR]
+  tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
   methods: Reads for {{ sample.name }} were processed with
     {{ constants.tools.gatk_4_1_0_0.verbose }} BaseRecalibrator to correct
     systematic errors in base quality scores.
@@ -84,7 +85,7 @@
 {% endfor %}
 
 - name: merge_bqsr_bam_chunks_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, samtools-merge, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
   after-re: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_.*
   output: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "4:00:00"
@@ -118,6 +119,7 @@
 # Moves the markduplicates bam without doing baserecalibration
 {% macro nobaserecalibration(sample, aligner='bwa') %}
 - name: no_baserecalibration_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   input: temp/{{ sample.name }}.{{ aligner }}.md.bam
   output: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   walltime: "1:00:00"

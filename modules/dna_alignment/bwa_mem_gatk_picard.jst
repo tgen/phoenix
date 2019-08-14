@@ -53,7 +53,7 @@ gatk SortSam \
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
 - name: bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}
-  tags: [bwa, samtools, samtools-view, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   input:
     - temp/fastqs/{{ r1fastq.basename }}
     - temp/fastqs/{{ r2fastq.basename }}
@@ -81,7 +81,7 @@ gatk SortSam \
 {% endfor %}
 
 - name: gatk_picard_markduplicates_{{ sample.name }}
-  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, mark_duplicates, gatk, {{ sample.name }}]
   after-re: bwa_mem_samtools_view_{{ sample.name }}_.*
   walltime: "48:00:00"
   cpus: 16
@@ -101,7 +101,7 @@ gatk SortSam \
 
 
 - name: gatk_picard_sortsam_{{ sample.name }}
-  tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, SortSam, gatk, {{ sample.name }}]
   after: gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "48:00:00"
@@ -138,7 +138,7 @@ gatk SortSam \
 
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
-  tags: [split, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, split, {{ sample.name }}]
   input:
     - temp/fastqs/{{ fastq.basename }}
   cpus: 1
@@ -170,7 +170,7 @@ gatk SortSam \
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
-  tags: [bwa, samtools, samtools-view, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
@@ -197,7 +197,7 @@ gatk SortSam \
 {% endfor %}
 
 - name: chunked_gatk_picard_markduplicates_{{ sample.name }}
-  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, mark_duplicates, gatk, {{ sample.name }}]
   after-re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
   walltime: "48:00:00"
   cpus: 16
@@ -227,7 +227,7 @@ gatk SortSam \
 
 
 - name: chunked_gatk_picard_sortsam_{{ sample.name }}
-  tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, SortSam, gatk, {{ sample.name }}]
   after: chunked_gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "48:00:00"
