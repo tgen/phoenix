@@ -4,7 +4,7 @@
 {% set run_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
 
 - name: manta_{{ sample.name }}_{{ aligner }}
-  tags: [manta, manta-constitutional, {{ sample.gltype }}]
+  tags: [{{ sample.name }}, constitutional, manta, structural_caller]
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
     ({{ aligner }}) were called with {{ constants.tools.manta_1_4.verbose }}.

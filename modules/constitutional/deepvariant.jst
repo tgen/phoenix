@@ -12,7 +12,7 @@
 {% for i in range(nshards) %}
 
 - name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
-  tags: [deepvariant, {{ sample.gltype }}]
+  tags: [{{ sample.name }}, constitutional, deepvariant, snp_indel_caller ]
   input: {{ bam }}
   cpus: 1
   mem: 4G
@@ -40,7 +40,7 @@
 {% endfor %}
 
 - name: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
-  tags: [deepvariant, {{ sample.gltype }}]
+  tags: [{{ sample.name }}, constitutional, deepvariant, snp_indel_caller]
   after:
   {% for i in range(nshards) %}
     - deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
@@ -68,7 +68,7 @@
 
 
 - name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
-  tags: [deepvariant, {{ sample.gltype }}]
+  tags: [{{ sample.name }}, constitutional, deepvariant, snp_indel_caller]
   after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
   output: {{ all_vcf }}
   cpus: 8
@@ -94,7 +94,7 @@
 
 
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
-  tags: [deepvariant, bcftools, filter, {{ sample.gltype }}]
+  tags: [{{ sample.name }}, constitutional, deepvariant, snp_indel_caller]
   after: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cpus: 2
