@@ -18,6 +18,7 @@
 {{ log('Cellranger library: {} assay: {} chemistry: {}'.format(library, assaycode, chemistry), 'CRITICAL') }}
 
 - name: cellranger_count_{{ props.name }}_{{ library }}
+  tags: [{{ props.gltype }}, single_cell, cellranger_count, {{ props.name }}]
   methods: >
     Transcript quantification for {{ props.name }} was performed with
     {{ constants.tools.cellranger_3_0_2.verbose }} using the cDNA index.
@@ -40,9 +41,6 @@
     {% for file in datafiles %}
     ln -rs "temp/fastqs/{{ file.basename }}" "{{ temp_dir }}/{{ file.basename }}"
     {% endfor %}
-
-    # TODO might need to actually rename the links with sample properties so
-    # that cellranger will idenitfy them properly
 
     # Cell Ranger recommended settings online are at least 8 cores and 6Gb of RAM per core
     # We are using 16 cores and therefore a 96Gb RAM pool is recommended
