@@ -6,8 +6,10 @@
         {% if tasks["SingleCellRNA_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
             {{- cellranger_10x(files) }}
         {% endif %}
+        {#
         {% if tasks["SingleCellRNA_transcriptome_quantify_expression_STARsolo"]|default(true) %}
             {{- starsolo(files) }}
         {% endif %}
+        #}
     {% endfor %}
 {% endmacro %}
