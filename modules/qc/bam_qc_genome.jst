@@ -11,7 +11,8 @@
   walltime: "24:00:00"
   cpus: 16
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
@@ -35,7 +36,8 @@
   walltime: "24:00:00"
   cpus: 16
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
@@ -59,7 +61,8 @@
   walltime: "24:00:00"
   cpus: 16
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"

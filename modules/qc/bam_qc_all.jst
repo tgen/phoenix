@@ -16,7 +16,8 @@
   cpus: 4
   mem: 8G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ stats_dir }}"
@@ -56,7 +57,8 @@
   cpus: 4
   mem: 8G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ stats_dir }}"
@@ -82,7 +84,8 @@
   cpus: 1
   mem: 2G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ stats_dir }}"
@@ -108,7 +111,8 @@
   walltime: "24:00:00"
   cpus: 16
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ stats_dir }}"
@@ -148,7 +152,8 @@
   walltime: "24:00:00"
   cpus: 16
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     gatk ConvertSequencingArtifactToOxoG \
@@ -171,7 +176,8 @@
   input: {{ bam_path }}
   cpus: 4
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Genotype the 387 test positions across the genome, filter to calls with DP >= 5
