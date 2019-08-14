@@ -2,7 +2,7 @@
 {%- macro snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type , analysis_type) %}
 
 - name: snpeff_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
-  tags: [{{ sample_or_pair.name }}, {{ analysis_type }}, {{ variant_caller }}, {{ task_type }}]
+  tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
   after: {{ after_task }}
   walltime: "8:00:00"
   cpus: 4

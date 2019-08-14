@@ -1,7 +1,7 @@
 {% macro spliceai(vcf, out) %}
-{% set temp_vcf }temp/{{ vcf|sha256 }}.vcf{% endset %}
+{% set temp_vcf %}temp/{{ vcf|sha256 }}.vcf{% endset %}
 - name: spliceai_{{ vcf|sha256 }}
-  tags: [{{ study }}, {{ project }}, spliceai, annotate]
+  tags: [ spliceai, annotate_vcfs]
   input: {{ vcf }}
   sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1', '-c', '10']
   cmd: |
@@ -18,7 +18,7 @@
 
 
 - name: spliceai_filter_{{ vcf|sha256 }}
-  tags: [{{ study }}, {{ project }}, bcftools, bcftools-filter]
+  tags: [ spliceai, annotate_vcfs]
   after: spliceai_{{ vcf|sha256 }}
   output: {{ out }}
   cpus: 2
