@@ -46,6 +46,7 @@
     {% for fq in r2fqlist %}
     - {{ fq.path }}
     {% endfor %}
+  output: {{ star_bam_unsort }}
   cpus: 20
   mem: 80G
   walltime: "24:00:00"
@@ -148,7 +149,7 @@
 - name: fixmate_sort_star_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   after: star_quant_{{ sample.name }}
-  output: {{ star_bam_unsort }}
+  output: {{ star_bam_sorted }}
   cpus: 8
   cmd: |
     set -uev
@@ -177,7 +178,7 @@
 
 - name: markduplicates_star_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
-  input: {{ star_bam_unsort }}
+  input: {{ star_bam_sorted }}
   output: {{ star_bam_final }}
   cpus: 10
   mem: 40G
