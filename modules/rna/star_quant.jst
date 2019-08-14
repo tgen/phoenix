@@ -51,7 +51,8 @@
   mem: 80G
   walltime: "24:00:00"
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.star_2_7_1a.module }}
 
     mkdir -p "{{ star_tempdir }}"
@@ -152,7 +153,7 @@
   output: {{ star_bam_sorted }}
   cpus: 8
   cmd: |
-    set -uev
+    set -eu
     set -o pipefail
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
@@ -183,7 +184,7 @@
   cpus: 10
   mem: 40G
   cmd: |
-    set -uev
+    set -eu
     set -o pipefail
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
@@ -212,7 +213,8 @@
   cpus: 16
   walltime: "48:00:00"
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.htseq_0_11_1.module }}
     
     mkdir -p "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/"
@@ -255,7 +257,8 @@
   cpus: 8
   walltime: "8:00:00"
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.subread_1_6_4.module }}
     
     mkdir -p "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/"
