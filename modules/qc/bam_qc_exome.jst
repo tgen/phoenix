@@ -5,7 +5,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collecthsmetrics, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectHsMetrics, {{ sample.name }}]
   input: {{ bam_path }}
   walltime: "8:00:00"
   cpus: 16

@@ -8,7 +8,7 @@
 
 {% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
-  tags: [samtools, stats, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
@@ -48,7 +48,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, flagstat, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_flagstat, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
@@ -74,7 +74,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
-  tags: [samtools, idxstats, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
   input: {{ bam_path }}
@@ -99,7 +99,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectmultiplemetrics, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectMultipleMetrics, {{ sample.name }}]
   methods: Alignment metrics, base distribution, insert size, quality,
     and other metrics for {{ sample.name }} ({{ aligner }}) were
     gathered with {{ constants.tools.gatk_4_1_0_0.verbose }}
@@ -142,7 +142,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, convertsequencingarrtifacttooxog, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
   input: {{ bam_path }}
   after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   walltime: "24:00:00"
@@ -167,7 +167,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
-  tags: [snpSniffer, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, genotype_concordance, snpSniffer, {{ sample.name }}]
   input: {{ bam_path }}
   cpus: 4
   cmd: |

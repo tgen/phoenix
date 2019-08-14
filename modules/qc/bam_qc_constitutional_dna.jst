@@ -5,7 +5,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: verifybamid2_{{ sample.name }}_{{ aligner }}
-  tags: [qc, verifybamid2, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
   input: {{ bam_path }}
   cpus: 1
   mem: 4G
@@ -41,6 +41,7 @@
 {% set outdir %}{{ sample.gltype }}/qc/freebayes_genotype/{{ sample.name }}{% endset %}
 
 - name: freebayes_genotype_qc_vcf_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, constitutional_genotype_vcf, freebayes, {{ sample.name }}]
   input: {{ bam_path }}
   cpus: 4
   cmd: |

@@ -5,6 +5,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetrics, {{ sample.name }}]
   tags: [gatk, picard, collectwgsmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
@@ -29,7 +30,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectwgsmetricswithnonzerocoverage, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetricsWithNonZeroCoverage, {{ sample.name }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
@@ -53,7 +54,7 @@
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [gatk, picard, collectrawwgsmetrics, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRawWgsMetrics, {{ sample.name }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16
