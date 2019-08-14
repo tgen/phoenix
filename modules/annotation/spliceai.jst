@@ -5,7 +5,8 @@
   input: {{ vcf }}
   sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1', '-c', '10']
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
 
     module load {{ constants.tools.python_3_6_0.module }}
     module load {{ constants.tools.cuda_toolkit_10_0_0.module }}

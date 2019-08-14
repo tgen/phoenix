@@ -6,7 +6,7 @@
   walltime: "8:00:00"
   cpus: 4
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
     module load {{ constants.tools.samtools_1_9.module }}

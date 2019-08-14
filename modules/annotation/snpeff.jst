@@ -7,7 +7,7 @@
   walltime: "8:00:00"
   cpus: 4
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
     module load {{ constants.tools.snpeff_4_3t.module }}

@@ -13,7 +13,8 @@
   cpus: 8
   mem: 3G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     samtools view \
