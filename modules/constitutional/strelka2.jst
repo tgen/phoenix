@@ -21,7 +21,8 @@
   cpus: 20
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.strelka_2_9_2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
@@ -85,7 +86,8 @@
   after: strelka2_{{ sample.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Then filter out the PASS variants to a separate file

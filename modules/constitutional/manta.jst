@@ -17,7 +17,8 @@
   mem: 80G
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.manta_1_4.module }}
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}

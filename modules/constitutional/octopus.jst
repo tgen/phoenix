@@ -16,7 +16,8 @@
   cpus: 8
   mem: 64G
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.octopus_0_6_0b.module }}
 
     mkdir -p "{{ temp_dir }}"
@@ -53,7 +54,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -80,7 +82,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Then filter out the passing variants to a separate file

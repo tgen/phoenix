@@ -18,7 +18,8 @@
   mem: 4G
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -50,7 +51,8 @@
   sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1']
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  # is this really necessary?
@@ -75,7 +77,8 @@
   mem: 64G
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.singularity_3_1_0.module }}
     module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
     module load {{ constants.tools.samtools_1_9.module }}
@@ -101,7 +104,8 @@
   mem: 4G
   walltime: "24:00:00"
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     # Then filter out the PASS variants to a separate file

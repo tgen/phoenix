@@ -18,7 +18,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     mkdir -p "{{ temp_dir }}"
 
@@ -40,7 +41,8 @@
   cpus: 6
   mem: 24G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     source activate gatk
 
@@ -66,7 +68,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -89,7 +92,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 

@@ -10,7 +10,8 @@
   walltime: "24:00:00"
   cpus: 1
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.hmmcopy_utils_1_0.module }}
 
     mkdir -p "{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/"
@@ -31,7 +32,8 @@
   walltime: "24:00:00"
   cpus: 1
   cmd: |
-    set -ue
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.ichorcna_0_1_0.module }}
 
     # Purge any existing results files prior to starting

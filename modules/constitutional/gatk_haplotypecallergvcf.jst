@@ -14,7 +14,8 @@
   cpus: 4
   mem: 16G
   cmd: |
-    set -euv
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ temp_dir }}"
@@ -44,6 +45,7 @@
   mem: 16G
   cmd: |
     set -eu
+    set -o pipefail
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ results_dir }}"
