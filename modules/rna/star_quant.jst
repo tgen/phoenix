@@ -210,7 +210,8 @@
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, HTseq, {{ sample.name }}]
   input: {{ star_bam_unsort }}
   output: {{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
-  cpus: 16
+  cpus: 1
+  mem: 4G
   walltime: "48:00:00"
   cmd: |
     set -eu
