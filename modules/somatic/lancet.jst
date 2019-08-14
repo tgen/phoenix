@@ -9,7 +9,7 @@
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [lancet, {{ pair.name }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -52,7 +52,7 @@
 
 
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, concat, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
   after-re: lancet_{{ pair.name }}_{{ aligner }}_.*
   output: {{ all_vcf }}
   cpus: 4
@@ -83,7 +83,7 @@
 
 
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, filter, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
   after: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |

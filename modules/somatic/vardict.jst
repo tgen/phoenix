@@ -9,7 +9,7 @@
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: vardict_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [vardict_somatic, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, VarDict, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -95,7 +95,7 @@
 
 
 - name: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, concat, vardict_somatic, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, VarDict, {{ pair.name }}]
   after-re: vardict_{{ pair.name }}_{{ aligner }}_.*
   output: {{ all_vcf }}
   cpus: 4
@@ -123,7 +123,7 @@
 
 
 - name: vardict_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, filter, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, VarDict, {{ pair.name }}]
   after: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cpus: 2

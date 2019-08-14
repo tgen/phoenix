@@ -9,7 +9,7 @@
 {% set pass_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
 - name: strelka2_{{ pair.name }}_{{ aligner }}
-  tags: [strelka2, strelka2-somatic, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
   methods: > 
     Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
     {{ constants.tools.strelka_2_9_2.verbose }}.
@@ -68,7 +68,7 @@
 
 
 - name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [strelka2, strelka2-somatic, bcftools, filter, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
   after: strelka2_{{ pair.name }}_{{ aligner }}
   output:
     - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz

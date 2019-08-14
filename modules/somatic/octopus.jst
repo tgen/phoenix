@@ -9,7 +9,7 @@
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [octopus_somatic, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -52,7 +52,7 @@
 
 
 - name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, concat, octopus_somatic, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   after-re: octopus_{{ pair.name }}_{{ aligner }}_.*
   output: {{ all_vcf }}
   cpus: 4
@@ -79,7 +79,7 @@
 
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, filter, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   after: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |

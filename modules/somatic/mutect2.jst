@@ -9,6 +9,7 @@
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   tags: [gatk, gatk-Mutect2, {{ pair.gltype }}]
   input:
     - {{ normal_bam }}
@@ -39,8 +40,8 @@
 
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
-  tags: [bcftools, concat, {{ pair.gltype }}]
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk_4_1_0_0.verbose }} Mutect2 in parallel chunks and
     then merged together with {{ constants.tools.samtools_1_9.verbose }} concat.
@@ -62,7 +63,7 @@
 
 
 - name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
-  tags: [gatk, gatk-FilterMutectCalls, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   after: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   output: {{ all_vcf }}
   cpus: 8
@@ -86,7 +87,7 @@
 
 
 - name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [bcftools, filter, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   after: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |

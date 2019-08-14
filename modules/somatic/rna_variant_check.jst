@@ -2,6 +2,7 @@
 {% macro add_rna_header_to_vcf(input_vcf, output_vcf, pair, aligner, temp_dir) %}
 
 - name: add_rna_header_to_vcf_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input: {{ input_vcf }}
   output: {{ output_vcf }}
   walltime: "8:00:00"
@@ -44,6 +45,7 @@
 {% set star_bam_final %}rna/alignment/star/{{ rna_sample }}/{{ rna_sample }}.star.bam{% endset %}
 
 - name: add_matched_rna_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input:
     - {{ input_vcf }}
     - {{ star_bam_final }}

@@ -6,7 +6,7 @@
 {% set tconut_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz{% endset %}
 
 - name: tconut_call_snvs_{{ pair.name }}_{{ aligner }}
-  tags: [tconut, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, cna_caller, tCoNuT, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -52,7 +52,7 @@
 
 
 - name: tconut_annotate_snvs_{{ pair.name }}_{{ aligner }}
-  tags: [tconut, bcftools, filter, {{ pair.gltype }}]
+  tags: [{{ pair.gltype }}, somatic, cna_caller, tCoNuT, {{ pair.name }}]
   after: tconut_call_snvs_{{ pair.name }}_{{ aligner }}
   output: {{ tconut_vcf }}
   cpus: 2
