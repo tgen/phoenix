@@ -10,7 +10,7 @@
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
 - name: strelka2_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.name }}, constitutional, strelka2, snp_indel_caller]
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, strelka2, {{ sample.name }}]
   methods: > 
     Constitutional variants for {{ sample.name }} ({{ aligner }}) were called with
     {{ constants.tools.strelka_2_9_2.verbose }}.
@@ -81,7 +81,7 @@
 
 
 - name: strelka2_filter_variants_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.name }}, constitutional, strelka2, snp_indel_caller]
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, strelka2, {{ sample.name }}]
   after: strelka2_{{ sample.name }}_{{ aligner }}
   output: {{ pass_vcf }}
   cmd: |
