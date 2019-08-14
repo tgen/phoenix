@@ -101,5 +101,5 @@
     bcftools index -tf "{{ pass_vcf }}"
 
 {%- set after_task = 'strelka2_filter_variants_'+sample.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'strelka2', 'constitutional' ) }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'strelka2', 'constitutional', 'snp_indel_caller' ) }}
 {% endmacro %}

@@ -132,6 +132,6 @@
 
 {% endif %}
 
-{{- annotate_vcfs(pair, temp_dir, results_dir, after_task, output_vcf, taskPrefix, aligner, 'merged', 'somatic') }}
+{{- annotate_vcfs(pair, temp_dir, results_dir, after_task, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
 
 {% endmacro %}

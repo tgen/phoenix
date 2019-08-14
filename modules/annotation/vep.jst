@@ -1,6 +1,6 @@
-{% macro vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner ) %}
+{% macro vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) %}
 - name: vep_all_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
-  tags: [{{ study }}, {{ project }}, {{ sample_or_pair.name }}, vep, annotate, bcftools, bcftools-view, bcftools-index ]
+  tags: [{{ sample_or_pair.name }}, {{ analysis_type }}, {{ variant_caller }}, {{ task_type }}]
   after: {{ after_task }}
   walltime: "8:00:00"
   cpus: 4
@@ -52,7 +52,7 @@
     bcftools index --threads 4 --force "{{ final_vcf_prefix }}.vep.full.vcf.gz"
 
 - name: vep_con_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
-  tags: [{{ study }}, {{ project }}, {{ sample_or_pair.name }}, vep, annotate, bcftools, bcftools-view, bcftools-index]
+  tags: [{{ sample_or_pair.name }}, {{ analysis_type }}, {{ variant_caller }}, {{ task_type }}]
   after: {{ after_task }}
   walltime: "8:00:00"
   cpus: 4

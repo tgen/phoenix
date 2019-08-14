@@ -1,7 +1,7 @@
-{%- macro bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, snpeff_flag, vep_flag) %}
+{%- macro bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, snpeff_flag, vep_flag, task_type) %}
 {%- set output_bcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.bcf{% endset %}
 - name: bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
-  tags: [{{ study }}, {{ project }}, {{ sample_or_pair.name }}, bcftools, bcftools-annotate, bcftools-index, bcftools-view ]
+  tags: [{{ sample_or_pair.name }}, {{ analysis_type }}, {{ variant_caller }}, {{ task_type }}  ]
   after: {{ after_task }}
   walltime: "8:00:00"
   cpus: 4

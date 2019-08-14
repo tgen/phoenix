@@ -117,5 +117,5 @@
     bcftools index -tf "{{ pass_vcf }}"
 
 {%- set after_task = 'deepvariant_filter_variants_'+sample.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'deepvariant', 'constitutional') }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'deepvariant', 'constitutional', 'snp_indel_caller') }}
 {% endmacro %}

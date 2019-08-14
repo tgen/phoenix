@@ -2,7 +2,7 @@
 {%- from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
 {%- from 'modules/annotation/vep.jst' import vep with context %}
 
-{%- macro annotate_vcfs(sample_or_pair, temp_dir, results_dir, after_task, input_vcf, taskPrefix, aligner, variant_caller, analysis_type) %}
+{%- macro annotate_vcfs(sample_or_pair, temp_dir, results_dir, after_task, input_vcf, taskPrefix, aligner, variant_caller, analysis_type, task_type) %}
 
 {% if variant_caller == 'merged' %}
   {%- set output_vcf %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.vcf.gz{% endset %}
@@ -49,24 +49,24 @@
 
 {%- if flags.bcftools is sameas true %}
 
-  {{- bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, flags.snpeff, flags.vep ) }}
+  {{- bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, flags.snpeff, flags.vep ,task_type ) }}
 
   {%- if flags.snpeff %}
-    {{- snpeff(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner) }}
+    {{- snpeff(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner, task_type, analysis_type) }}
   {% endif %}
 
   {%- if flags.vep %}
-    {{- vep(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner) }}
+    {{- vep(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner, task_type, analysis_type) }}
   {% endif %}
 
 {% else %}
 
   {%- if flags.snpeff %}
-    {{- snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner) }}
+    {{- snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) }}
   {% endif %}
 
   {%- if flags.vep %}
-    {{- vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner) }}
+    {{- vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) }}
   {% endif %}
 
 {% endif %}
