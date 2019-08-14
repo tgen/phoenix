@@ -1,11 +1,12 @@
 
 
 {% macro bam_to_cram(sample, aligner='bwa') %}
+{% if cram|default(true) %}
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
 
 - name: bam_to_cram_{{ sample.name }}_{{ aligner }}
-  tags: [{{ study }}, {{ project }}, {{ sample.name }}, bam_to_cram, samtools-view, samtools-index ]
+  tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
   input: {{ bam_path }}
   output: {{ cram_path }}
   walltime: "8:00:00"
@@ -27,5 +28,5 @@
       "{{ bam_path }}"
 
     samtools index "{{ cram_path }}"
-
+{% endif %}
 {% endmacro %}
