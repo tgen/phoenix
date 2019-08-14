@@ -229,9 +229,10 @@
     # --supplementary-alignments=<score/ignore> ; default=score
 
     htseq-count \
+      --quiet \
       --format=bam \
-      --order=pos \
-      --a=10 \
+      --order=name \
+      --minaqual=10 \
       --type=exon \
       --idattr=gene_id \
       --additional-attr=gene_name \
@@ -258,8 +259,8 @@
     
     mkdir -p "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/"
 
-    # TODO
-    # -p should only be set for paired-end
+    # TODO -p should only be set for paired-end
+
     featureCounts \
       -T 7 \
       -p \
