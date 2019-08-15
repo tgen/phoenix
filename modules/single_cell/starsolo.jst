@@ -10,7 +10,8 @@
 {% set CDNA_LIST = [] %}
 {% set CB_UMI_LIST = [] %}
 
-{% set star_index = constants.phoenix.starSOLO_index %}
+{% set star_index_size %}{{ props.read_length|default(100) }}bpReads{% endset %}
+{% set star_index = constants.phoenix.star_indices[star_index_size] %}
 {% set barcode_path = constants.phoenix.barcodes_path %}
 
 {% set outdir %}{{ props.gltype }}/quant/starSOLO/{{ props.name }}/{% endset %}

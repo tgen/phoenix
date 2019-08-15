@@ -320,7 +320,6 @@ constants:
     ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.ribo.interval_list
     transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.transcriptome.fasta
     salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
-    starSOLO_index: /scratch/jkeats/starSOLO_tests/starSOLO_100
     barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
     star_indices:
