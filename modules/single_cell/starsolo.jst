@@ -33,7 +33,8 @@
   mem: 80
   walltime: "48:00:00"
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.star_2_7_1a.module }}
 
     mkdir -p "{{ outdir }}"

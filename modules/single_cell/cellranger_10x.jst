@@ -31,7 +31,8 @@
   mem: 128G
   walltime: "24:00:00"
   cmd: |
-    set -uev
+    set -eu
+    set -o pipefail
     module load {{ constants.tools.cellranger_3_0_2.module }}
 
     rm -r "{{ temp_dir }}" || true
