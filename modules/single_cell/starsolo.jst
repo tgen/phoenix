@@ -60,11 +60,11 @@
     # Make a comma separated list of the CDNA and CBUMI read sets
     {% for rgpu, _ in files|groupby('rgpu') %}
     {% if fqCode == "R1" %}
-        {% set CBUMI_string %}{{ props.fastqPath|basename }}{% endset %}
+        {% set CBUMI_string %}temp/fastqs/{{ props.fastqPath|basename }}{% endset %}
         {% do CB_UMI_LIST.append(CBUMI_string) %}
     {% endif %}
     {% if fqCode == "R2" %}
-        {% set CDNA_string %}{{ props.fastqPath|basename }}{% endset %}
+        {% set CDNA_string %}temp/fastqs{{ props.fastqPath|basename }}{% endset %}
         {% do CDNA_LIST.append(CDNA_string) %}
     {% endif %}
     {% endfor %}
