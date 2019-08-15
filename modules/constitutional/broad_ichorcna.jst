@@ -36,16 +36,20 @@
     set -o pipefail
     module load {{ constants.tools.ichorcna_0_1_0.module }}
 
-    # Purge any existing results files prior to starting
+    {# Purge any existing results files prior to starting #}
     rm -r "{{ run_dir }}" || true
     mkdir -p "{{ run_dir }}"
 
+    {#
     # ichorCNA includes some pre-built references in the source code, this command
     # finds these files dynamically with R system.find before starting
+    #}
     EXTDATA=$(Rscript <(echo "cat(system.file('extdata/', package='ichorCNA'))"))
 
+    {#
     # The ichorCNA launcher script does not currently get installed with
     # the rest of the package, so this path is hard coded in constants.yaml
+    #}
     Rscript "{{ constants.tools.ichorcna_0_1_0.launcher }}" \
       --id "{{ sample.name}}.{{ aligner }}" \
       --WIG "{{ wig }}" \

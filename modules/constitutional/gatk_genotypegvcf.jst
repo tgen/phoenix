@@ -97,7 +97,7 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    # Annotate with FilterVariantTranches 
+    {# Annotate with FilterVariantTranches #}
     gatk FilterVariantTranches \
       --java-options "-Xmx14G" \
       --info-key CNN_2D \
@@ -109,7 +109,7 @@
       --variant "{{ all_vcf }}" \
       --output "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
        
-    # Then filter out the passing variants to a separate file
+    {# Then filter out the passing variants to a separate file #}
     bcftools filter \
       -O z \
       -i 'FILTER == "."' \
