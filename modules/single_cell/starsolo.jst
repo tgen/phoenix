@@ -34,6 +34,7 @@
 
     mkdir -p "{{ outdir }}"
 
+    {#
     # Setting barcodes based on configuration
     # Cell Barcode Whitelist NOTES:
     # PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
@@ -45,6 +46,7 @@
     # CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
     # CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
     # CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
+    #}
     {% if assaycode == "XCSCR" %}
         {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
     {% endif %}
@@ -66,10 +68,11 @@
         {% do CDNA_LIST.append(CDNA_string) %}
     {% endif %}
     {% endfor %}
+    {#
     # Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
     # cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1
     # to add  \
-
+    #}
     STAR \
       --runMode alignReads \
       --twopassMode Basic \
