@@ -65,6 +65,10 @@
     mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ cellranger_out }}/{{ props.name }}_{{ library }}.raw_feature_bc_matrix.h5
     mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ props.name }}_{{ library }}.web_summary.html
 
+    # removing the analysis directory as is it no longer needed
+    rm -rf {{ cellranger_out }}/analysis
+
+    # move everything to the output directory
     mv {{ cellranger_out }}/* {{ outdir }}
 
 {% endfor %}
