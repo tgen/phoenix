@@ -110,7 +110,7 @@
 
     samtools index -@ 4 "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
-    # Cleanup the tempfiles
+    {# Cleanup the tempfiles #}
     {% if not debug %}
     {% for b in constants.phoenix.sequence_groupings %}
     rm "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"

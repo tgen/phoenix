@@ -117,7 +117,7 @@ gatk SortSam \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
 
-    # Cleanup the tempfiles
+    {# Cleanup the tempfiles #}
     {% if not debug %}
     rm "temp/{{ sample.name }}.bwa.md-uns.bam"
     {% endif %}
@@ -132,7 +132,7 @@ gatk SortSam \
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
-# Calc the expected number of chunks so we can validate the output
+{# Calc the expected number of chunks so we can validate the output #}
 {% set n_lines = (reads_per_chunk * 4)|int %}
 {% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
@@ -221,7 +221,7 @@ gatk SortSam \
       --METRICS_FILE "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md-uns.bam"
 
-    # Cleanup the tempfiles
+    {# Cleanup the tempfiles #}
     {% if not debug %}
     {% for rgid in sample.read_groups %}
     rm -r "temp/{{ rgid }}/"
@@ -245,7 +245,7 @@ gatk SortSam \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
     
-    # Cleanup the tempfiles
+    {# Cleanup the tempfiles #}
     {% if not debug %}
     rm "temp/{{ sample.name }}.bwa.md-uns.bam"
     {% endif %}
