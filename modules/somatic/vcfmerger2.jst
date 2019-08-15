@@ -37,7 +37,7 @@
   cpus: 2
   walltime: "4:00:00"
   cmd: |
-    set -eu
+    set -euv
     set -o pipefail
 
     module load {{ constants.tools.vcfmerger2_0_7_5.module }}
@@ -55,6 +55,16 @@
     # Locate the prep_vcf.sh script relative to vcfMerger2.py
     PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
     WORKDIR=`pwd`
+
+    which python2
+    which python3
+    which pip
+    which pip2
+    which pip3
+
+    pip freeze
+    pip2 freeze
+    pip3 freeze
 
     ${PREPVCF} \
       --ref-genome "{{ constants.phoenix.reference_fasta }}" \
