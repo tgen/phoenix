@@ -26,10 +26,12 @@
     
     mkdir -p "{{ temp_dir }}"
 
+    {#
     # Write out the regions in this batch to a file
     # Here we use bedtools to split each interval into smaller chunks
     # and the -s option to create overlaps in the chunks. This is due
     # to the VarDict memory usage spiking very high on larger intervals.
+    #}
     TAB=$'\t'
     cat <<EOF | bedtools makewindows -w 20000 -s 19850 -b /dev/stdin > "{{ temp_dir }}/{{ loop.index }}.bed"
     {% for interval in batch %}
@@ -37,11 +39,13 @@
     {% endfor %}
     EOF
 
+    {#
     # Custom settings:
     # -Q 1 (default is 0) -O 5 (default is no filtering, suspect that means 0)
     # -q 20 (default is 25), set as novaseq has bins of 2, 12, 23, 37
     # enabled -UN to only count the first in pair when an overlap exists, didn't use -u that uses the
     # forward strand read which might be second in pairs that typically has worse quality.
+    #}
     JAVA_OPTS="-Xmx26g" VarDict \
       -th 4 \
       -b "{{ tumor_bam }}|{{ normal_bam }}" \

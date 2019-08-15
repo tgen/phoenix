@@ -23,7 +23,7 @@
     
     mkdir -p "{{ temp_dir }}"
     
-    # Write out the regions in this batch to a bed file
+    {# Write out the regions in this batch to a bed file #}
     TAB=$'\t'
     cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
     {% for interval in batch %}
@@ -31,7 +31,7 @@
     {% endfor %}
     EOF
     
-    # Somatic calling with octopus
+    {# Somatic calling with octopus #}
     octopus \
       --caller cancer \
       --threads 8 \

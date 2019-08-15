@@ -26,14 +26,16 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    # Purge any existing run files prior to starting
+    {# Purge any existing run files prior to starting #}
     rm -r "{{ run_dir }}" || true
     mkdir -p "{{ run_dir }}"
 
+    {#
     # In order to restrict calling to only the specified regions
     # strelka requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Strelka.
+    #}
     TAB=$'\t'
     cat <<EOF > "{{ run_dir }}/callRegions.bed"
     {% for contig in constants.phoenix.calling_contigs %}
@@ -44,14 +46,16 @@
     bgzip -f "{{ run_dir }}/callRegions.bed"
     tabix -f -p bed "{{ run_dir }}/callRegions.bed.gz"
 
+    {#
     # Some settings are only configurable via an ini file. Here
     # we generate this ini file and save it to the run dir.
+    #}
     cat <<EOF > "{{ run_dir }}/config.ini"
     [StrelkaSomatic]
     isWriteRealignedBam = 1
     EOF
 
-    # Build the Strelka run file
+    {# Build the Strelka run file #}
     configureStrelkaSomaticWorkflow.py \
       {% if pair.gltype == 'exome' %}
       --exome \
@@ -64,7 +68,7 @@
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --runDir "{{ run_dir }}"
 
-    # Execute on the local machine with 19 parallel jobs
+    {# Execute on the local machine with 19 parallel jobs #}
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
 
@@ -81,13 +85,13 @@
 
     mkdir -p "{{ pair_dir }}/evidence"
   
-    # Move and rename the evidence bams
+    {# Move and rename the evidence bams #}
     mv "{{ run_dir }}/results/realigned/realigned.normal.bam" "{{ pair_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam"
     mv "{{ run_dir }}/results/realigned/realigned.normal.bam.bai" "{{ pair_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
     mv "{{ run_dir }}/results/realigned/realigned.tumor.bam" "{{ pair_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
     mv "{{ run_dir }}/results/realigned/realigned.tumor.bam.bai" "{{ pair_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
 
-    # Merge the snvs and indels into a final vcf
+    {# Merge the snvs and indels into a final vcf #}
     bcftools concat \
       -a \
       --threads 2 \
@@ -98,7 +102,7 @@
 
     bcftools index -tf "{{ all_vcf }}"
 
-    # Then filter out the PASS variants to a separate file
+    {# Then filter out the PASS variants to a separate file #}
     bcftools filter \
       -O z \
       -i 'FILTER == "PASS"' \
@@ -110,7 +114,7 @@
 
     bcftools index -tf "{{ pass_vcf }}"
 
-    # Finally remove the run dir
+    {# Finally remove the run dir #}
     rm -r "{{ run_dir }}"
 
 

@@ -19,14 +19,16 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    # Purge any existing run files prior to starting
+    {# Purge any existing run files prior to starting #}
     rm -r "{{ run_dir }}" || true
     mkdir -p "{{ run_dir }}"
 
+    {#
     # In order to restrict calling to only the specified regions
     # strelka requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Strelka2.
+    #}
     TAB=$'\t'
     cat <<EOF > "{{ run_dir }}/callRegions.bed"
     {% for contig in constants.phoenix.calling_contigs %}
@@ -37,7 +39,7 @@
     bgzip -f "{{ run_dir }}/callRegions.bed"
     tabix -f -p bed "{{ run_dir }}/callRegions.bed.gz"
 
-    # Build the Strelka run file
+    {# Build the Strelka run file #}
     configureStrelkaGermlineWorkflow.py \
       {% if pair.gltype == 'exome' %}
       --exome \
@@ -48,7 +50,7 @@
       --bam "{{ tumor_bam }}" \
       --runDir "{{ run_dir }}"
 
-    # Execute on the local machine
+    {# Execute on the local machine #}
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
 
@@ -64,7 +66,7 @@
 
     mkdir -p "{{ pair_dir }}"
     
-    # Filter and annotate the snv vcf
+    {# Filter and annotate the snv vcf #}
     bcftools annotate \
       --threads 2 \
       -O z \
@@ -75,7 +77,7 @@
 
     bcftools index -tf "{{ tconut_vcf }}"
 
-    # Finally remove the run dir
+    {# Finally remove the run dir #}
     rm -r "{{ run_dir }}"
 
 

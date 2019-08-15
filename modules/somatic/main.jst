@@ -14,8 +14,10 @@
 
 {% macro somatic_variant_calling(samples) %}
 {% if somatic_variant_calling_pairs is defined %}
+    {#
     # Pairs can be a predefined list of objects: 
     # [{"tumor": <tumor name>, "normal": <normal name>},...]
+    #}
     {% set pairs = [] %}
     {% for pair in somatic_variant_calling_pairs %}
         {% set tumor = samples[pair.tumor] %}
@@ -34,12 +36,14 @@
         {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
     {% endfor %}
 {% else %}
+    {#
     # If pairs are not predefined, build up the somatic variant calling 
     # sample pairs object by pairing every tumor to every normal of the 
     # same gltype. This will essentially permute every tumor-normal 
     # combination in the project. For projects with multiple individuals
     # this is likely NOT what you want to do, and pairs should be 
-    # predefined in the config data. 
+    # predefined in the config data.
+    #}
     {% set pairs = [] %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'exome' %}
         {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
@@ -73,14 +77,16 @@
     {% endfor %}
 {% endif %}
 
+{#
 # Variant caller macros that are used should add their name to the pair.caller list 
 # and then vcfmerger will merge all variants for callers that were used.
-# For example: {# {% do pair.callers.append('mutect2') %} #}
+# For example: {% do pair.callers.append('mutect2') %}
 # This requires that the output vcfs be located and named consitently, more details
 # in vcfmerger2.jst
+#}
 {% for pair in pairs %}{% do pair.update({'callers': []}) %}{% endfor %}
 
-# Start of the macro calls that will actually add the tasks to the workflow
+{# Start of the macro calls that will actually add the tasks to the workflow #}
 {% for pair in pairs %}
     {% if pair.gltype in 'exome' %}
         {% set taskPrefix = 'Exome' %}

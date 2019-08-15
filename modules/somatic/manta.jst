@@ -27,14 +27,16 @@
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
-    # Purge any existing run files prior to starting
+    {# Purge any existing run files prior to starting #}
     rm -r "{{ run_dir }}" || true
     mkdir -p "{{ run_dir }}"
 
+    {#
     # In order to restrict calling to only the specified regions
     # Manta requires a bed file (that has been bgzipped and indexed
     # with tabix). Here we generate that file on the fly, store in
     # the run dir, and pass the path to Manta.
+    #}
     MANTA_BED="{{ run_dir }}/callRegions.bed"
     TAB=$'\t'
     cat <<EOF > "${MANTA_BED}"
@@ -46,15 +48,17 @@
     bgzip -f "${MANTA_BED}"
     tabix -f -p bed "${MANTA_BED}.gz"
 
+    {#
     # Some settings are only configurable via tha ini file. Here
     # we generate this ini file and save it to the run dir.
+    #}
     MANTA_CONFIG="{{ run_dir }}/config.ini"
     cat <<EOF > "${MANTA_CONFIG}"
     [manta]
     enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
     EOF
 
-    # Build the Manta run file
+    {# Build the Manta run file #}
     configManta.py \
       {% if pair.gltype == 'exome' %}
       --exome \
@@ -66,10 +70,10 @@
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
       --runDir "{{ run_dir }}"
 
-    # Execute on the local machine with 19 parallel jobs
+    {# Execute on the local machine with 19 parallel jobs #}
     "{{ run_dir }}/runWorkflow.py" -m local -j 19
 
-    # Save all the vcs in the sample dir
+    {# Save all the vcs in the sample dir #}
     mkdir -p "{{ pair_dir }}" || true
 
     mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
@@ -81,7 +85,7 @@
     mv "{{ run_dir }}/results/variants/somaticSV.vcf.gz" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz"
     mv "{{ run_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
 
-    # Remove the remaining files
+    {# Remove the remaining files #}
     rm -r "{{ run_dir }}"
 
 {% endmacro %}

@@ -24,7 +24,7 @@
     
     mkdir -p "{{ temp_dir }}"
 
-    # Write out the regions in this batch to a bed file
+    {# Write out the regions in this batch to a bed file #}
     TAB=$'\t'
     cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
     {% for interval in batch %}
@@ -40,8 +40,10 @@
       --tumor "{{ tumor_bam }}" \
       > "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
 
+    {#
     # Lancet sorts output in lexicographical order and this does not
     # match the reference fasta order. Here we resort to match the reference
+    #}
     gatk SortVcf \
       --java-options "-Xmx14G" \
       --TMP_DIR "temp" \
@@ -77,9 +79,11 @@
 
     {% if not debug %}
     rm -r "{{ temp_dir }}"
+    {#
     # This version of Lancet leaves behind a config.txt file in the top 
     # of the project dir. This was patched in a later versions so that
     # we can remove later.
+    #}
     rm config.txt || true
     {% endif %}
 

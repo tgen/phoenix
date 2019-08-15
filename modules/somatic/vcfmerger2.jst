@@ -14,8 +14,10 @@
 
 {% set vcfs_to_merge=[] %}
 
+{#
 # Here we iterate over the callers for each pair calculating the necessary
 # paths. Callers add themselves to the pair object when their macro is used.
+#}
 {% for caller in pair.callers %}
 {% set bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set gzipped_path %}{{ pair.gltype }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
@@ -52,7 +54,7 @@
     mkdir -p "{{ temp_dir }}"
     gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
 
-    # Locate the prep_vcf.sh script relative to vcfMerger2.py
+    {# Locate the prep_vcf.sh script relative to vcfMerger2.py #}
     PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
     WORKDIR=`pwd`
 
