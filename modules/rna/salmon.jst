@@ -50,8 +50,8 @@
       -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
       --output "{{ tempdir }}"
-    
-    # Save back what we need and nuke the rest
+
+    {# Save back what we need and nuke the rest #}
     mv "{{ tempdir }}/quant.sf" "{{ resultsdir }}/{{ sample.name }}.transcripts.sf"
     mv "{{ tempdir }}/quant.genes.sf" "{{ resultsdir }}/{{ sample.name }}.genes.sf"
     mv "{{ tempdir }}/lib_format_counts.json" "{{ resultsdir }}/{{ sample.name }}.counts.json"

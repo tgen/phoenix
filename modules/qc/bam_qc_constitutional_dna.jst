@@ -17,7 +17,7 @@
 
     mkdir -p "{{ stats_dir }}"
 
-    # Some resources are included in the VerifyBamID home dir
+    {# Some resources are included in the VerifyBamID home dir #}
     VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
 
     VerifyBamID \

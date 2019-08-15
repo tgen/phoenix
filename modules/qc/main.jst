@@ -25,7 +25,7 @@
 
 {% macro bam_qc(sample, aligner='bwa') %}
 
-    # General Library type specific tasks
+    {# General Library type specific tasks #}
     {% if sample.gltype == 'rna' %}
         {% set taskPrefix = 'RNA' %}
 
@@ -58,7 +58,7 @@
     {% endif %}
 
     {% if sample.subGroup|lower == 'constitutional' and ( sample.gltype|lower == 'genome' or sample.gltype|lower == 'exome' )  %}
-    # Cnstitutional dna specific tasks
+    {# Cnstitutional dna specific tasks #}
         {% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
            {{- bam_qc_verifybamid2(sample, aligner=aligner) }}
         {% endif %}
@@ -68,7 +68,7 @@
         {% endif %}
      {% endif %}
 
-    # Tasks performed on all bams
+    {# Tasks performed on all bams #}
     {% if tasks[taskPrefix+"_quality_control_stats_samtools_stats"]|default(true) %}
         {{- bam_qc_samtools_stats(sample, aligner=aligner) }}
     {% endif %}
@@ -89,9 +89,9 @@
         {{- bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner=aligner) }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_quality_control_genotype_concordance_snpSniffer"]|default(true) %}
+    {%- if tasks[taskPrefix+"_quality_control_genotype_concordance_snpSniffer"]|default(true) %}
         {{- bam_qc_snpsniffer_geno(sample, aligner=aligner) }}
-    {% endif %}
+    {% endif -%}
 
 {% endmacro %}
 

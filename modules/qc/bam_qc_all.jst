@@ -180,7 +180,7 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    # Genotype the 387 test positions across the genome, filter to calls with DP >= 5
+    {# Genotype the 387 test positions across the genome, filter to calls with DP >= 5 #}
     bcftools mpileup \
       --no-BAQ \
       --max-depth 5000 \

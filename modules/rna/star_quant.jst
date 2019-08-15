@@ -14,7 +14,7 @@
 {% set star_bam_md %}{{ star_tempdir }}/{{ sample.name }}.md.bam{% endset %}
 {% set star_bam_final %}{{ star_finaldir }}/{{ sample.name }}.star.bam{% endset %}
 
-# Here we build up lists of all the fastq files and rg lines for this sample
+{# Here we build up lists of all the fastq files and rg lines for this sample #}
 {% set r1fqlist = [] %}
 {% set r2fqlist = [] %}
 {% set rglinelist = [] %}
@@ -59,6 +59,7 @@
     mkdir -p "{{ star_finaldir }}"
     mkdir -p "{{ star_finalcountsdir }}"
 
+    {#
     # Custom STAR Code Options ; defaults and source justification
     # Star Manual v2.7.0f Encode Recommendations:
     # --outFilterType BySJout ; default=Normal ; reduces the number of spurious junctions
@@ -95,6 +96,7 @@
     # --chimOutType Junctions SeparateSAMold WithinBAM SoftClip ; #default=Junctions ;
     #   NOTE: Did not enable SeparateSAMold as this will be deprecated
     # --quantMode TranscriptomeSAM GeneCounts, default=- ; GeneCounts=count reads per gene
+    #}
 
     STAR \
       --runMode alignReads \
@@ -157,9 +159,11 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
+    {#
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
+    #}
     rm -r "{{ star_tempdir }}/sort" || true
     mkdir -p "{{ star_tempdir }}/sort"
 
@@ -188,9 +192,11 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
+    {#
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
+    #}
     rm -r "{{ star_tempdir }}/markdup" || true
     mkdir -p "{{ star_tempdir }}/markdup"
     mkdir -p "{{ star_finaldir }}/stats/"
@@ -220,6 +226,7 @@
     
     mkdir -p "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/"
 
+    {#
     # Notes about command options:
     # -r --order=pos ; default=name ; GDC=name (bam unsorted)
     # -s --stranded=<yes/no/reverse> ; default=yes ; GDC=no (Dumb)
@@ -231,7 +238,7 @@
     #   one feature in the overlap
     # --secondary-alignments=<score/ignore> ; default=score
     # --supplementary-alignments=<score/ignore> ; default=score
-
+    #}
     htseq-count \
       --quiet \
       --format=bam \
@@ -264,8 +271,7 @@
     
     mkdir -p "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/"
 
-    # TODO -p should only be set for paired-end
-
+    {# TODO -p should only be set for paired-end #}
     featureCounts \
       -T 7 \
       -p \
@@ -275,8 +281,10 @@
       -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv" \
       "{{ star_bam_unsort }}"
 
+    {#
     # If walltime for these cmds is substantial, we'll split them into 2 separate
     # tasks. For now just testing them out vs HTSeq
+    #}
     featureCounts \
       -T 7 \
       -p \

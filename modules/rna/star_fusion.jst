@@ -1,7 +1,7 @@
 # Run STAR-Fusion for detecting gene fusions
 {% macro star_fusion(sample) %}
 
-{% set r1fqlist = [] %}
+{%- set r1fqlist = [] %}
 {% set r2fqlist = [] %}
 {% for rgid, rg in sample.read_groups.items() %}
   {% if rg.data_files|length < 2 %}
@@ -11,7 +11,7 @@
   {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
   {% do r1fqlist.append(r1fastq) %}
   {% do r2fqlist.append(r2fastq) %}
-{% endfor %}
+{% endfor -%}
 
 - name: star_fusion_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
@@ -32,12 +32,14 @@
     module load {{ constants.tools.star_fusion_1_5_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
+    {#
     # Here we purge any existing run data prior to starting.
     # STAR-Fusion keeps track of progress with checkpoint files 
     # stored in the run dir. If they're present, steps in the 
     # workflow will be skipped. For example, if the fastq inputs 
     # changed, alignment will not be rerun properly unless these
     # files are removed first.
+    #}
     OUTDIR="{{ sample.gltype }}/fusions/star-fusion/{{ sample.name }}/"
     rm -r "${OUTDIR}" || true
     mkdir -p "${OUTDIR}"
@@ -48,6 +50,4 @@
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --output_dir "${OUTDIR}"
-
-
-{% endmacro %}
+{% endmacro -%}
