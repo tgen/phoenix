@@ -13,7 +13,7 @@
     module load {{ constants.tools.snpeff_4_3t.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    # Generate full annotation set
+    {# Generate full annotation set #}
     snpEff ann \
       -t \
       -c "{{ constants.phoenix.snpeff_config }}" \
@@ -29,7 +29,7 @@
     bcftools index --threads 4 --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
 
-    # Generate canonical annotation set
+    {# Generate canonical annotation set #}
     snpEff ann \
       -t \
       -c "{{ constants.phoenix.snpeff_config }}" \

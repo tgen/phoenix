@@ -13,8 +13,10 @@
 
     mkdir -p "{{ temp_dir }}"
 
+    {#
     # we need to convert whatever vcf type we are given into a bcf (bcftools loves bcfs)
     # also create a temp bcf that we will use for all annotation runs
+    #}
     bcftools view \
       --threads 4 \
       --output-type b \
@@ -24,7 +26,7 @@
     bcftools index --threads 4 --force "{{ output_bcf }}"
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_dbsnp_v152"]|default(true) %}
-    # annotate with dbsnp
+    {# annotate with dbsnp #}
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.dbsnp_v152 }}" \
@@ -34,14 +36,14 @@
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
 
-    # move tempout to tempin for next step
+    {# move tempout to tempin for next step #}
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover"]|default(true) %}
-    # annotate with gnomad exome
+    {# annotate with gnomad exome #}
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_exome_v2_1_1_liftover }}" \
@@ -50,14 +52,14 @@
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
 
-    # move tempout to tempin for next step
+    {# move tempout to tempin for next step #}
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome_v2_1_1_liftover"]|default(true) %}
-    # annotate with gnomad genome
+    {# annotate with gnomad genome #}
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_genome_v2_1_1_liftover }}" \
@@ -66,14 +68,14 @@
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
 
-    # move tempout to tempin for next step
+    {# move tempout to tempin for next step #}
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_coding_v89"]|default(true) %}
-    # annotate with cosmic
+    {# annotate with cosmic #}
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.cosmic_coding_v89 }}" \
@@ -82,14 +84,14 @@
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
 
-    # move tempout to tempin for next step
+    {# move tempout to tempin for next step #}
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_noncoding_v89"]|default(true) %}
-    # annotate with cosmic_nc
+    {# annotate with cosmic_nc #}
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.cosmic_noncoding_v89 }}" \
@@ -98,14 +100,14 @@
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
 
-    # move tempout to tempin for next step
+    {# move tempout to tempin for next step #}
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_clinvar_20190715"]|default(true) %}
-    # annotate with clinvar
+    {# annotate with clinvar #}
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.clinvar_20190715 }}" \
@@ -114,13 +116,13 @@
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
 
-    # move tempout to tempin for next step
+    {# move tempout to tempin for next step #}
     mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
 
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
-    # convert back to vcf.gz for the average users
+    {# convert back to vcf.gz for the average users #}
     {% if snpeff_flag or vep_flag %}
 
     bcftools view \

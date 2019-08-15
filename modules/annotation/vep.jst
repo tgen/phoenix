@@ -11,7 +11,7 @@
     module load {{ constants.tools.vep_97_3.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    # Use VEP to create full annotation file with all transcripts
+    {# Use VEP to create full annotation file with all transcripts #}
     vep --fork 4 \
         --input_file "{{ input_vcf }}" \
         --format vcf \
@@ -40,7 +40,7 @@
         --flag_pick_allele_gene \
         --pick_order canonical,appris,tsl,biotype,rank,ccds,length
 
-    # Convert to compressed VCF
+    {# Convert to compressed VCF #}
     bcftools view \
         --threads 4 \
         --output-type z \
@@ -63,7 +63,7 @@
     module load {{ constants.tools.vep_97_3.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    # Use VEP to create full annotation file with all transcripts
+    {# Use VEP to create full annotation file with all transcripts #}
     vep --fork 4 \
         --input_file "{{ input_vcf }}" \
         --format vcf \
@@ -92,7 +92,7 @@
         --pick_allele_gene \
         --pick_order canonical,appris,tsl,biotype,rank,ccds,length
 
-    # Convert to compressed VCF
+    {# Convert to compressed VCF #}
     bcftools view \
         --threads 4 \
         --output-type z \
