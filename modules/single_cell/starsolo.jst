@@ -7,7 +7,6 @@
 {% set assaycode = props.assayCode|default('unknown') %}
 {% set fqCode = props.fastqCode %}
 
-{% set samples_list = [] %}
 {% set CDNA_LIST = [] %}
 {% set CB_UMI_LIST = [] %}
 
@@ -59,11 +58,11 @@
     # Make a comma separated list of the CDNA and CBUMI read sets
     {% for rgpu, _ in files|groupby('rgpu') %}
     {% if fqCode == "R1" %}
-        {% set CBUMI_string %}{{ props.name }}_{{ library }}_{{ rgpu[:-2] }}{% endset %}
+        {% set CBUMI_string %}{{ props.fastqPath|basename }}{% endset %}
         {% do CB_UMI_LIST.append(CBUMI_string) %}
     {% endif %}
     {% if fqCode == "R2" %}
-        {% set CDNA_string %}{{ props.name }}_{{ library }}_{{ rgpu[:-2] }}{% endset %}
+        {% set CDNA_string %}{{ props.fastqPath|basename }}{% endset %}
         {% do CDNA_LIST.append(CDNA_string) %}
     {% endif %}
     {% endfor %}
