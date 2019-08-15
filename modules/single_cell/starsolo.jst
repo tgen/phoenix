@@ -10,12 +10,6 @@
 {% set samples_list = [] %}
 {% set CDNA_LIST = [] %}
 {% set CB_UMI_LIST = [] %}
-{% set CDNA_SET = "" %}
-{% set CB_UMI_SET = "" %}
-{% for rgpu, _ in files|groupby('rgpu') %}
-  {% set sample_string %}{{ props.name }}_{{ library }}_{{ rgpu[:-2] }}{% endset %}
-  {% do samples_list.append(sample_string) %}
-{% endfor %}
 
 {% set star_index = constants.phoenix.starSOLO_index %}
 {% set barcode_path = constants.phoenix.barcodes_path %}
@@ -72,8 +66,6 @@
         {% set CDNA_string %}{{ props.name }}_{{ library }}_{{ rgpu[:-2] }}{% endset %}
         {% do CDNA_LIST.append(CDNA_string) %}
     {% endif %}
-    {% set CBUMI_SET = ",".join(CB_UMI_LIST) %}
-    {% set CDNA_SET = ",".join(CDNA_LIST) %}
     {% endfor %}
     # Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
     # cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1
@@ -86,7 +78,7 @@
       --genomeLoad NoSharedMemory \
       --sjdbOverhang 99 \
       --readFilesType Fastx \
-      --readFilesIn {{ CDNA_SET }} {{ CB_UMI_SET }} \
+      --readFilesIn {{ CDNA_LIST|join(',') }} {{ CB_UMI_LIST|join(',') }} \
       --readFilesCommand zcat \
       --outFileNamePrefix {{ props.name }}_ \
       --outSAMtype BAM SortedByCoordinate \
