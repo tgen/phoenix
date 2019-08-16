@@ -6,17 +6,49 @@
 {% set strandDirection = props.rnaStrandDirection %}
 {% set assaycode = props.assayCode|default('unknown') %}
 {% set fqCode = props.fastqCode %}
-
-{% set CDNA_LIST = [] %}
-{% set CB_UMI_LIST = [] %}
-
 {% set star_index_size %}{{ props.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
 {% set barcode_path = constants.phoenix.barcodes_path %}
-
 {% set outdir %}{{ props.gltype }}/quant/starSOLO/{{ props.name }}/{% endset %}
+{% set temp_dir %}temp/starSOLO/{{ props.name }}/{{ library }}/fastqs/{% endset %}
+
+{# Local Variables #}
+{% set CDNA_LIST = [] %}
+{% set CB_UMI_LIST = [] %}
+{% set BARCODE = "" %}
+
+{% for rgpu, _ in files|groupby('rgpu') %}
+  {# Setting barcodes based on configuration
+  Cell Barcode Whitelist NOTES:
+  PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
+  Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
+  Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
+  Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
+  Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
+  Single Cell V(D)J = 737K-august-2016.txt
+  CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
+  CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
+  CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
+  {% if assaycode == "XCSCR" %}
+      {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
+  {% elif assaycode == "X3SCR" %}
+      {% set BARCODE %}{{ barcode_path }}/737K-april-2014_rc.txt{% endset %}
+  {% elif strandDirection == "Reverse" %}
+      {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
+  {% endif %}
+
+  {# Make a comma separated list of the CDNA and CBUMI read sets #}
+  {% if fqCode == "R1" %}
+      {% set CBUMI_string %}temp/fastqs/{{ props.fastqPath|basename }}{% endset %}
+      {% do CB_UMI_LIST.append(CBUMI_string) %}
+  {% elif fqCode == "R2" %}
+      {% set CDNA_string %}temp/fastqs{{ props.fastqPath|basename }}{% endset %}
+      {% do CDNA_LIST.append(CDNA_string) %}
+  {% endif %}
+{% endfor %}
 
 - name: starsolo_count_{{ props.name }}
+  tags: [{{ props.gltype }}, single_cell, starsolo_count, {{ props.name }}]
   methods: >
     Alignment and quantification for {{ props.name }} was performed with
     {{ constants.tools.star_2_7_1a.verbose }} using the genome index.
@@ -33,42 +65,10 @@
     set -o pipefail
     module load {{ constants.tools.star_2_7_1a.module }}
 
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ outdir }}"
 
-    {#
-    # Setting barcodes based on configuration
-    # Cell Barcode Whitelist NOTES:
-    # PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
-    # Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
-    # Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
-    # Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
-    # Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
-    # Single Cell V(D)J = 737K-august-2016.txt
-    # CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
-    # CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
-    # CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
-    #}
-    {% if assaycode == "XCSCR" %}
-        {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-    {% endif %}
-    {% if assaycode == "X3SCR" %}
-        {% set BARCODE %}{{ barcode_path }}/737K-april-2014_rc.txt{% endset %}
-    {% endif %}
-    {% if strandDirection == "Reverse" %}
-        {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-    {% endif %}
-
-    # Make a comma separated list of the CDNA and CBUMI read sets
-    {% for rgpu, _ in files|groupby('rgpu') %}
-    {% if fqCode == "R1" %}
-        {% set CBUMI_string %}temp/fastqs/{{ props.fastqPath|basename }}{% endset %}
-        {% do CB_UMI_LIST.append(CBUMI_string) %}
-    {% endif %}
-    {% if fqCode == "R2" %}
-        {% set CDNA_string %}temp/fastqs{{ props.fastqPath|basename }}{% endset %}
-        {% do CDNA_LIST.append(CDNA_string) %}
-    {% endif %}
-    {% endfor %}
     {#
     # Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
     # cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1
@@ -100,7 +100,7 @@
       --soloBarcodeReadLength 0 \
       --genomeDir {{ star_index }} \
       --soloStrand {{ strandDirection }} \
-      --soloOutFileNames Solo.out/ {{ props.name }}_genes.tsv {{ props.name }}_barcodes.tsv {{ props.name }}_matrix.mtx {{ props.name }}_matrixSJ.mtx
+      --soloOutFileNames {{ outdir }} {{ props.name }}_genes.tsv {{ props.name }}_barcodes.tsv {{ props.name }}_matrix.mtx {{ props.name }}_matrixSJ.mtx
 
 {% endfor %}
 {% endmacro %}
