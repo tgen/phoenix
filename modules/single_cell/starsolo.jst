@@ -3,16 +3,13 @@
 
 {% for library, datafiles in libraries %}
 {% set props = datafiles[0] %}
-{% set strandDirection = props.rnaStrandDirection %}
-{% set assaycode = props.assayCode|default('unknown') %}
-{% set fqCode = props.fastqCode %}
 {% set star_index_size %}{{ props.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
 {% set barcode_path = constants.phoenix.barcodes_path %}
 {% set outdir %}{{ props.gltype }}/quant/starSOLO/{{ props.name }}/{% endset %}
 {% set temp_dir %}temp/starSOLO/{{ props.name }}/{{ library }}/fastqs/{% endset %}
 
-{# Local Variables #}
+{# Local Temp Variables #}
 {% set CDNA_LIST = [] %}
 {% set CB_UMI_LIST = [] %}
 {% set BARCODE = "" %}
@@ -29,19 +26,19 @@
   CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
   CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
   CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
-  {% if assaycode == "XCSCR" %}
+  {% if props.assayCode == "XCSCR" %}
       {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-  {% elif assaycode == "X3SCR" %}
+  {% elif props.assayCode == "X3SCR" %}
       {% set BARCODE %}{{ barcode_path }}/737K-april-2014_rc.txt{% endset %}
-  {% elif strandDirection == "Reverse" %}
+  {% elif props.rnaStrandDirection == "Reverse" %}
       {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
   {% endif %}
 
   {# Make a comma separated list of the CDNA and CBUMI read sets #}
-  {% if fqCode == "R1" %}
+  {% if props.fastqCode == "R1" %}
       {% set CBUMI_string %}temp/fastqs/{{ props.fastqPath|basename }}{% endset %}
       {% do CB_UMI_LIST.append(CBUMI_string) %}
-  {% elif fqCode == "R2" %}
+  {% elif props.fastqCode == "R2" %}
       {% set CDNA_string %}temp/fastqs{{ props.fastqPath|basename }}{% endset %}
       {% do CDNA_LIST.append(CDNA_string) %}
   {% endif %}
@@ -69,11 +66,21 @@
     mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ outdir }}"
 
+    {% for file in datafiles %}
+    ln -rs "temp/fastqs/{{ file.basename }}" "{{ temp_dir }}/{{ file.basename }}"
+    {% endfor %}
+
     {#
     # Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
     # cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1
     # to add  \
     #}
+
+    echo "starSOLO is about to begin. The inputs are:"
+    echo "Barcode: "{{ BARCODE }}
+    echo "cDNA_list: "{{ CDNA_LIST }}
+    echo "cellbarcode_umi_list: "{{ CB_UMI_LIST }}
+
     STAR \
       --runMode alignReads \
       --twopassMode Basic \
