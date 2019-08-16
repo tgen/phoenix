@@ -65,7 +65,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
   {% endfor %}
   output: {{ outdir }}
   cpus: 20
-  mem: 100G
+  mem: 120G
   walltime: "48:00:00"
   cmd: |
     set -eu
@@ -90,7 +90,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --twopassMode Basic \
       --runThreadN 19 \
       --genomeLoad NoSharedMemory \
-      --sjdbOverhang 250 \
+      --sjdbOverhang 99 \
       --readFilesType Fastx \
       --readFilesIn {{ CDNA_LIST|join(',') }} {{ CB_UMI_LIST|join(',') }} \
       --readFilesCommand zcat \

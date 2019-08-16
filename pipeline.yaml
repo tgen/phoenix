@@ -299,6 +299,7 @@ constants:
     cosmic_coding_v89: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v89/CosmicCodingMuts_v89_hg38tgen.bcf
     cosmic_noncoding_v89: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v89/CosmicNonCodingMuts_v89_hg38tgen.bcf
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
+    barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
     cellranger_chemistry:
       X3SCR: SC3Pv1
@@ -320,7 +321,6 @@ constants:
     ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.ribo.interval_list
     transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.transcriptome.fasta
     salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
-    barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
     star_indices:
       # Multiple STAR references defined here in order to accommodate 
