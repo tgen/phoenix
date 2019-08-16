@@ -14,34 +14,44 @@
 {% set CB_UMI_LIST = [] %}
 {% set BARCODE = "" %}
 
-{% for rgpu, _ in files|groupby('rgpu') %}
-  {# Setting barcodes based on configuration
-  Cell Barcode Whitelist NOTES:
-  PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
-  Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
-  Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
-  Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
-  Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
-  Single Cell V(D)J = 737K-august-2016.txt
-  CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
-  CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
-  CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
-  {% if props.assayCode == "XCSCR" %}
-      {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-  {% elif props.assayCode == "X3SCR" %}
-      {% set BARCODE %}{{ barcode_path }}/737K-april-2014_rc.txt{% endset %}
-  {% elif props.rnaStrandDirection == "Reverse" %}
-      {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-  {% endif %}
+{# Setting barcodes based on configuration
+Cell Barcode Whitelist NOTES:
+PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
+Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
+Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
+Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
+Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
+Single Cell V(D)J = 737K-august-2016.txt
+CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
+CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
+CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
+{% if props.assayCode == "X3SCR" %}
+    {% set BARCODE %}{{ barcode_path }}/737K-april-2014_rc.txt{% endset %}
+{% elif props.assayCode == "XCSCR" %}
+    {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
+{% elif props.assayCode == "X5SCR" %}
+    {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
+{% elif props.assayCode == "X3SC3" %}
+    {% set BARCODE %}{{ barcode_path }}/3M-february-2018.txt.gz{% endset %}
+{% else %}
+    {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
+{% endif %}
 
-  {# Make a comma separated list of the CDNA and CBUMI read sets #}
-  {% if props.fastqCode == "R1" %}
-      {% set CBUMI_string %}temp/fastqs/{{ props.fastqPath|basename }}{% endset %}
-      {% do CB_UMI_LIST.append(CBUMI_string) %}
-  {% elif props.fastqCode == "R2" %}
-      {% set CDNA_string %}temp/fastqs{{ props.fastqPath|basename }}{% endset %}
-      {% do CDNA_LIST.append(CDNA_string) %}
+{# Generating input lists #}
+{% for rgid, rg in datafiles|groupby('rgid') %}
+  {#
+  {% if rg|length != 2 %}
+      {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
   {% endif %}
+  #}
+
+  {% set r1fastq = rg|selectattr('fastqCode', 'eq', 'R1')|first %}
+  {% set r1fastq %}"temp/fastqs/{{ r1fastq.basename }}"{% endset %}
+  {% do CB_UMI_LIST.append(r1fastq) %}
+
+  {% set r2fastq = rg|selectattr('fastqCode', 'eq', 'R2')|first %}
+  {% set r2fastq %}"temp/fastqs/{{ r2fastq.basename }}"{% endset %}
+  {% do CDNA_LIST.append(r2fastq) %}
 {% endfor %}
 
 - name: starsolo_count_{{ props.name }}
