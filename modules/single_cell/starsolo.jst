@@ -106,7 +106,7 @@
       --soloUMIlen 10 \
       --soloBarcodeReadLength 0 \
       --genomeDir {{ star_index }} \
-      --soloStrand {{ strandDirection }} \
+      --soloStrand {{ props.rnaStrandDirection }} \
       --soloOutFileNames {{ outdir }} {{ props.name }}_genes.tsv {{ props.name }}_barcodes.tsv {{ props.name }}_matrix.mtx {{ props.name }}_matrixSJ.mtx
 
 {% endfor %}
