@@ -27,9 +27,9 @@
    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
   output: {{ props.gltype }}/cellranger/{{ props.name }}_{{ library }}/
-  cpus: 16
-  mem: 128G
-  walltime: "24:00:00"
+  cpus: 20
+  mem: 160G
+  walltime: "48:00:00"
   cmd: |
     set -eu
     set -o pipefail
@@ -48,8 +48,8 @@
     # We are using 16 cores and therefore a 96Gb RAM pool is recommended
     #}
     (cd "{{ temp_dir }}" && cellranger count \
-      --localcores 16 \
-      --localmem 96 \
+      --localcores 20 \
+      --localmem 160 \
       --chemistry "{{ chemistry }}" \
       --id "{{ props.name }}_{{ library }}" \
       --fastqs . \
