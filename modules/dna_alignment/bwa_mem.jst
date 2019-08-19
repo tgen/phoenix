@@ -1,4 +1,10 @@
 # Shared bwa command used by both Picard and Samtools workflows
+# bwa mem
+#   -v 3 \            # verbosity: 3 = message (default = 3)
+#   -Y \              # use soft clipping for supplementary alignments
+#   -K 100000000 \    # process INT input bases in each batch regardless of nThreads (for reproducibility)
+#   -t 1 \            # Number of threads to use
+
 {% macro bwa_mem(threads) -%}
 bwa mem -v 3 -Y -K 100000000 -t{{ threads }}
 {%- endmacro %}
