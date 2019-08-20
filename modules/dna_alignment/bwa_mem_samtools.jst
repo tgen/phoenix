@@ -7,167 +7,10 @@
 #
 
 # This alignment command prefix is shared by all modules using bwa
-{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
-{% from 'utilities/read_group_line.jst' import read_group_line %}
+{% from 'utilities/read_group_line.jst' import read_group_line with context %}
 
-# Markdups task is used by chunking and non-chunking alignments
-{% macro samtools_markdup(sample) %}
-- name: samtools_markdup_{{ sample.name }}_bwa
-  tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
-  methods: Duplicate reads for {{ sample.name }} were marked with
-    {{ constants.tools.samtools_1_9_92_gcb6b3b5.verbose }} markdup.
-  input: temp/{{ sample.name }}.bwa.bam
-  output: temp/{{ sample.name }}.bwa.md.bam
-  walltime: "48:00:00"
-  cpus: 10
-  mem: 40G
-  cmd: |
-    set -eu
-    set -o pipefail
-    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
-
-    {#
-    # If this task was interrupted previously, temp files may exist
-    # that will cause errors with samtools markdup. Here, we purge any
-    # existing temp files before making the directory again.
-    #}
-    rm -r "temp/markdup_{{ sample.name }}_bwa/" || true
-    mkdir -p "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}"
-    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
-
-    {# No long options available for the following:
-     -S   Mark supplemenary alignments of duplicates as duplicates (slower).
-     -s   Report stats.
-     -T   PREFIX    Write temporary files to PREFIX.samtools.nnnn.nnnn.tmp.
-     2>   stats are output to stderr which is redirected to ".bwa.bam.markdup.txt"
-    #}
-    samtools markdup \
-      -S \
-      -s \
-      --threads 10 \
-      -T "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}" \
-      "temp/{{ sample.name }}.bwa.bam" \
-      "temp/{{ sample.name }}.bwa.md.bam" \
-      2> "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
-
-    {# No long options available for the following:
-      -@ 1 Number of threads used for indexing the bam.
-    #}
-    samtools index -@ 10 "temp/{{ sample.name }}.bwa.md.bam"
-    rm -r "temp/markdup_{{ sample.name }}_bwa/"
-
-{% endmacro %}
-
-# Single alignment task per read group, no chunking
-{% macro bwa_mem_samtools(sample) %}
-{% for rgid, rg in sample.read_groups.items() %}
-{% if rg.data_files|length != 2 %}
-    {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
-{% endif %}
-
-{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
-{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-
-- name: bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}
-  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
-  input:
-    - temp/fastqs/{{ r1fastq.basename }}
-    - temp/fastqs/{{ r2fastq.basename }}
-  walltime: "12:00:00"
-  cpus: 10
-  mem: 40G
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
-
-    mkdir -p "temp/{{ rgid }}/"
-
-    {# No long options available for the following:
-     bwa mem
-
-     samtools fixmate
-     -m   Add mate score tag, REQUIRED for samtools markdup
-     -    input from stdin
-     -    output to stdout
-
-     samtools sort
-     -l INT     Set compression level, from 0 (uncompressed) to 9 (best)
-     -m INT     Set maximum memory per thread; suffix K/M/G recognized [768M]
-     -T PREFIX  Write temporary files to PREFIX.nnnn.bam
-     -          input from stdin
-     -o FILE    Write final output to FILE rather than standard output
-    #}
-    {{ bwa_mem(threads=9) }} \
-      -R "{{ read_group_line(rg, format='bwa') }}" \
-      "{{ constants.phoenix.bwa_index }}" \
-      "temp/fastqs/{{ r1fastq.basename }}" \
-      "temp/fastqs/{{ r2fastq.basename }}" |\
-    samtools fixmate \
-      --threads 9 \
-      -m \
-      - \
-      - |\
-    samtools sort \
-      -l 2 \
-      -m 3G \
-      --threads 9 \
-      --output-fmt BAM \
-      -T "temp/{{ rgid }}/{{ rgid }}" \
-      - \
-      -o "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
-
-{% endfor %}
-
-
-- name: samtools_merge_rg_bams_{{ sample.name }}_bwa
-  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
-  after-re: bwa_mem_samtools_fixmate_{{ sample.name }}_.*
-  output: temp/{{ sample.name }}.bwa.bam
-  walltime: "48:00:00"
-  cpus: 4
-  mem: 16G
-  cmd: |
-    set -eu
-    set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
-
-    {% if sample.read_groups | length > 1 %}
-
-    samtools merge \
-      --threads 4 \
-      -c \
-      -f \
-      "temp/{{ sample.name }}.bwa.bam" \
-    {% for rgid in sample.read_groups %}
-      "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
-    {% endfor %}
-
-    {% else %}
-    {% set rgid = sample.read_groups|first %}
-    {# No merging needed for <= 1 read group not split #}
-    mv \
-      "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
-      "temp/{{ sample.name }}.bwa.bam"
-
-    {% endif %}
-
-    {# Cleanup the tempfiles #}
-    {% if not debug %}
-    {% for rgid in sample.read_groups %}
-    rm -r "temp/{{ rgid }}/"
-    {% endfor %}
-    {% endif %}
-
-
-{{- samtools_markdup(sample) }}
-
-{% endmacro %}
-
-
-# This macro splits large fastqs into chunks prior to aligning. The inputs
-# and outputs are the same as above.
+# This macro splits large fastqs into chunks prior to aligning.
+# If fastq is less than reads_per_chunk (48000000) then one chunk is made.
 {% macro bwa_mem_samtools_chunked(sample, reads_per_chunk) %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
@@ -194,9 +37,9 @@
 
     zcat "temp/fastqs/{{ fastq.basename }}" |\
       split \
-        -d \
+        --numeric-suffixes \
         --suffix-length 2 \
-        -l {{ n_lines }} \
+        --lines {{ n_lines }} \
         - \
         "temp/{{ rgid }}/{{ fastq.basename }}/"
 
@@ -235,20 +78,29 @@
 
     {# No long options available for the following:
      bwa mem
+        -v INT       verbosity: 3 = message (default = 3)
+        -Y           use soft clipping for supplementary alignments
+        -K INT       process INT input bases in each batch regardless of nThreads (for reproducibility)
+        -t INT       Number of threads to use
+        -R STR       read group header line such as '@RG\tID:foo\tSM:bar' [null]
 
      samtools fixmate
-     -m   Add mate score tag, REQUIRED for samtools markdup
-     -    input from stdin
-     -    output to stdout
+        -m         Add mate score tag, REQUIRED for samtools markdup
+        -          input from stdin
+        -          output to stdout
 
      samtools sort
-     -l INT     Set compression level, from 0 (uncompressed) to 9 (best)
-     -m INT     Set maximum memory per thread; suffix K/M/G recognized [768M]
-     -T PREFIX  Write temporary files to PREFIX.nnnn.bam
-     -          input from stdin
-     -o FILE    Write final output to FILE rather than standard output
+        -l INT     Set compression level, from 0 (uncompressed) to 9 (best)
+        -m INT     Set maximum memory per thread; suffix K/M/G recognized [768M]
+        -T PREFIX  Write temporary files to PREFIX.nnnn.bam
+        -          input from stdin
+        -o FILE    Write final output to FILE rather than standard output
     #}
-    {{ bwa_mem(threads=9) }} \
+    bwa mem \
+      -v 3 \
+      -Y \
+      -K 100000000 \
+      -t 9 \
       -R "{{ read_group_line(rg, format='bwa') }}" \
       "{{ constants.phoenix.bwa_index }}" \
       "temp/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
@@ -305,7 +157,49 @@
     {% endif %}
 
 
-{{- samtools_markdup(sample) }}
+- name: samtools_markdup_{{ sample.name }}_bwa
+  tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
+  methods: Duplicate reads for {{ sample.name }} were marked with
+    {{ constants.tools.samtools_1_9_92_gcb6b3b5.verbose }} markdup.
+  input: temp/{{ sample.name }}.bwa.bam
+  output: temp/{{ sample.name }}.bwa.md.bam
+  walltime: "48:00:00"
+  cpus: 10
+  mem: 40G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
+
+    {#
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools markdup. Here, we purge any
+    # existing temp files before making the directory again.
+    #}
+    rm -r "temp/markdup_{{ sample.name }}_bwa/" || true
+    mkdir -p "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}"
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
+
+    {# No long options available for the following:
+     -S   Mark supplemenary alignments of duplicates as duplicates (slower).
+     -s   Report stats.
+     -T   PREFIX    Write temporary files to PREFIX.samtools.nnnn.nnnn.tmp.
+     2>   stats are output to stderr which is redirected to ".bwa.bam.markdup.txt"
+    #}
+    samtools markdup \
+      -S \
+      -s \
+      --threads 10 \
+      -T "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}" \
+      "temp/{{ sample.name }}.bwa.bam" \
+      "temp/{{ sample.name }}.bwa.md.bam" \
+      2> "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
+
+    {# No long options available for the following:
+      -@ 1 Number of threads used for indexing the bam.
+    #}
+    samtools index -@ 10 "temp/{{ sample.name }}.bwa.md.bam"
+    rm -r "temp/markdup_{{ sample.name }}_bwa/"
 
 {% endmacro %}
 

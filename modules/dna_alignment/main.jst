@@ -1,7 +1,7 @@
 # DNA Alignment with BWA MEM
 # Take DNA fastq data files to aligned bams with qc data
-{% from 'modules/dna_alignment/bwa_mem_samtools.jst' import bwa_mem_samtools, bwa_mem_samtools_chunked with context %}
-{% from 'modules/dna_alignment/bwa_mem_gatk_picard.jst' import bwa_mem_gatk_picard, bwa_mem_gatk_picard_chunked with context %}
+{% from 'modules/dna_alignment/bwa_mem_samtools.jst' import bwa_mem_samtools_chunked with context %}
+{% from 'modules/dna_alignment/bwa_mem_gatk_picard.jst' import bwa_mem_gatk_picard_chunked with context %}
 {% from 'modules/dna_alignment/bwa_mem_samblaster_sambamba.jst' import bwa_mem_blaster_bamba with context %}
 {% from 'modules/dna_alignment/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
 {% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
@@ -10,28 +10,14 @@
 
 {% macro dna_alignment(samples) %}
   {% set alignment_style = dnaAlignmentStyle|default('tgen')|lower %}
-  {% set chunking = chunking|default(True) %}
   {% set reads_per_chunk = reads_per_chunk|default(48000000) %}
 
   {% for sample in samples.values() if sample.gltype in ['genome', 'exome'] %}
-    {% do sample.update({'needs_split': False}) %}
-    {% for rg in sample.read_groups.values() %}
-      {% if rg.numberOfReads|default(0) > reads_per_chunk %}
-        {% do sample.update({'needs_split': True}) %}
-      {% endif %}
-    {% endfor %}
+
     {% if alignment_style == 'tgen' %}
-      {% if chunking and sample.needs_split %}
-        {{- bwa_mem_samtools_chunked(sample, reads_per_chunk) }}
-      {% else %}
-        {{- bwa_mem_samtools(sample) }}
-      {% endif %}
+      {{- bwa_mem_samtools_chunked(sample, reads_per_chunk) }}
     {% elif alignment_style == 'broad'  %}
-      {% if chunking and sample.needs_split %}
-        {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) }}
-      {% else %}
-        {{- bwa_mem_gatk_picard(sample) }}
-      {% endif %}
+      {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) }}
     {% elif alignment_style == 'ashion' %}
       {{- bwa_mem_blaster_bamba(sample) }}
     {% else %}
@@ -42,13 +28,13 @@
       {% if tasks.Genome_alignment_base_recalibration_gatk is defined and tasks.Genome_alignment_base_recalibration_gatk %}
         {{- baserecalibration(sample, aligner='bwa') }}
       {% else %}
-         {{- nobaserecalibration(sample, aligner='bwa') }}
+        {{- nobaserecalibration(sample, aligner='bwa') }}
       {% endif %}
     {% elif sample.gltype == 'exome' %}
       {% if tasks.Exome_alignment_base_recalibration_gatk is defined and tasks.Exome_alignment_base_recalibration_gatk %}
-          {{- baserecalibration(sample, aligner='bwa') }}
+        {{- baserecalibration(sample, aligner='bwa') }}
       {% else %}
-          {{- nobaserecalibration(sample, aligner='bwa') }}
+        {{- nobaserecalibration(sample, aligner='bwa') }}
       {% endif %}
     {% endif %}
 

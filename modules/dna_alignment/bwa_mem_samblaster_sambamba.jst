@@ -7,7 +7,6 @@
 #
 
 # This alignment command prefix is shared by all modules using bwa
-{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
 {% from 'utilities/read_group_line.jst' import read_group_line %}
 
 # Replicating the exact workflow from Ashion into jst format
@@ -69,19 +68,47 @@
     module load {{ constants.tools.samblaster_0_1_24.module }}
     module load {{ constants.tools.sambamba_0_7_0.module }}
 
-    {{ bwa_mem(threads=9) }} \
+    {# No long options available for the following:
+     bwa mem
+        -v INT       verbosity: 3 = message (default = 3)
+        -Y           use soft clipping for supplementary alignments
+        -K INT       process INT input bases in each batch regardless of nThreads (for reproducibility)
+        -t INT       Number of threads to use
+        -R STR       read group header line such as '@RG\tID:foo\tSM:bar' [null]
+
+     samblaster
+
+     sambamba view
+        -f
+        -l
+        -S
+
+     sambamba sort
+        -m INT
+        -t INT
+        --tmpdir STR
+        -o STR
+    #}
+    bwa mem \
+      -v 3 \
+      -Y \
+      -K 100000000 \
+      -t 9 \
       -R "{{ r_flag }}" \
       "{{ constants.phoenix.bwa_index }}" \
       temp/{{ sample.rglb }}/{{ sample.rglb }}_R1_merged.fastq.gz \
       temp/{{ sample.rglb }}/{{ sample.rglb }}_R2_merged.fastq.gz |\
-      samblaster |\
-      sambamba view -f bam -l 0 -S /dev/stdin |\
-      sambamba sort \
-        -m 20GB \
-        -t 9 \
-        --tmpdir "temp/{{ sample.rglb }}/" \
-        /dev/stdin \
-        -o "temp/{{ sample.name }}.bwa.md.bam"
+    samblaster |\
+    sambamba view \
+      -f bam \
+      -l 0 \
+      -S /dev/stdin |\
+    sambamba sort \
+      -m 20GB \
+      -t 9 \
+      --tmpdir "temp/{{ sample.rglb }}/" \
+      /dev/stdin \
+      -o "temp/{{ sample.name }}.bwa.md.bam"
 
 
 {% endmacro %}
