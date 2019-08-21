@@ -24,12 +24,10 @@
     {% endif %}
 
     {% if tasks.RNA_alignment_rna_alignment_STAR|default(true) %}
-    {{- star_quant(sample) }}
+      {{- star_quant(sample) }}
+      {{- bam_to_cram(sample, aligner='star') }}
+      {{- bam_qc(sample, aligner='star') }}
     {% endif %}
-
-    {{- bam_to_cram(sample, aligner='star') }}
-
-    {{- bam_qc(sample, aligner='star') }}
 {% endfor -%}
 
 {% endmacro -%}
