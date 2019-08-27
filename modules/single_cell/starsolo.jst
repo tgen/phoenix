@@ -85,7 +85,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
     # cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1
     # to add  \
     #}
-    STAR \
+    (cd "{{ temp_dir }}" && STAR \
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
@@ -111,7 +111,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --soloBarcodeReadLength 0 \
       --genomeDir {{ star_index }} \
       --soloStrand {{ props.rnaStrandDirection }} \
-      --soloOutFileNames Solo.out/ {{ props.name }}_genes.tsv {{ props.name }}_barcodes.tsv {{ props.name }}_matrix.mtx {{ props.name }}_matrixSJ.mtx
+      --soloOutFileNames Solo.out/ {{ props.name }}_genes.tsv {{ props.name }}_barcodes.tsv {{ props.name }}_matrix.mtx {{ props.name }}_matrixSJ.mtx)
 
 {% endfor %}
 {% endmacro %}
