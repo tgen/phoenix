@@ -3,30 +3,30 @@
 {% set libraries = files|groupby('rglb') %}
 
 {% for library, datafiles in libraries %}
-{% set props = datafiles[0] %}
-{% set assaycode = props.assayCode|default('unknown') %}
+{% set sample = datafiles[0] %}
+{% set assaycode = sample.assayCode|default('unknown') %}
 {% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
-{% set outdir %}{{ props.gltype }}/cellranger/{{ props.name }}_{{ library }}/{% endset %}
-{% set temp_dir %}temp/cellranger/{{ props.name }}/{{ library }}/fastqs/{% endset %}
+{% set outdir %}{{ sample.gltype }}/cellranger/{{ sample.name }}_{{ library }}/{% endset %}
+{% set temp_dir %}temp/cellranger/{{ sample.name }}/{{ library }}/fastqs/{% endset %}
 
 {% set samples_list = [] %}
 {% for rgpu, _ in files|groupby('rgpu') %}
-  {% set sample_string %}{{ props.name }}_{{ library }}_{{ rgpu[:-2] }}{% endset %}
+  {% set sample_string %}{{ sample.name }}_{{ library }}_{{ rgpu[:-2] }}{% endset %}
   {% do samples_list.append(sample_string) %}
 {% endfor %}
 
 {{ log('Cellranger library: {} assay: {} chemistry: {}'.format(library, assaycode, chemistry), 'CRITICAL') }}
 
-- name: cellranger_count_{{ props.name }}_{{ library }}
-  tags: [{{ props.gltype }}, single_cell, cellranger_count, {{ props.name }}]
+- name: cellranger_count_{{ sample.name }}_{{ library }}
+  tags: [{{ sample.gltype }}, single_cell, cellranger_count, {{ sample.name }}]
   methods: >
-    Transcript quantification for {{ props.name }} was performed with
+    Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.cellranger_3_0_2.verbose }} using the cDNA index.
   input:
   {% for fq in datafiles %}
    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ props.gltype }}/cellranger/{{ props.name }}_{{ library }}/
+  output: {{ sample.gltype }}/cellranger/{{ sample.name }}_{{ library }}/
   cpus: 20
   mem: 160G
   walltime: "48:00:00"
@@ -51,21 +51,21 @@
       --localcores 20 \
       --localmem 160 \
       --chemistry "{{ chemistry }}" \
-      --id "{{ props.name }}_{{ library }}" \
+      --id "{{ sample.name }}_{{ library }}" \
       --fastqs . \
       --sample "{{ samples_list|join(',') }}" \
       --transcriptome "{{ constants.phoenix.cellranger_reference }}")
 
     # Renaming all output files, could be cleaned up a bit using 'rename' commands, might only remove one line or so
-    {% set cellranger_out %}{{ temp_dir }}{{ props.name }}_{{ library }}/outs{% endset %}
-    mv {{ cellranger_out }}/possorted_genome_bam.bam {{ cellranger_out }}/{{ props.name }}_{{ library }}.bam
-    mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ cellranger_out }}/{{ props.name }}_{{ library }}.bam.bai
-    mv {{ cellranger_out }}/cloupe.cloupe {{ cellranger_out }}/{{ props.name }}_{{ library }}.cloupe
-    mv {{ cellranger_out }}/filtered_feature_bc_matrix.h5 {{ cellranger_out }}/{{ props.name }}_{{ library }}.filtered_feature_bc_matrix.h5
-    mv {{ cellranger_out }}/metrics_summary.csv {{ cellranger_out }}/{{ props.name }}_{{ library }}.metrics_summary.csv
-    mv {{ cellranger_out }}/molecule_info.h5 {{ cellranger_out }}/{{ props.name }}_{{ library }}.molecule_info.h5
-    mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ cellranger_out }}/{{ props.name }}_{{ library }}.raw_feature_bc_matrix.h5
-    mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ props.name }}_{{ library }}.web_summary.html
+    {% set cellranger_out %}{{ temp_dir }}{{ sample.name }}_{{ library }}/outs{% endset %}
+    mv {{ cellranger_out }}/possorted_genome_bam.bam {{ cellranger_out }}/{{ sample.name }}_{{ library }}.bam
+    mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ cellranger_out }}/{{ sample.name }}_{{ library }}.bam.bai
+    mv {{ cellranger_out }}/cloupe.cloupe {{ cellranger_out }}/{{ sample.name }}_{{ library }}.cloupe
+    mv {{ cellranger_out }}/filtered_feature_bc_matrix.h5 {{ cellranger_out }}/{{ sample.name }}_{{ library }}.filtered_feature_bc_matrix.h5
+    mv {{ cellranger_out }}/metrics_summary.csv {{ cellranger_out }}/{{ sample.name }}_{{ library }}.metrics_summary.csv
+    mv {{ cellranger_out }}/molecule_info.h5 {{ cellranger_out }}/{{ sample.name }}_{{ library }}.molecule_info.h5
+    mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ cellranger_out }}/{{ sample.name }}_{{ library }}.raw_feature_bc_matrix.h5
+    mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ sample.name }}_{{ library }}.web_summary.html
 
     {# removing the analysis directory as is it no longer needed #}
     rm -rf {{ cellranger_out }}/analysis

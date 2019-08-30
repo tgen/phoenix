@@ -2,12 +2,12 @@
 {% set libraries = files|groupby('rglb') %}
 
 {% for library, datafiles in libraries %}
-{% set props = datafiles[0] %}
-{% set star_index_size %}{{ props.read_length|default(100) }}bpReads{% endset %}
+{% set sample = datafiles[0] %}
+{% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
 {% set barcode_path = constants.phoenix.barcodes_path %}
-{% set outdir %}{{ props.gltype }}/quant/starSOLO/{{ props.name }}/{% endset %}
-{% set temp_dir %}temp/starSOLO/{{ props.name }}/{{ library }}/fastqs/{% endset %}
+{% set outdir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ library }}/{% endset %}
+{% set temp_dir %}temp/starSOLO/{{ sample.name }}_{{ library }}/fastqs/{% endset %}
 
 {# Local Temp Variables #}
 {% set CDNA_LIST = [] %}
@@ -25,13 +25,13 @@ Single Cell V(D)J = 737K-august-2016.txt
 CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
 CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
 CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
-{% if props.assayCode == "X3SCR" %}
+{% if sample.assayCode == "X3SCR" %}
     {% set BARCODE %}{{ barcode_path }}/737K-april-2014_rc.txt{% endset %}
-{% elif props.assayCode == "XCSCR" %}
+{% elif sample.assayCode == "XCSCR" %}
     {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-{% elif props.assayCode == "X5SCR" %}
+{% elif sample.assayCode == "X5SCR" %}
     {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-{% elif props.assayCode == "X3SC3" %}
+{% elif sample.assayCode == "X3SC3" %}
     {% set BARCODE %}{{ barcode_path }}/3M-february-2018.txt.gz{% endset %}
 {% else %}
     {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
@@ -46,18 +46,18 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
   #}
 
   {% set r1fastq = rg|selectattr('fastqCode', 'eq', 'R1')|first %}
-  {% set r1fastq %}"temp/fastqs/{{ r1fastq.basename }}"{% endset %}
+  {% set r1fastq %}{{ r1fastq.basename }}{% endset %}
   {% do CB_UMI_LIST.append(r1fastq) %}
 
   {% set r2fastq = rg|selectattr('fastqCode', 'eq', 'R2')|first %}
-  {% set r2fastq %}"temp/fastqs/{{ r2fastq.basename }}"{% endset %}
+  {% set r2fastq %}{{ r2fastq.basename }}{% endset %}
   {% do CDNA_LIST.append(r2fastq) %}
 {% endfor %}
 
-- name: starsolo_count_{{ props.name }}
-  tags: [{{ props.gltype }}, single_cell, starsolo_count, {{ props.name }}]
+- name: starsolo_count_{{ sample.name }}
+  tags: [{{ sample.gltype }}, single_cell, starsolo_count, {{ sample.name }}]
   methods: >
-    Alignment and quantification for {{ props.name }} was performed with
+    Alignment and quantification for {{ sample.name }} was performed with
     {{ constants.tools.star_2_7_1a.verbose }} using the genome index.
   input:
   {% for fq in datafiles %}
@@ -80,12 +80,15 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
     ln -rs "temp/fastqs/{{ file.basename }}" "{{ temp_dir }}/{{ file.basename }}"
     {% endfor %}
 
+    cd "{{ temp_dir }}"
+
     {#
-    # Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
-    # cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1
-    # to add  \
+    Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
+    cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1 to add
+    Currently --soloFeatures GeneFull causes segmentation fault when used in conjuction with
+    any other soloFeature.
     #}
-    (cd "{{ temp_dir }}" && STAR \
+    STAR \
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
@@ -94,7 +97,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --readFilesType Fastx \
       --readFilesIn {{ CDNA_LIST|join(',') }} {{ CB_UMI_LIST|join(',') }} \
       --readFilesCommand zcat \
-      --outFileNamePrefix {{ props.name }}_ \
+      --outFileNamePrefix {{ sample.name }}_{{ library }}_ \
       --outSAMtype BAM SortedByCoordinate \
       --outSAMmode Full \
       --outSAMunmapped None \
@@ -102,7 +105,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --outSAMattributes NH HI AS nM CR CY UR UY \
       --soloType Droplet \
       --soloCBwhitelist {{ BARCODE }} \
-      --soloFeatures Gene GeneFull \
+      --soloFeatures Gene \
       --soloUMIdedup 1MM_All \
       --soloCBstart 1 \
       --soloCBlen 16 \
@@ -110,8 +113,10 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --soloUMIlen 10 \
       --soloBarcodeReadLength 0 \
       --genomeDir {{ star_index }} \
-      --soloStrand {{ props.rnaStrandDirection }} \
-      --soloOutFileNames Solo.out/ {{ props.name }}_genes.tsv {{ props.name }}_barcodes.tsv {{ props.name }}_matrix.mtx {{ props.name }}_matrixSJ.mtx)
+      --soloStrand {{ sample.rnaStrandDirection }} \
+      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrix.mtx {{ sample.name }}_matrixSJ.mtx
+
+    mv {{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
 
 {% endfor %}
 {% endmacro %}
