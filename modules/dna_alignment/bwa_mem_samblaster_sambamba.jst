@@ -70,24 +70,13 @@
 
     {# No long options available for the following:
      bwa mem
-        -v INT       verbosity: 3 = message (default = 3)
-        -Y           use soft clipping for supplementary alignments
-        -K INT       process INT input bases in each batch regardless of nThreads (for reproducibility)
+        -v INT       Verbosity: 3 = message (default = 3)
+        -Y           Use soft clipping for supplementary alignments
+        -K INT       Process INT input bases in each batch regardless of nThreads (for reproducibility)
         -t INT       Number of threads to use
-        -R STR       read group header line such as '@RG\tID:foo\tSM:bar' [null]
+        -R STR       Read group header line such as '@RG\tID:foo\tSM:bar' [null]
 
-     samblaster
-
-     sambamba view
-        -f
-        -l
-        -S
-
-     sambamba sort
-        -m INT
-        -t INT
-        --tmpdir STR
-        -o STR
+     samblaster      No options set, reads directly from stdout of bwamem
     #}
     bwa mem \
       -v 3 \
@@ -100,15 +89,15 @@
       temp/{{ sample.rglb }}/{{ sample.rglb }}_R2_merged.fastq.gz |\
     samblaster |\
     sambamba view \
-      -f bam \
-      -l 0 \
-      -S /dev/stdin |\
+      --format bam \
+      --compression-level 0 \
+      --sam-input /dev/stdin |\
     sambamba sort \
-      -m 20GB \
-      -t 9 \
+      --memory-limit 20GB \
+      --nthreads 9 \
       --tmpdir "temp/{{ sample.rglb }}/" \
       /dev/stdin \
-      -o "temp/{{ sample.name }}.bwa.md.bam"
+      --out "temp/{{ sample.name }}.bwa.md.bam"
 
 
 {% endmacro %}

@@ -22,10 +22,10 @@
       --known-sites "{{ vcf }}" \
       {% endfor %}
       {% for interval in batch %}
-      -L "{{ interval }}:1+" \
+      --intervals "{{ interval }}:1+" \
       {% endfor %}
       {% if loop.last %}
-      -L "unmapped" \
+      --intervals "unmapped" \
       {% endif %}
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       --output "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table"
@@ -78,12 +78,12 @@
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       --bqsr-recal-file "temp/{{ sample.name }}.{{ aligner }}.recal_data.table" \
       {% for interval in batch %}
-      -L "{{ interval }}:1+" \
+      --intervals "{{ interval }}:1+" \
       {% endfor %}
       {% if loop.last %}
-      -L "unmapped" \
+      --intervals "unmapped" \
       {% endif %}
-      -O "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
+      --output "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
 
 {% endfor %}
 

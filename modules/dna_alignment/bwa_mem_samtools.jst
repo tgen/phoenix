@@ -78,23 +78,23 @@
 
     {# No long options available for the following:
      bwa mem
-        -v INT       verbosity: 3 = message (default = 3)
-        -Y           use soft clipping for supplementary alignments
-        -K INT       process INT input bases in each batch regardless of nThreads (for reproducibility)
+        -v INT       Verbosity: 3 = message (default = 3)
+        -Y           Use soft clipping for supplementary alignments
+        -K INT       Process INT input bases in each batch regardless of nThreads (for reproducibility)
         -t INT       Number of threads to use
-        -R STR       read group header line such as '@RG\tID:foo\tSM:bar' [null]
+        -R STR       Read group header line such as '@RG\tID:foo\tSM:bar' [null]
 
      samtools fixmate
-        -m         Add mate score tag, REQUIRED for samtools markdup
-        -          input from stdin
-        -          output to stdout
+        -m           Add mate score tag, REQUIRED for samtools markdup
+        -            Input from stdin
+        -            Output to stdout
 
      samtools sort
-        -l INT     Set compression level, from 0 (uncompressed) to 9 (best)
-        -m INT     Set maximum memory per thread; suffix K/M/G recognized [768M]
-        -T PREFIX  Write temporary files to PREFIX.nnnn.bam
-        -          input from stdin
-        -o FILE    Write final output to FILE rather than standard output
+        -l INT       Set compression level, from 0 (uncompressed) to 9 (best)
+        -m INT       Set maximum memory per thread; suffix K/M/G recognized [768M]
+        -T PREFIX    Write temporary files to PREFIX.nnnn.bam
+        -            Input from stdin
+        -o FILE      Write final output to FILE rather than standard output
     #}
     bwa mem \
       -v 3 \
@@ -135,9 +135,9 @@
     module load {{ constants.tools.samtools_1_9.module }}
 
     {# No long options available for the following:
-      -c        Combine @RG headers with colliding IDs [alter IDs to be distinct]
-      -f        Overwrite the output BAM if exist
-      -l INT    Compression level, from 0 to 9 [-1]
+      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
+      -f           Overwrite the output BAM if exist
+      -l INT       Compression level, from 0 to 9 [-1]
     #}
     samtools merge \
       --threads 8 \
@@ -181,10 +181,10 @@
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     {# No long options available for the following:
-     -S   Mark supplemenary alignments of duplicates as duplicates (slower).
-     -s   Report stats.
-     -T   PREFIX    Write temporary files to PREFIX.samtools.nnnn.nnnn.tmp.
-     2>   stats are output to stderr which is redirected to ".bwa.bam.markdup.txt"
+     -S      Mark supplemenary alignments of duplicates as duplicates (slower)
+     -s      Report stats
+     -T      PREFIX    Write temporary files to PREFIX.samtools.nnnn.nnnn.tmp
+     2>      Stats are output to stderr which is redirected to ".bwa.bam.markdup.txt"
     #}
     samtools markdup \
       -S \
@@ -196,7 +196,7 @@
       2> "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
 
     {# No long options available for the following:
-      -@ 1 Number of threads used for indexing the bam.
+      -@ 1   Number of threads used for indexing the bam
     #}
     samtools index -@ 10 "temp/{{ sample.name }}.bwa.md.bam"
     rm -r "temp/markdup_{{ sample.name }}_bwa/"

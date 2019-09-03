@@ -70,15 +70,15 @@
 
     {# No long options available for the following:
      bwa mem
-        -v INT       verbosity: 3 = message (default = 3)
-        -Y           use soft clipping for supplementary alignments
-        -K INT       process INT input bases in each batch regardless of nThreads (for reproducibility)
+        -v INT       Verbosity: 3 = message (default = 3)
+        -Y           Use soft clipping for supplementary alignments
+        -K INT       Process INT input bases in each batch regardless of nThreads (for reproducibility)
         -t INT       Number of threads to use
-        -R STR       read group header line such as '@RG\tID:foo\tSM:bar' [null]
+        -R STR       Read group header line such as '@RG\tID:foo\tSM:bar' [null]
 
      samtools view
-        -o FILE
-        -
+        -o FILE      Output file name
+        -            <in.bam>|<in.sam> - stdin from bwa mem stdout
     #}
     bwa mem \
       -v 3 \

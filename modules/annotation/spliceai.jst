@@ -11,6 +11,13 @@
     module load {{ constants.tools.python_3_6_0.module }}
     module load {{ constants.tools.cuda_toolkit_10_0_0.module }}
 
+    {# No long options available for the following:
+      -A      Gene annotation file
+      -R      Reference genome fasta file
+      -I      Input VCF with variants of interest
+      -O      Output VCF with SpliceAI predictions
+    #}
+
     spliceai \
       -A grch38 \
       -R "{{ constants.phoenix.reference_fasta }}" \
@@ -29,9 +36,9 @@
     module load {{ constants.tools.samtools_1_9.module }}
 
     bcftools filter \
-      -O z \
+      --output-type z \
       --include 'INFO/SpliceAI != "."' \
-      -o "{{ out }}" \
+      --output "{{ out }}" \
       "{{ temp_vcf }}"
 
     rm "{{ temp_vcf }}"

@@ -111,7 +111,7 @@
        
     {# Then filter out the passing variants to a separate file #}
     bcftools filter \
-      -O z \
+      --output-type z \
       -i 'FILTER == "."' \
       {% if sample.gltype == 'exome' %}
       --targets-file "{{ sample.capture_kit.extended_bed }}" \
@@ -119,7 +119,7 @@
       "{{ temp_dir }}/{{ sample.name }}.hc.fvt.vcf.gz" \
       > "{{ pass_vcf }}"
 
-    bcftools index -tf "{{ pass_vcf }}"
+    bcftools index --tbi --force "{{ pass_vcf }}"
 
     {% if not debug %}
     rm -r "{{ temp_dir }}"

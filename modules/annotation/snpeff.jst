@@ -13,10 +13,16 @@
     module load {{ constants.tools.snpeff_4_3t.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
+    {# No long options available for the following:
+      -t      Use multiple threads (implies '-noStats')
+      -hgvs   Use HGVS annotations for amino acid sub-field
+      -lof    Add loss of function (LOF) and Nonsense mediated decay (NMD) tags
+    #}
+
     {# Generate full annotation set #}
     snpEff ann \
       -t \
-      -c "{{ constants.phoenix.snpeff_config }}" \
+      -config "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       -hgvs \
       -lof \
@@ -28,11 +34,16 @@
     bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
     bcftools index --threads 4 --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
-
+    {# No long options available for the following:
+      -t      Use multiple threads (implies '-noStats')
+      -hgvs   Use HGVS annotations for amino acid sub-field
+      -lof    Add loss of function (LOF) and Nonsense mediated decay (NMD) tags
+      -canon  Only use canonical transcripts
+    #}
     {# Generate canonical annotation set #}
     snpEff ann \
       -t \
-      -c "{{ constants.phoenix.snpeff_config }}" \
+      -config "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       -canon \
       -hgvs \
