@@ -80,15 +80,13 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
     ln -rs "temp/fastqs/{{ file.basename }}" "{{ temp_dir }}/{{ file.basename }}"
     {% endfor %}
 
-    cd "{{ temp_dir }}"
-
     {#
     Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
     cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1 to add
     Currently --soloFeatures GeneFull causes segmentation fault when used in conjuction with
     any other soloFeature.
     #}
-    STAR \
+    ( cd "{{ temp_dir }} && STAR \
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
@@ -114,9 +112,9 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --soloBarcodeReadLength 0 \
       --genomeDir {{ star_index }} \
       --soloStrand {{ sample.rnaStrandDirection }} \
-      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrix.mtx {{ sample.name }}_matrixSJ.mtx
+      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrix.mtx {{ sample.name }}_matrixSJ.mtx )
 
-    mv {{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
+    mv {{ temp_dir }}{{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
 
 {% endfor %}
 {% endmacro %}
