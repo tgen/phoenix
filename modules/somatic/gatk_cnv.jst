@@ -33,37 +33,37 @@
     {% if pair.gltype == 'exome' %}
     gatk --java-options "-Xmx12g" IntervalListTools \
       --tmp-dir {{ temp_dir }}/temp/ \
-	    --INPUT {{ pair.normal.capture_kit.targets_interval_list }} \
-	    --INPUT {{ pair.tumor.capture_kit.targets_interval_list }} \
-	    --ACTION INTERSECT \
-	    --OUTPUT {{ temp_dir }}/pair_intersect.interval_list
-	  {% endif %}
+      --INPUT {{ pair.normal.capture_kit.targets_interval_list }} \
+      --INPUT {{ pair.tumor.capture_kit.targets_interval_list }} \
+      --ACTION INTERSECT \
+      --OUTPUT {{ temp_dir }}/pair_intersect.interval_list
+    {% endif %}
 
     {#
     The --intervals option for genomes may be required depending on results
     https://gatkforums.broadinstitute.org/gatk/discussion/11682#ref2
     #}
     gatk --java-options "-Xmx12g" PreprocessIntervals \
-	    --tmp-dir {{ temp_dir }}/temp/ \
-	    {% if pair.gltype in 'exome' %}
+      --tmp-dir {{ temp_dir }}/temp/ \
+      {% if pair.gltype in 'exome' %}
       --intervals {{ temp_dir }}/pair_intersect.interval_list \
-	    --bin-length 0 \
-	    --padding 100 \
+      --bin-length 0 \
+      --padding 100 \
       {% elif pair.gltype in 'genome' %}
       --bin-length 1000 \
       {% endif %}
-	    --reference {{ constants.phoenix.reference_fasta }} \
-	    --output {{ temp_dir }}/preprocessed.interval_list \
-	    --interval-merging-rule OVERLAPPING_ONLY
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY
 
-	  gatk --java-options "-Xmx12g" AnnotateIntervals \
-	    --tmp-dir {{ temp_dir }}/temp/ \
-	    --intervals {{ temp_dir }}/preprocessed.interval_list \
-	    --output {{ temp_dir }}/anno_preprocessed.interval_list \
-	    --interval-merging-rule OVERLAPPING_ONLY \
-	    --reference {{ constants.phoenix.reference_fasta }}
+    gatk --java-options "-Xmx12g" AnnotateIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --output {{ temp_dir }}/anno_preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --reference {{ constants.phoenix.reference_fasta }}
 
-	  bcftools view \
+    bcftools view \
       --exclude-types indels,mnps,ref,bnd,other \
       --genotype het \
       --exclude 'VAF<0.40 | VAF>0.60 | DP<20' \
@@ -73,38 +73,38 @@
 
     {#  #}
     gatk --java-options "-Xmx12g" CollectReadCounts \
-		  --tmp-dir {{ temp_dir }}/temp/ \
-		  --input {{ tumor_bam }} \
-		  --intervals {{ temp_dir }}/preprocessed.interval_list \
-		  --interval-merging-rule OVERLAPPING_ONLY \
-		  --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ tumor_bam }} \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
 
     gatk --java-options "-Xmx12g" CollectAllelicCounts \
-		  --tmp-dir {{ temp_dir }}/temp/ \
-		  --input {{ tumor_bam }} \
-		  --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
-		  --reference {{ constants.phoenix.reference_fasta }} \
-		  --output {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ tumor_bam }} \
+      --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
 
     gatk --java-options "-Xmx12g" CollectReadCounts \
-		  --tmp-dir {{ temp_dir }}/temp/ \
-		  --input {{ normal_bam }} \
-		  --intervals {{ temp_dir }}/preprocessed.interval_list \
-		  --interval-merging-rule OVERLAPPING_ONLY \
-		  --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
 
-		gatk --java-options "-Xmx12g" CollectAllelicCounts \
-		  --tmp-dir {{ temp_dir }}/temp/ \
-		  --input {{ normal_bam }} \
-		  --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
-		  --reference {{ constants.phoenix.reference_fasta }} \
-		  --output {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+    gatk --java-options "-Xmx12g" CollectAllelicCounts \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
 
     gatk --java-options "-Xmx12g" CreateReadCountPanelOfNormals \
-		  --tmp-dir {{ temp_dir }}/temp/ \
-		  --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
-		  --annotated-intervals {{ temp_dir }}/anno_preprocessed.interval_list \
-		  --output {{ temp_dir }}/cnv.pon.hdf5
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
+      --annotated-intervals {{ temp_dir }}/anno_preprocessed.interval_list \
+      --output {{ temp_dir }}/cnv.pon.hdf5
 
     gatk --java-options "-Xmx12g" DenoiseReadCounts \
       --tmp-dir {{ temp_dir }}/temp/ \
