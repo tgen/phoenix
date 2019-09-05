@@ -1,0 +1,20 @@
+# The macros found in this template are used to generate the gatk4 somatic cnv workflow.
+
+{% macro gatk_cnv(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set pair_dir %}{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}{% endset %}
+{% set run_dir %}temp/{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}_{{ aligner }}{% endset %}
+
+- name: gatk_call_cnv_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  cpus: 1
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+{% endmacro %}

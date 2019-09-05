@@ -10,7 +10,6 @@
 {% for batch in constants.phoenix.calling_intervals %}
 - name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  tags: [gatk, gatk-Mutect2, {{ pair.gltype }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
