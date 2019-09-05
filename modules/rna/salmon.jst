@@ -20,7 +20,7 @@
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.salmon_0_14_1.verbose }} using the cDNA index.
   input:
-  {% for fq in r1fqlist %} 
+  {% for fq in r1fqlist %}
     - {{ fq }}
   {% endfor %}
   {% for fq in r2fqlist %}

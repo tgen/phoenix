@@ -30,7 +30,7 @@
     {# PreprocessIntervals #}
 
     {# Make the intersect interval file that will go into PreprocessIntervals if exomes #}
-    {% if pair.gltype == 'exome' %}
+    {% if pair.gltype in 'exome' %}
     gatk --java-options "-Xmx12g" IntervalListTools \
       --tmp-dir {{ temp_dir }}/temp/ \
       --INPUT {{ pair.normal.capture_kit.targets_interval_list }} \
@@ -50,6 +50,7 @@
       --bin-length 0 \
       --padding 100 \
       {% elif pair.gltype in 'genome' %}
+      --intervals {{ constants.phoenix.gatk_cnv_primary_contigs_male }} \
       --bin-length 1000 \
       {% endif %}
       --reference {{ constants.phoenix.reference_fasta }} \
@@ -66,7 +67,11 @@
     bcftools view \
       --exclude-types indels,mnps,ref,bnd,other \
       --genotype het \
+      {% if pair.gltype in 'exome' %}
       --exclude 'VAF<0.40 | VAF>0.60 | DP<20' \
+      {% elif pair.gltype in 'genome' %}
+      --exclude 'VAF<0.333 | VAF>0.666 | DP<6' \
+      {% endif %}
       --output-type v \
       --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       {{ deepvariant_vcf }}
@@ -113,8 +118,40 @@
       --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv \
       --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
 
+    {#
+
+     #}
     gatk --java-options "-Xmx12g" ModelSegments \
       --tmp-dir {{ temp_dir }}/temp/ \
+      {% if pair.gltype in 'exome' %}
+      --minimum-total-allele-count 30 \
+      --genotyping-homozygous-log-ratio-threshold -10.0 \
+      --maximum-number-of-smoothing-iterations 25 \
+      --number-of-samples-copy-ratio 100 \
+      --number-of-samples-allele-fraction 100 \
+      --number-of-smoothing-iterations-per-fit 0 \
+      {# Advanced smoothing options #}
+      --number-of-changepoints-penalty-factor 1.0 \
+      --kernel-variance-copy-ratio 0.0 \
+      --kernel-variance-allele-fraction 0.025 \
+      --kernel-scaling-allele-fraction 1.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 2.0 \
+      --smoothing-credible-interval-threshold-allele-fraction 2.0 \
+      {% elif pair.gltype in 'genome' %}
+      --minimum-total-allele-count 6 \
+      --genotyping-homozygous-log-ratio-threshold -10.0 \
+      --maximum-number-of-smoothing-iterations 25 \
+      --number-of-samples-copy-ratio 100 \
+      --number-of-samples-allele-fraction 100 \
+      --number-of-smoothing-iterations-per-fit 0 \
+      {# Advanced smoothing options #}
+      --number-of-changepoints-penalty-factor 1.0 \
+      --kernel-variance-copy-ratio 0.0 \
+      --kernel-variance-allele-fraction 0.025 \
+      --kernel-scaling-allele-fraction 1.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 2.0 \
+      --smoothing-credible-interval-threshold-allele-fraction 2.0 \
+      {% endif %}
       --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
       --allelic-counts {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
       --normal-allelic-counts {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
@@ -129,7 +166,7 @@
     /home/tgenjetstream/dev_binaries_and_databases/plotCNV/plotCNV.R \
       --sample_name={{ pair.tumor.name }} \
       --output_prefix={{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }} \
-      --denoised_copy_ratios_file={{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
+      --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
       --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
       --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg
 

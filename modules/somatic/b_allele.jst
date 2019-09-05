@@ -1,12 +1,12 @@
-{% macro tconut(pair, aligner='bwa') %}
+{% macro b_allele(pair, aligner='bwa') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set pair_dir %}{{ pair.gltype }}/somatic_copy_number/tconut/{{ pair.name }}{% endset %}
-{% set run_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/tconut/{{ pair.name }}_{{ aligner }}{% endset %}
-{% set tconut_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.tconut.vcf.gz{% endset %}
+{% set results_dir %}{{ pair.gltype }}/b_allele/strelka/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/b_allele/strelka/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set b_allele_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.b_allele.vcf.gz{% endset %}
 
-- name: tconut_call_snvs_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, cna_caller, tCoNuT, {{ pair.name }}]
+- name: strelka_b_allele_call_snvs_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, b_allele_caller, strelka, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -20,8 +20,8 @@
     module load {{ constants.tools.python_2_7_15.module }}
 
     {# Purge any existing run files prior to starting #}
-    rm -r "{{ run_dir }}" || true
-    mkdir -p "{{ run_dir }}"
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
 
     {#
     # In order to restrict calling to only the specified regions
@@ -30,14 +30,14 @@
     # the run dir, and pass the path to Strelka2.
     #}
     TAB=$'\t'
-    cat <<EOF > "{{ run_dir }}/callRegions.bed"
+    cat <<EOF > "{{ temp_dir }}/callRegions.bed"
     {% for contig in constants.phoenix.calling_contigs %}
     {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
     {% endfor %}
     EOF
 
-    bgzip -f "{{ run_dir }}/callRegions.bed"
-    tabix -f -p bed "{{ run_dir }}/callRegions.bed.gz"
+    bgzip -f "{{ temp_dir }}/callRegions.bed"
+    tabix -f -p bed "{{ temp_dir }}/callRegions.bed.gz"
 
     {# Build the Strelka run file #}
     configureStrelkaGermlineWorkflow.py \
@@ -45,26 +45,26 @@
       --exome \
       {% endif %}
       --ref "{{ constants.phoenix.reference_fasta }}" \
-      --callRegions "{{ run_dir }}/callRegions.bed.gz" \
+      --callRegions "{{ temp_dir }}/callRegions.bed.gz" \
       --bam "{{ normal_bam }}" \
       --bam "{{ tumor_bam }}" \
-      --runDir "{{ run_dir }}"
+      --runDir "{{ temp_dir }}"
 
     {# Execute on the local machine #}
-    "{{ run_dir }}/runWorkflow.py" -m local -j 19
+    "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
 
-- name: tconut_annotate_snvs_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, cna_caller, tCoNuT, {{ pair.name }}]
-  after: tconut_call_snvs_{{ pair.name }}_{{ aligner }}
-  output: {{ tconut_vcf }}
+- name: strelka_b_allele_annotate_snvs_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, b_allele_caller, strelka, {{ pair.name }}]
+  after: strelka_b_allele_call_snvs_{{ pair.name }}_{{ aligner }}
+  output: {{ b_allele_vcf }}
   cpus: 2
   cmd: |
     set -eu
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ pair_dir }}"
+    mkdir -p "{{ results_dir }}"
     
     {# Filter and annotate the snv vcf #}
     bcftools annotate \
@@ -72,13 +72,12 @@
       -O z \
       -a "{{ constants.phoenix.dbsnp_v152 }}" \
       -c "ID,+INFO" \
-      "{{ run_dir }}/results/variants/variants.vcf.gz" \
-      -o "{{ tconut_vcf }}"
+      "{{ temp_dir }}/results/variants/variants.vcf.gz" \
+      -o "{{ b_allele_vcf }}"
 
-    bcftools index -tf "{{ tconut_vcf }}"
+    bcftools index -tf "{{ b_allele_vcf }}"
 
     {# Finally remove the run dir #}
-    rm -r "{{ run_dir }}"
-
+    rm -r "{{ temp_dir }}"
 
 {% endmacro %}
