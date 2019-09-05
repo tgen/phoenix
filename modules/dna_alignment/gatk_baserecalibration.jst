@@ -34,7 +34,6 @@
 
 - name: gather_bqsr_reports_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
-  tags: [gatk, gatk-GatherBQSRReports, {{ sample.gltype }}]
   after-re: baserecalibration_table_{{ sample.name }}_{{ aligner }}_.*
   walltime: "4:00:00"
   cpus: 4
