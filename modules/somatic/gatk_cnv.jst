@@ -3,18 +3,137 @@
 {% macro gatk_cnv(pair, aligner='bwa') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set pair_dir %}{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}{% endset %}
-{% set run_dir %}temp/{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set deepvariant_vcf %}{{ pair.normal.gltype }}/constitutional_variant_calls/deepvariant/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}{% endset %}
 
 - name: gatk_call_cnv_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+    - {{ deepvariant_vcf }}
   cpus: 1
+  mem: 16G
   walltime: "4:00:00"
   cmd: |
     set -eu
     set -o pipefail
+
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ temp_dir }}/temp"
+    mkdir -p "{{ temp_dir }}/results/plots"
+
+    {# PreprocessIntervals #}
+
+    {# Make the intersect interval file that will go into PreprocessIntervals if exomes #}
+    {% if pair.gltype == 'exome' %}
+    gatk --java-options "-Xmx12g" IntervalListTools \
+      --tmp-dir {{ temp_dir }}/temp/ \
+	    --INPUT {{ pair.normal.capture_kit.targets_interval_list }} \
+	    --INPUT {{ pair.tumor.capture_kit.targets_interval_list }} \
+	    --ACTION INTERSECT \
+	    --OUTPUT {{ temp_dir }}/pair_intersect.interval_list
+	  {% endif %}
+
+    {#
+    The --intervals option for genomes may be required depending on results
+    https://gatkforums.broadinstitute.org/gatk/discussion/11682#ref2
+    #}
+    gatk --java-options "-Xmx12g" PreprocessIntervals \
+	    --tmp-dir {{ temp_dir }}/temp/ \
+	    {% if pair.gltype in 'exome' %}
+      --intervals {{ temp_dir }}/pair_intersect.interval_list \
+	    --bin-length 0 \
+	    --padding 100 \
+      {% elif pair.gltype in 'genome' %}
+      --bin-length 1000 \
+      {% endif %}
+	    --reference {{ constants.phoenix.reference_fasta }} \
+	    --output {{ temp_dir }}/preprocessed.interval_list \
+	    --interval-merging-rule OVERLAPPING_ONLY
+
+	  gatk --java-options "-Xmx12g" AnnotateIntervals \
+	    --tmp-dir {{ temp_dir }}/temp/ \
+	    --intervals {{ temp_dir }}/preprocessed.interval_list \
+	    --output {{ temp_dir }}/anno_preprocessed.interval_list \
+	    --interval-merging-rule OVERLAPPING_ONLY \
+	    --reference {{ constants.phoenix.reference_fasta }}
+
+	  bcftools view \
+      --exclude-types indels,mnps,ref,bnd,other \
+      --genotype het \
+      --exclude 'VAF<0.40 | VAF>0.60 | DP<20' \
+      --output-type v \
+      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      {{ deepvariant_vcf }}
+
+    {#  #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+		  --tmp-dir {{ temp_dir }}/temp/ \
+		  --input {{ tumor_bam }} \
+		  --intervals {{ temp_dir }}/preprocessed.interval_list \
+		  --interval-merging-rule OVERLAPPING_ONLY \
+		  --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+
+    gatk --java-options "-Xmx12g" CollectAllelicCounts \
+		  --tmp-dir {{ temp_dir }}/temp/ \
+		  --input {{ tumor_bam }} \
+		  --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+		  --reference {{ constants.phoenix.reference_fasta }} \
+		  --output {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+		  --tmp-dir {{ temp_dir }}/temp/ \
+		  --input {{ normal_bam }} \
+		  --intervals {{ temp_dir }}/preprocessed.interval_list \
+		  --interval-merging-rule OVERLAPPING_ONLY \
+		  --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+
+		gatk --java-options "-Xmx12g" CollectAllelicCounts \
+		  --tmp-dir {{ temp_dir }}/temp/ \
+		  --input {{ normal_bam }} \
+		  --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+		  --reference {{ constants.phoenix.reference_fasta }} \
+		  --output {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+
+    gatk --java-options "-Xmx12g" CreateReadCountPanelOfNormals \
+		  --tmp-dir {{ temp_dir }}/temp/ \
+		  --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
+		  --annotated-intervals {{ temp_dir }}/anno_preprocessed.interval_list \
+		  --output {{ temp_dir }}/cnv.pon.hdf5
+
+    gatk --java-options "-Xmx12g" DenoiseReadCounts \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
+      --count-panel-of-normals {{ temp_dir }}/cnv.pon.hdf5 \
+      --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv \
+      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
+
+    gatk --java-options "-Xmx12g" ModelSegments \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
+      --allelic-counts {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
+      --normal-allelic-counts {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
+      --output {{ temp_dir }}/results \
+      --output-prefix {{ pair.name }}.{{ aligner }}
+
+    gatk --java-options "-Xmx12g" CallCopyRatioSegments \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.cr.seg \
+      --output {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.called.seg
+
+    /home/tgenjetstream/dev_binaries_and_databases/plotCNV/plotCNV.R \
+      --sample_name={{ pair.tumor.name }} \
+      --output_prefix={{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }} \
+      --denoised_copy_ratios_file={{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
+      --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
+      --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+
+    mkdir -p "{{ results_dir }}"
+    mv {{ temp_dir }}/results/* {{ results_dir }}/
 
 {% endmacro %}

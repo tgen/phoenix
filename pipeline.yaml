@@ -64,6 +64,16 @@ constants:
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
+    gatk_4_1_3_0:
+      module: gatk/4.1.3.0
+      version: "4.1.3.0"
+      verbose: Genome Analysis Toolkit v4.1.3.0
+      website: https://software.broadinstitute.org/gatk/
+      citation: >
+        The Genome Analysis Toolkit: a MapReduce framework for analyzing
+        next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
+        Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
+        Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
     hmmcopy_utils_1_0:
       module: HMM_Copy_Utils/1.0
       version: "1.0"

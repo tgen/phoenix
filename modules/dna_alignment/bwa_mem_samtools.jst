@@ -142,7 +142,7 @@
       --threads 8 \
       -c \
       -f \
-      -l -1 \
+      -l 6 \
       "temp/{{ sample.name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
       "temp/{{ rgid }}/"*.bwa.bam \

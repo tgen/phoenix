@@ -4,7 +4,7 @@
 {% from 'modules/somatic/strelka2.jst' import strelka2_somatic with context %}
 {% from 'modules/somatic/octopus.jst' import octopus_somatic with context %}
 {% from 'modules/somatic/vardict.jst' import vardict_somatic with context %}
-{% from 'modules/somatic/tconut.jst' import tconut with context %}
+{% from 'modules/somatic/gatk_cnv.jst' import gatk_cnv with context %}
 {% from 'modules/somatic/vcfmerger2.jst' import vcfmerger2 with context %}
 
 # Somatic tools generally operate on pairs of DNA samples (tumor/normal).
@@ -118,8 +118,8 @@
         {{- vardict_somatic(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_somatic_cna_caller_tCoNuT"]|default(true) %}
-        {{- tconut(pair, aligner='bwa') }}
+    {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
+        {{- gatk_cnv(pair, aligner='bwa') }}
     {% endif %}
 
     {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
