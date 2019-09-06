@@ -64,6 +64,16 @@ constants:
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
+    gatk_4_1_3_0:
+      module: gatk/4.1.3.0
+      version: "4.1.3.0"
+      verbose: Genome Analysis Toolkit v4.1.3.0
+      website: https://software.broadinstitute.org/gatk/
+      citation: >
+        The Genome Analysis Toolkit: a MapReduce framework for analyzing
+        next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
+        Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
+        Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
     hmmcopy_utils_1_0:
       module: HMM_Copy_Utils/1.0
       version: "1.0"
@@ -319,6 +329,8 @@ constants:
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.gtf
     ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.refFlat.txt
     ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.ribo.interval_list
+    gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
+    gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
     transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/Homo_sapiens.GRCh38.97.ucsc.transcriptome.fasta
     salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
