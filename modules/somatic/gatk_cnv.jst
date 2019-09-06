@@ -123,7 +123,8 @@
     gatk --java-options "-Xmx12g" ModelSegments \
       --tmp-dir {{ temp_dir }}/temp/ \
       {% if pair.gltype in 'exome' %}
-      --minimum-total-allele-count 30 \
+      --minimum-total-allele-count-normal 30 \
+      --minimum-total-allele-count-case 0 \
       --genotyping-homozygous-log-ratio-threshold -10.0 \
       --maximum-number-of-smoothing-iterations 25 \
       --number-of-samples-copy-ratio 100 \
@@ -137,7 +138,8 @@
       --smoothing-credible-interval-threshold-copy-ratio 2.0 \
       --smoothing-credible-interval-threshold-allele-fraction 2.0 \
       {% elif pair.gltype in 'genome' %}
-      --minimum-total-allele-count 6 \
+      --minimum-total-allele-count-normal 6 \
+      --minimum-total-allele-count-case 0 \
       --genotyping-homozygous-log-ratio-threshold -10.0 \
       --maximum-number-of-smoothing-iterations 25 \
       --number-of-samples-copy-ratio 100 \
