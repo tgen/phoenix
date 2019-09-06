@@ -39,12 +39,6 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
 
 {# Generating input lists #}
 {% for rgid, rg in datafiles|groupby('rgid') %}
-  {#
-  {% if rg|length != 2 %}
-      {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
-  {% endif %}
-  #}
-
   {% set r1fastq = rg|selectattr('fastqCode', 'eq', 'R1')|first %}
   {% set r1fastq %}{{ r1fastq.basename }}{% endset %}
   {% do CB_UMI_LIST.append(r1fastq) %}
