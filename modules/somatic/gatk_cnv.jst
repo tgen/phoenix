@@ -32,7 +32,6 @@
     {# Make the intersect interval file that will go into PreprocessIntervals if exomes #}
     {% if pair.gltype in 'exome' %}
     gatk --java-options "-Xmx12g" IntervalListTools \
-      --tmp-dir {{ temp_dir }}/temp/ \
       --INPUT {{ pair.normal.capture_kit.targets_interval_list }} \
       --INPUT {{ pair.tumor.capture_kit.targets_interval_list }} \
       --ACTION INTERSECT \
