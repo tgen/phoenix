@@ -15,6 +15,7 @@
 
     {# No long options available for the following:
       -t      Use multiple threads (implies '-noStats')
+      -c      Config file, apparently the long form breaks stuff
       -hgvs   Use HGVS annotations for amino acid sub-field
       -lof    Add loss of function (LOF) and Nonsense mediated decay (NMD) tags
     #}
@@ -22,7 +23,7 @@
     {# Generate full annotation set #}
     snpEff ann \
       -t \
-      -config "{{ constants.phoenix.snpeff_config }}" \
+      -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       -hgvs \
       -lof \
@@ -36,6 +37,7 @@
 
     {# No long options available for the following:
       -t      Use multiple threads (implies '-noStats')
+      -c      Config file, apparently the long form breaks stuff
       -hgvs   Use HGVS annotations for amino acid sub-field
       -lof    Add loss of function (LOF) and Nonsense mediated decay (NMD) tags
       -canon  Only use canonical transcripts
@@ -43,7 +45,7 @@
     {# Generate canonical annotation set #}
     snpEff ann \
       -t \
-      -config "{{ constants.phoenix.snpeff_config }}" \
+      -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
       -canon \
       -hgvs \
