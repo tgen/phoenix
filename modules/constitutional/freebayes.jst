@@ -31,9 +31,9 @@
     EOF
 
     freebayes \
-      -b "{{ bam }}" \
-      -f "{{ constants.phoenix.reference_fasta }}" \
-      -t "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --bam-file "{{ bam }}" \
+      --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
+      --targets "{{ temp_dir }}/{{ loop.index }}.bed" \
       --ploidy 2 \
       --min-repeat-entropy 1 \
       > "{{ temp_dir }}/{{ loop.index }}.vcf"

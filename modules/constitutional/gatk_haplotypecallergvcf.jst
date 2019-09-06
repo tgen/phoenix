@@ -23,8 +23,8 @@
     gatk HaplotypeCaller \
       --java-options "-Xmx14G" \
       -ERC GVCF \
-      -R {{ constants.phoenix.reference_fasta }} \
-      -I "{{ bam }}" \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --input "{{ bam }}" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}

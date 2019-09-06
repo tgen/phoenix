@@ -61,13 +61,13 @@
     mkdir -p "{{ results_dir }}"
 
     bcftools concat \
-      -O z \
-      -o "{{ all_vcf }}" \
+      --output-type z \
+      --output "{{ all_vcf }}" \
       {% for b in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
       {% endfor %}
 
-    bcftools index -tf "{{ all_vcf }}"
+    bcftools index --tbi --force "{{ all_vcf }}"
 
     {% if not debug %}
     rm -r "{{ temp_dir }}"
@@ -88,15 +88,15 @@
 
     {# Then filter out the passing variants to a separate file #}
     bcftools filter \
-      -O z \
-      -i 'FILTER == "PASS"' \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
       {% if sample.gltype == 'exome' %}
       --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
 
-    bcftools index -tf "{{ pass_vcf }}"
+    bcftools index --tbi --force "{{ pass_vcf }}"
 
 {%- set after_task = 'octopus_filter_variants_'+sample.name+'_'+aligner %}
 {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional', 'snp_indel_caller') }}

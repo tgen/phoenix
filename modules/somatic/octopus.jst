@@ -67,13 +67,13 @@
     mkdir -p "{{ results_dir }}"
 
     bcftools concat \
-      -O z \
-      -o "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
+      --output-type z \
+      --output "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
       {% endfor %}
 
-    bcftools index -t "{{ all_vcf }}"
+    bcftools index --tbi "{{ all_vcf }}"
 
     {% if not debug %}
     rm -r "temp/{{ pair.gltype }}/somatic_variant_calls/octopus/{{ pair.name }}_{{ aligner }}/"
@@ -90,15 +90,15 @@
     module load {{ constants.tools.samtools_1_9.module }}
 
     bcftools filter \
-      -O z \
-      -i 'FILTER == "PASS"' \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
       {% if pair.gltype == 'exome' %}
       --targets-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
     
-    bcftools index -tf "{{ pass_vcf }}"
+    bcftools index --tbi --force "{{ pass_vcf }}"
 
 
 {% endmacro %}

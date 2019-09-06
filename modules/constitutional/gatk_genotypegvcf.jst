@@ -75,13 +75,13 @@
     mkdir -p "{{ results_dir }}"
 
     bcftools concat \
-      -O z \
-      -o "{{ all_vcf }}" \
+      --output-type z \
+      --output "{{ all_vcf }}" \
       {% for batch in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz" \
       {% endfor %}
 
-    bcftools index -tf "{{ all_vcf }}"
+    bcftools index --tbi --force "{{ all_vcf }}"
 
 
 - name: haplotypecaller_filter_variants_{{ sample.name }}_{{ aligner }}
@@ -112,7 +112,7 @@
     {# Then filter out the passing variants to a separate file #}
     bcftools filter \
       --output-type z \
-      -i 'FILTER == "."' \
+      --include 'FILTER == "."' \
       {% if sample.gltype == 'exome' %}
       --targets-file "{{ sample.capture_kit.extended_bed }}" \
       {% endif %}

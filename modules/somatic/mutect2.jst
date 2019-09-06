@@ -54,13 +54,13 @@
     module load {{ constants.tools.samtools_1_9.module }}
     
     bcftools concat \
-      -O z \
-      -o "{{ temp_dir }}.mutect2.raw.vcf.gz" \
+      --output-type z \
+      --output "{{ temp_dir }}.mutect2.raw.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz" \
       {% endfor %}
 
-    bcftools index -tf "{{ temp_dir }}.mutect2.raw.vcf.gz"
+    bcftools index --tbi --force "{{ temp_dir }}.mutect2.raw.vcf.gz"
 
 
 - name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
@@ -98,14 +98,14 @@
     module load {{ constants.tools.samtools_1_9.module }}
     
     bcftools filter \
-      -O z \
-      -i 'FILTER == "PASS"' \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
       {% if pair.gltype == 'exome' %}
       --targets-file "{{ pair.normal.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
     
-    bcftools index -tf "{{ pass_vcf }}"
+    bcftools index --tbi --force "{{ pass_vcf }}"
 
 {% endmacro %}

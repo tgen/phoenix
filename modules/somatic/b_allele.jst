@@ -69,13 +69,13 @@
     {# Filter and annotate the snv vcf #}
     bcftools annotate \
       --threads 2 \
-      -O z \
-      -a "{{ constants.phoenix.dbsnp_v152 }}" \
-      -c "ID,+INFO" \
+      --output-type z \
+      --annotations "{{ constants.phoenix.dbsnp_v152 }}" \
+      --columns "ID,+INFO" \
       "{{ temp_dir }}/results/variants/variants.vcf.gz" \
-      -o "{{ b_allele_vcf }}"
+      --output "{{ b_allele_vcf }}"
 
-    bcftools index -tf "{{ b_allele_vcf }}"
+    bcftools index --tbi --force "{{ b_allele_vcf }}"
 
     {# Finally remove the run dir #}
     rm -r "{{ temp_dir }}"
