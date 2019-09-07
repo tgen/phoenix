@@ -164,7 +164,7 @@
       --input {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.cr.seg \
       --output {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.called.seg
 
-    /home/tgenjetstream/dev_binaries_and_databases/plotCNV/plotCNV.R \
+    Rscript /home/tgenjetstream/dev_binaries_and_databases/plotCNV/plotCNV.R \
       --sample_name={{ pair.tumor.name }} \
       --output_prefix={{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }} \
       --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
