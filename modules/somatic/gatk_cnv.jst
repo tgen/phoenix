@@ -50,7 +50,12 @@
       --padding 100 \
       {% elif pair.gltype in 'genome' %}
       --intervals {{ constants.phoenix.gatk_cnv_primary_contigs_male }} \
-      --bin-length 1000 \
+      {#
+      The --bin-length default of 1000 bp is a good place to start for 30x genomes
+      and should be incresed for less depth or decreased for higher depth.
+      Setting to 10,000 for testing with MMRF low coverage genomes.
+      #}
+      --bin-length 10000 \
       {% endif %}
       --reference {{ constants.phoenix.reference_fasta }} \
       --output {{ temp_dir }}/preprocessed.interval_list \
