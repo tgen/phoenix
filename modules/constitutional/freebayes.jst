@@ -31,7 +31,7 @@
     EOF
 
     freebayes \
-      --bam-file "{{ bam }}" \
+      --bam "{{ bam }}" \
       --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
       --targets "{{ temp_dir }}/{{ loop.index }}.bed" \
       --ploidy 2 \
