@@ -98,7 +98,7 @@
     module load {{ constants.tools.samtools_1_9.module }}
 
     bcftools filter \
-      -output-type z \
+      --output-type z \
       --include 'FILTER == "PASS"' \
       {% if pair.gltype == 'exome' %}
       --targets-file "{{ pair.normal.capture_kit.extended_bed }}" \
