@@ -176,7 +176,7 @@
       -o 1.5 \
     | bcftools view \
       --output-type z \
-      --output "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
+      --output-file "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
     
     bcftools index --tbi --force "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
 
