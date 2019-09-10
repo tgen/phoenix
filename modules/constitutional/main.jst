@@ -43,7 +43,7 @@
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_deepvariant"]|default(true) %}
             {{- deepvariant(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
-        {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_octopus"]|default(true) %}
+        {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_octopus"]|default(false) %}
             {{- octopus_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
     {% endif %}
