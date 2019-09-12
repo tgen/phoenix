@@ -19,7 +19,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.manta_1_4.module }}
+    module load {{ constants.tools.manta_1_6.module }}
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
@@ -41,6 +41,9 @@
     {% endfor %}
     EOF
 
+    head -n 24 "{{ run_dir }}/callRegions.bed" > "{{ run_dir }}/mantaRegions.bed"
+    MANTA_BED="{{ run_dir }}/mantaRegions.bed"
+    rm "{{ run_dir }}/callRegions.bed"
     bgzip -f "${MANTA_BED}"
     tabix -f -p bed "${MANTA_BED}.gz"
 
@@ -49,6 +52,8 @@
       {% if sample.gltype == 'exome' %}
       --exome \
       {% endif %}
+      --scanSizeMb 12 \
+      --callMemMb 10 \
       --callRegions "${MANTA_BED}.gz" \
       --bam "{{ bam }}" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \

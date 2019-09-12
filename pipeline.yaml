@@ -119,6 +119,14 @@ constants:
       citation: >
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
+    manta_1_6:
+      module: manta/1.6
+      version: "1.6"
+      verbose: Manta v1.6
+      website: https://github.com/Illumina/manta
+      citation: >
+        Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
+        cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
     multiqc_1_7:
       module: python/3.6.2
       version: "1.7"
