@@ -13,8 +13,8 @@
     - {{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
     - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
-  cpus: 20
-  mem: 80G
+  cpus: 40
+  mem: 128G
   walltime: "48:00:00"
   cmd: |
     set -eu
@@ -60,7 +60,7 @@
       --runDir "{{ run_dir }}"
 
     {# Execute on the local machine with 19 parallel jobs #}
-    "{{ run_dir }}/runWorkflow.py" -m local -j 19
+    "{{ run_dir }}/runWorkflow.py" -m local -j 38
 
     {# Save all the vcs in the sample dir #}
     mkdir -p "{{ sample_dir }}" || true
