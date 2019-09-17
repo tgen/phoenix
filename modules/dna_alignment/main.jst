@@ -5,6 +5,7 @@
 {% from 'modules/dna_alignment/bwa_mem_samblaster_sambamba.jst' import bwa_mem_blaster_bamba with context %}
 {% from 'modules/dna_alignment/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
 {% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
+{% from 'utilities/read_group_line.jst' import read_group_line %}
 {% from 'modules/qc/main.jst' import bam_qc with context %}
 
 
@@ -14,10 +15,17 @@
 
   {% for sample in samples.values() if sample.gltype in ['genome', 'exome'] %}
 
+    {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
+    {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
+      {% set distance = 2500 %}
+    {% else %}
+      {% set distance = 100 %}
+    {% endif %}
+
     {% if alignment_style == 'tgen' %}
-      {{- bwa_mem_samtools_chunked(sample, reads_per_chunk) }}
+      {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, distance) }}
     {% elif alignment_style == 'broad'  %}
-      {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) }}
+      {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk, distance) }}
     {% elif alignment_style == 'ashion' %}
       {{- bwa_mem_blaster_bamba(sample) }}
     {% else %}

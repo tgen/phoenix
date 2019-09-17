@@ -209,6 +209,15 @@ constants:
         Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
+    samtools_1_9_latest:
+      module: samtools/1.9-latest
+      version: "1.9-latest"
+      verbose: SAMtools v1.9 latest dev branch commit
+      website: http://www.htslib.org
+      citation: >
+        Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
+        Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
+        Bioinformatics (2009) 25(16) 2078-9 [19505943]
     salmon_0_14_1:
       module: salmon/0.14.1
       version: "0.14.1"

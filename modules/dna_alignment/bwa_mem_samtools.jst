@@ -11,7 +11,7 @@
 
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
-{% macro bwa_mem_samtools_chunked(sample, reads_per_chunk) %}
+{% macro bwa_mem_samtools_chunked(sample, reads_per_chunk, distance) %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
@@ -159,7 +159,7 @@
 - name: samtools_markdup_{{ sample.name }}_bwa
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
-    {{ constants.tools.samtools_1_9_92_gcb6b3b5.verbose }} markdup.
+    {{ constants.tools.samtools_1_9_latest.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "48:00:00"
@@ -168,7 +168,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
+    module load {{ constants.tools.samtools_1_9_latest.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -179,20 +179,25 @@
     mkdir -p "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}"
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
+    {#
+    # Choose an optical distance based on sequencer
+    #}
+
     {# No long options available for the following:
+     -d      Optical distance
      -S      Mark supplemenary alignments of duplicates as duplicates (slower)
-     -s      Report stats
+     -f      Write stats to named file. Implies -s (report stats)
      -T      PREFIX    Write temporary files to PREFIX.samtools.nnnn.nnnn.tmp
      2>      Stats are output to stderr which is redirected to ".bwa.bam.markdup.txt"
     #}
     samtools markdup \
+      -d {{ distance }} \
       -S \
-      -s \
+      -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt" \
       --threads 10 \
       -T "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}" \
       "temp/{{ sample.name }}.bwa.bam" \
-      "temp/{{ sample.name }}.bwa.md.bam" \
-      2> "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt"
+      "temp/{{ sample.name }}.bwa.md.bam"
 
     {# No long options available for the following:
       -@ 1   Number of threads used for indexing the bam

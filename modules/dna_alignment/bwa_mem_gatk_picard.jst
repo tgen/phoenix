@@ -10,7 +10,7 @@
 
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
-{% macro bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) %}
+{% macro bwa_mem_gatk_picard_chunked(sample, reads_per_chunk, distance) %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
@@ -109,13 +109,6 @@
     module load {{ constants.tools.gatk_4_1_0_0.module }}
 
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
-
-    {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
-    {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
-      {% set distance = 2500 %}
-    {% else %}
-      {% set distance = 100 %}
-    {% endif %}
 
     gatk MarkDuplicates \
       --java-options "-Xmx28G" \
