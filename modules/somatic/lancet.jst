@@ -70,7 +70,9 @@
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
   after-re: lancet_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ all_vcf }}
+  output:
+    - {{ gatk_all_vcf }}
+    - {{ bcf_all_vcf }}
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -112,7 +114,9 @@
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
   after: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
-  output: {{ pass_vcf }}
+  output:
+    - {{ gatk_pass_vcf }}
+    - {{ bcf_pass_vcf }}
   cmd: |
     set -eu
     set -o pipefail
