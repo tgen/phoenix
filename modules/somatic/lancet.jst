@@ -21,9 +21,14 @@
     set -eu
     set -o pipefail
 
+
+    {#
+     We're module loading samtools 1.9.92_gcb6b3b5 because standard 1.9 has options missing for bcftools,
+     namely the --fai option for reheader to
+    #}
     module load {{ constants.tools.lancet_1_0_7.module }}
     module load {{ constants.tools.gatk_4_1_0_0.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
     
     mkdir -p "{{ temp_dir }}"
 
@@ -56,13 +61,16 @@
 
     {#
     # Additional sorting with bcftools to see if the sorted vcf is drastically different than gatk
+    # bcftools requires gz or bcf files
     #}
+    bgzip "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
+    tabix "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
     bcftools sort \
-    --max-mem 768M \
-    --temp-dir {{ temp_dir }}/temp/ \
-    --output-type z \
-    --output-file "{{ temp_dir }}/{{ loop.index }}.lancet_bcf.vcf.gz" \
-    "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
+      --max-mem 768M \
+      --temp-dir {{ temp_dir }}/temp/ \
+      --output-type v \
+      --output-file "{{ temp_dir }}/{{ loop.index }}.lancet_bcf.vcf" \
+      "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
 
 {% endfor %}
 
