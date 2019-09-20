@@ -63,8 +63,8 @@
     # Additional sorting with bcftools to see if the sorted vcf is drastically different than gatk
     # bcftools requires gz or bcf files
     #}
-    bgzip "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
-    tabix "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
+    bgzip --force --threads 4 "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
+    tabix --force "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
     bcftools sort \
       --max-mem 768M \
       --temp-dir {{ temp_dir }}/temp/ \
