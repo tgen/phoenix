@@ -11,11 +11,12 @@
 
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
-{% macro bwa_mem_samtools_chunked(sample, reads_per_chunk, distance) %}
+{% macro bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
+{# Comment about the math, using the assumed legacy illumina interpretation, it is a TGen modification #}
 {% set n_lines = (reads_per_chunk * 4)|int %}
 {% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
@@ -104,6 +105,7 @@
       "{{ constants.phoenix.bwa_index }}" \
       "temp/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
+    {# Test if 2nd '-' is needed #}
     samtools fixmate \
       --threads 9 \
       -m \
@@ -148,7 +150,9 @@
       "temp/{{ rgid }}/"*.bwa.bam \
     {% endfor %}
 
-    {# Cleanup the tempfiles #}
+    {# Cleanup the tempfiles
+    # removes fastq chunks and intermediate chunk bam files
+    #}
     {% if not debug %}
     {% for rgid in sample.read_groups %}
     rm -r "temp/{{ rgid }}/"
@@ -191,19 +195,21 @@
      2>      Stats are output to stderr which is redirected to ".bwa.bam.markdup.txt"
     #}
     samtools markdup \
-      -d {{ distance }} \
+      -d {{ opt_dup_distance }} \
       -S \
-      -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.markdup.txt" \
+      -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt" \
       --threads 10 \
+      --write-index \
       -T "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}" \
       "temp/{{ sample.name }}.bwa.bam" \
       "temp/{{ sample.name }}.bwa.md.bam"
 
-    {# No long options available for the following:
-      -@ 1   Number of threads used for indexing the bam
+    {#
+    # Cleaning up the temp
     #}
-    samtools index -@ 10 "temp/{{ sample.name }}.bwa.md.bam"
-    rm -r "temp/markdup_{{ sample.name }}_bwa/"
+    {% if not debug %}
+        rm -r "temp/markdup_{{ sample.name }}_bwa/"
+    {% endif %}
 
 {% endmacro %}
 

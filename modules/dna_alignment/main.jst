@@ -11,21 +11,22 @@
 
 {% macro dna_alignment(samples) %}
   {% set alignment_style = dnaAlignmentStyle|default('tgen')|lower %}
+  {# Not configurable by LIMS #}
   {% set reads_per_chunk = reads_per_chunk|default(48000000) %}
 
   {% for sample in samples.values() if sample.gltype in ['genome', 'exome'] %}
 
     {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
     {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
-      {% set distance = 2500 %}
+      {% set opt_dup_distance = 2500 %}
     {% else %}
-      {% set distance = 100 %}
+      {% set opt_dup_distance = 100 %}
     {% endif %}
 
     {% if alignment_style == 'tgen' %}
-      {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, distance) }}
+      {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
     {% elif alignment_style == 'broad'  %}
-      {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk, distance) }}
+      {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk, opt_dup_distance) }}
     {% elif alignment_style == 'ashion' %}
       {{- bwa_mem_blaster_bamba(sample) }}
     {% else %}
@@ -33,6 +34,7 @@
     {% endif %}
 
     {% if sample.gltype == 'genome' %}
+      {# shorten to tasks.Genome_alignment_base_recalibration_gatk|default(false) #}
       {% if tasks.Genome_alignment_base_recalibration_gatk is defined and tasks.Genome_alignment_base_recalibration_gatk %}
         {{- baserecalibration(sample, aligner='bwa') }}
       {% else %}

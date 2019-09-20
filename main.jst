@@ -96,6 +96,7 @@
 
 {% if debug %}{{ log(samples|tojson(indent=4), level='CRITICAL') }}{% endif %}
 
+{# Move to utility scripts #}
 {% for batch in dataFiles|batch(4) %}
 - name: copy_fastqs_{{ loop.index }}
   output:
@@ -118,7 +119,7 @@
 
 {% endfor %}
 
-
+{# Move to utility scripts #}
 - name: finalize
   after-re: .*
   cpus: 1
@@ -132,6 +133,7 @@
 
 
 # Start of module calls
+{# These if statements are kind of dead right now because they aren't passed by LIMS, but everything runs because of default(true) #}
 {% if tasks.dna_alignment|default(true) %}
     {{- dna_alignment(samples) }}
 {% endif %}
@@ -152,4 +154,6 @@
     {{- rna_fusion_detection(samples) }}
 {% endif -%}
 
-{{- single_cell_rna(dataFiles) }}
+{%- if tasks.single_cell_rna|default(true) %}
+    {{- single_cell_rna(dataFiles) }}
+{% endif -%}
