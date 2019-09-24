@@ -6,6 +6,37 @@
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
+- name: samtools_stats_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_9.verbose }} stats.
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt
+  walltime: "4:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    samtools view \
+      --threads 4 \
+      -h \
+      "{{ bam_path }}" \
+      | \
+    samtools stats \
+      --remove-dups \
+      --remove-overlaps \
+      {% if aligner == 'star' %}
+      --reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      > "{{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt"
+
 {% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
