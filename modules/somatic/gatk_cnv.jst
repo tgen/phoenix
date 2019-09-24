@@ -251,6 +251,15 @@
     fi
 
     Rscript /home/tgenjetstream/dev_binaries_and_databases/plotCNV/plotCNV.R \
+      {% if pair.gltype in 'exome' %}
+      --hetDPfilter 20 \
+      --hetAFlow 0.4 \
+      --hetAFhigh 0.6 \
+      {% elif pair.gltype in 'genome' %}
+      --hetDPfilter 6 \
+      --hetAFlow 0.333 \
+      --hetAFhigh 0.666 \
+      {% endif %}
       --sample_name={{ pair.tumor.name }} \
       --output_prefix={{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }} \
       --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
