@@ -282,10 +282,10 @@
 
     if [ ${SEX} = "Male" ]
     then
-      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv >
+      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv > \
         {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
 
-      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg >
+      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg > \
         {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
     else
       cp {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
