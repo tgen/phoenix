@@ -8,6 +8,7 @@
 {% set deepvariant_vcf %}{{ pair.normal.gltype }}/constitutional_variant_calls/deepvariant/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}{% endset %}
+{% set config_sex %}{{ sex|default("Female") }}{% endset %}
 
 - name: gatk_call_cnv_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
@@ -24,7 +25,7 @@
     set -eu
     set -o pipefail
 
-    {# Set constants for coverage and bin length for genomes #}
+    {# Set constants for coverage and bin length for genomes. #}
     {% if pair.gltype in 'genome' %}
     COVERAGE_CONSTANT=30
     BIN_LENGTH_CONSTANT=2000
@@ -39,8 +40,19 @@
     mkdir -p "{{ temp_dir }}/temp"
     mkdir -p "{{ temp_dir }}/results/plots"
 
-    {# Get the sex results of the normal #}
+    {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
     SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f11`
+    CONFIG_SEX={{ config_sex }}
+
+    if [ ${SEX} != "Male" ] && [ ${SEX} != "Female" ]
+    then
+      if [ ${CONFIG_SEX} == "Male" ] || [ ${CONFIG_SEX} == "Female" ]
+      then
+        SEX=${CONFIG_SEX}
+      else
+        SEX=Female
+      fi
+    fi
 
     {# PreprocessIntervals #}
     {# Make the intersect interval file that will go into PreprocessIntervals if exomes #}
@@ -67,6 +79,7 @@
     EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2 ))
 
     {% elif pair.gltype in 'genome' %}
+
     if [ ${SEX} == "Female" ]
     then
       INTERVALS={{ constants.phoenix.gatk_cnv_primary_contigs_female }}
@@ -120,7 +133,7 @@
       --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       {{ deepvariant_vcf }}
 
-    {# Perform first round of CollectReadCounts on the normal for filtering intervals with no reads #}
+    {# Perform first round of CollectReadCounts on the normal for filtering intervals with little to no reads #}
     gatk --java-options "-Xmx12g" CollectReadCounts \
       --tmp-dir {{ temp_dir }}/temp/ \
       --input {{ normal_bam }} \
@@ -129,7 +142,20 @@
       --read-filter FirstOfPairReadFilter \
       --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
 
-    {# Filter the intervals based on the counts from the normal #}
+    {#
+    Filter the intervals based on the counts from the normal.
+    EXP_1X_COUNTS is the number of expected reads for 1x depth.
+    We only want to filter based on the counts so we set the following additional options to prevent unwanted filtering.
+      --low-count-filter-percentage-of-samples 90.0 \
+      --extreme-count-filter-minimum-percentile 1.0 \
+      --extreme-count-filter-maximum-percentile 99.0 \
+      --extreme-count-filter-percentage-of-samples 90.0 \
+      --minimum-gc-content 0.1 \
+      --maximum-gc-content 0.9 \
+      --minimum-mappability 0.1 \
+      --maximum-mappability 0.9 \
+      --maximum-segmental-duplication-content 0.5 \
+    #}
     gatk --java-options "-Xmx12g" FilterIntervals \
       --intervals {{ temp_dir }}/preprocessed.interval_list \
       --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
@@ -143,7 +169,6 @@
       --maximum-gc-content 1 \
       --minimum-mappability 0 \
       --maximum-mappability 1 \
-      --minimum-segmental-duplication-content 0 \
       --maximum-segmental-duplication-content 1 \
       --output {{ temp_dir }}/preprocessed_filt.interval_list
 
@@ -189,7 +214,11 @@
       --reference {{ constants.phoenix.reference_fasta }} \
       --output {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
 
-    {# Create a panel of normals file consiting of the matched normal #}
+    {#
+    Create a panel of normals file consiting of the matched normal.
+    The --minimum-interval-median-percentile option was changed from it's default to include all data from the matched normal
+      --minimum-interval-median-percentile 10.0
+    #}
     gatk --java-options "-Xmx12g" CreateReadCountPanelOfNormals \
       --tmp-dir {{ temp_dir }}/temp/ \
       --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
@@ -205,7 +234,20 @@
       --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv \
       --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
 
-    {# Perform segmentation #}
+    {#
+    Perform segmentation
+    Non-default parameters used
+      --number-of-smoothing-iterations-per-fit 1 \
+      --number-of-changepoints-penalty-factor 0.05 \
+      --kernel-variance-allele-fraction 0.0 \
+      --kernel-scaling-allele-fraction 0.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 3.0 \
+      --smoothing-credible-interval-threshold-allele-fraction 3.0 \
+      --window-size 2 \
+      --window-size 4 \
+      --minimum-total-allele-count-normal 30 \
+      --minimum-total-allele-count-normal 6 \
+    #}
     gatk --java-options "-Xmx12g" ModelSegments \
       --tmp-dir {{ temp_dir }}/temp/ \
       --number-of-smoothing-iterations-per-fit 1 \
