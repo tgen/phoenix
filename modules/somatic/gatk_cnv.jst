@@ -231,8 +231,8 @@
       --tmp-dir {{ temp_dir }}/temp/ \
       --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
       --count-panel-of-normals {{ temp_dir }}/cnv.pon.hdf5 \
-      --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv \
-      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
+      --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv \
+      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
 
     {#
     Perform segmentation
@@ -269,7 +269,7 @@
       {% elif pair.gltype in 'genome' %}
       --minimum-total-allele-count-normal 6 \
       {% endif %}
-      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
+      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv \
       --allelic-counts {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
       --normal-allelic-counts {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
       --output {{ temp_dir }}/results \
@@ -282,14 +282,14 @@
 
     if [ ${SEX} = "Male" ]
     then
-      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv > \
-        {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv > \
+        {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
 
-      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg > \
-        {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+      awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg > \
+        {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
     else
-      cp {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
-      cp {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+      cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+      cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
     fi
 
     Rscript /home/tgenjetstream/dev_binaries_and_databases/plotCNV/plotCNV.R \
@@ -304,7 +304,7 @@
       {% endif %}
       --sample_name={{ pair.tumor.name }} \
       --output_prefix={{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }} \
-      --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
+      --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
       --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
       --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
 
