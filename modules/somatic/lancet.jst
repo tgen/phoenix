@@ -55,7 +55,7 @@
     tabix --force "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
     bcftools sort \
       --max-mem 768M \
-      --temp-dir {{ temp_dir }}/temp/ \
+      --temp-dir {{ temp_dir }}/temp_{{ loop.index }}/ \
       --output-type v \
       --output-file "{{ temp_dir }}/{{ loop.index }}.lancet.vcf" \
       "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
