@@ -77,7 +77,7 @@
     MAX_LENGTH=`awk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
 
     {# From the interect intervals file extract the smallest. If the smallest is less than 100 set the default as 100 #}
-    MIN_INTERVAL=`awk -F'\t' -v MAX_LENGTH=${MAX_LENGTH} 'BEGIN { MIN = MAX_LENGTH } $1 !~ /@/ { if ( $3-$2 < MIN ) { MIN = $3-$2 }} END { if () {} print MIN }' {{ temp_dir }}/pair_intersect.interval_list`
+    MIN_INTERVAL=`awk -F'\t' -v MAX_LENGTH=${MAX_LENGTH} 'BEGIN { MIN = MAX_LENGTH } $1 !~ /@/ { if ( $3-$2 < MIN ) { MIN = $3-$2 }} END { print MIN }' {{ temp_dir }}/pair_intersect.interval_list`
 
     if [[ ${MIN_INTERVAL} < 100 ]]
     then
