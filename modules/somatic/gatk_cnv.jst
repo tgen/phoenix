@@ -321,6 +321,13 @@
       --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
 
     mkdir -p "{{ results_dir }}"
+
+    {# If the task has already been run then we need to remove the plots directory. #}
+    if [ -d {{ results_dir }}/plots ]
+    then
+      rm -rf {{ results_dir }}/plots
+    fi
+
     mv {{ temp_dir }}/results/* {{ results_dir }}/
 
 {% endmacro %}
