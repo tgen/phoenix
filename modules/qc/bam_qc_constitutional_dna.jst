@@ -203,8 +203,8 @@
     # Only count read in the non-PAR regions
     ### WARNING: the tested regions needs to be a parameter NOT hard coded
     #}
-    READS_ON_X=`samtools view -c -q 30 -f 67 {{ bam_path }} chrX:2781480-155701382,chrX:156030896-156040895`
-    READS_ON_Y=`samtools view -c -q 30 -f 67 {{ bam_path }} chrY:2781480-56887902,chrY:57217416-57227415`
+    READS_ON_X=`samtools view -c -q 30 -f 67 {{ bam_path }} chrX:2781480-155701382 chrX:156030896-156040895`
+    READS_ON_Y=`samtools view -c -q 30 -f 67 {{ bam_path }} chrY:2781480-56887902 chrY:57217416-57227415`
 
     {# Calculate the Y/(X+Y) read ratio #}
     TOTAL_SEX_CHR_READS=$(echo $READS_ON_X $READS_ON_Y | awk '{printf $1+$2}')
