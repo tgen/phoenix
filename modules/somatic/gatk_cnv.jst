@@ -41,7 +41,7 @@
     mkdir -p "{{ temp_dir }}/results/plots"
 
     {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
-    SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f11`
+    SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
     CONFIG_SEX={{ config_sex }}
 
     if [ ${SEX} != "Male" ] && [ ${SEX} != "Female" ]
@@ -79,7 +79,7 @@
     {# From the interect intervals file extract the smallest. If the smallest is less than 100 set the default as 100 #}
     MIN_INTERVAL=`awk -F'\t' -v MAX_LENGTH=${MAX_LENGTH} 'BEGIN { MIN = MAX_LENGTH } $1 !~ /@/ { if ( $3-$2 < MIN ) { MIN = $3-$2 }} END { print MIN }' {{ temp_dir }}/pair_intersect.interval_list`
 
-    if [[ ${MIN_INTERVAL} < 100 ]]
+    if [[ ${MIN_INTERVAL} -lt 100 ]]
     then
       MIN_INTERVAL=100
     fi
@@ -87,7 +87,8 @@
     BIN_LENGTH=$(( 200 + MIN_INTERVAL ))
 
     {# Divide by two to accomidate autosomes then times by ten to reach an esitmated 10x depth #}
-    EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2*10 ))
+    {# Tried 10x and the MMRF_2118 exome still looks a little noisy. Going to try 20 #}
+    EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2*20 ))
 
     {% elif pair.gltype in 'genome' %}
 
@@ -105,7 +106,7 @@
     BIN_LENGTH=`awk -v BIN_LENGTH_CONSTANT=${BIN_LENGTH_CONSTANT} -v BIN_LENGTH_MODIFYER=${BIN_LENGTH_MODIFYER} 'BEGIN { printf("%d\n",BIN_LENGTH_CONSTANT*BIN_LENGTH_MODIFYER)}'`
 
     {# If the bin length is shorter than the max read length then set the bin length to the read length #}
-    if [[ ${BIN_LENGTH} < ${MAX_LENGTH} ]]
+    if [[ ${BIN_LENGTH} -lt ${MAX_LENGTH} ]]
     then
       BIN_LENGTH=${MAX_LENGTH}
     fi
