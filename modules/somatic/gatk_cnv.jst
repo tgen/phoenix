@@ -292,7 +292,7 @@
       --input {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.cr.seg \
       --output {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.called.seg
 
-    if [ ${SEX} = "Male" ]
+    if [ ${SEX} == "Male" ]
     then
       awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv > \
         {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
