@@ -324,8 +324,8 @@ constants:
     dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
     gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
     gnomad_genome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.genomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
-    cosmic_coding_v89: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v89/CosmicCodingMuts_v89_hg38tgen.bcf
-    cosmic_noncoding_v89: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v89/CosmicNonCodingMuts_v89_hg38tgen.bcf
+    cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
+    cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
     barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0

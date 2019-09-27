@@ -78,7 +78,7 @@
     {# annotate with cosmic #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.cosmic_coding_v89 }}" \
+      --annotations "{{ constants.phoenix.cosmic_coding_v90 }}" \
       --mark-sites COSMIC \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
@@ -94,7 +94,7 @@
     {# annotate with cosmic_nc #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.cosmic_noncoding_v89 }}" \
+      --annotations "{{ constants.phoenix.cosmic_noncoding_v90 }}" \
       --mark-sites COSMIC_NC \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
