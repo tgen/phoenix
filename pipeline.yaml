@@ -46,6 +46,15 @@ constants:
         universal SNP and small-indel variant caller using deep neural networks. Nat
         Biotechnol. 2018 Nov;36(10):983-987. doi: 10.1038/nbt.4235. Epub 2018 Sep 24.
         PubMed PMID: 30247488.
+    delly_0_8_1:
+      module: delly/0.8.1
+      version: "0.8.1"
+      verbose: DELLY2 v0.8.1
+      website: https://github.com/dellytools/delly
+      citation: >
+        Tobias Rausch, Thomas Zichner, Andreas Schlattl, Adrian M. Stütz, Vladimir Benes, Jan O. Korbel,
+        DELLY: structural variant discovery by integrated paired-end and split-read analysis, Bioinformatics,
+        Volume 28, Issue 18, 15 September 2012, Pages i333–i339, https://doi.org/10.1093/bioinformatics/bts378
     freebayes_1_2:
       module: freebayes/1.2
       version: "1.2"
