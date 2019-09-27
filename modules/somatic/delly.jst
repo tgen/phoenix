@@ -1,0 +1,59 @@
+{# {% macro delly_somatic(pair, aligner='bwa') %} #}
+
+{#
+# {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+# {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+# {% set pair_dir %}{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
+# {% set run_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
+#}
+
+{#
+#- name: delly_{{ pair.name }}_{{ aligner }}
+#  tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
+#  methods: >
+#    Somatic structural variants and indels for {{ pair.name }} ({{ aligner }})
+#    were called with {{ constants.tools.delly.verbose }}.
+#  input:
+#    - {{ normal_bam }}
+#    - {{ tumor_bam }}
+#  output:
+#    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.vcf.gz
+#  cpus: 20
+#  walltime: "24:00:00"
+#  cmd: |
+#    cd $DIR
+
+#    module load python/3.6.0
+#    module load BEDTools/2.26.0
+
+#    export FILE_REGION_TO_EXCLUDE="/home/tgenref/binaries/delly2/v20161111/human.GRCh37.contigs_to_exclude.MMRF-specific.tsv"
+#    export FILE_WITH_FILTER_OPTIONS="/home/tgenref/binaries/delly2/v20161111/ini_files/svtop.delly.filter_options.ini"
+#    export ANNO_FILE=/home/tgenref/binaries/delly2/v20161111/annotations/MMRF.StructuralAnnotationDatabase.GRCh37.74_20161101.bed
+#    export DELLY_BINDIR=/home/tgenref/binaries/delly2/bin/0.7.6
+#    export VCFTOOLS_BINDIR=/home/clegendre/tools/vcftools/vcftools_v0.1.14_20160810/bin
+#    export VCF_CONCAT_EXE=/home/clegendre/tools/vcftools/vcftools_v0.1.14_20160810/bin/vcf-concat
+#    export PERL5LIB=/home/clegendre/tools/vcftools/vcftools_v0.1.14_20160810/share/perl5:/home/clegendre/tools/vcftools/vcftools_v0.1.14_20160810/bin:${PERL5LIB}
+
+#    # changed to version in personal directory as original binary has been deleted
+#    export SNPSIFT_JAR_FP=/home/achristofferson/local/snpEff_4.2_2015-12-05/SnpSift.jar
+
+#    export PYTHON_SCRIPT_DELLY_GENE_ANNO=/home/tgenref/binaries/delly2/v20161111/svtop.delly.sv_annotation.parallel.py
+#    export PATH=/home/achristofferson/local/bcftools-1.6:/packages/BEDTools/2.26.0/bin:$PATH
+#    export FILE_INI_ENV_VARS=${DIR_SCRIPT_DELLY}/ini_files/svtop.delly.definition_env_variables.ini
+
+#    delly call \
+#     --svtype ALL \
+#     --genome {{ REF_GENOME }} \
+#     --minclip \
+#     --exclude {{ FILE_REGION_TO_EXCLUDE }} \
+#     {{ TUMOR_BAM }} {{ NORMAL_BAM }}
+
+    ## function running DELLY itself based on SVTYPE and SOMATIC TYPE (not germline)
+#    run_SV_type ${SVTYPE} ${REF_GEN} ${TUMOR_BAM} ${NORMAL_BAM} -a 0.1 -r 0.75 -v 5 -c 0 -m 500 -n 500000000 ${REGION_TO_EXCLUDE_FILE}
+
+    # Concatenate the vcfs
+#    concatDellyVcfs ${PREFIX_TBAM} ${PREFIX_NBAM} $(find -maxdepth 1 -type f -name "*.flt.vcf" | sed 's/^\.\///')
+#
+#    bash ${DIR_SCRIPT_DELLY}/svtop.delly.process_the_concatenated_vcfs.addRC_and_distribution.sh ${VCF} ${TUMOR_BAM} ${NORMAL_BAM} ${SLOP} "${LIST_CONTIGS_TOBE_FILTERED_OUT[@]}" ${ANNO_FILE}
+#}
+{# {% endmacro %} #}
