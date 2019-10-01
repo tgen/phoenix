@@ -14,16 +14,12 @@
     - {{ normal_bam }}
     - {{ tumor_bam }}
   cpus: 4
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
     set -eu
     set -o pipefail
 
-
-    {#
-     We're module loading samtools 1.9.92_gcb6b3b5 because standard 1.9 has options missing for bcftools,
-     namely the --fai option for reheader to
-    #}
     module load {{ constants.tools.lancet_1_0_7.module }}
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
     

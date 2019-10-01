@@ -186,11 +186,11 @@
   input: {{ star_bam_sorted }}
   output: {{ star_bam_final }}
   cpus: 10
-  mem: 60G
+  mem: 80G
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
+    module load {{ constants.tools.samtools_1_9_latest.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
