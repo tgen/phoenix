@@ -299,9 +299,14 @@
 
       awk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg > \
         {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+      contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrXCONTIG_DELIMITERchrY"
+      contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895CONTIG_DELIMITER57227415"
     else
       cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
       cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+      contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrX"
+      contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895"
     fi
 
     Rscript /home/tgenjetstream/dev_binaries_and_databases/plotCNVplus/plotCNVplus.R \
@@ -311,23 +316,21 @@
       --hetAFhigh 0.55 \
       {% elif pair.gltype in 'genome' %}
       --hetDPfilter 6 \
-      --hetAFlow 0.333 \
-      --hetAFhigh 0.666 \
+      --hetAFlow 0.425 \
+      --hetAFhigh 0.575 \
       {% endif %}
       --sample_name={{ pair.tumor.name }} \
       --output_prefix={{ pair.name }}.{{ aligner }} \
       --plots_directory={{ temp_dir }}/results/plots \
       --re_center_CNA=TRUE \
       --re_centered_seg_directory={{ temp_dir }}/results \
+      --contig_names_string=${contig_names_string} \
+      --contig_lengths_string=${contig_lengths_string} \
       --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
       --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
       --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
 
-    echo "Completed making all files."
-
     mkdir -p "{{ results_dir }}"
-
-    echo "Made directory"
 
     {# If the task has already been run then we need to remove the plots directory. #}
     if [ -d {{ results_dir }}/plots ]
