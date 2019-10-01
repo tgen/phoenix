@@ -114,7 +114,6 @@
     
     vcfMerger2.py \
       --skip-prep-vcfs \
-      --bams {{ tumor_bam }} \
       --do-venn \
       --precedence "{{ pair.callers|join('|') }}" \
       --toolnames "{{ pair.callers|join('|') }}" \

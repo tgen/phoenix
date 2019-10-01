@@ -304,18 +304,21 @@
       cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
     fi
 
-    Rscript /home/tgenjetstream/dev_binaries_and_databases/plotCNV/plotCNV.R \
+    Rscript /home/tgenjetstream/dev_binaries_and_databases/plotCNVplus/plotCNVplus.R \
       {% if pair.gltype in 'exome' %}
       --hetDPfilter 20 \
-      --hetAFlow 0.4 \
-      --hetAFhigh 0.6 \
+      --hetAFlow 0.45 \
+      --hetAFhigh 0.55 \
       {% elif pair.gltype in 'genome' %}
       --hetDPfilter 6 \
       --hetAFlow 0.333 \
       --hetAFhigh 0.666 \
       {% endif %}
       --sample_name={{ pair.tumor.name }} \
-      --output_prefix={{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }} \
+      --output_prefix={{ pair.name }}.{{ aligner }} \
+      --plots_directory={{ temp_dir }}/results/plots \
+      --re_center_CNA=TRUE \
+      --re_centered_seg_directory={{ temp_dir }}/results \
       --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
       --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
       --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
