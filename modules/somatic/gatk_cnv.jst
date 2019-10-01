@@ -323,7 +323,11 @@
       --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
       --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
 
+    echo "Completed making all files."
+
     mkdir -p "{{ results_dir }}"
+
+    echo "Made directory"
 
     {# If the task has already been run then we need to remove the plots directory. #}
     if [ -d {{ results_dir }}/plots ]
