@@ -4,6 +4,7 @@
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set normal_bam_stats %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/stats/{{ normal_bam|basename }}.bamstats.txt{% endset %}
+{% set tumor_bam_stats %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ tumor_bam|basename }}.bamstats.txt{% endset %}
 {% set normal_sex_check %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/stats/{{ normal_bam|basename }}.sexCheck.txt{% endset %}
 {% set deepvariant_vcf %}{{ pair.normal.gltype }}/constitutional_variant_calls/deepvariant/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}_{{ aligner }}{% endset %}
@@ -17,6 +18,7 @@
     - {{ tumor_bam }}
     - {{ deepvariant_vcf }}
     - {{ normal_bam_stats }}
+    - {{ tumor_bam_stats }}
     - {{ normal_sex_check }}
   cpus: 1
   mem: 16G
@@ -101,7 +103,16 @@
 
     {# Set sample specific variables #}
     MAX_LENGTH=`awk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
-    AVERAGE_DEPTH=`awk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print SUM/TOT}' {{ normal_bam_stats }}`
+    NORMAL_AVERAGE_DEPTH=`awk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
+    TUMOR_AVERAGE_DEPTH=`awk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ tumor_bam_stats }}`
+
+    if [ ${NORMAL_AVERAGE_DEPTH} -lt ${TUMOR_AVERAGE_DEPTH} ]
+    then
+      AVERAGE_DEPTH=${NORMAL_AVERAGE_DEPTH}
+    else
+      AVERAGE_DEPTH=${TUMOR_AVERAGE_DEPTH}
+    fi
+
     BIN_LENGTH_MODIFYER=`bc -l <<< ${COVERAGE_CONSTANT}/${AVERAGE_DEPTH}`
     BIN_LENGTH=`awk -v BIN_LENGTH_CONSTANT=${BIN_LENGTH_CONSTANT} -v BIN_LENGTH_MODIFYER=${BIN_LENGTH_MODIFYER} 'BEGIN { printf("%d\n",BIN_LENGTH_CONSTANT*BIN_LENGTH_MODIFYER)}'`
 
@@ -139,7 +150,7 @@
       {% if pair.gltype in 'exome' %}
       --exclude 'VAF<0.40 | VAF>0.60 | DP<20' \
       {% elif pair.gltype in 'genome' %}
-      --exclude 'VAF<0.333 | VAF>0.666 | DP<6' \
+      --exclude "VAF<0.333 | VAF>0.666 | DP<${NORMAL_AVERAGE_DEPTH}" \
       {% endif %}
       --output-type v \
       --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
@@ -279,7 +290,7 @@
       {% if pair.gltype in 'exome' %}
       --minimum-total-allele-count-normal 30 \
       {% elif pair.gltype in 'genome' %}
-      --minimum-total-allele-count-normal 6 \
+      --minimum-total-allele-count-normal ${NORMAL_AVERAGE_DEPTH} \
       {% endif %}
       --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv \
       --allelic-counts {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
@@ -315,7 +326,7 @@
       --hetAFlow 0.45 \
       --hetAFhigh 0.55 \
       {% elif pair.gltype in 'genome' %}
-      --hetDPfilter 6 \
+      --hetDPfilter ${TUMOR_AVERAGE_DEPTH} \
       --hetAFlow 0.425 \
       --hetAFhigh 0.575 \
       {% endif %}
