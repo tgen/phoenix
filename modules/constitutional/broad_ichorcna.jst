@@ -1,7 +1,8 @@
 {% macro ichorcna(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set wig %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
-{% set run_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
+{% set sample_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
+{% set wig %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
+{% set run_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
 
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
@@ -14,7 +15,7 @@
     set -o pipefail
     module load {{ constants.tools.hmmcopy_utils_1_0.module }}
 
-    mkdir -p "{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/"
+    mkdir -p "{{ sample_dir }}/"
 
     readCounter \
       --window 1000000 \
@@ -75,5 +76,17 @@
       --mapWig ${EXTDATA}/map_hg38_1000kb.wig \
       --centromere ${EXTDATA}/GRCh38.GCA_000001405.2_centromere_acen.txt \
       --normalPanel ${EXTDATA}/HD_ULP_PoN_hg38_1Mb_median_normAutosome_median.rds
+
+    {#
+    # Move the output files to the final location
+    #}
+    mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+
+    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg" "{{ sample_dir }}/"
+    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt" "{{ sample_dir }}/"
+    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.params.txt" "{{ sample_dir }}/"
+    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.RData" "{{ sample_dir }}/"
+    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt" "{{ sample_dir }}/"
+    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf" "{{ sample_dir }}/"
 
 {% endmacro %}
