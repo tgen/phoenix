@@ -46,10 +46,10 @@ constants:
         universal SNP and small-indel variant caller using deep neural networks. Nat
         Biotechnol. 2018 Nov;36(10):983-987. doi: 10.1038/nbt.4235. Epub 2018 Sep 24.
         PubMed PMID: 30247488.
-    delly_0_8_1:
-      module: delly/0.8.1
-      version: "0.8.1"
-      verbose: DELLY2 v0.8.1
+    delly_0_7_6:
+      module: delly/0.7.6
+      version: "0.7.6"
+      verbose: DELLY2 v0.7.6
       website: https://github.com/dellytools/delly
       citation: >
         Tobias Rausch, Thomas Zichner, Andreas Schlattl, Adrian M. Stütz, Vladimir Benes, Jan O. Korbel,

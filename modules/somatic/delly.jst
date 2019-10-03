@@ -6,7 +6,8 @@
 {% set all_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.all.bcf{% endset %}
 {% set pass_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.bcf{% endset %}
 
-- name: delly_{{ pair.name }}_{{ aligner }}
+{% for SVTYPE in [DEL, DUP, INS, INV, TRA] %}
+- name: delly_{{ pair.name }}_{{ aligner }}_{{ SVTYPE }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
   methods: >
     Somatic structural variants and indels for {{ pair.name }} ({{ aligner }})
@@ -15,23 +16,23 @@
     - {{ normal_bam }}
     - {{ tumor_bam }}
   output:
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.all.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.bcf
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ SVTYPE }}.bcf
   cpus: 20
   walltime: "24:00:00"
   cmd: |
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.delly_0_8_1.module }}
+    module load {{ constants.tools.delly_0_7_6.module }}
 
+{% set sv_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ SVTYPE }}.bcf{% endset %}
     {# delly has the option to add an exclusion file via --exclude #}
     delly call \
-     --svtype ALL \
+     --svtype {{ SVTYPE }} \
      --genome {{ constants.phoenix.reference_fasta }} \
      --map-qual 1 \
      --mad-cutoff 9 \
-     --outfile {{ all_vcf }} \
+     --outfile {{ sv_vcf }} \
      {{ tumor_bam }} {{ normal_bam }}
 
     delly filter \
@@ -43,11 +44,30 @@
      --minsize 500 \
      --maxsize 500000000 \
      --outfile {{ pass_vcf }} \
-     {{ all_vcf }}
+     {{ sv_vcf }}
 
     {# There is some post processing for delly, however this may not be needed due to incorporating delly into the
     # phoenix environment, annotation and other processes are handled downstream. I'm including this statement from
     # the original code in case it has some value to the overall delly process.
     # svtop.delly.process_the_concatenated_vcfs.addRC_and_distribution.sh ${VCF} ${TUMOR_BAM} ${NORMAL_BAM} ${SLOP} "${LIST_CONTIGS_TOBE_FILTERED_OUT[@]}" ${ANNO_FILE} #}
+{{ endfor }}
+
+- name: delly_merge_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
+  methods: >
+    Somatic structural variants and indels for {{ pair.name }} ({{ aligner }})
+    were called with {{ constants.tools.delly.verbose }}.
+  input:
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.DEL.bcf
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.INS.bcf
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.TRA.bcf
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.SNV.bcf
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.SNP.bcf
+  output:
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.all.bcf
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.bcf
+  cpus: 20
+  walltime: "24:00:00"
+  cmd: |
 
 {% endmacro %}
