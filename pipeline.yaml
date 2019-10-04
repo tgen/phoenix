@@ -73,6 +73,16 @@ constants:
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
+    gatk_4_1_2_0:
+      module: gatk/4.1.2.0
+      version: "4.1.2.0"
+      verbose: Genome Analysis Toolkit v4.1.2.0
+      website: https://software.broadinstitute.org/gatk/
+      citation: >
+        The Genome Analysis Toolkit: a MapReduce framework for analyzing
+        next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
+        Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
+        Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
     gatk_4_1_3_0:
       module: gatk/4.1.3.0
       version: "4.1.3.0"
@@ -345,6 +355,7 @@ constants:
     cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
     delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/delly_anno_Homo_sapiens.GRCh38.97.ucsc.bed
+    delly_scripts: /home/tgenref/binaries/delly2/v20161111/
     barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
     cellranger_chemistry:
