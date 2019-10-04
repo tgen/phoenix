@@ -133,7 +133,7 @@
         --check-ref s                 # --check-ref s will set/fix when an incorrect or missing REF is encountered
     #}
     bcftools norm \
-      --check-ref \
+      --check-ref s \
       --strict-filter \
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
       --multiallelics -any \
