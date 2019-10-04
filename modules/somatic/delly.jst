@@ -3,8 +3,8 @@
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set pair_dir %}{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
 {% set run_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
-{% set all_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.all.bcf{% endset %}
-{% set pass_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.bcf{% endset %}
+{% set all_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.allCalls.vcf{% endset %}
+{% set pass_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
 
 {% for SVTYPE in [DEL, DUP, INS, INV, TRA] %}
 - name: delly_{{ pair.name }}_{{ aligner }}_{{ SVTYPE }}
@@ -22,16 +22,16 @@
 
     module load {{ constants.tools.delly_0_7_6.module }}
 
-    {% set sv_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ SVTYPE }}.bcf{% endset %}
+    {% set sv_bcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ SVTYPE }}.bcf{% endset %}
     {% set filt_sv = {"DEL": "--minsize 2000 --maxsize 500000000", "DUP": "--minsize 100 --maxsize 500000000", "INS": "--minsize 5 --maxsize 87", "INV": "--minsize 100 --maxsize 500000000", "TRA": "--minsize 500 --maxsize 500000000"}[SVTYPE] | default("--minsize 500 --maxsize 500000000") -%}
-    {% set filt_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ SVTYPE }}.flt.bcf{% endset %}
+    {% set filt_bcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ SVTYPE }}.flt.bcf{% endset %}
     {# delly has the option to add an exclusion file via --exclude #}
     delly call \
      --svtype {{ SVTYPE }} \
      --genome {{ constants.phoenix.reference_fasta }} \
      --map-qual 1 \
      --mad-cutoff 9 \
-     --outfile {{ sv_vcf }} \
+     --outfile {{ sv_bcf }} \
      {{ tumor_bam }} {{ normal_bam }}
 
     delly filter \
@@ -41,22 +41,20 @@
      --coverage 5 \
      --controlcontamination 0 \
      {{ filt_sv }} \
-     --outfile {{ filt_vcf }} \
-     {{ sv_vcf }}
+     --outfile {{ filt_bcf }} \
+     {{ sv_bcf }}
 
 {{ endfor }}
 
 - name: delly_merge_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
   input:
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.DEL.flt.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.DUP.flt.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.INS.flt.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.INV.flt.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.TRA.flt.bcf
+    {% for SVTYPE in [DEL, DUP, INS, INV, TRA] %}
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ SVTYPE }}.flt.bcf
+    {% endfor %}
   output:
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.all.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.bcf
+    - {{ all_vcf }}
+    - {{ pass_vcf }}
   cpus: 8
   walltime: "24:00:00"
   cmd: |
@@ -66,89 +64,44 @@
       {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.DEL.flt.bcf \
       {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.DUP.flt.bcf \
       {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.INS.flt.bcf \
-      {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.INV.flt.bc \
+      {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.INV.flt.bcf \
       {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.TRA.flt.bcf 2>/dev/null | \
       tee >(cat - | grep -E "^#" | grep -vE "##bcftools_viewCommand|^#CHROM"  > header.vcfs.txt ) | tee >(cat - | grep -E "^#CHROM" > header.lineCHROM.txt ) | grep -vE "^#" | sort -k1,1V -k2,2n > body.vcfs.txt ;
     grep -E "^##bcftools_viewCommand" ${LVCFS[@]} | cut -d":" -f2 > header.bcfCommands.txt ;
-    cat header.vcfs.txt header.bcfCommands.txt header.lineCHROM.txt body.vcfs.txt > ${PREFIX_NBAM}-${PREFIX_TBAM}.delly.allCalls.vcf
-    cat header.vcfs.txt header.bcfCommands.txt header.lineCHROM.txt ; cat body.vcfs.txt | awk '{FS=OFS="\t"} $7=="PASS" {print}' ) > ${PREFIX_NBAM}-${PREFIX_TBAM}.delly.passOnly.vcf
+    cat header.vcfs.txt header.bcfCommands.txt header.lineCHROM.txt body.vcfs.txt > {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.allCalls.vcf
+    cat header.vcfs.txt header.bcfCommands.txt header.lineCHROM.txt ; cat body.vcfs.txt | awk '{FS=OFS="\t"} $7=="PASS" {print}' ) > {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf
     rm header.lineCHROM.txt header.vcfs.txt body.vcfs.txt header.bcfCommands.txt
 
 - name: delly_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
   input:
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.all.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.bcf
+    - {{ pass_vcf }}
   output:
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.all.ann.bcf
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.ann.bcf
+    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.ann.vcf
   cpus: 8
   walltime: "24:00:00"
-  cmd: |
-    {# svtop.delly.process_the_concatenated_vcfs.addRC_and_distribution.sh ${VCF} ${TUMOR_BAM} ${NORMAL_BAM} ${SLOP} "${LIST_CONTIGS_TOBE_FILTERED_OUT[@]}" ${ANNO_FILE}
-    #  LIST_CONTIGS_TOBE_FILTERED_OUT[@] will need to be a colon ':' separated list #}
-    {# ##1) In order to avoid the ERROR << END lesser than POS >> while using snpSift, we need to convert the END tag into another TAGNAME in the VCF, such as END --> ENDPOSSV
-    {#if [[ ! -e ${VCF}.ori ]] ; then cp ${VCF} ${VCF}.ori ; fi
-    {#
-    {#if [[ $(grep -m 1 -c "ENDPOSSV" ${VCF} ) -ne 1  ]] ;
-    {#then
-    {#        sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' ${VCF} > ${VCF}.mod
-    {#        check_ev $? "ERROR: sed command Failed"
-    {#        VCF=${VCF}.mod
-    {#
-    {#        echo -e "running addRC_to_Delly_VCF.py ..."
-    {#        echo -e "python ${DIR_SCRIPT_DELLY}/addRC_to_Delly_VCF.py -i ${VCF} -t ${TBAM} -n ${NBAM} -s ${SLOP}"
-    {#        #source ${PYTHON_ENV_ACTIVATE}
-    {#
-    {#        mycmd="python ${DIR_SCRIPT_DELLY}/addRC_to_Delly_VCF.py -i ${VCF} -t ${TBAM} -n ${NBAM} -s ${SLOP}"
-    {#        echo ${mycmd} ;
-    {#        eval ${mycmd} ;
-    {#        if [[ $? -ne 0 ]] ; then  echo -e "ERROR: python addRC_to_Delly_VCF.py FAILED" ; exit -1 ; fi
-    {#        VCF=${VCF}_addDist.vcf
-    {#        #deactivate
-    {#else
-    {#        echo -e "VCF file has already the New Tags ... skipping addRC_to_Delly_VCF.py"
-    {#        cp ${VCF} ${VCF}.mod_addDist.vcf ; VCF=${VCF}.mod_addDist.vcf
-    {#fi #}
-    {# ##############################################################################
-    {#### Filtering VCF based on ALT read count and read distribution
-    {#### the Filtering involvd HARDCODED variables  # if wanted or needed
-    {####TH_RCALT_TUMOR=5
-    {####TH_RCALT_CONSTITUTIONAL=1
-    {####TH_RDISTDISC1_TUMOR=100
-    {####TH_RDISTDISC2_TUMOR=100
-    {###############################################################################
-    {#
-    {#echo -e "Filtering the VCF based on ALT read count and read distribution"
-    {#echo -e "( grep -E \"^#\" ${VCF} ; cat ${VCF} | ${SNPSIFT_CMD} filter \"( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) \" | grep -vE \"^#|${LIST_CONTIGS_TOBE_FILTERED_OUT[@]}\" ) > `basename ${VCF} \".vcf.mod_addDist.vcf\"`.flt.vcf\" "
-    {#
-    {#( grep -E "^#" ${VCF} ; cat ${VCF} | ${SNPSIFT_CMD} filter "( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) " | grep -vE "^#|${LIST_CONTIGS_TOBE_FILTERED_OUT[@]}" ) > `basename ${VCF} ".vcf.mod_addDist.vcf"`.flt.vcf
-    {#if [[ $? -eq 0 ]] ; then mv ${VCF} ${VCF_ORI} ; else echo -e "ERROR: snpSIFT.jar  filter  FAILED" ; exit -1 ; fi
-    {#
-    {#VCF=`basename ${VCF} ".vcf.mod_addDist.vcf"`.flt.vcf
-    {#export VCF=${VCF}
-    {#
-    {#############################
-    {###  GENE NAMES Annotation
-    {#############################
-    {#echo -e "annotating the SVs with Gene Names ..."
-    {##echo -e "PYTHON_ENV_ACTIVATE ==== ${PYTHON_ENV_ACTIVATE} \nPYTHON_SCRIPT_DELLY_GENE_ANNO ==== ${PYTHON_SCRIPT_DELLY_GENE_ANNO}"
-    {##source ${PYTHON_ENV_ACTIVATE}
-    {#mycmd="python ${DIR_SCRIPT_DELLY}/svtop.delly.sv_annotation.parallel.py -a ${ANNO_FILE}  -i ${VCF}  -o $(basename ${VCF} '.vcf').anno.final.vcf"
-    {#echo ${mycmd} ;
-    {#eval ${mycmd} ;
-    {#if [[ $? -ne 0 ]] ; then echo -e "ERROR: vcf annotation with svtop.delly.sv_annotation.parallel.py  FAILED" ; exit -1 ; fi
-    {##deactivate
-    {#
-    {#######################################
-    {### CLEANING
-    {#######################################
-    {#echo -e "cleaning ..."
-    {#cp ${VCF_ORI}.ori ${VCF_ORI}
-    {#if [[ $? -ne 0 ]] ; then echo -e "ERROR: cp command FAILED" ; exit -1 ; fi
-    {#rm ${VCF_ORI}.mod  `basename ${VCF_ORI} ".vcf"`.flt.vcf
-    {#if [[ $? -ne 0 ]] ; then echo -e "ERROR: rm command FAILED" ; exit -1 ; fi
-    {#
-    {#echo -e "script addTags and Gene Annotation completed succesfully" #}
+  cmd:
+    {% set delly_scripts %}{{ constants.phoenix.delly_scripts }}{% endset %}
+    {% set snpSift %}java -jar /packages/snpEff/snpEff_v4_3t_core/snpEff/SnpSift.jar{% endset %}
+    {% set ANNO_VCF %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
+    {% set SLOP %}1000{% endset %}
+
+    {# TODO Generate list of contigs that will be filtered out, either on the fly here or add to pipeline yaml, they need to be colon separated for our annotation #}
+
+    module load {{ constants.tools.python_3_6_0.module }}
+
+    if [[ $(grep -m 1 -c "ENDPOSSV" {{ ANNO_VCF }} ) -ne 1  ]] ;
+    then
+            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ ANNO_VCF }} > {{ ANNO_VCF }}.mod
+            python {{ delly_scripts }}addRC_to_Delly_VCF.py -i {{ ANNO_VCF }}.mod -t {{ TUMOR_BAM }} -n {{ NORMAL_BAM }} -s {{ SLOP }}
+    else
+            cp {{ ANNO_VCF }} {{ ANNO_VCF }}.mod_addDist.vcf
+    fi
+
+    {% set ANNO_VCF %}{{ ANNO_VCF }}.mod_addDist.vcf{% endset %}
+
+    grep -E "^#" {{ ANNO_VCF }} ; cat {{ ANNO_VCF }} | {{ snpSift }} filter "( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) " | grep -vE "^#|{{ LIST_CONTIGS_TOBE_FILTERED_OUT }}" ) > {{ ANNO_VCF }}.flt.vcf
+
+    python {{ delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ ANNO_VCF }}.flt.vcf -o {{ ANNO_VCF }}.flt.anno.final.vcf
 
 {% endmacro %}
