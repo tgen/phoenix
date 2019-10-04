@@ -144,7 +144,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.gatk_4_1_3_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 
@@ -185,7 +185,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    module load {{ constants.tools.gatk_4_1_3_0.module }}
 
     gatk ConvertSequencingArtifactToOxoG \
       {% if aligner == 'star' %}

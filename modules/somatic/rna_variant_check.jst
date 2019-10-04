@@ -128,13 +128,8 @@
     # Since the input variants are all normalized, use bcftools to normalize the RNA calls and remove any variant line
     # with no ALT allele noted (ie. ALT = ".") (Largely a Seurat related bug)
     #}
-    {# TODO investigate -cs options. Possible long options are:
-        --check-ref --strict-filter   # --check-ref defaults to [e], which exits when an incorrect or missing REF is encountered
-        --check-ref s                 # --check-ref s will set/fix when an incorrect or missing REF is encountered
-    #}
     bcftools norm \
       --check-ref s \
-      --strict-filter \
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
       --multiallelics -any \
       {{ temp_dir }}/{{ rna_sample }}_DnaVarInRNA.vcf \

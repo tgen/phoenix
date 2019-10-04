@@ -155,6 +155,14 @@ constants:
       citation: >
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
+    octopus_0_6_3b:
+      module: octopus/0.6.3-beta
+      version: 0.6.3-beta
+      verbose: Octopus v0.6.3-beta
+      website: https://github.com/luntergroup/octopus
+      citation: >
+        A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke,
+        David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
     phaser_1_1_1:
       module: phASER/1.1.1
       version: 1.1.1
@@ -336,6 +344,7 @@ constants:
     cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
     cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
+    delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/delly_anno_Homo_sapiens.GRCh38.97.ucsc.bed
     barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
     cellranger_chemistry:
