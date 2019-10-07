@@ -30,7 +30,7 @@
     {{ delly }} call \
      --type {{ svtype }} \
      --genome {{ constants.phoenix.reference_fasta }} \
-     --exclude {{ constants.phoenix.delly_exclusions }}
+     --exclude {{ constants.phoenix.delly_exclusions }} \
      --map-qual 1 \
      --mad-cutoff 9 \
      --outfile {{ sv_bcf }} \
