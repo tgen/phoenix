@@ -13,7 +13,7 @@
     - {{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
     - {{ sample_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
-  cpus: 40
+  cpus: 32
   mem: 128G
   walltime: "48:00:00"
   cmd: |
