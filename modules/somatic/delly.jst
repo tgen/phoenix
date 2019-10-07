@@ -17,6 +17,7 @@
   cpus: 8
   walltime: "24:00:00"
   cmd: |
+    cd {{ run_dir }}
     set -eu
     set -o pipefail
 
@@ -58,6 +59,8 @@
   cpus: 8
   walltime: "24:00:00"
   cmd: |
+    cd {{ run_dir }}
+
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
     bcftools concat \
@@ -81,16 +84,27 @@
   cpus: 8
   walltime: "24:00:00"
   cmd:
+    cd {{ run_dir }}
+
     {% set delly_scripts %}{{ constants.phoenix.delly_scripts }}{% endset %}
     {% set snpSift %}java -jar /packages/snpEff/snpEff_v4_3t_core/snpEff/SnpSift.jar{% endset %}
     {% set ANNO_VCF %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
     {% set SLOP %}1000{% endset %}
 
-    {# TODO Generate list of contigs that will be filtered out, either on the fly here or add to pipeline yaml, they need to be colon separated for our annotation #}
+    {#
+    # Generating exclusion list
+    #}
+    awk '{ print $1 }' {{ constants.phoenix.reference_fai }} > delly.co
+    sed -n 25p delly.co > delly.chrM
+    sed -n '456,$p' delly.co > delly.notCallingContigs
+    cat delly.chrM delly.notCallingContigs > delly.excl
+    rm delly.co delly.chrM delly.notCallingContigs
+
+    {% set LIST_CONTIGS_TOBE_FILTERED_OUT %}delly.excl{% endset %}
 
     module load {{ constants.tools.python_3_6_0.module }}
 
-    if [[ $(grep -m 1 -c "ENDPOSSV" {{ ANNO_VCF }} ) -ne 1  ]] ;
+    if [[ $(grep -m 1 -c "ENDPOSSV" {{ ANNO_VCF }} ) -ne 1 ]] ;
     then
             sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ ANNO_VCF }} > {{ ANNO_VCF }}.mod
             python {{ delly_scripts }}addRC_to_Delly_VCF.py -i {{ ANNO_VCF }}.mod -t {{ TUMOR_BAM }} -n {{ NORMAL_BAM }} -s {{ SLOP }}
