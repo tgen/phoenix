@@ -20,12 +20,12 @@
     set -o pipefail
 
     {% set delly %}/home/tgenref/binaries/delly2/bin/0.7.6/delly{% endset %}
-    {% set sv_bcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.bcf{% endset %}
+    {% set sv_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.bcf{% endset %}
     {% set filt_sv = {"DEL": "--minsize 2000 --maxsize 500000000", "DUP": "--minsize 100 --maxsize 500000000", "INS": "--minsize 5 --maxsize 87", "INV": "--minsize 100 --maxsize 500000000", "TRA": "--minsize 500 --maxsize 500000000"}[svtype] | default("--minsize 500 --maxsize 500000000") -%}
     {% set filt_bcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
+    {% set sample_file %}sample.{{ svtype }}.{{ pair.name }}.tsv{% endset %}
 
     mkdir -p "{{ run_dir }}"
-    cd {{ run_dir }}
 
     {{ delly }} call \
      --type {{ svtype }} \
@@ -33,19 +33,23 @@
      --exclude {{ constants.phoenix.delly_exclusions }} \
      --map-qual 1 \
      --mad-cutoff 9 \
-     --outfile {{ sv_bcf }} \
+     --outfile {{ run_dir }}/{{ sv_bcf }} \
      {{ tumor_bam }} {{ normal_bam }}
+
+    {# Creating a sample file for filter step #}
+    echo -e "$(echo -e {{ pair.tumor.rgsm }} |  sed 's/\..*//')\ttumor\n$(echo -e $( {{ pair.normal.rgsm }} |  sed 's/\..*//'))\tcontrol" > {{ sample_file }}
 
     {{ delly }} filter \
      --type {{ svtype }} \
      --filter somatic \
-     --alataf 0.1 \
+     --samples {{ sample_file }} \
+     --altaf 0.1 \
      --ratiogeno 0.75 \
      --coverage 5 \
      --controlcontamination 0 \
      {{ filt_sv }} \
-     --outfile {{ filt_bcf }} \
-     {{ sv_bcf }}
+     --outfile {{ run_dir }}/{{ filt_bcf }} \
+     {{ run_dir }}/{{ sv_bcf }}
 
 {% endfor %}
 
