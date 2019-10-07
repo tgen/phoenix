@@ -153,8 +153,18 @@
       --exclude "VAF<0.333 | VAF>0.666 | DP<${NORMAL_AVERAGE_DEPTH}" \
       {% endif %}
       --output-type v \
-      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf \
       {{ deepvariant_vcf }}
+
+    {# Filter out Blacklist regions. https://doi.org/10.1038/s41598-019-45839-z #}
+    bcftools view \
+      --targets-file ^{{ constants.phoenix.black_list }} \
+      --output-type v \
+      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
+
+    {# Remove preFilt.snps.vcf #}
+    rm {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
 
     {# Perform first round of CollectReadCounts on the normal for filtering intervals with little to no reads #}
     gatk --java-options "-Xmx12g" CollectReadCounts \
