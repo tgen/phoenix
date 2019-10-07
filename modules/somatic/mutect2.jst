@@ -79,6 +79,7 @@
     
     gatk FilterMutectCalls \
       --java-options "-Xmx28G" \
+      --reference {{ constants.phoenix.reference_fasta }} \
       {% if pair.gltype == 'genome' %}
       --strict-strand-bias true \
       {% endif %}
