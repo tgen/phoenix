@@ -108,8 +108,7 @@
         {{- manta_somatic(pair, aligner='bwa') }}
     {% endif %}
 
-    {# defaulting to false to avoid render issues #}
-    {% if tasks[taskPrefix+"_somatic_structural_caller_delly"]|default(false) %}
+    {% if tasks[taskPrefix+"_somatic_structural_caller_delly"]|default(true) %}
         {{- delly_somatic(pair, aligner='bwa') }}
     {% endif %}
     
