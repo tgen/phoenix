@@ -91,7 +91,7 @@
     ( cat {{ merged_vcf }} | grep -E "^#CHROM" > header.lineCHROM.txt )
     ( cat {{ merged_vcf }} | grep -vE "^#" | sort -k1,1V -k2,2n > body.vcfs.txt )
     cat header.vcfs.txt header.lineCHROM.txt body.vcfs.txt > {{ pair.name }}.{{ aligner }}.delly.allCalls.vcf
-    ( cat header.vcfs.txt header.lineCHROM.txt ; cat body.vcfs.txt | awk '{FS=OFS="\t"} $7=="PASS" {print}' ) > {{ pair.name }}.{{ aligner }}.delly.passOnly.vcf
+    ( cat header.vcfs.txt header.lineCHROM.txt ; cat body.vcfs.txt | awk '{FS=OFS="\t"} $7=="PASS" {print}' ) > {{ pass_vcf }}
     rm header.lineCHROM.txt header.vcfs.txt body.vcfs.txt {{ merged_vcf }}
 
 - name: delly_annotate_{{ pair.name }}_{{ aligner }}
@@ -103,15 +103,14 @@
     - {{ pair.name }}.{{ aligner }}.delly.passOnly.ann.vcf
   cpus: 8
   walltime: "24:00:00"
-  cmd:
+  cmd: |
     set -eu
     set -o pipefail
 
     {% set delly_scripts %}{{ constants.phoenix.delly_scripts }}{% endset %}
     {% set snpSift %}java -jar /packages/snpEff/snpEff_v4_3t_core/snpEff/SnpSift.jar{% endset %}
     {% set slop %}1000{% endset %}
-
-    cd {{ run_dir }}
+    {% set ann_vcf %}{{ run_dir }}/{{ pass_vcf }}{% endset %}
 
     {#
     # Generating exclusion list
@@ -126,18 +125,18 @@
 
     module load {{ constants.tools.python_3_6_0.module }}
 
-    if [[ $(grep -m 1 -c "ENDPOSSV" {{ pass_vcf }} ) -ne 1 ]] ;
+    if [[ $(grep -m 1 -c "ENDPOSSV" {{ ann_vcf }} ) -ne 1 ]] ;
     then
-            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ pass_vcf }} > {{ pass_vcf }}.mod
-            python {{ delly_scripts }}addRC_to_Delly_VCF.py -i {{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s {{ slop }}
+            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ ann_vcf }} > {{ ann_vcf }}.mod
+            python {{ delly_scripts }}addRC_to_Delly_VCF.py -i {{ ann_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s {{ slop }}
     else
-            cp {{ pass_vcf }} {{ pass_vcf }}.mod_addDist.vcf
+            cp {{ ann_vcf }} {{ ann_vcf }}.mod_addDist.vcf
     fi
 
-    {% set pass_vcf %}{{ pass_vcf }}.mod_addDist.vcf{% endset %}
+    {% set ann_vcf %}{{ ann_vcf }}.mod_addDist.vcf{% endset %}
 
-    ( grep -E "^#" {{ pass_vcf }} ; cat {{ pass_vcf }} | {{ snpSift }} filter "( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) " ) > {{ pass_vcf }}.flt.vcf
+    ( grep -E "^#" {{ ann_vcf }} ; cat {{ ann_vcf }} | {{ snpSift }} filter "( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) " ) > {{ ann_vcf }}.flt.vcf
 
-    python {{ delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ pass_vcf }}.flt.vcf -o {{ pass_vcf }}.flt.anno.final.vcf
+    python {{ delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ ann_vcf }}.flt.vcf -o {{ ann_vcf }}.flt.anno.final.vcf
 
 {% endmacro %}
