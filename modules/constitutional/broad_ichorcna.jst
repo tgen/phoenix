@@ -80,8 +80,6 @@
     {#
     # Move the output files to the final location
     #}
-    mv "{{ run_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
-
     mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg" "{{ sample_dir }}/"
     mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt" "{{ sample_dir }}/"
     mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.params.txt" "{{ sample_dir }}/"
