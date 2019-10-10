@@ -134,10 +134,9 @@
             cp {{ ann_vcf }} {{ ann_vcf }}.mod_addDist.vcf
     fi
 
-    {% set ann_vcf %}{{ ann_vcf }}.mod_addDist.vcf{% endset %}
+    {# We need to re-evaluate this statement, probably can be replaced with a bcftools filter #}
+    {# ( grep -E "^#" {{ ann_vcf }}.mod_addDist.vcf ; cat {{ ann_vcf }}.mod_addDist.vcf | {{ snpSift }} filter "( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) " ) > {{ ann_vcf }}.mod_addDist.vcf.flt.vcf #}
 
-    ( grep -E "^#" {{ ann_vcf }} ; cat {{ ann_vcf }} | {{ snpSift }} filter "( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) " ) > {{ ann_vcf }}.flt.vcf
-
-    python {{ delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ ann_vcf }}.flt.vcf -o {{ ann_vcf }}.flt.anno.final.vcf
+    python {{ delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ ann_vcf }}.mod_addDist.vcf.flt.vcf -o {{ ann_vcf }}.flt.anno.final.vcf
 
 {% endmacro %}
