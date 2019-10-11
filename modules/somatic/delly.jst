@@ -108,23 +108,12 @@
     set -o pipefail
 
     {% set delly_scripts %}{{ constants.phoenix.delly_scripts }}{% endset %}
-    {% set snpSift %}java -jar /packages/snpEff/snpEff_v4_3t_core/snpEff/SnpSift.jar{% endset %}
     {% set slop %}1000{% endset %}
     {% set ann_vcf %}{{ run_dir }}/{{ pass_vcf }}{% endset %}
 
-    {#
-    # Generating exclusion list
-    # Potentially not needed when providing an exclusion list upstream
-    #}
-    {#    awk '{ print $1 }' {{ constants.phoenix.reference_fai }} > delly.co#}
-    {#    sed -n 25p delly.co > delly.chrM#}
-    {#    sed -n '456,$p' delly.co > delly.notCallingContigs#}
-    {#    cat delly.chrM delly.notCallingContigs > delly.excl#}
-    {#    rm delly.co delly.chrM delly.notCallingContigs#}
-    {#    {% set list_of_contigs_to_filter_out %}delly.excl{% endset %}#}
-
     module load {{ constants.tools.python_3_6_0.module }}
     module load {{ constants.tools.bedtools_2_26_0.module }}
+    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
     if [[ $(grep -m 1 -c "ENDPOSSV" {{ ann_vcf }} ) -ne 1 ]] ;
     then
@@ -134,8 +123,7 @@
             cp {{ ann_vcf }} {{ ann_vcf }}.mod_addDist.vcf
     fi
 
-    {# We need to re-evaluate this statement, probably can be replaced with a bcftools filter #}
-    {# ( grep -E "^#" {{ ann_vcf }}.mod_addDist.vcf ; cat {{ ann_vcf }}.mod_addDist.vcf | {{ snpSift }} filter "( GEN[0].RCALT >= 5 && GEN[1].RCALT <=1 && GEN[0].RDISTDISC1 >= 100 && GEN[0].RDISTDISC2 >= 100 ) " ) > {{ ann_vcf }}.mod_addDist.vcf.flt.vcf #}
+    bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ ann_vcf }}.mod_addDist.vcf > {{ ann_vcf }}.mod_addDist.vcf.flt.vcf
 
     python {{ delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ ann_vcf }}.mod_addDist.vcf.flt.vcf -o {{ ann_vcf }}.flt.anno.final.vcf
 
