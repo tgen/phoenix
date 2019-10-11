@@ -85,6 +85,6 @@
     mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.params.txt" "{{ sample_dir }}/"
     mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.RData" "{{ sample_dir }}/"
     mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt" "{{ sample_dir }}/"
-    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf" "{{ sample_dir }}/"
+    mv {{ run_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ sample_dir }}/"
 
 {% endmacro %}
