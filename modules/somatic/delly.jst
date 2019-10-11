@@ -19,15 +19,16 @@
     set -eu
     set -o pipefail
 
-    {% set delly %}/home/tgenref/binaries/delly2/bin/0.7.6/delly{% endset %}
     {% set sv_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.bcf{% endset %}
     {% set filt_sv = {"DEL": "--minsize 2000 --maxsize 500000000", "DUP": "--minsize 100 --maxsize 500000000", "INS": "--minsize 5 --maxsize 87", "INV": "--minsize 100 --maxsize 500000000", "TRA": "--minsize 500 --maxsize 500000000"}[svtype] | default("--minsize 500 --maxsize 500000000") -%}
     {% set filt_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
     {% set sample_file %}sample.{{ svtype }}.{{ pair.name }}.tsv{% endset %}
 
+    module load {{ constants.tools.delly_0_7_6.module }}
+
     mkdir -p "{{ run_dir }}"
 
-    {{ delly }} call \
+    delly call \
      --type {{ svtype }} \
      --genome {{ constants.phoenix.reference_fasta }} \
      --exclude {{ constants.phoenix.delly_exclusions }} \
@@ -39,7 +40,7 @@
     {# Creating a sample file for filter step #}
     echo -e "$(echo -e {{ pair.tumor.rgsm }} |  sed 's/\..*//')\ttumor\n$(echo -e {{ pair.normal.rgsm }} |  sed 's/\..*//')\tcontrol" > {{ sample_file }}
 
-    {{ delly }} filter \
+    delly filter \
      --type {{ svtype }} \
      --filter somatic \
      --samples {{ sample_file }} \
@@ -63,7 +64,7 @@
     {% endfor %}
   input:
     {% for svtype in variant_types %}
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf
+    - {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf
     {% endfor %}
   output:
     - {{ all_vcf }}
@@ -107,24 +108,24 @@
     set -eu
     set -o pipefail
 
-    {% set delly_scripts %}{{ constants.phoenix.delly_scripts }}{% endset %}
-    {% set slop %}1000{% endset %}
-    {% set ann_vcf %}{{ run_dir }}/{{ pass_vcf }}{% endset %}
-
     module load {{ constants.tools.python_3_6_0.module }}
     module load {{ constants.tools.bedtools_2_26_0.module }}
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
-    if [[ $(grep -m 1 -c "ENDPOSSV" {{ ann_vcf }} ) -ne 1 ]] ;
+    if [[ $(grep -m 1 -c "ENDPOSSV" {{ run_dir }}/{{ pass_vcf }} ) -ne 1 ]] ;
     then
-            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ ann_vcf }} > {{ ann_vcf }}.mod
-            python {{ delly_scripts }}addRC_to_Delly_VCF.py -i {{ ann_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s {{ slop }}
+            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ run_dir }}/{{ pass_vcf }} > {{ run_dir }}/{{ pass_vcf }}.mod
+            python {{ constants.phoenix.delly_scripts }}/addRC_toDelly_VCF.py -i {{ run_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
     else
-            cp {{ ann_vcf }} {{ ann_vcf }}.mod_addDist.vcf
+            cp {{ run_dir }}/{{ pass_vcf }} {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf
     fi
 
-    bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ ann_vcf }}.mod_addDist.vcf > {{ ann_vcf }}.mod_addDist.vcf.flt.vcf
+    bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
 
-    python {{ delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ ann_vcf }}.mod_addDist.vcf.flt.vcf -o {{ ann_vcf }}.flt.anno.final.vcf
+    python {{ constants.phoenix.delly_scripts }}/svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pass_vcf }}.flt.anno.final.vcf
+
+    mv {{ run_dir }}/{{ pass_vcf }}.flt.anno.final.vcf {{ pair_dir }}
+    mv {{ run_dir }}/{{ pass_vcf }} {{ pair_dir }}
+    mv {{ run_dir }}/{{ all_vcf }} {{ pair_dir }}
 
 {% endmacro %}
