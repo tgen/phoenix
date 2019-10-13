@@ -384,6 +384,7 @@ constants:
     salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v97/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
     sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
     sex_check_vcf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.vcf.gz
+    lymphocyteReceptor_loci_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
     star_indices:
       # Multiple STAR references defined here in order to accommodate 
