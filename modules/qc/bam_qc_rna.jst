@@ -27,3 +27,24 @@
       --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
 
 {% endmacro %}
+
+{% macro bam_qc_rna_BTcell_loci(sample, aligner='star') %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: rna_getBTcellLociCounts_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
+  tags: [rna, counts, BTcellLociCounts, {{ sample.gltype }}]
+  input: {{ bam_path }}
+  walltime: "8:00:00"
+  cpus: 2
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ stats_dir }}"
+
+    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam_path }}" > "{{ stats_dir }}/{{ sample.name }}.BTcell.loci.counts.txt"
+
+{% endmacro %}
