@@ -71,7 +71,7 @@
     gatk --java-options "-Xmx14G" GetPileupSummaries \
       --reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ tumor_bam }}" \
-      --interval-set-rule INTERSECTION \
+      --interval-set-rule UNION \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
@@ -89,7 +89,7 @@
     gatk --java-options "-Xmx14g" GetPileupSummaries \
       -reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ normal_bam }}" \
-      --interval-set-rule INTERSECTION \
+      --interval-set-rule UNION \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
