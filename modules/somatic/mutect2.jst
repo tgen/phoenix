@@ -77,11 +77,9 @@
       {% endfor %}
       {% if pair.gltype == 'exome' %}
       --variant {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
-      --intervals {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
       {% endif %}
       {% if pair.gltype == 'genome' %}
       --variant {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
-      --intervals {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
       {% endif %}
       --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
 
@@ -91,15 +89,13 @@
       --input "{{ normal_bam }}" \
       --interval-set-rule UNION \
       {% for interval in batch %}
-      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       {% if pair.gltype == 'exome' %}
       --variant {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
-      --intervals {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
       {% endif %}
       {% if pair.gltype == 'genome' %}
       --variant {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
-      --intervals {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
       {% endif %}
       --output {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
 
