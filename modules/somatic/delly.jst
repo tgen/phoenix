@@ -115,14 +115,14 @@
     if [[ $(grep -m 1 -c "ENDPOSSV" {{ run_dir }}/{{ pass_vcf }} ) -ne 1 ]] ;
     then
             sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ run_dir }}/{{ pass_vcf }} > {{ run_dir }}/{{ pass_vcf }}.mod
-            python {{ constants.phoenix.delly_scripts }}/addRC_toDelly_VCF.py -i {{ run_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
+            python {{ constants.phoenix.delly_scripts }}addRC_toDelly_VCF.py -i {{ run_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
     else
             cp {{ run_dir }}/{{ pass_vcf }} {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf
     fi
 
     bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
 
-    python {{ constants.phoenix.delly_scripts }}/svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pass_vcf }}.flt.anno.final.vcf
+    python {{ constants.phoenix.delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pass_vcf }}.flt.anno.final.vcf
 
     mv {{ run_dir }}/{{ pass_vcf }}.flt.anno.final.vcf {{ pair_dir }}
     mv {{ run_dir }}/{{ pass_vcf }} {{ pair_dir }}
