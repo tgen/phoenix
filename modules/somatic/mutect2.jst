@@ -93,8 +93,14 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --variant ~{variants_for_contamination} \
-      --intervals ~{variants_for_contamination} \
+      {% if pair.gltype == 'exome' %}
+      --variant {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
+      --intervals {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
+      {% endif %}
+      {% if pair.gltype == 'genome' %}
+      --variant {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
+      --intervals {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
+      {% endif %}
       --output "{{ temp_dir }}/{{ loop.index }}.normal-pileups.table
 
 
