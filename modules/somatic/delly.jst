@@ -122,9 +122,11 @@
 
     bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
 
-    python {{ constants.phoenix.delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pass_vcf }}.flt.anno.final.vcf
+    python {{ constants.phoenix.delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf
 
-    mv {{ run_dir }}/{{ pass_vcf }}.flt.anno.final.vcf {{ pair_dir }}
+    mkdir -p {{ pair_dir }}
+
+    mv {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf {{ pair_dir }}
     mv {{ run_dir }}/{{ pass_vcf }} {{ pair_dir }}
     mv {{ run_dir }}/{{ all_vcf }} {{ pair_dir }}
 
