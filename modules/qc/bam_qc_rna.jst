@@ -1,6 +1,6 @@
 # These macros are run on rna bams from the star_quant module.
 
-{% macro bam_qc_gatk_collectrnaseqmetrics(sample, aligner='bwa') %}
+{% macro bam_qc_gatk_collectrnaseqmetrics(sample, aligner='star') %}
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
