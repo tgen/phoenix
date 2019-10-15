@@ -190,7 +190,7 @@
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.tumor-pileups.table" \
       {% endfor %}
-      -O "{{ temp_dir }}/merged.tumor-pileups.table.tsv
+      -O {{ temp_dir }}/merged.tumor-pileups.table.tsv
 
     # Merge normal pileup
     gatk --java-options "-Xmx6G" GatherPileupSummaries \
@@ -198,7 +198,7 @@
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.normal-pileups.table" \
       {% endfor %}
-      -O "{{ temp_dir }}/merged.normal-pileups.table.tsv
+      -O {{ temp_dir }}/merged.normal-pileups.table.tsv
 
 - name: mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
