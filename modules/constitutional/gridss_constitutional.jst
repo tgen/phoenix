@@ -1,0 +1,24 @@
+{% macro gridss_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set sample_dir %}{{ sample.gltype }}/constitutional_structural_calls/gridss/{{ sample.name }}{% endset %}
+{% set run_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/gridss/{{ sample.name }}{% endset %}
+
+- name: gridss_constitutional_{{ aligner }}
+  tags: [constitutional, gridss]
+  input:
+    - {{ bam }}
+  cpus: 8
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gridss_2_4_0.module }}
+
+    gridss CallVariants \
+      -r {{ constants.phoenix.reference_fasta }} \
+      -w {{ run_dir }} \
+      -o {{ sample_dir }}/{{ bam }}.sv.vcf \
+      {{ bam }}
+
+{% endmacro %}
