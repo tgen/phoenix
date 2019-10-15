@@ -83,7 +83,7 @@
       --variant {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
       --intervals {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
       {% endif %}
-      --output "{{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
+      --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
 
     ## Normal pileups
     gatk --java-options "-Xmx14g" GetPileupSummaries \
@@ -101,7 +101,7 @@
       --variant {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
       --intervals {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
       {% endif %}
-      --output "{{ temp_dir }}/{{ loop.index }}.normal-pileups.table
+      --output {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
 
 
 {% endfor %}
