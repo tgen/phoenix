@@ -23,6 +23,11 @@
     
     mkdir -p "{{ temp_dir }}"
 
+    # Create the read orientation file
+    # This is not absolutely needed but is implemented in the Broad WDL for a cromwell issue
+    # Internally we have random failure associated with a complete MuTect run but no read orientation file created
+    touch "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz"
+
     ## we always use a matching normal from the same patient
     # not using -pon as we often don't have a set of matching normals with the identical assay
     # not using --alleles to force calls at specific locations
@@ -127,7 +132,7 @@
     bcftools index --tbi --force "{{ temp_dir }}.mutect2.raw.vcf.gz"
 
 - name: mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk_4_1_0_0.verbose }} Mutect2 in parallel chunks and
