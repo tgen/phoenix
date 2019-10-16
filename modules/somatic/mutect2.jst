@@ -51,7 +51,8 @@
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
       --output "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz" \
-      --f1r2-tar-gz "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz"
+      --f1r2-tar-gz "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz" \
+      --independent-mates true
 
 {% endfor %}
 
