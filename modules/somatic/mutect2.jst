@@ -33,7 +33,7 @@
     # not using --alleles to force calls at specific locations
     # might want to enable "--bam-output "{{ temp_dir }}/{{ loop.index }}.bamout.bam" \"
     ## but it makes a very big bam file
-    gatk Mutect2 \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk Mutect2 \
       --java-options "-Xmx14G" \
       --tmp-dir temp/ \
       --reference {{ constants.phoenix.reference_fasta }} \
@@ -73,7 +73,7 @@
 
     ### GetPileupSummaries this can happen at the same time as the variant calling, no need to wait
     ## Tumor pileups
-    gatk --java-options "-Xmx14G" GetPileupSummaries \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk --java-options "-Xmx14G" GetPileupSummaries \
       --reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ tumor_bam }}" \
       --interval-set-rule UNION \
@@ -89,7 +89,7 @@
       --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
 
     ## Normal pileups
-    gatk --java-options "-Xmx14g" GetPileupSummaries \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk --java-options "-Xmx14g" GetPileupSummaries \
       -reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ normal_bam }}" \
       --interval-set-rule UNION \
@@ -145,7 +145,7 @@
     set -o pipefail
     module load {{ constants.tools.gatk_4_1_3_0.module }}
 
-    gatk --java-options "-Xmx6G" MergeMutectStats \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk --java-options "-Xmx6G" MergeMutectStats \
       {% for b in constants.phoenix.calling_intervals %}
       -stats "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats" \
       {% endfor %}
@@ -165,7 +165,7 @@
     set -o pipefail
     module load {{ constants.tools.gatk_4_1_3_0.module }}
 
-    gatk --java-options "-Xmx6G" LearnReadOrientationModel \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk --java-options "-Xmx6G" LearnReadOrientationModel \
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz
       {% endfor %}
@@ -186,7 +186,7 @@
     module load {{ constants.tools.gatk_4_1_3_0.module }}
 
     # Merge tumor pileup
-    gatk --java-options "-Xmx6G" GatherPileupSummaries \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk --java-options "-Xmx6G" GatherPileupSummaries \
       --sequence-dictionary {{ constants.phoenix.reference_dict }} \
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.tumor-pileups.table" \
@@ -194,7 +194,7 @@
       -O {{ temp_dir }}/merged.tumor-pileups.table.tsv
 
     # Merge normal pileup
-    gatk --java-options "-Xmx6G" GatherPileupSummaries \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk --java-options "-Xmx6G" GatherPileupSummaries \
       --sequence-dictionary {{ constants.phoenix.reference_dict }} \
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.normal-pileups.table" \
@@ -215,7 +215,7 @@
     set -o pipefail
     module load {{ constants.tools.gatk_4_1_3_0.module }}
 
-    gatk --java-options "-Xmx6G" CalculateContamination \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk --java-options "-Xmx6G" CalculateContamination \
       -I "{{ temp_dir }}/merged.tumor-pileups.table.tsv" \
       -matched "{{ temp_dir }}/merged.normal-pileups.table.tsv" \
       -O "{{ temp_dir }}/contamination.table" \
@@ -244,7 +244,7 @@
     ### Additional step that could be added
     # FilterAlignmentArtifacts
 
-    gatk FilterMutectCalls \
+    /home/tgenjetstream/gatk-4.1.4.0/gatk FilterMutectCalls \
       --java-options "-Xmx28G" \
       --reference {{ constants.phoenix.reference_fasta }} \
       --max-alt-allele-count 2 \
