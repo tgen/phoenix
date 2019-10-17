@@ -11,7 +11,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
 
     gatk \
       --java-options "-Xmx14G" \
@@ -40,7 +40,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
 
     gatk \
       --java-options "-Xmx14G" \
@@ -63,7 +63,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
 
     gatk ApplyBQSR \
       --java-options "-Xmx28G" \
@@ -95,7 +95,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/"

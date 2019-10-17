@@ -20,7 +20,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
     mkdir -p "{{ temp_dir }}"
 
     gatk GenotypeGVCFs \
@@ -43,7 +43,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
     source activate gatk
 
     gatk CNNScoreVariants \
@@ -94,7 +94,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_3_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     {# Annotate with FilterVariantTranches #}
