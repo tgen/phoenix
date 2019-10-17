@@ -226,6 +226,7 @@
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   after: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   after: mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
+  after: mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
   output: {{ all_vcf }}
   cpus: 8
   mem: 32G
