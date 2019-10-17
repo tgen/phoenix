@@ -13,12 +13,12 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_2_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 
     gatk CollectWgsMetrics \
-      --USE_FAST_ALGORITHM true \
+      --USE_FAST_ALGORITHM false \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_metrics.txt" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
@@ -38,7 +38,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_2_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 
@@ -63,12 +63,12 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_2_0.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
 
     mkdir -p "{{ stats_dir }}"
 
     gatk CollectRawWgsMetrics \
-      --USE_FAST_ALGORITHM true \
+      --USE_FAST_ALGORITHM false \
       --INPUT "{{ bam_path }}" \
       --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_raw_metrics.txt" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
