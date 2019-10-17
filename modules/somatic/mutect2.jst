@@ -125,12 +125,12 @@
     
     bcftools concat \
       --output-type z \
-      --output "{{ temp_dir }}.mutect2.raw.vcf.gz" \
+      --output "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz" \
       {% endfor %}
 
-    bcftools index --tbi --force "{{ temp_dir }}.mutect2.raw.vcf.gz"
+    bcftools index --tbi --force "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz"
 
 - name: mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
@@ -250,7 +250,7 @@
       --java-options "-Xmx28G" \
       --reference {{ constants.phoenix.reference_fasta }} \
       --max-alt-allele-count 2 \
-      --variant "{{ temp_dir }}.mutect2.raw.vcf.gz" \
+      --variant "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
       --stats "{{ temp_dir }}/merged.stats" \
       --contamination-table "{{ temp_dir }}/contamination.table" \
       --tumor-segmentation "{{ temp_dir }}/segments.table" \
