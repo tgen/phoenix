@@ -1,4 +1,29 @@
-# Phoenix
+# Phoenix Workflow - A JetStream Workflow
+
+This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
+
+### Tools Used by the Workflow
+Last Update October 18, 2019
+
+| Tool | Version Implemented | Current Version | Note |
+| :---: | :---: | :---: | :--- |
+| [bcftools](https://github.com/samtools/bcftools/releases) | 1.9 | 1.9 | |
+| [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | |
+| [deepvariant](https://github.com/lh3/bwa/releases) | 0.7.0 | **0.8.0** | singularity container |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.2.0 | **1.3.1** | update allows skipping of high coverage regions |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.4.0 | **2.6.2** | **behind** |
+| [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release |
+| [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.1.0 | **0.2.0** | package in R/3.4.1 module |
+| [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | |
+| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | |
+| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | 0.7.0 | |
+| [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | |
+| [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch |
+| [strelka](https://github.com/Illumina/strelka/releases) | 2.9.2 | 2.9.10 | REALLY??|
+
+    
+ 
 
 ## Install Guide
 First, jetstream must be installed, available [here](https://github.com/tgen/jetstream/tree/master). There is an install guide for jetstream available at the link provided, but the gist of the guide is to install using pip3 using a command similar to:  
