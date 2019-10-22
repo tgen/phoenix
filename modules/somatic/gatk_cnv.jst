@@ -22,7 +22,7 @@
     - {{ normal_sex_check }}
   cpus: 1
   mem: 16G
-  walltime: "10:00:00"
+  walltime: "24:00:00"
   cmd: |
     set -eu
     set -o pipefail
@@ -142,7 +142,7 @@
       --output {{ temp_dir }}/preprocessed.interval_list \
       --interval-merging-rule OVERLAPPING_ONLY
 
-    {# Extract heterozygous snps from the matched normal #}
+    {# Extract heterozygous snps from the matched normal excluding the PAR regions on XY#}
     bcftools view \
       --exclude-types indels,mnps,ref,bnd,other \
       --genotype het \

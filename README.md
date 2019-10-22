@@ -3,25 +3,42 @@
 This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
 
 ### Tools Used by the Workflow
-Last Update October 18, 2019
+Last Update October 21, 2019
 
 | Tool | Version Implemented | Current Version | Note |
 | :---: | :---: | :---: | :--- |
 | [bcftools](https://github.com/samtools/bcftools/releases) | 1.9 | 1.9 | |
+| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.26.0 | **2.29.0** | delly-filter, addmatchRNA, vardict, vcfmerger2 |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | |
-| [deepvariant](https://github.com/lh3/bwa/releases) | 0.7.0 | **0.8.0** | singularity container |
+| [cellranger](https://github.com/lh3/bwa/releases) | 3.0.2 | **3.1.0** | |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.7.0 | **0.8.0** | singularity container |
+| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | |
+| [featurecounts](https://sourceforge.net/projects/subread/) | 1.6.4 | **2.0.0** | part of subread package |
 | [freebayes](https://github.com/ekg/freebayes/releases) | 1.2.0 | **1.3.1** | update allows skipping of high coverage regions |
 | [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.4.0 | **2.6.2** | **behind** |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.4.0 | **2.6.3** | **behind** |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release |
+| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.1.0 | **0.2.0** | package in R/3.4.1 module |
+| [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | |
+| [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 |
+| [plotCNVplus.R](https://github.com/tgen/plotCNVplus) | NA | NA | TGen Code |
+| [rstats](https://www.cnn.com) | 3.4.1 | ??? | gatk cnv, varDict, vcfmerger2 |
 | [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | 0.7.0 | |
 | [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | |
+| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | 0.14.2 | updates to alevin (unused today) |
 | [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch |
-| [strelka](https://github.com/Illumina/strelka/releases) | 2.9.2 | 2.9.10 | REALLY??|
-
+| [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017|
+| [star](https://github.com/alexdobin/STAR/releases) | 2.7.1a | **2.7.3a** | Several Major Updates |
+| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.5.0 | **1.8.1** | |
+| [strelka](https://github.com/Illumina/strelka/releases) | 2.9.2 | **2.9.10** | REALLY??|
+| [vardict](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.6.0 | **1.7.0** | |
+| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.7 | 0.7.7 | |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 97.3 | **98.2** | |
+| [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.5 | **1.0.6** | |
+| [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | |
     
  
 
