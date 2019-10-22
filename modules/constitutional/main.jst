@@ -2,6 +2,7 @@
 {% from 'modules/constitutional/gatk_genotypegvcf.jst' import genotypegvcf with context %}
 {% from 'modules/constitutional/freebayes.jst' import freebayes with context %}
 {% from 'modules/constitutional/manta.jst' import manta_constitutional with context %}
+{% from 'modules/constitutional/gridss.jst' import gridss_constitutional with context %}
 {% from 'modules/constitutional/strelka2.jst' import strelka2_constitutional with context %}
 {% from 'modules/constitutional/deepvariant.jst' import deepvariant with context %}
 {% from 'modules/constitutional/octopus.jst' import octopus_constitutional with context %}
@@ -36,6 +37,9 @@
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_structural_caller_manta"]|default(true) %}
             {{- manta_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
+        {% endif %}
+        {%- if tasks[taskPrefix+"_constitutional_structural_caller_gridss"]|default(true) %}
+            {{- gridss_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_strelka2"]|default(true) %}
             {{- strelka2_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
