@@ -41,7 +41,7 @@
       --germline-resource {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_germlinereference }} \
       {% endif %}
       {% if pair.gltype == 'genome' %}
-      --germline-resource {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_germlinereference }} \
+      --germline-resource {{ constants.phoenix.gnomad_genome_v3_0_mutect_germlinereference }} \
       {% endif %}
       --input "{{ normal_bam }}" \
       --normal-sample "{{ pair.normal.rgsm }}" \
@@ -85,7 +85,7 @@
       --variant {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
       {% endif %}
       {% if pair.gltype == 'genome' %}
-      --variant {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
+      --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
       {% endif %}
       --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
 
@@ -101,7 +101,7 @@
       --variant {{ constants.phoenix.gnomad_exome_v2_1_1_mutect_contamination }} \
       {% endif %}
       {% if pair.gltype == 'genome' %}
-      --variant {{ constants.phoenix.gnomad_genome_v2_1_1_mutect_contamination }} \
+      --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
       {% endif %}
       --output {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
 

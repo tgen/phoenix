@@ -31,12 +31,12 @@ Last Update October 21, 2019
 | [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | 0.14.2 | updates to alevin (unused today) |
 | [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch |
 | [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017|
-| [star](https://github.com/alexdobin/STAR/releases) | 2.7.1a | **2.7.3a** | Several Major Updates |
+| [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | |
 | [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.5.0 | **1.8.1** | |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.2 | **2.9.10** | REALLY??|
 | [vardict](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.6.0 | **1.7.0** | |
 | [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.7 | 0.7.7 | |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 97.3 | **98.2** | |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.5 | **1.0.6** | |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | |
     

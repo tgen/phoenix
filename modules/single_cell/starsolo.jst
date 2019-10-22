@@ -64,7 +64,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.star_2_7_1a.module }}
+    module load {{ constants.tools.star_2_7_3a.module }}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
@@ -95,10 +95,12 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --outSAMunmapped None \
       --outSAMmapqUnique 255 \
       --outSAMattributes NH HI AS nM CR CY UR UY \
-      --soloType Droplet \
+      --soloType CB_UMI_Simple \
       --soloCBwhitelist {{ BARCODE }} \
-      --soloFeatures Gene \
+      --soloFeatures Gene SJ GeneFull Transcript3p \
+      --soloCBmatchWLtype 1MM multi pseudocounts \
       --soloUMIdedup 1MM_All \
+      --soloUMIfiltering MultiGeneUMI \
       --soloCBstart 1 \
       --soloCBlen 16 \
       --soloUMIstart 17 \
@@ -106,7 +108,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --soloBarcodeReadLength 0 \
       --genomeDir {{ star_index }} \
       --soloStrand {{ sample.rnaStrandDirection }} \
-      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrix.mtx {{ sample.name }}_matrixSJ.mtx )
+      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx )
 
     mv {{ temp_dir }}{{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
 

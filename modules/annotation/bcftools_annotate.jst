@@ -62,7 +62,7 @@
     {# annotate with gnomad genome #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.gnomad_genome_v2_1_1_liftover }}" \
+      --annotations "{{ constants.phoenix.gnomad_genome_v3_0 }}" \
       --mark-sites GNOMAD_GENOME \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
