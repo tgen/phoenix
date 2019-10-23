@@ -38,7 +38,7 @@
         {%- if tasks[taskPrefix+"_constitutional_structural_caller_manta"]|default(true) %}
             {{- manta_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
-        {%- if tasks[taskPrefix+"_constitutional_structural_caller_gridss"]|default(true) %}
+        {%- if tasks[taskPrefix+"_constitutional_structural_caller_gridss"]|default(false) %}
             {{- gridss_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_strelka2"]|default(true) %}

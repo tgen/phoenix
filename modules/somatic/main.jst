@@ -113,7 +113,7 @@
         {{- delly_somatic(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_somatic_structural_caller_gridss"]|default(true) %}
+    {% if tasks[taskPrefix+"_somatic_structural_caller_gridss"]|default(false) %}
         {{- gridss_somatic(pair, aligner='bwa') }}
     {% endif %}
     
