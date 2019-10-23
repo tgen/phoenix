@@ -48,9 +48,9 @@
   {% for i in range(nshards) %}
     - deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   {% endfor %}
-  cpus: 10
+  cpus: 8
   mem: 40G
-  sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1']
+  sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1', '-N', '1', '--tasks-per-node', '1' ]
   walltime: "24:00:00"
   cmd: |
     set -eu
