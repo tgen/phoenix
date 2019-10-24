@@ -57,7 +57,7 @@
     freebayes \
       --ploidy 2 \
       --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
-      --targets /external_scripts/hg38.bed \
+      --targets ~/jetstream_pipelines/phoenix/external_scripts/hg38.bed \
       "{{ bam_path }}" \
       > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
 
