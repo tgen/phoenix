@@ -116,7 +116,7 @@
     then
        if [[ -e {{ pair_dir }}/{{ pass_vcf }} ]]
        then
-          cp {{ pair_dir }}/{{ pass_vcf }} {{ run_dir }}/
+          cp {{ pair_dir }}/{{ pass_vcf }} {{ pair_dir }}/{{ all_vcf }}  {{ run_dir }}/
        else
           echo -e "ERROR: FNF << {{ pass_vcf }} >> in dirs {{ run_dir }} OR {{ pair_dir }}; Aborting."
           exit 1
