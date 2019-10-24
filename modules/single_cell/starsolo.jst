@@ -80,7 +80,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
     Currently --soloFeatures GeneFull causes segmentation fault when used in conjuction with
     any other soloFeature.
     #}
-    ( cd "{{ temp_dir }} && STAR \
+    ( cd {{ temp_dir }} && STAR \
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
