@@ -378,10 +378,10 @@ constants:
     cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
     cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
-    black_list: /home/tgenjetstream/dev_binaries_and_databases/Blacklist/lists/hg38-blacklist.v2.bed.gz
+    black_list: /external_scripts/Blacklist/lists/hg38-blacklist.v2.bed.gz
     delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/delly_anno_Homo_sapiens.GRCh38.97.ucsc.bed
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/hg38.excl
-    delly_scripts: /home/tgenjetstream/dev_binaries_and_databases/delly_annotation_scripts/
+    delly_scripts: /external_scripts/delly_annotation_scripts/
     barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
     cellranger_chemistry:
