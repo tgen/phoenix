@@ -1,3 +1,4 @@
+
 from multiprocessing import Process, Queue, cpu_count
 import pysam, sys
 import getopt
@@ -26,7 +27,7 @@ def main(scriptname, argv):
         elif opt in ("-s", "--slop"):
             slop = int(arg)
     ## Filename can be full path or relative assuming the right current folder
-    print('VCF  is: ', vcf ) ;
+    print('VCF  is: ', vcf ) ; 
     print('TBAM is: ', tbam)
     print('NBAM is: ', nbam)
     print('SLOP is: ', slop)
@@ -48,10 +49,10 @@ def getDiscordantReadsDistribution(bam, chr, pos, slop, chr2, pos2):
     ## init list of coordinates
     CR = []
     for x in iter:  ## x is a read line or aka an alignment record
-        if x.has_tag('MQ'):     ## some alignemnt records do not have the MQ value in the mate when pair aligned; BWA-known-issue
+        if x.has_tag('MQ'):	## some alignemnt records do not have the MQ value in the mate when pair aligned; BWA-known-issue
             mq_mate=x.get_tag('MQ')
         else:
-            mq_mate=60  ## we assume that if the mate quality is not present it is still a good one. TODO: Re-Calculate MQ if possible
+            mq_mate=60	## we assume that if the mate quality is not present it is still a good one. TODO: Re-Calculate MQ if possible
         mq=x.mapping_quality
         ## here the heart of the read selection:
         if not x.is_unmapped and not x.mate_is_unmapped and not x.is_proper_pair and not x.is_duplicate and mq>=1 and mq_mate>=1:
@@ -62,7 +63,7 @@ def getDiscordantReadsDistribution(bam, chr, pos, slop, chr2, pos2):
                 CR.append(x.reference_start)
     if not CR:
 #        print("No Discordant Pairs")
-        return(-1,0)    ## This mean there was no discordant reads in that region ; we can return 0,0 or -1,0
+        return(-1,0)	## This mean there was no discordant reads in that region ; we can return 0,0 or -1,0
     else:
         return(max(CR)-min(CR),len(CR))
 
@@ -81,7 +82,7 @@ def process_files_and_get_dist_of_discordant_pairs_and_return_new_vcf_records(vc
 
     LVAR = []  ## init list for updated variants
     slop_ori = slop  ## we need to keep the otiginal value of the slop variable
-    for variant in myvcf:       # loop over the list of variants records
+    for variant in myvcf:	# loop over the list of variants records
         variant.samples[0]['RCALT']=variant.samples[0]['DV']+variant.samples[0]['RV']
         variant.samples[1]['RCALT']=variant.samples[1]['DV']+variant.samples[1]['RV']
 #        print(variant)
