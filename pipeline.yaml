@@ -5,7 +5,7 @@ __pipeline__:
   version: development
 constants:
   install_path:
-    path_to_phoenix_repo: NEEDS_UPDATE
+    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
   tools:
     bedtools_2_26_0:
       module: BEDTools/2.26.0
@@ -25,10 +25,10 @@ constants:
       citation: >
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
-    cellranger_3_0_2:
-      module: cellranger/3.0.2
-      version: "3.0.2"
-      verbose: 10X CellRanger v3.0.2
+    cellranger_3_1_0:
+      module: cellranger/3.1.0
+      version: "3.1.0"
+      verbose: 10X CellRanger v3.1.0
       website: https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger
       citation: >
         TODO
@@ -384,7 +384,7 @@ constants:
     delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/delly_anno_Homo_sapiens.GRCh38.97.ucsc.bed
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/hg38.excl
     delly_scripts: external_scripts/delly_annotation_scripts/
-    barcodes_path: /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
+    barcodes_path: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
     cellranger_chemistry:
       X3SCR: SC3Pv1
