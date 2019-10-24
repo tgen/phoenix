@@ -126,8 +126,8 @@
 
     mkdir -p {{ pair_dir }}
 
-    mv {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf {{ pair_dir }}
-    mv {{ run_dir }}/{{ pass_vcf }} {{ pair_dir }}
-    mv {{ run_dir }}/{{ all_vcf }} {{ pair_dir }}
+    cp {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf {{ pair_dir }}
+    cp {{ run_dir }}/{{ pass_vcf }} {{ pair_dir }}
+    cp {{ run_dir }}/{{ all_vcf }} {{ pair_dir }}
 
 {% endmacro %}
