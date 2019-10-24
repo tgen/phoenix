@@ -16,7 +16,7 @@ Last Update October 21, 2019
 | [featurecounts](https://sourceforge.net/projects/subread/) | 1.6.4 | **2.0.0** | part of subread package |
 | [freebayes](https://github.com/ekg/freebayes/releases) | 1.2.0 | **1.3.1** | update allows skipping of high coverage regions |
 | [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.4.0 | **2.6.3** | **behind** |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.6.3 |  |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release |
 | [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.1.0 | **0.2.0** | package in R/3.4.1 module |
