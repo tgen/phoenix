@@ -132,7 +132,7 @@ constants:
         Bioinformatics (2014), in print, online at doi:10.1093/bioinformatics/btu638
     ichorcna_0_1_0:
       module: R/3.4.1
-      launcher: /home/tgenref/binaries/scripts/ichorCNA/0.1.0-1d54a1f/runIchorCNA.R
+      launcher: /external_scripts/runIchorCNA.R
       version: "0.1.0-1d54a1f"
       verbose: ichorCNA v0.1.0 (1d54a1f)
       website: https://github.com/broadinstitute/ichorCNA
