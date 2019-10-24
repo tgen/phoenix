@@ -52,7 +52,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
   tags: [{{ sample.gltype }}, single_cell, starsolo_count, {{ sample.name }}]
   methods: >
     Alignment and quantification for {{ sample.name }} was performed with
-    {{ constants.tools.star_2_7_1a.verbose }} using the genome index.
+    {{ constants.tools.star_2_7_3a.verbose }} using the genome index.
   input:
   {% for fq in datafiles %}
       - temp/fastqs/{{ fq.basename }}
