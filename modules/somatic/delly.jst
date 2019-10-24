@@ -112,21 +112,26 @@
     module load {{ constants.tools.bedtools_2_26_0.module }}
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
-    if [[ $(grep -m 1 -c "ENDPOSSV" {{ run_dir }}/{{ pass_vcf }} ) -ne 1 ]] ;
+    if [[ ! -e {{ run_dir }}/{{ pass_vcf }} ]]
     then
+       if [[ -e {{ pair_dir }}/{{ pass_vcf }} ]]
+       then
+          cp {{ pair_dir }}/{{ pass_vcf }} {{ run_dir }}/
+       else
+          echo -e "ERROR: FNF << {{ pass_vcf }} >> in dirs {{ run_dir }} OR {{ pair_dir }}; Aborting."
+          exit 1
+       fi
+    else 
+       if [[ $(grep -m 1 -c "ENDPOSSV" {{ run_dir }}/{{ pass_vcf }} ) -ne 1 ]] ;
+       then
             sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ run_dir }}/{{ pass_vcf }} > {{ run_dir }}/{{ pass_vcf }}.mod
             python {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.delly_scripts }}addRC_to_Delly_VCF.py -i {{ run_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
-    elif [[ -e {{ run_dir }}/{{ pass_vcf }} ]]
-    then
+       elif [[ -e {{ run_dir }}/{{ pass_vcf }} ]]
+       then
             cp {{ run_dir }}/{{ pass_vcf }} {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf
-    elif [[ -e {{ pair_dir }}/{{ pass_vcf }} ]]
-    then
-            cp {{ pair_dir }}/{{ pass_vcf }} {{ run_dir }}/
-    else
-            echo -e "ERROR: FNF << {{ pass_vcf }} >> in dirs {{ run_dir }} OR {{ pair_dir }}; Aborting."
-            exit 1    
+       fi
     fi
-
+    
     bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
 
     python {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf
