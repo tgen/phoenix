@@ -103,10 +103,10 @@ constants:
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
-    gridss_2_4_0:
-      module: gridss/2.4.0
-      version: "2.4.0"
-      verbose: Genomic Rearrangement IDentification Software Suite v2.4.0
+    gridss_2_6_3:
+      module: gridss/2.6.3
+      version: "2.6.3"
+      verbose: Genomic Rearrangement IDentification Software Suite v2.6.3
       website: https://github.com/PapenfussLab/gridss
       citation: >
         Daniel L. Cameron, Jan Schröder, Jocelyn Sietsma Penington, Hongdo Do,

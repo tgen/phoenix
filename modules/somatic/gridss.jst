@@ -15,7 +15,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.gridss_2_4_0.module }}
+    module load {{ constants.tools.gridss_2_6_3.module }}
 
     gridss CallVariants \
       -r {{ constants.phoenix.reference_fasta }} \
