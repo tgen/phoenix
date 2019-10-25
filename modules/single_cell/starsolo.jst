@@ -84,6 +84,7 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
+      --genomeDir {{ star_index }} \
       --genomeLoad NoSharedMemory \
       --sjdbOverhang 99 \
       --readFilesType Fastx \
@@ -92,23 +93,23 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --outFileNamePrefix {{ sample.name }}_{{ library }}_ \
       --outSAMtype BAM SortedByCoordinate \
       --outSAMmode Full \
-      --outSAMunmapped None \
+      --outSAMunmapped Within KeepPairs \
       --outSAMmapqUnique 255 \
-      --outSAMattributes NH HI AS nM CR CY UR UY \
+      --outSAMattributes NH HI AS nM CR CY UR UY CB UB sM \
       --soloType CB_UMI_Simple \
       --soloCBwhitelist {{ BARCODE }} \
-      --soloFeatures Gene SJ GeneFull Transcript3p \
-      --soloCBmatchWLtype 1MM multi pseudocounts \
-      --soloUMIdedup 1MM_All \
-      --soloUMIfiltering MultiGeneUMI \
       --soloCBstart 1 \
       --soloCBlen 16 \
       --soloUMIstart 17 \
       --soloUMIlen 10 \
       --soloBarcodeReadLength 0 \
-      --genomeDir {{ star_index }} \
+      --soloCBmatchWLtype 1MM_multi_pseudocounts \
       --soloStrand {{ sample.rnaStrandDirection }} \
-      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx )
+      --soloFeatures Gene SJ GeneFull Transcript3p \
+      --soloUMIdedup 1MM_All \
+      --soloUMIfiltering MultiGeneUMI \
+      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx \
+      --soloCellFilter CellRanger2.2 5000 0.99 10 )
 
     # Update permissions so files are readable by all users (first make all folders executable recursively so they can be navigated, then make all files readable)
     chmod -R a+X {{ temp_dir }}{{ sample.name }}_{{ library }}_Solo.out
