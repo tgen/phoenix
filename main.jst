@@ -52,6 +52,7 @@
     {% do file.update({'name': name}) %}
     {% do file.update({'basename': bn}) %}
     {% do file.update({'gltype': file.glType.lower()}) %}
+    {% do file.update({'glprep': file.glPrep.lower()}) %}
     {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
 
     {% if name not in samples %}
