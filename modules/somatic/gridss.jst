@@ -9,12 +9,19 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
-  cpus: 8
-  walltime: "24:00:00"
+  cpus: 20
+  mem: 60G
+  walltime: "48:00:00"
   cmd: |
     set -eu
     set -o pipefail
 
+    module load {{ constants.toools.sambamba_0_7_0.module }}
+    module load {{ constants.tools.bwa_0_7_17.module }}
+    module load {{ constants.tools.R_3_5_2.module }}
+    {# gcc/5.1.0 gets loaded with R/3.5.2 on our system #}
+    module load {{ constants.tools.gcc_5_1_0.module }}
+    {# all of the modules above get loaded with gridss at the moment, but this many not be the case on other systems #}
     module load {{ constants.tools.gridss_2_6_3.module }}
 
     gridss CallVariants \

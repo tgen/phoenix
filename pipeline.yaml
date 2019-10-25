@@ -311,10 +311,10 @@ constants:
         Brian Haas, Alexander Dobin, Nicolas Stransky, Bo Li, Xiao Yang, Timothy Tickle,
         Asma Bankapur, Carrie Ganote, Thomas Doak, Natalie Pochet, Jing Sun, Catherine Wu,
         Thomas Gingeras, Aviv Regev bioRxiv 120295; doi: https://doi.org/10.1101/120295"
-    strelka_2_9_2:
-      module: strelka/2.9.2
-      version: "2.9.2"
-      verbose: Strelka2 Small Variant Caller v2.9.2
+    strelka_2_9_10:
+      module: strelka/2.9.10
+      version: "2.9.10"
+      verbose: Strelka2 Small Variant Caller v2.9.10
       website: https://github.com/Illumina/strelka
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
