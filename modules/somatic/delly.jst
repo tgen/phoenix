@@ -112,8 +112,12 @@
     module load {{ constants.tools.bedtools_2_26_0.module }}
     module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
 
-    cp {{ pair_dir }}/{{ all_vcf }} {{ run_dir }}/
+    if [[ -e {{ pair_dir }}/{{ all_vcf }}  ]] ; 
+    then
+       cp {{ pair_dir }}/{{ all_vcf }} {{ run_dir }}/
     if [[ $? -ne 0 ]] ; then echo -e "it is probably the first run for that project so the fiel does not exist yet ; continue anyway ; This was added temporarily to accomodate the error due to the mv command previously put in line below (143 to line 145)" ; fi
+    fi
+    
     if [[ ! -e {{ run_dir }}/{{ pass_vcf }} ]]
     then
        if [[ -e {{ pair_dir }}/{{ pass_vcf }} ]]
