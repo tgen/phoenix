@@ -1,4 +1,5 @@
-{% from 'modules/single_cell/cellranger_10x.jst' import cellranger_10x with context %}
+{% from 'modules/single_cell/cellranger_count.jst' import cellranger_count with context %}
+{% from 'modules/single_cell/cellranger_vdj.jst' import cellranger_vdj with context %}
 {% from 'modules/single_cell/starsolo.jst' import starsolo with context %}
 
 {% macro single_cell_rna(dataFiles) %}
