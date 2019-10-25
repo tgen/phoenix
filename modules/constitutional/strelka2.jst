@@ -13,7 +13,7 @@
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, strelka2, {{ sample.name }}]
   methods: > 
     Constitutional variants for {{ sample.name }} ({{ aligner }}) were called with
-    {{ constants.tools.strelka_2_9_2.verbose }}.
+    {{ constants.tools.strelka_2_9_10.verbose }}.
   input:
     - {{ bam }}
     - {{ indel_candidates }}
@@ -23,7 +23,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.strelka_2_9_2.module }}
+    module load {{ constants.tools.strelka_2_9_10.module }}
     module load {{ constants.tools.samtools_1_9.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
