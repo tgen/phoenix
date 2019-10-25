@@ -385,7 +385,7 @@ constants:
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/hg38.excl
     delly_scripts: external_scripts/delly_annotation_scripts/
     barcodes_path: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes
-    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
+    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
     cellranger_chemistry:
       X3SCR: SC3Pv1
       XCSCR: SC3Pv2
