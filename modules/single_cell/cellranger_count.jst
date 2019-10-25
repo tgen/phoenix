@@ -7,8 +7,8 @@
 {% set sample = datafiles[0] %}
 {% set assaycode = sample.assayCode|default('unknown') %}
 {% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
-{% set outdir %}{{ sample.gltype }}/cellranger/{{ sample.name }}_{{ library }}/{% endset %}
-{% set temp_dir %}temp/cellranger/{{ sample.name }}/{{ library }}/fastqs/{% endset %}
+{% set outdir %}{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ library }}/{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}/{{ library }}/fastqs/{% endset %}
 
 {% set samples_list = [] %}
 {% for rgpu, _ in files|groupby('rgpu') %}
@@ -27,7 +27,7 @@
   {% for fq in datafiles %}
    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ sample.gltype }}/cellranger/{{ sample.name }}_{{ library }}/
+  output: {{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ library }}/
   cpus: 20
   mem: 160G
   walltime: "48:00:00"
@@ -48,17 +48,19 @@
     # Cell Ranger recommended settings online are at least 8 cores and 6Gb of RAM per core
     # We are using 16 cores and therefore a 96Gb RAM pool is recommended
     #}
-    (cd "{{ temp_dir }}" && cellranger count \
+    cd "{{ temp_dir }}"
+
+    cellranger count \
       --localcores 20 \
       --localmem 160 \
       --chemistry "{{ chemistry }}" \
       --id "{{ sample.name }}_{{ library }}" \
       --fastqs . \
       --sample "{{ samples_list|join(',') }}" \
-      --transcriptome "{{ constants.phoenix.cellranger_reference }}")
+      --transcriptome "{{ constants.phoenix.cellranger_reference }}"
 
     # Renaming all output files, could be cleaned up a bit using 'rename' commands, might only remove one line or so
-    {% set cellranger_out %}{{ temp_dir }}{{ sample.name }}_{{ library }}/outs{% endset %}
+    {% set cellranger_out %}{{ sample.name }}_{{ library }}/outs{% endset %}
     mv {{ cellranger_out }}/possorted_genome_bam.bam {{ cellranger_out }}/{{ sample.name }}_{{ library }}.bam
     mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ cellranger_out }}/{{ sample.name }}_{{ library }}.bam.bai
     mv {{ cellranger_out }}/cloupe.cloupe {{ cellranger_out }}/{{ sample.name }}_{{ library }}.cloupe

@@ -7,7 +7,7 @@
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
 {% set barcode_path = constants.phoenix.barcodes_path %}
 {% set outdir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ library }}/{% endset %}
-{% set temp_dir %}temp/starSOLO/{{ sample.name }}_{{ library }}/fastqs/{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ library }}/fastqs/{% endset %}
 
 {# Local Temp Variables #}
 {% set CDNA_LIST = [] %}
@@ -80,7 +80,8 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
     Currently --soloFeatures GeneFull causes segmentation fault when used in conjuction with
     any other soloFeature.
     #}
-    ( cd {{ temp_dir }} && STAR \
+    cd "{{ temp_dir }}"
+    STAR \
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
@@ -108,9 +109,9 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --soloBarcodeReadLength 0 \
       --genomeDir {{ star_index }} \
       --soloStrand {{ sample.rnaStrandDirection }} \
-      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx )
+      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx
 
-    mv {{ temp_dir }}{{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
+    mv {{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
 
 {% endfor %}
 {% endmacro %}
