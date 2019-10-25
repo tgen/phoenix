@@ -53,7 +53,7 @@
         --id "{{ sample.name }}_{{ library }}" \
         --fastqs . \
         --reference "{{ constants.phoenix.cellranger_vdj_reference }}" \
-        --sample "{{ samples_list|join(',') }}"
+        --sample "{{ samples_list|join(',') }}")
     # Renaming all output files, could be cleaned up a bit using 'rename' commands, might only remove one line or so
     {% set cellranger_out %}{{ temp_dir }}{{ sample.name }}_{{ library }}/outs{% endset %}
     mv {{ cellranger_out }}/all_contig_annotations.bed {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig_annotations.bed
