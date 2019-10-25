@@ -3,9 +3,9 @@ __pipeline__:
   main: main.jst
   description: Human GRCh38 genomics suite
   version: development
-  constants:
-    install_path:
-      path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
+constants:
+  install_path:
+    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
   tools:
     bedtools_2_26_0:
       module: BEDTools/2.26.0
