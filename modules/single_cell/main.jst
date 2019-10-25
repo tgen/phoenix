@@ -4,10 +4,15 @@
 {% macro single_cell_rna(dataFiles) %}
     {% for sample, files in dataFiles|groupby('name') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellrna' %}
         {% if tasks["SingleCellRNA_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
-            {{- cellranger_10x(files) }}
+            {{- cellranger_count(files) }}
         {% endif %}
         {% if tasks["SingleCellRNA_transcriptome_quantify_expression_STARsolo"]|default(true) %}
             {{- starsolo(files) }}
+        {% endif %}
+    {% endfor %}
+    {% for sample, files in dataFiles|groupby('name') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellenrichment' %}
+        {% if tasks["SingleCellRNA_VDJ_Assembly_cellranger_vdj"]|default(true) %}
+            {{- cellranger_vdj(files) }}
         {% endif %}
     {% endfor %}
 {% endmacro %}
