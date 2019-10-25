@@ -105,6 +105,13 @@ constants:
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
+    gcc_5_1_0:
+      module: gcc/5.1.0
+      version: "5.1.0"
+      verbose: gcc
+      website: gcc.com
+      citation: >
+        Todo
     gridss_2_6_3:
       module: gridss/2.6.3
       version: "2.6.3"
@@ -228,6 +235,14 @@ constants:
       module: R/3.4.1
       version: "3.4.1"
       verbose: R v3.4.1
+      website: https://www.r-project.org
+      citation: >
+        R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
+        Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+    R_3_5_2:
+      module: R/3.5.2
+      version: "3.5.2"
+      verbose: R v3.5.2
       website: https://www.r-project.org
       citation: >
         R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
