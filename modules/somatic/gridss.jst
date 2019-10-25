@@ -24,10 +24,12 @@
     {# all of the modules above get loaded with gridss at the moment, but this many not be the case on other systems #}
     module load {{ constants.tools.gridss_2_6_3.module }}
 
+    mkdir -p {{ pair_dir }}
+
     gridss CallVariants \
       -r {{ constants.phoenix.reference_fasta }} \
       -w {{ run_dir }} \
-      -o {{ pair_dir }}/{{ normal_bam }}.sv.vcf \
+      -o {{ pair_dir }}/{{ pair.name }}.sv.vcf \
       {{ normal_bam }} {{ tumor_bam }}
 
 {% endmacro %}

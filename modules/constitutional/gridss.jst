@@ -22,10 +22,12 @@
     {# all of the modules above get loaded with gridss at the moment, but this many not be the case on other systems #}
     module load {{ constants.tools.gridss_2_6_3.module }}
 
+    mkdir -p {{ sample_dir }}
+
     gridss CallVariants \
       -r {{ constants.phoenix.reference_fasta }} \
       -w {{ run_dir }} \
-      -o {{ sample_dir }}/{{ bam }}.sv.vcf \
+      -o {{ sample_dir }}/{{ sample.name }}.sv.vcf \
       {{ bam }}
 
 {% endmacro %}
