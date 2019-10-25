@@ -7,7 +7,7 @@
 {% set sample = datafiles[0] %}
 {% set assaycode = sample.assayCode|default('unknown') %}
 {% set outdir %}{{ sample.gltype }}/cellranger/{{ sample.name }}_{{ library }}/{% endset %}
-{% set temp_dir %}temp/cellranger/{{ sample.name }}/{{ library }}/fastqs{% endset %}
+{% set temp_dir %}temp/cellranger/{{ sample.name }}/{{ library }}/fastqs/{% endset %}
 
 {% set samples_list = [] %}
 {% for rgpu, _ in files|groupby('rgpu') %}
@@ -48,26 +48,42 @@
     # We are using 16 cores and therefore a 96Gb RAM pool is recommended
     #}
     (cd "{{ temp_dir }}" && cellranger vdj \
-      --localcores 20 \
-      --localmem 80 \
-      --id "{{ sample.name }}_{{ library }}" \
-      --fastqs . \
-      --reference "{{ constants.phoenix.cellranger_vdj_reference }}" \
-      --sample "{{ samples_list|join(',') }}"
-
+        --localcores 20 \
+        --localmem 80 \
+        --id "{{ sample.name }}_{{ library }}" \
+        --fastqs . \
+        --reference "{{ constants.phoenix.cellranger_vdj_reference }}" \
+        --sample "{{ samples_list|join(',') }}"
     # Renaming all output files, could be cleaned up a bit using 'rename' commands, might only remove one line or so
     {% set cellranger_out %}{{ temp_dir }}{{ sample.name }}_{{ library }}/outs{% endset %}
-    mv {{ cellranger_out }}/possorted_genome_bam.bam {{ cellranger_out }}/{{ sample.name }}_{{ library }}.bam
-    mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ cellranger_out }}/{{ sample.name }}_{{ library }}.bam.bai
-    mv {{ cellranger_out }}/cloupe.cloupe {{ cellranger_out }}/{{ sample.name }}_{{ library }}.cloupe
-    mv {{ cellranger_out }}/filtered_feature_bc_matrix.h5 {{ cellranger_out }}/{{ sample.name }}_{{ library }}.filtered_feature_bc_matrix.h5
-    mv {{ cellranger_out }}/metrics_summary.csv {{ cellranger_out }}/{{ sample.name }}_{{ library }}.metrics_summary.csv
-    mv {{ cellranger_out }}/molecule_info.h5 {{ cellranger_out }}/{{ sample.name }}_{{ library }}.molecule_info.h5
-    mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ cellranger_out }}/{{ sample.name }}_{{ library }}.raw_feature_bc_matrix.h5
-    mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ sample.name }}_{{ library }}.web_summary.html
+    mv {{ cellranger_out }}/all_contig_annotations.bed {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig_annotations.bed
+    mv {{ cellranger_out }}/all_contig_annotations.csv {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig_annotations.csv
 
-    {# removing the analysis directory as is it no longer needed #}
-    rm -rf {{ cellranger_out }}/analysis
+    mv {{ cellranger_out }}/all_contig_annotations.json {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig_annotations.json
+    mv {{ cellranger_out }}/all_contig.bam {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig.bam
+    mv {{ cellranger_out }}/all_contig.bam.bai {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig.bam.bai
+    mv {{ cellranger_out }}/all_contig.fasta {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig.fasta
+    mv {{ cellranger_out }}/all_contig.fasta.fai {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig.fasta.fai
+    mv {{ cellranger_out }}/all_contig.fastq {{ cellranger_out }}/{{ sample.name }}_{{ library }}_all_contig.fastq
+    mv {{ cellranger_out }}/cell_barcodes.json {{ cellranger_out }}/{{ sample.name }}_{{ library }}_cell_barcodes.json
+    mv {{ cellranger_out }}/clonotypes.csv {{ cellranger_out }}/{{ sample.name }}_{{ library }}_clonotypes.csv
+    mv {{ cellranger_out }}/concat_ref.bam {{ cellranger_out }}/{{ sample.name }}_{{ library }}_concat_ref.bam
+    mv {{ cellranger_out }}/concat_ref.bam.bai {{ cellranger_out }}/{{ sample.name }}_{{ library }}_concat_ref.bam.bai
+    mv {{ cellranger_out }}/concat_ref.fasta {{ cellranger_out }}/{{ sample.name }}_{{ library }}_concat_ref.fasta
+    mv {{ cellranger_out }}/concat_ref.fasta.fai {{ cellranger_out }}/{{ sample.name }}_{{ library }}_concat_ref.fasta.fai
+    mv {{ cellranger_out }}/consensus_annotations.csv {{ cellranger_out }}/{{ sample.name }}_{{ library }}_consensus_annotations.csv
+    mv {{ cellranger_out }}/consensus_annotations.json {{ cellranger_out }}/{{ sample.name }}_{{ library }}_consensus_annotations.json
+    mv {{ cellranger_out }}/consensus.bam {{ cellranger_out }}/{{ sample.name }}_{{ library }}_consensus.bam
+    mv {{ cellranger_out }}/consensus.bam.bai {{ cellranger_out }}/{{ sample.name }}_{{ library }}_consensus.bam.bai
+    mv {{ cellranger_out }}/consensus.fasta {{ cellranger_out }}/{{ sample.name }}_{{ library }}_consensus.fasta
+    mv {{ cellranger_out }}/consensus.fasta.fai {{ cellranger_out }}/{{ sample.name }}_{{ library }}_consensus.fasta.fai
+    mv {{ cellranger_out }}/consensus.fastq {{ cellranger_out }}/{{ sample.name }}_{{ library }}_consensus.fastq
+    mv {{ cellranger_out }}/filtered_contig_annotations.csv {{ cellranger_out }}/{{ sample.name }}_{{ library }}_filtered_contig_annotations.csv
+    mv {{ cellranger_out }}/filtered_contig.fasta {{ cellranger_out }}/{{ sample.name }}_{{ library }}_filtered_contig.fasta
+    mv {{ cellranger_out }}/filtered_contig.fastq {{ cellranger_out }}/{{ sample.name }}_{{ library }}_filtered_contig.fastq
+    mv {{ cellranger_out }}/metrics_summary.csv {{ cellranger_out }}/{{ sample.name }}_{{ library }}_metrics_summary.csv
+    mv {{ cellranger_out }}/vloupe.vloupe {{ cellranger_out }}/{{ sample.name }}_{{ library }}.vloupe
+    mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ sample.name }}_{{ library }}_web_summary.html
 
     {# move everything to the output directory #}
     mv {{ cellranger_out }}/* {{ outdir }}
