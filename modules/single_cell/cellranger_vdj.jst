@@ -15,7 +15,7 @@
   {% do samples_list.append(sample_string) %}
 {% endfor %}
 
-{{ log('Cellranger library: {} assay: {} chemistry: {}'.format(library, assaycode), 'CRITICAL') }}
+{{ log('Cellranger library: {} assay: {}'.format(library, assaycode), 'CRITICAL') }}
 
 - name: cellranger_vdj_{{ sample.name }}_{{ library }}
   tags: [{{ sample.gltype }}, single_cell, cellranger_count, {{ sample.name }}]
