@@ -29,7 +29,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.star_fusion_1_5_0.module }}
+    module load {{ constants.tools.star_fusion_1_8_1.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     {#
@@ -45,7 +45,7 @@
     mkdir -p "${OUTDIR}"
 
     STAR-Fusion \
-      --CPU 16 \
+      --CPU 20 \
       --genome_lib_dir "{{ constants.phoenix.starfusion_index }}" \
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \

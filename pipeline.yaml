@@ -301,10 +301,10 @@ constants:
         Chaisson M, Gingeras TR. STAR: ultrafast universal RNA-seq aligner.
         Bioinformatics. 2013 Jan 1;29(1):15-21. doi: 10.1093/bioinformatics/bts635. Epub
         2012 Oct 25. PubMed PMID: 23104886; PubMed Central PMCID: PMC3530905.
-    star_fusion_1_5_0:
-      module: STAR-Fusion/1.5.0
-      version: 1.5.0
-      verbose: STAR-Fusion v1.5.0
+    star_fusion_1_8_1:
+      module: STAR-Fusion/1.8.1
+      version: 1.8.1
+      verbose: STAR-Fusion v1.8.1
       website: https://github.com/STAR-Fusion/STAR-Fusion
       citation: >
         "STAR-Fusion: Fast and Accurate Fusion Transcript Detection from RNA-Seq
@@ -419,7 +419,7 @@ constants:
       75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/75bpReads
       100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/100bpReads
       150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/150bpReads
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
+    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/
     strandedness_options:
       inward-unstranded-notapplicable:
         salmon: "IU"
