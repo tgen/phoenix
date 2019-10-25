@@ -112,8 +112,8 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx
 
     # Update permissions so files are readable by all users (first make all folders executable recursively so they can be navigated, then make all files readable)
-    chmod -R a+X {{ sample.name }}_{{ library }}_Solo.out
-    chmod -R +r {{ sample.name }}_{{ library }}_Solo.out
+    #chmod -R a+X {{ sample.name }}_{{ library }}_Solo.out
+    #chmod -R +r {{ sample.name }}_{{ library }}_Solo.out
 
     # Move results to output directory
     mv {{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
