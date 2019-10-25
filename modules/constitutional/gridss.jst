@@ -14,7 +14,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.toools.sambamba_0_7_0.module }}
+    module load {{ constants.tools.sambamba_0_7_0.module }}
     module load {{ constants.tools.bwa_0_7_17.module }}
     module load {{ constants.tools.R_3_5_2.module }}
     {# gcc/5.1.0 gets loaded with R/3.5.2 on our system #}
