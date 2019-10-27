@@ -5,37 +5,12 @@
 {% set sample = datafiles[0] %}
 {% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
-{% set barcode_path = constants.phoenix.barcodes_path %}
 {% set outdir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ library }}/{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ library }}/fastqs/{% endset %}
 
 {# Local Temp Variables #}
 {% set CDNA_LIST = [] %}
 {% set CB_UMI_LIST = [] %}
-{% set BARCODE = "" %}
-
-{# Setting barcodes based on configuration
-Cell Barcode Whitelist NOTES:
-PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
-Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
-Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
-Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
-Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
-Single Cell V(D)J = 737K-august-2016.txt
-CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
-CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
-CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
-{% if sample.assayCode == "X3SCR" %}
-    {% set BARCODE %}{{ barcode_path }}/737K-april-2014_rc.txt{% endset %}
-{% elif sample.assayCode == "XCSCR" %}
-    {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-{% elif sample.assayCode == "X5SCR" %}
-    {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-{% elif sample.assayCode == "X3SC3" %}
-    {% set BARCODE %}{{ barcode_path }}/3M-february-2018.txt.gz{% endset %}
-{% else %}
-    {% set BARCODE %}{{ barcode_path }}/737K-august-2016.txt{% endset %}
-{% endif %}
 
 {# Generating input lists #}
 {% for rgid, rg in datafiles|groupby('rgid') %}
@@ -97,11 +72,11 @@ CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz #}
       --outSAMmapqUnique 255 \
       --outSAMattributes NH HI AS nM CR CY UR UY CB UB sM \
       --soloType CB_UMI_Simple \
-      --soloCBwhitelist {{ BARCODE }} \
+      --soloCBwhitelist "{{ constants.phoenix.10x_scrna_chemistry_options[sample.assayCode].cell_barcode_whitelist_file }}" \
       --soloCBstart 1 \
       --soloCBlen 16 \
       --soloUMIstart 17 \
-      --soloUMIlen 10 \
+      --soloUMIlen "{{ constants.phoenix.10x_scrna_chemistry_options[sample.assayCode].umi_length }}" \
       --soloBarcodeReadLength 0 \
       --soloCBmatchWLtype 1MM_multi_pseudocounts \
       --soloStrand {{ sample.rnaStrandDirection }} \
