@@ -422,12 +422,6 @@ constants:
         chemistry_name: auto
         umi_lenth: 10
         cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
-    cellranger_chemistry:
-      X3SCR: SC3Pv1
-      XCSCR: SC3Pv2
-      X3SC3: SC3Pv3
-      X5SCR: SC5P-R2
-      unknown: auto
     gatk_known_sites:
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz

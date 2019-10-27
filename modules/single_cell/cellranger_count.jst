@@ -6,7 +6,7 @@
 {% for library, datafiles in libraries %}
 {% set sample = datafiles[0] %}
 {% set assaycode = sample.assayCode|default('unknown') %}
-{% set chemistry = constants.phoenix.cellranger_chemistry[assaycode] %}
+{% set chemistry = constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name %}
 {% set outdir %}{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ library }}/{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}/{{ library }}/fastqs/{% endset %}
 
