@@ -1,7 +1,7 @@
 {% from 'utilities/read_group_line.jst' import read_group_line %}
 
 # Run STAR RNA Alignment for quantification
-{% macro star_quant(sample) %}
+{% macro star_quant(sample, opt_dup_distance) %}
 {% set sjdb_overhang = sample.read_length|default(100) - 1 %}
 {% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
 {% set star_index = constants.phoenix.star_indices[star_index_size] %}
@@ -24,11 +24,11 @@
       {{ raise('Read group did not have 2 data files: {}'.format(rgid)) }}
   {% endif %}
   {% do rglinelist.append(read_group_line(rg, format='star')) %}
-  
+
   {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
   {% do r1fastq.update({"path": "temp/fastqs/" + r1fastq.basename}) %}
   {% do r1fqlist.append(r1fastq) %}
-    
+
   {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
   {% do r2fastq.update({"path": "temp/fastqs/" + r2fastq.basename}) %}
   {% do r2fqlist.append(r2fastq) %}
@@ -142,7 +142,7 @@
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outFileNamePrefix "{{ star_tempdir }}/{{ sample.name }}."
-    
+
     mv \
       "{{ star_tempdir }}/{{ sample.name }}.ReadsPerGene.out.tab" \
       "{{ star_tempdir }}/{{ sample.name }}.SJ.out.tab" \
@@ -181,7 +181,7 @@
       -o "{{ star_bam_sorted }}"
 
 
-- name: markduplicates_star_{{ sample.name }}
+- name: markduplicates_star_samtools_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   input: {{ star_bam_sorted }}
   output: {{ star_bam_final }}
@@ -197,19 +197,67 @@
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    rm -r "{{ star_tempdir }}/markdup" || true
-    mkdir -p "{{ star_tempdir }}/markdup"
-    mkdir -p "{{ star_finaldir }}/stats/"
+    if [ -d "{{ star_tempdir }}/markdup_samtools" ]
+    then
+      rm -r "{{ star_tempdir }}/markdup_samtools"
+    fi
+
+    mkdir -p "{{ star_tempdir }}/markdup_samtools"
+    mkdir -p "{{ star_finaldir }}/stats_samtools/"
 
     samtools markdup \
+      -d {{ opt_dup_distance }} \
       -s \
       --threads 10 \
-      -T "{{ star_tempdir }}/markdup" \
+      -T "{{ star_tempdir }}/markdup_samtools" \
       "{{ star_bam_sorted }}" \
       "{{ star_bam_final }}" \
-      2> "{{ star_finaldir }}/stats/{{ sample.name }}.star.bam.markdup.txt"
-    
+      2> "{{ star_finaldir }}/stats_samtools/{{ sample.name }}.star.bam.markdup.txt"
+
     samtools index -@ 10 "{{ star_bam_final }}"
+
+{# This task works, and was tested with MMRF_1499, but it was made as a backup for samtools markdups #}
+{# which appears to be working now after some code changes, keeping this here in case we need a backup #}
+{#- name: markduplicates_star_gatk_{{ sample.name }}#}
+{#  tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]#}
+{#  input: {{ star_bam_sorted }}#}
+{#  output: {{ star_bam_final }}#}
+{#  cpus: 10#}
+{#  mem: 80G#}
+{#  cmd: |#}
+{#    set -eu#}
+{#    set -o pipefail#}
+{#    module load {{ constants.tools.samtools_1_9_latest.module }}#}
+{##}
+    {#
+{#    # If this task was interrupted previously, temp files may exist#}
+{#    # that will cause errors with samtools markdup. Here, we purge any#}
+{#    # existing temp files before making the directory again.#}
+{#    #}
+{#    if [ -d "{{ star_tempdir }}/markdup_gatk" ]#}
+{#    then#}
+{#      rm -r "{{ star_tempdir }}/markdup_gatk"#}
+{#    fi#}
+{##}
+{#    mkdir -p "{{ star_tempdir }}/markdup_gatk"#}
+{#    mkdir -p "{{ star_finaldir }}/stats_gatk/"#}
+{##}
+{#    module load {{ constants.tools.gatk_4_1_4_0.module }}#}
+{##}
+{#    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"#}
+{##}
+{#    gatk MarkDuplicates \#}
+{#      --java-options "-Xmx31G" \#}
+{#      --TMP_DIR "temp" \#}
+{#      --ASSUME_SORT_ORDER queryname \#}
+{#      --CLEAR_DT false \#}
+{#      --ADD_PG_TAG_TO_READS false \#}
+{#      --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ opt_dup_distance }} \#}
+{#      --INPUT "{{ star_bam_sorted }}" \#}
+{#      --METRICS_FILE "{{ star_finaldir }}/stats_gatk/{{ sample.name }}.mdmetrics.txt" \#}
+{#      --OUTPUT "{{ star_bam_final }}"#}
+{##}
+{#    samtools index -@ 10 "{{ star_bam_final }}"#}
 
 {% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
 - name: htseq_{{ sample.name }}

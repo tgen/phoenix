@@ -19,12 +19,19 @@
 {% macro rna_quant(samples) %}
 
 {% for sample in samples.values() if sample.gltype == 'rna' %}
+    {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
+    {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
+      {% set opt_dup_distance = 2500 %}
+    {% else %}
+      {% set opt_dup_distance = 100 %}
+    {% endif %}
+
     {% if tasks.RNA_transcriptome_quantify_expression_salmon_fastqs|default(true) %}
-    {{- salmon(sample) }}
+      {{- salmon(sample) }}
     {% endif %}
 
     {% if tasks.RNA_alignment_rna_alignment_STAR|default(true) %}
-      {{- star_quant(sample) }}
+      {{- star_quant(sample, opt_dup_distance) }}
       {{- bam_to_cram(sample, aligner='star') }}
       {{- bam_qc(sample, aligner='star') }}
     {% endif %}
