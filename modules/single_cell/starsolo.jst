@@ -50,10 +50,7 @@
     {% endfor %}
 
     {#
-    Setting to "Within" causes a segmentation fault, as does "Within KeepPairs"
-    cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION used in pass-1 to add
-    Currently --soloFeatures GeneFull causes segmentation fault when used in conjuction with
-    any other soloFeature.
+    cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION
     #}
     ( cd {{ temp_dir }} && STAR \
       --runMode alignReads \
@@ -72,11 +69,11 @@
       --outSAMmapqUnique 255 \
       --outSAMattributes NH HI AS nM CR CY UR UY CB UB sM \
       --soloType CB_UMI_Simple \
-      --soloCBwhitelist "{{ constants.phoenix.10x_scrna_chemistry_options[sample.assayCode].cell_barcode_whitelist_file }}" \
+      --soloCBwhitelist "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].cell_barcode_whitelist_file }}" \
       --soloCBstart 1 \
       --soloCBlen 16 \
       --soloUMIstart 17 \
-      --soloUMIlen "{{ constants.phoenix.10x_scrna_chemistry_options[sample.assayCode].umi_length }}" \
+      --soloUMIlen "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].umi_length }}" \
       --soloBarcodeReadLength 0 \
       --soloCBmatchWLtype 1MM_multi_pseudocounts \
       --soloStrand {{ sample.rnaStrandDirection }} \
