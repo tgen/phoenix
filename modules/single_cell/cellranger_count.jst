@@ -46,7 +46,7 @@
 
     {#
     # Cell Ranger recommended settings online are at least 8 cores and 6Gb of RAM per core
-    # We are using 16 cores and therefore a 96Gb RAM pool is recommended
+    # We are using 20 cores and therefore a 120Gb RAM pool is recommended
     #}
     ( cd {{ temp_dir }} && cellranger count \
       --localcores 20 \
