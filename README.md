@@ -33,14 +33,28 @@ Last Update October 21, 2019
 | [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017|
 | [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | |
 | [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | |
-| [strelka](https://github.com/Illumina/strelka/releases) | 2.9.2 | **2.9.10** | REALLY??|
+| [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | |
 | [vardict](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.6.0 | **1.7.0** | |
 | [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.7 | 0.7.7 | |
 | [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.5 | **1.0.6** | |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | |
     
- 
+### Single Cell RNA Sequencing Analysis
+Two options exist for alignment and gene expression count generation per cell.
+* 10x Genomics Cell Ranger 3.1.1
+* starSOLO 2.7.3a
+
+**Cell Barcode Whitelist Notes:**
+PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
+Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
+Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
+Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
+Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
+Single Cell V(D)J = 737K-august-2016.txt
+CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
+CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
+CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
 
 ## Install Guide
 First, jetstream must be installed, available [here](https://github.com/tgen/jetstream/tree/master). There is an install guide for jetstream available at the link provided, but the gist of the guide is to install using pip3 using a command similar to:  
