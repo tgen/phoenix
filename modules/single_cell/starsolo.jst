@@ -13,7 +13,7 @@
 {% set CB_UMI_LIST = [] %}
 
 {# Generating input lists #}
-{% for rgid, rg in datafiles|groupby('rgid') %}
+{% for rglb, rg in datafiles|groupby('rglb') %}
   {% set r1fastq = rg|selectattr('fastqCode', 'eq', 'R1')|first %}
   {% set r1fastq %}{{ r1fastq.basename }}{% endset %}
   {% do CB_UMI_LIST.append(r1fastq) %}
