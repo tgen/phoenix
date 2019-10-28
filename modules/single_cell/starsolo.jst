@@ -23,7 +23,7 @@
   {% do CDNA_LIST.append(r2fastq) %}
 {% endfor %}
 
-- name: starsolo_count_{{ sample.name }}
+- name: starsolo_count_{{ sample.name }}_{{ library }}
   tags: [{{ sample.gltype }}, single_cell, starsolo_count, {{ sample.name }}]
   methods: >
     Alignment and quantification for {{ sample.name }} was performed with
@@ -80,7 +80,7 @@
       --soloFeatures Gene SJ GeneFull Transcript3p \
       --soloUMIdedup 1MM_All \
       --soloUMIfiltering MultiGeneUMI \
-      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx \
+      --soloOutFileNames Solo.out/ {{ sample.name }}_{{ library }}_genes.tsv {{ sample.name }}_{{ library }}_barcodes.tsv {{ sample.name }}_{{ library }}_matrixGene.mtx {{ sample.name }}_{{ library }}_matrixSJ.mtx {{ sample.name }}_{{ library }}_matrixGeneFull.mtx {{ sample.name }}_{{ library }}_matrixTranscripts3p.mtx \
       --soloCellFilter CellRanger2.2 5000 0.99 10 )
 
     # Update permissions so files are readable by all users (first make all folders executable recursively so they can be navigated, then make all files readable)

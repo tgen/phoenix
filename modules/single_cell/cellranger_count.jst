@@ -8,7 +8,7 @@
 {% set assaycode = sample.assayCode|default('unknown') %}
 {% set chemistry = constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name %}
 {% set outdir %}{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ library }}/{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}/{{ library }}/fastqs/{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ library }}/fastqs/{% endset %}
 
 {% set samples_list = [] %}
 {% for rgpu, _ in files|groupby('rgpu') %}
