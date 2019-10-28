@@ -1,0 +1,3 @@
+# Download the k100.umap.bed.gz mappability track from https://bismap.hoffmanlab.org/raw/hg38/k100.umap.bed.gz
+wget https://bismap.hoffmanlab.org/raw/hg38/k100.umap.bed.gz
+
