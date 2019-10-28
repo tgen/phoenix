@@ -36,43 +36,6 @@
 {% endmacro %}
 
 
-{% macro freebayes_genotype_qc_vcf(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set temp %}temp/{{ sample.gltype }}/qc/freebayes_genotype/{{ sample.name }}{% endset %}
-{% set outdir %}{{ sample.gltype }}/qc/freebayes_genotype/{{ sample.name }}{% endset %}
-
-- name: freebayes_genotype_qc_vcf_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.gltype }}, quality_control, constitutional_genotype_vcf, freebayes, {{ sample.name }}]
-  input: {{ bam_path }}
-  cpus: 4
-  cmd: |
-    set -eu
-    set -o pipefail
-    module load {{ constants.tools.freebayes_1_2.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
-
-    mkdir -p "{{ temp }}/temp"
-    mkdir -p "{{ outdir }}"
-
-    freebayes \
-      --ploidy 2 \
-      --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
-      --targets {{ constants.install_path.path_to_phoenix_repo }}/external_scripts/hg38.bed \
-      "{{ bam_path }}" \
-      > "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
-
-    bcftools sort \
-      --max-mem 768M \
-      --temp-dir {{ temp }}/temp/ \
-      --output-type z \
-      --output-file "{{ outdir }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz" \
-      "{{ temp }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf"
-
-    bcftools index --threads 4 --tbi --force "{{ outdir }}/{{ sample.name }}_{{ aligner }}_freebayes_qc.vcf.gz"
-
-{% endmacro %}
-
-
 {% macro sex_check(sample, aligner='bwa') %}
 {% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}

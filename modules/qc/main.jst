@@ -22,7 +22,6 @@
 
 # Performed on constitutional dna
 {% from 'modules/qc/bam_qc_constitutional_dna.jst' import bam_qc_verifybamid2 with context %}
-{% from 'modules/qc/bam_qc_constitutional_dna.jst' import freebayes_genotype_qc_vcf with context %}
 {% from 'modules/qc/bam_qc_constitutional_dna.jst' import sex_check with context %}
 
 {% macro bam_qc(sample, aligner='bwa') %}
@@ -63,10 +62,6 @@
     {# Cnstitutional dna specific tasks #}
         {% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
            {{- bam_qc_verifybamid2(sample, aligner=aligner) }}
-        {% endif %}
-
-        {% if tasks[taskPrefix+"_quality_control_constitutional_genotype_vcf_freebayes"]|default(true) %}
-           {{- freebayes_genotype_qc_vcf(sample, aligner=aligner) }}
         {% endif %}
 
         {% if tasks[taskPrefix+"_quality_control_constitutional_sex_check_freebayes"]|default(true) %}
