@@ -90,7 +90,7 @@
 
     bcftools sort \
       --output-type v \
-      --output {{ all_vcf }} \
+      --output-file {{ all_vcf }} \
       {{ merged_vcf }}
 
     bcftools view -f PASS {{ all_vcf }} > {{ pass_vcf }}
