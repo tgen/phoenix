@@ -180,7 +180,7 @@
       - \
       -o "{{ star_bam_sorted }}"
 
-
+{#
 - name: markduplicates_star_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   input: {{ star_bam_sorted }}
@@ -190,13 +190,15 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_latest.module }}
 
+    module load {{ constants.tools.samtools_1_9_latest.module }}
+#}
     {#
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     #}
+{#
     if [ -d "{{ star_tempdir }}/markdup_samtools" ]
     then
       rm -r "{{ star_tempdir }}/markdup_samtools"
@@ -220,48 +222,53 @@
       2> "{{ star_finaldir }}/stats_samtools/{{ sample.name }}.star.bam.markdup.txt"
 
     samtools index -@ 10 "{{ star_bam_final }}"
+#}
 
-{# This task works, and was tested with MMRF_1499, but it was made as a backup for samtools markdups #}
-{# which appears to be working now after some code changes, keeping this here in case we need a backup #}
-{#- name: markduplicates_star_gatk_{{ sample.name }}#}
-{#  tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]#}
-{#  input: {{ star_bam_sorted }}#}
-{#  output: {{ star_bam_final }}#}
-{#  cpus: 10#}
-{#  mem: 80G#}
-{#  cmd: |#}
-{#    set -eu#}
-{#    set -o pipefail#}
-{#    module load {{ constants.tools.samtools_1_9_latest.module }}#}
-{##}
-{#    # If this task was interrupted previously, temp files may exist#}
-{#    # that will cause errors with samtools markdup. Here, we purge any#}
-{#    # existing temp files before making the directory again.#}
-{#    #}
-{#    if [ -d "{{ star_tempdir }}/markdup_gatk" ]#}
-{#    then#}
-{#      rm -r "{{ star_tempdir }}/markdup_gatk"#}
-{#    fi#}
-{##}
-{#    mkdir -p "{{ star_tempdir }}/markdup_gatk"#}
-{#    mkdir -p "{{ star_finaldir }}/stats_gatk/"#}
-{##}
-{#    module load {{ constants.tools.gatk_4_1_4_0.module }}#}
-{##}
-{#    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"#}
-{##}
-{#    gatk MarkDuplicates \#}
-{#      --java-options "-Xmx31G" \#}
-{#      --TMP_DIR "temp" \#}
-{#      --ASSUME_SORT_ORDER queryname \#}
-{#      --CLEAR_DT false \#}
-{#      --ADD_PG_TAG_TO_READS false \#}
-{#      --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ opt_dup_distance }} \#}
-{#      --INPUT "{{ star_bam_sorted }}" \#}
-{#      --METRICS_FILE "{{ star_finaldir }}/stats_gatk/{{ sample.name }}.mdmetrics.txt" \#}
-{#      --OUTPUT "{{ star_bam_final }}"#}
-{##}
-{#    samtools index -@ 10 "{{ star_bam_final }}"#}
+
+{#
+This task works, and was tested with MMRF_1499, but it was made as a backup for samtools markdups
+which appears to be working now after some code changes, keeping this here in case we need a backup
+#}
+- name: markduplicates_star_gatk_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
+  input: {{ star_bam_sorted }}
+  output: {{ star_bam_final }}
+  cpus: 10
+  mem: 80G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9_latest.module }}
+
+    {#
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools markdup. Here, we purge any
+    # existing temp files before making the directory again.
+    #}
+    if [ -d "{{ star_tempdir }}/markdup_gatk" ]
+    then
+      rm -r "{{ star_tempdir }}/markdup_gatk"
+    fi
+
+    mkdir -p "{{ star_tempdir }}/markdup_gatk"
+    mkdir -p "{{ star_finaldir }}/stats_gatk/"
+
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
+
+    gatk MarkDuplicates \
+      --java-options "-Xmx31G" \
+      --TMP_DIR "temp" \
+      --ASSUME_SORT_ORDER queryname \
+      --CLEAR_DT false \
+      --ADD_PG_TAG_TO_READS false \
+      --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ opt_dup_distance }} \
+      --INPUT "{{ star_bam_sorted }}" \
+      --METRICS_FILE "{{ star_finaldir }}/stats_gatk/{{ sample.name }}.mdmetrics.txt" \
+      --OUTPUT "{{ star_bam_final }}"
+
+    samtools index -@ 10 "{{ star_bam_final }}"
 
 {% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
 - name: htseq_{{ sample.name }}
