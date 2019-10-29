@@ -157,7 +157,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_92_gcb6b3b5.module }}
+    module load {{ constants.tools.samtools_1_9_latest.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
