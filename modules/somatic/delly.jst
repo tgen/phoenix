@@ -88,12 +88,12 @@
       --output-type v \
       --output {{ merged_vcf }}
 
-    ( cat {{ merged_vcf }} | grep -E "^#" | grep -vE "##bcftools_viewCommand|^#CHROM"  > header.vcfs.txt )
-    ( cat {{ merged_vcf }} | grep -E "^#CHROM" > header.lineCHROM.txt )
-    ( cat {{ merged_vcf }} | grep -vE "^#" | sort -k1,1V -k2,2n > body.vcfs.txt )
-    cat header.vcfs.txt header.lineCHROM.txt body.vcfs.txt > {{ pair.name }}.{{ aligner }}.delly.allCalls.vcf
-    ( cat header.vcfs.txt header.lineCHROM.txt ; cat body.vcfs.txt | awk '{FS=OFS="\t"} $7=="PASS" {print}' ) > {{ pass_vcf }}
-    rm header.lineCHROM.txt header.vcfs.txt body.vcfs.txt {{ merged_vcf }}
+    bcftools sort \
+      --output-type v \
+      --output {{ all_vcf }} \
+      {{ merged_vcf }}
+
+    bcftools view -f PASS {{ all_vcf }} > {{ pass_vcf }}
 
 - name: delly_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
