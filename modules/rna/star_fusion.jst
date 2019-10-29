@@ -49,5 +49,9 @@
       --genome_lib_dir "{{ constants.phoenix.starfusion_index }}" \
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
+      --examine_coding_effect \
+      --extract_fusion_reads \
+      --FusionInspector inspect \
+      --denovo_reconstruct \
       --output_dir "${OUTDIR}"
 {% endmacro -%}
