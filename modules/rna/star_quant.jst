@@ -319,7 +319,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.subread_1_6_4.module }}
+    module load {{ constants.tools.subread_2_0_0.module }}
     
     mkdir -p "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/"
 

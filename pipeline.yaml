@@ -7,10 +7,10 @@ constants:
   install_path:
     path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
   tools:
-    bedtools_2_26_0:
-      module: BEDTools/2.26.0
-      version: "2.26.0"
-      verbose: BEDTools v2.26.0
+    bedtools_2_29_0:
+      module: BEDTools/2.29.0
+      version: "2.29.0"
+      verbose: BEDTools v2.29.0
       website: https://bedtools.readthedocs.io/
       citation: >
         Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing
@@ -37,10 +37,10 @@ constants:
       version: "10.0.0"
       verbose: NVIDIA CUDA 10.0
       website: https://developer.nvidia.com/cuda-toolkit
-    deepvariant_0_7_0_gpu:
-      module: deepvariant/0.7.0-gpu
-      version: "0.7.0-gpu"
-      verbose: DeepVariant 0.7.0-gpu
+    deepvariant_0_8_0_gpu:
+      module: deepvariant/0.8.0-gpu
+      version: "0.8.0-gpu"
+      verbose: DeepVariant 0.8.0-gpu
       website: https://github.com/google/deepvariant
       citation: >
         Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
@@ -57,10 +57,10 @@ constants:
         Tobias Rausch, Thomas Zichner, Andreas Schlattl, Adrian M. Stütz, Vladimir Benes, Jan O. Korbel,
         DELLY: structural variant discovery by integrated paired-end and split-read analysis, Bioinformatics,
         Volume 28, Issue 18, 15 September 2012, Pages i333–i339, https://doi.org/10.1093/bioinformatics/bts378
-    freebayes_1_2:
-      module: freebayes/1.2
-      version: "1.2"
-      verbose: Freebayes v1.2
+    freebayes_1_3_1:
+      module: freebayes/1.3.1
+      version: "1.3.1"
+      verbose: Freebayes v1.3.1
       website: https://github.com/ekg/freebayes
       citation: >
         Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing.
@@ -69,26 +69,6 @@ constants:
       module: gatk/4.1.0.0
       version: "4.1.0.0"
       verbose: Genome Analysis Toolkit v4.1.0.0
-      website: https://software.broadinstitute.org/gatk/
-      citation: >
-        The Genome Analysis Toolkit: a MapReduce framework for analyzing
-        next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
-        Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
-        Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
-    gatk_4_1_2_0:
-      module: gatk/4.1.2.0
-      version: "4.1.2.0"
-      verbose: Genome Analysis Toolkit v4.1.2.0
-      website: https://software.broadinstitute.org/gatk/
-      citation: >
-        The Genome Analysis Toolkit: a MapReduce framework for analyzing
-        next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
-        Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
-        Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
-    gatk_4_1_3_0:
-      module: gatk/4.1.3.0
-      version: "4.1.3.0"
-      verbose: Genome Analysis Toolkit v4.1.3.0
       website: https://software.broadinstitute.org/gatk/
       citation: >
         The Genome Analysis Toolkit: a MapReduce framework for analyzing
@@ -186,14 +166,6 @@ constants:
         Bioinformatics (2016)
       doi: 10.1093/bioinformatics/btw354
       PMID: 27312411
-    octopus_0_6_0b:
-      module: octopus/2019
-      version: 0.6.0-beta
-      verbose: Octopus v0.6.0-beta
-      website: https://github.com/luntergroup/octopus
-      citation: >
-        A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
-        David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
     octopus_0_6_3b:
       module: octopus/0.6.3-beta
       version: 0.6.3-beta
@@ -334,10 +306,10 @@ constants:
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
         variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
-    subread_1_6_4:
-      module: subread/1.6.4
-      version: "1.6.4"
-      verbose: Subread v1.6.4
+    subread_2_0_0:
+      module: subread/2.0.0
+      version: "2.0.0"
+      verbose: Subread v2.0.0
       webiste: http://subread.sourceforge.net
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
@@ -448,7 +420,7 @@ constants:
       75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/75bpReads
       100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/100bpReads
       150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/150bpReads
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/
+    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir
     strandedness_options:
       inward-unstranded-notapplicable:
         salmon: "IU"
