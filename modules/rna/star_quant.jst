@@ -181,7 +181,7 @@
       -o "{{ star_bam_sorted }}"
 
 
-- name: markduplicates_star_samtools_{{ sample.name }}
+- name: markduplicates_star_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   input: {{ star_bam_sorted }}
   output: {{ star_bam_final }}
@@ -202,14 +202,19 @@
       rm -r "{{ star_tempdir }}/markdup_samtools"
     fi
 
-    mkdir -p "{{ star_tempdir }}/markdup_samtools"
-    mkdir -p "{{ star_finaldir }}/stats_samtools/"
+    if [ -f "{{ star_bam_final }}" ]
+    then
+      mv "{{ star_bam_final }}" "{{ star_bam_sorted }}"
+    fi
+
+    mkdir -p "{{ star_tempdir }}/markdup"
+    mkdir -p "{{ star_finaldir }}/stats/"
 
     samtools markdup \
       -d {{ opt_dup_distance }} \
       -s \
       --threads 10 \
-      -T "{{ star_tempdir }}/markdup_samtools" \
+      -T "{{ star_tempdir }}/markdup" \
       "{{ star_bam_sorted }}" \
       "{{ star_bam_final }}" \
       2> "{{ star_finaldir }}/stats_samtools/{{ sample.name }}.star.bam.markdup.txt"
@@ -229,7 +234,6 @@
 {#    set -o pipefail#}
 {#    module load {{ constants.tools.samtools_1_9_latest.module }}#}
 {##}
-    {#
 {#    # If this task was interrupted previously, temp files may exist#}
 {#    # that will cause errors with samtools markdup. Here, we purge any#}
 {#    # existing temp files before making the directory again.#}
