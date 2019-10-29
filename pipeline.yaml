@@ -166,14 +166,6 @@ constants:
         Bioinformatics (2016)
       doi: 10.1093/bioinformatics/btw354
       PMID: 27312411
-    octopus_0_6_0b:
-      module: octopus/2019
-      version: 0.6.0-beta
-      verbose: Octopus v0.6.0-beta
-      website: https://github.com/luntergroup/octopus
-      citation: >
-        A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
-        David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
     octopus_0_6_3b:
       module: octopus/0.6.3-beta
       version: 0.6.3-beta
