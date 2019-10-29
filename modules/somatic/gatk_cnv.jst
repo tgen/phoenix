@@ -11,7 +11,8 @@
 {% set results_dir %}{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}{% endset %}
 {% set config_sex %}{{ sex|default("Female") }}{% endset %}
 
-- name: gatk_call_cnv_{{ pair.name }}_{{ aligner }}
+{# Step 1 #}
+- name: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
   input:
     - {{ normal_bam }}
@@ -213,39 +214,139 @@
       --interval-merging-rule OVERLAPPING_ONLY \
       --reference {{ constants.phoenix.reference_fasta }}
 
+
+{# Step 2a #}
+- name: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2a"
+
     {# Collect read counts for the normal using the filtered interval list #}
     gatk --java-options "-Xmx12g" CollectReadCounts \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp2a/ \
       --input {{ normal_bam }} \
       --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
       --interval-merging-rule OVERLAPPING_ONLY \
       --read-filter FirstOfPairReadFilter \
       --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
 
+
+{# Step 2b #}
+- name: gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2b"
+
     {# Collect allelic counts for the normal #}
     gatk --java-options "-Xmx12g" CollectAllelicCounts \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp2b/ \
       --input {{ normal_bam }} \
       --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       --reference {{ constants.phoenix.reference_fasta }} \
       --output {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
 
+
+{# Step 2c #}
+- name: gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2c"
+
     {# Collect read counts for the tumor using the filtered interval list #}
     gatk --java-options "-Xmx12g" CollectReadCounts \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp2c/ \
       --input {{ tumor_bam }} \
       --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
       --interval-merging-rule OVERLAPPING_ONLY \
       --read-filter FirstOfPairReadFilter \
       --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
 
+
+{# Step 2d #}
+- name: gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2d"
+
     {# Collect allelic counts for the normal #}
     gatk --java-options "-Xmx12g" CollectAllelicCounts \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp2d/ \
       --input {{ tumor_bam }} \
       --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       --reference {{ constants.phoenix.reference_fasta }} \
       --output {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+
+
+{# Step 3 #}
+- name: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp3"
 
     {#
     Create a panel of normals file consiting of the matched normal.
@@ -253,19 +354,64 @@
       --minimum-interval-median-percentile 10.0
     #}
     gatk --java-options "-Xmx12g" CreateReadCountPanelOfNormals \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp3/ \
       --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
       --minimum-interval-median-percentile 0.0 \
       --annotated-intervals {{ temp_dir }}/anno_preprocessed.interval_list \
       --output {{ temp_dir }}/cnv.pon.hdf5
 
+
+{# Step 4 #}
+- name: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp4"
+
     {# Denoise the tumor using the panel of normals made from the matched normal #}
     gatk --java-options "-Xmx12g" DenoiseReadCounts \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp4/ \
       --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
       --count-panel-of-normals {{ temp_dir }}/cnv.pon.hdf5 \
       --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv \
       --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+
+
+{# Step 5 #}
+- name: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp5"
+
+    {# Get the average depth of the normal if it is a genome #}
+    {% if pair.gltype in 'genome' %}
+      NORMAL_AVERAGE_DEPTH=`awk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
+    {% endif %}
 
     {#
     Perform segmentation
@@ -282,7 +428,7 @@
       --minimum-total-allele-count-normal 6 \
     #}
     gatk --java-options "-Xmx12g" ModelSegments \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp5/ \
       --number-of-smoothing-iterations-per-fit 1 \
       --number-of-changepoints-penalty-factor 0.05 \
       --kernel-variance-allele-fraction 0.0 \
@@ -309,9 +455,48 @@
       --output-prefix {{ pair.name }}.{{ aligner }}
 
     gatk --java-options "-Xmx12g" CallCopyRatioSegments \
-      --tmp-dir {{ temp_dir }}/temp/ \
+      --tmp-dir {{ temp_dir }}/temp5/ \
       --input {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.cr.seg \
       --output {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.called.seg
+
+
+{# Step 6 #}
+- name: gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.rstats_3_4_1.module }}
+    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp6"
+
+    {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
+    SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
+    CONFIG_SEX={{ config_sex }}
+
+    if [ ${SEX} != "Male" ] && [ ${SEX} != "Female" ]
+    then
+      if [ ${CONFIG_SEX} == "Male" ] || [ ${CONFIG_SEX} == "Female" ]
+      then
+        SEX=${CONFIG_SEX}
+      else
+        SEX=Female
+      fi
+    fi
+
+    {# Get the average depth of the tumor if it is a genome #}
+    {% if pair.gltype in 'genome' %}
+      TUMOR_AVERAGE_DEPTH=`awk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ tumor_bam_stats }}`
+    {% endif %}
 
     if [ ${SEX} == "Male" ]
     then
