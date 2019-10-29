@@ -58,7 +58,7 @@
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
-    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome_v2_1_1_liftover"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome_v3_0"]|default(true) %}
     {# annotate with gnomad genome #}
     bcftools annotate \
       --threads 4 \
