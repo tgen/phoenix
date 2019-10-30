@@ -41,7 +41,7 @@
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
       --reads "{{ bam }}" \
       --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
-      --skip-regions-file {{ constants.phoenix.black_list }} \
+      --skip-regions-file {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.black_list }} \
       --bamout "{{ temp_dir }}/{{ loop.index }}.realigned.bam" \
       --output "{{ temp_dir }}/{{ loop.index }}.octopus.vcf"
 
