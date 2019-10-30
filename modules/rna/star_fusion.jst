@@ -27,7 +27,6 @@
   mem: 60G
   walltime: "24:00:00"
   cmd: |
-    echo $MODULEPATH
     set -eu
     set -o pipefail
     module load {{ constants.tools.star_fusion_1_8_1.module }}
