@@ -97,6 +97,12 @@
 
 {% if debug %}{{ log(samples|tojson(indent=4), level='CRITICAL') }}{% endif %}
 
+{# Set the billing account for the project to use accross all tasks #}
+- name: setup_env
+  exec: |
+    import os
+    os.environ.putenv('SBATCH_ACCOUNT', '{{ hpcAccount }}')
+
 {# Move to utility scripts #}
 {% for batch in dataFiles|batch(4) %}
 - name: copy_fastqs_{{ loop.index }}
