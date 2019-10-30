@@ -211,7 +211,7 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    {# Genotype the 387 test positions across the genome, filter to calls with DP >= 5 #}
+    {# Genotype the 387 test positions across the genome, filter to calls with DP >= 5, sort, remove chr from contig names #}
     bcftools mpileup \
       --no-BAQ \
       --max-depth 5000 \
@@ -229,8 +229,11 @@
       --consensus-caller \
       | \
     bcftools sort \
+      | \
+    bcftools annotate \
+      --threads 2 \
+      --rename-chrs /home/jkeats/git_repositories/GRCh38_CrossMapping/GRCh38_Cosmic89_2_UCSC_Contigs.txt \
       --output-type v \
       --output-file "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
 
 {% endmacro %}
-
