@@ -321,9 +321,9 @@ constants:
       version: "0.7.7"
       verbose: vcfMerger2 v0.7.7
       website: https://github.com/tgen/vcfMerger2
-    verifybamid2_1_0_5:
-      module: verifybamID/1.0.5
-      version: 1.0.5
+    verifybamid2_1_0_6:
+      module: verifybamID/1.0.6
+      version: 1.0.6
       website: https://github.com/Griffan/VerifyBamID
       citation: >
         Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
