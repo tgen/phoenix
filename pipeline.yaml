@@ -307,10 +307,10 @@ constants:
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
-    vardict_1_6_0:
-      module: vardict/1.6.0
-      version: "1.6.0"
-      verbose: Vardict Java v1.6.0
+    vardict_1_7_0:
+      module: vardict/1.7.0
+      version: "1.7.0"
+      verbose: Vardict Java v1.7.0
       website: https://github.com/AstraZeneca-NGS/VarDictJava
       citation: >
         Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
