@@ -22,7 +22,7 @@
     module load {{ constants.tools.octopus_0_6_3b.module }}
     
     mkdir -p "{{ temp_dir }}"
-    
+
     {# Write out the regions in this batch to a bed file #}
     TAB=$'\t'
     cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"

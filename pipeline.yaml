@@ -699,6 +699,9 @@ constants:
       # Calling contigs broken down into smaller batches of intervals. These intervals
       # are taken from GATK Resource Bundle and describe regions that can be safely
       # called independently for SNP/small indel genotyping.
+      # Removed the following interval batch as both of the intervals completely overlap with an interval in the ENCODE blacklist
+      # chr3:90568829-90722458
+      # chr3:90772459-91249905
       - - {"contig": "chr1", "length": 197665, "start": 10001, "stop": 207666}
         - {"contig": "chr1", "length": 40301, "start": 257667, "stop": 297968}
         - {"contig": "chr1", "length": 188019, "start": 347969, "stop": 535988}
@@ -727,8 +730,6 @@ constants:
       - - {"contig": "chr2", "length": 141414040, "start": 97489619, "stop": 238903659}
       - - {"contig": "chr2", "length": 3279481, "start": 238904048, "stop": 242183529}
       - - {"contig": "chr3", "length": 90555294, "start": 10001, "stop": 90565295}
-      - - {"contig": "chr3", "length": 153629, "start": 90568829, "stop": 90722458}
-        - {"contig": "chr3", "length": 477446, "start": 90772459, "stop": 91249905}
       - - {"contig": "chr3", "length": 1468, "start": 91256422, "stop": 91257890}
         - {"contig": "chr3", "length": 5200, "start": 91260181, "stop": 91265381}
         - {"contig": "chr3", "length": 5180, "start": 91276995, "stop": 91282175}
