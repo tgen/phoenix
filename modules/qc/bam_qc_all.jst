@@ -232,7 +232,7 @@
       | \
     bcftools annotate \
       --threads 2 \
-      --rename-chrs /home/jkeats/git_repositories/GRCh38_CrossMapping/GRCh38_Cosmic89_2_UCSC_Contigs.txt \
+      --rename-chrs "{{ constants.install_path.path_to_grch38_crossmapping_repo }}"/"{{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }" \
       --output-type v \
       --output-file "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
 
