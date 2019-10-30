@@ -8,13 +8,13 @@ Last Update October 21, 2019
 | Tool | Version Implemented | Current Version | Note |
 | :---: | :---: | :---: | :--- |
 | [bcftools](https://github.com/samtools/bcftools/releases) | 1.9 | 1.9 | |
-| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.26.0 | **2.29.0** | delly-filter, addmatchRNA, vardict, vcfmerger2 |
+| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | 2.29.0 | delly-filter, addmatchRNA, vardict, vcfmerger2 |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | |
-| [cellranger](https://github.com/lh3/bwa/releases) | 3.0.2 | **3.1.0** | |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.7.0 | **0.8.0** | singularity container |
-| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | |
-| [featurecounts](https://sourceforge.net/projects/subread/) | 1.6.4 | **2.0.0** | part of subread package |
-| [freebayes](https://github.com/ekg/freebayes/releases) | 1.2.0 | **1.3.1** | update allows skipping of high coverage regions |
+| [cellranger](https://github.com/lh3/bwa/releases) | 3.1.0 | 3.1.0 | |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container |
+| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons |
+| [featurecounts](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions |
 | [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  |
 | [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.6.3 |  |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release |
