@@ -34,7 +34,7 @@ Last Update October 21, 2019
 | [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | |
 | [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | |
-| [vardict](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.6.0 | **1.7.0** | |
+| [vardict](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | |
 | [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.7 | 0.7.7 | |
 | [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.5 | **1.0.6** | |
