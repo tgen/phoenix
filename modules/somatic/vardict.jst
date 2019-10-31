@@ -131,7 +131,7 @@
           -o	signal/noise
           The minimum signal to noise, or the ratio of hi/(lo+0.5).  Default to 1.5.  Set it higher for deep sequencing.
     #}
-    JAVA_OPTS="-Xmx26g" VarDict \
+    JAVA_OPTS="-Xmx26g" vardict \
       -th 4 \
       -b "{{ tumor_bam }}|{{ normal_bam }}" \
       -N "{{ pair.tumor.rgsm }}" \
