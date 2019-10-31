@@ -61,12 +61,13 @@ First, jetstream must be installed, available [here](https://github.com/tgen/jet
 ```
 $ pip3 install --upgrade --user git+https://github.com/tgen/jetstream.git@master
 ```  
-Then the recommended install method for installing the phoenix pipeline is:
+Then the recommended install method for installing the phoenix-development pipeline is:
 ```
 $ cd ~
 $ mkdir jetstream_pipelines
 $ cd jetstream_pipelines
-$ git clone https://github.com/tgen/phoenix
+$ git clone --single-branch --branch develop https://github.com/tgen/phoenix
+$ mv phoenix phoenix-development
 ```  
 We're getting close to being able to easily run the pipeline now, and from this point you might be able to hack your way to make everything run. But it is recommended that you use similar settings to the ones detailed here in order to get the best support possible.
 
@@ -131,11 +132,21 @@ This may return more than one result. The one we are looking for should look sim
 We're nearly done now. At the time of writing, jetstream/phoenix is not entirely environment agnostic. The phoenix pipeline currently looks for reference data within our /home/tgenref/ directory. If we have/want to use data not within /home/tgenref/ we simply need to modify the pipeline.yaml for phoenix. 
 We can view the pipeline.yaml by changing directories to where we downloaded the phoenix pipeline:  
 ```
-$ cd ./jetstream_pipelines/phoenix/
+$ cd ./jetstream_pipelines/phoenix-development/
 $ less pipeline.yaml
 ```  
-The area that we are looking for is:
+The areas that we are interested in are:
 ```
+__pipeline__:
+  name: phoenix
+  main: main.jst
+  description: Human GRCh38 genomics suite
+  version: development
+constants:
+  install_path:
+    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
+    path_to_jetstream_resources_repo: /home/tgenjetstream/git_repositories/jetstream_resources
+    path_to_grch38_crossmapping_repo: /home/tgenjetstream/git_repositories/GRCh38_CrossMapping
 .
 .
 .
@@ -143,15 +154,25 @@ phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
+    reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
-    dbsnp: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b151/common_all_20180418.UCSC.vcf.gz
-    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
-    cellranger_chemistry:
-      X3SCR: SC3Pv1
-      XCSCR: SC3Pv2
-      X3SC3: SC3Pv3
-      X5SCR: SC5P-R2
-      unknown: auto
+    dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
+    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
+    gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
+    gnomad_exome_v2_1_1_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
+    gnomad_genome_v3_0_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
+    gnomad_exome_v2_1_1_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
+    gnomad_genome_v3_0_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
+    cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
+    cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
+    clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
+    bcftools_annotate_contig_update_ucsc2ensembl: GRCh38_UCSC_2_Ensembl_Contigs.txt
+    black_list: external_scripts/Blacklist/lists/hg38-blacklist.v2.bed.gz
+    delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/delly_anno_Homo_sapiens.GRCh38.97.ucsc.bed
+    delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/delly/ensembl_v97/hg38.excl
+    delly_scripts: external_scripts/delly_annotation_scripts/
+    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
+    cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
     gatk_known_sites:
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
@@ -161,19 +182,24 @@ phoenix:
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
-    gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.gtf
-    ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.refFlat.txt
-    ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.ribo.interval_list
-    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.transcriptome.fasta
-    salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
+    gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
+    ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
+    ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
+    gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
+    gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
+    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.transcriptome.fasta
+    salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
+    sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
+    sex_check_vcf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.vcf.gz
+    lymphocyteReceptor_loci_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
     star_indices:
-      # Multiple STAR references defined here in order to accommodate
+      # Multiple STAR references defined here in order to accommodate 
       # RNA data with different read lengths.
-      75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/75bpReads
-      100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
-      150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
+      75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/75bpReads
+      100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/100bpReads
+      150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/150bpReads
+    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir
 .
 .
 .
