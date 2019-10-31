@@ -14,6 +14,7 @@
     - {{ normal_bam }}
     - {{ tumor_bam }}
   cpus: 8
+  retry: 2
   mem: 96G
   walltime: "48:00:00"
   cmd: |
