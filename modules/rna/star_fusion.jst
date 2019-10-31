@@ -30,6 +30,7 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.star_fusion_1_8_1.module }}
+    module load {{ constants.tools.trinity_2_8_6.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     {#
@@ -52,5 +53,6 @@
       --examine_coding_effect \
       --extract_fusion_reads \
       --FusionInspector inspect \
+      --denovo_reconstruct \
       --output_dir "${OUTDIR}"
 {% endmacro -%}

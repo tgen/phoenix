@@ -307,6 +307,16 @@ constants:
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
+    trinity_2_8_6:
+      module: trinityrnaseq/2.8.6
+      version: "2.8.6"
+      verbose: Trinity Release v2.8.6
+      website: https://github.com/trinityrnaseq/trinityrnaseq
+      citation: >
+        Grabherr MG, Haas BJ, Yassour M, Levin JZ, Thompson DA, Amit I, Adiconis X, Fan L, Raychowdhury R,
+        Zeng Q, Chen Z, Mauceli E, Hacohen N, Gnirke A, Rhind N, di Palma F, Birren BW, Nusbaum C, Lindblad-Toh K,
+        Friedman N, Regev A. Full-length transcriptome assembly from RNA-seq data without a reference genome.
+        Nat Biotechnol. 2011 May 15;29(7):644-52. doi: 10.1038/nbt.1883. PubMed PMID: 21572440
     vardict_1_7_0:
       module: vardict/1.7.0
       version: "1.7.0"
