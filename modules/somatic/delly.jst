@@ -142,10 +142,26 @@
 
     python {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf
 
+    {# Compressing all vcfs #}
+    bcftools view \
+      --output-type z \
+      --output {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf.gz \
+      {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf
+
+    bcftools view \
+      --output-type z \
+      --output {{ run_dir }}/{{ pass_vcf }}.gz \
+      {{ run_dir }}/{{ pass_vcf }}
+
+    bcftools view \
+      --output-type z \
+      --output {{ run_dir }}/{{ all_vcf }}.gz \
+      {{ run_dir }}/{{ all_vcf }}
+
     mkdir -p {{ pair_dir }}
 
-    cp {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf {{ pair_dir }}
-    cp {{ run_dir }}/{{ pass_vcf }} {{ pair_dir }}
-    cp {{ run_dir }}/{{ all_vcf }} {{ pair_dir }}
+    cp {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.final.vcf.gz {{ pair_dir }}
+    cp {{ run_dir }}/{{ pass_vcf }}.gz {{ pair_dir }}
+    cp {{ run_dir }}/{{ all_vcf }}.gz {{ pair_dir }}
 
 {% endmacro %}
