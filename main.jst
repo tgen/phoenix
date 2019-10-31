@@ -104,12 +104,9 @@
     os.environ.putenv('SBATCH_ACCOUNT', '{{ hpcAccount }}')
 
 {# Move to utility scripts #}
-{% for batch in dataFiles|batch(4) %}
+{% for fastq in dataFiles %}
 - name: copy_fastqs_{{ loop.index }}
-  output:
-    {% for fq in batch %}
-    - temp/fastqs/{{ fq.basename }}
-    {% endfor %}
+  output: temp/fastqs/{{ fastq.basename }}
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']
   retry: 2
@@ -120,9 +117,7 @@
 
     mkdir -p temp/fastqs/
 
-    {% for fq in batch %}
-    rsync "{{ fq.fastqPath }}" "temp/fastqs/"
-    {% endfor %}
+    rsync "{{ fastq.fastqPath }}" "temp/fastqs/"
 
 {% endfor %}
 
