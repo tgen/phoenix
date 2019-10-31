@@ -7,7 +7,7 @@
 {% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
 
-{% for batch in constants.phoenix.calling_intervals %}
+{% for batch in constants.phoenix.primary_contig_calling_intervals %}
 - name: octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   input:
@@ -72,7 +72,7 @@
     bcftools concat \
       --output-type z \
       --output "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
-      {% for b in constants.phoenix.calling_intervals %}
+      {% for b in constants.phoenix.primary_contig_calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
       {% endfor %}
 
