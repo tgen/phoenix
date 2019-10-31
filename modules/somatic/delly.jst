@@ -1,8 +1,8 @@
 {% macro delly_somatic(pair, aligner='bwa') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set pair_dir %}{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
-{% set run_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
 {% set all_vcf %}{{ pair.name }}.{{ aligner }}.delly.allCalls.vcf{% endset %}
 {% set pass_vcf %}{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
 {% set variant_types=['DEL','DUP','INS','INV','TRA'] %}
@@ -26,7 +26,7 @@
 
     module load {{ constants.tools.delly_0_7_6.module }}
 
-    mkdir -p "{{ run_dir }}"
+    mkdir -p "{{ temp_dir }}"
 
     delly call \
      --type {{ svtype }} \
@@ -34,7 +34,7 @@
      --exclude {{ constants.phoenix.delly_exclusions }} \
      --map-qual 1 \
      --mad-cutoff 9 \
-     --outfile {{ run_dir }}/{{ sv_bcf }} \
+     --outfile {{ temp_dir }}/{{ sv_bcf }} \
      {{ tumor_bam }} {{ normal_bam }}
 
     {# Creating a sample file for filter step #}
@@ -49,8 +49,8 @@
      --coverage 5 \
      --controlcontamination 0 \
      {{ filt_sv }} \
-     --outfile {{ run_dir }}/{{ filt_bcf }} \
-     {{ run_dir }}/{{ sv_bcf }}
+     --outfile {{ temp_dir }}/{{ filt_bcf }} \
+     {{ temp_dir }}/{{ sv_bcf }}
 
     rm {{ sample_file }}
 
@@ -64,7 +64,7 @@
     {% endfor %}
   input:
     {% for svtype in variant_types %}
-    - {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf
+    - {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf
     {% endfor %}
   output:
     - {{ all_vcf }}
@@ -78,7 +78,7 @@
 
     {% set merged_vcf %}{{ pair.name }}.{{ aligner }}.delly.merged.vcf{% endset %}
 
-    cd {{ run_dir }}
+    cd {{ temp_dir }}
 
     bcftools concat \
       {% for svtype in variant_types %}
@@ -112,56 +112,56 @@
     module load {{ constants.tools.bedtools_2_29_0.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
-    if [[ -e {{ pair_dir }}/{{ all_vcf }}  ]] ; 
+    if [[ -e {{ results_dir }}/{{ all_vcf }}  ]] ;
     then
-       cp {{ pair_dir }}/{{ all_vcf }} {{ run_dir }}/
+       cp {{ results_dir }}/{{ all_vcf }} {{ temp_dir }}/
     if [[ $? -ne 0 ]] ; then echo -e "it is probably the first run for that project so the fiel does not exist yet ; continue anyway ; This was added temporarily to accomodate the error due to the mv command previously put in line below (143 to line 145)" ; fi
     fi
     
-    if [[ ! -e {{ run_dir }}/{{ pass_vcf }} ]]
+    if [[ ! -e {{ temp_dir }}/{{ pass_vcf }} ]]
     then
-       if [[ -e {{ pair_dir }}/{{ pass_vcf }} ]]
+       if [[ -e {{ results_dir }}/{{ pass_vcf }} ]]
        then
-          cp {{ pair_dir }}/{{ pass_vcf }} {{ pair_dir }}/{{ all_vcf }}  {{ run_dir }}/
+          cp {{ results_dir }}/{{ pass_vcf }} {{ results_dir }}/{{ all_vcf }}  {{ temp_dir }}/
        else
-          echo -e "ERROR: FNF << {{ pass_vcf }} >> in dirs {{ run_dir }} OR {{ pair_dir }}; Aborting."
+          echo -e "ERROR: FNF << {{ pass_vcf }} >> in dirs {{ temp_dir }} OR {{ results_dir }}; Aborting."
           exit 1
        fi
     else 
-       if [[ $(grep -m 1 -c "ENDPOSSV" {{ run_dir }}/{{ pass_vcf }} ) -ne 1 ]] ;
+       if [[ $(grep -m 1 -c "ENDPOSSV" {{ temp_dir }}/{{ pass_vcf }} ) -ne 1 ]] ;
        then
-            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ run_dir }}/{{ pass_vcf }} > {{ run_dir }}/{{ pass_vcf }}.mod
-            python {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.delly_scripts }}addRC_to_Delly_VCF.py -i {{ run_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
-       elif [[ -e {{ run_dir }}/{{ pass_vcf }} ]]
+            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ temp_dir }}/{{ pass_vcf }} > {{ temp_dir }}/{{ pass_vcf }}.mod
+            python {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.delly_scripts }}addRC_to_Delly_VCF.py -i {{ temp_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
+       elif [[ -e {{ temp_dir }}/{{ pass_vcf }} ]]
        then
-            cp {{ run_dir }}/{{ pass_vcf }} {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf
+            cp {{ temp_dir }}/{{ pass_vcf }} {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf
        fi
     fi
     
-    bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
+    bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
 
-    python {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ run_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
+    python {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.delly_scripts }}svtop.delly.sv_annotation.parallel.py -a {{ constants.phoenix.delly_annotation }} -i {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
 
     {# Compressing all vcfs #}
     bcftools view \
       --output-type z \
-      --output {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz \
-      {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
+      --output {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz \
+      {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
 
     bcftools view \
       --output-type z \
-      --output {{ run_dir }}/{{ pass_vcf }}.gz \
-      {{ run_dir }}/{{ pass_vcf }}
+      --output {{ temp_dir }}/{{ pass_vcf }}.gz \
+      {{ temp_dir }}/{{ pass_vcf }}
 
     bcftools view \
       --output-type z \
-      --output {{ run_dir }}/{{ all_vcf }}.gz \
-      {{ run_dir }}/{{ all_vcf }}
+      --output {{ temp_dir }}/{{ all_vcf }}.gz \
+      {{ temp_dir }}/{{ all_vcf }}
 
-    mkdir -p {{ pair_dir }}
+    mkdir -p {{ results_dir }}
 
-    cp {{ run_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz {{ pair_dir }}
-    cp {{ run_dir }}/{{ pass_vcf }}.gz {{ pair_dir }}
-    cp {{ run_dir }}/{{ all_vcf }}.gz {{ pair_dir }}
+    cp {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz {{ results_dir }}
+    cp {{ temp_dir }}/{{ pass_vcf }}.gz {{ results_dir }}
+    cp {{ temp_dir }}/{{ all_vcf }}.gz {{ results_dir }}
 
 {% endmacro %}

@@ -1,8 +1,8 @@
 {% macro ichorcna(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set sample_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
-{% set wig %}{{ sample_dir }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
-{% set run_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
+{% set results_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
+{% set wig %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
 
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
@@ -15,7 +15,7 @@
     set -o pipefail
     module load {{ constants.tools.hmmcopy_utils_1_0.module }}
 
-    mkdir -p "{{ sample_dir }}/"
+    mkdir -p "{{ results_dir }}/"
 
     readCounter \
       --window 1000000 \
@@ -38,8 +38,8 @@
     module load {{ constants.tools.ichorcna_0_1_0.module }}
 
     {# Purge any existing results files prior to starting #}
-    rm -r "{{ run_dir }}" || true
-    mkdir -p "{{ run_dir }}"
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
 
     {#
     # ichorCNA includes some pre-built references in the source code, this command
@@ -54,7 +54,7 @@
     Rscript {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.tools.ichorcna_0_1_0.launcher }} \
       --id "{{ sample.name}}.{{ aligner }}" \
       --WIG "{{ wig }}" \
-      --outDir "{{ run_dir }}" \
+      --outDir "{{ temp_dir }}" \
       --includeHOMD False \
       --estimateNormal True \
       --estimatePloidy True \
@@ -80,11 +80,11 @@
     {#
     # Move the output files to the final location
     #}
-    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg" "{{ sample_dir }}/"
-    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt" "{{ sample_dir }}/"
-    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.params.txt" "{{ sample_dir }}/"
-    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.RData" "{{ sample_dir }}/"
-    mv "{{ run_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt" "{{ sample_dir }}/"
-    mv {{ run_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ sample_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.params.txt" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.RData" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt" "{{ results_dir }}/"
+    mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ results_dir }}/"
 
 {% endmacro %}

@@ -1,8 +1,8 @@
 {% macro gridss_somatic(pair, aligner='bwa') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set pair_dir %}{{ pair.gltype }}/somatic_structural_calls/gridss/{{ pair.name }}{% endset %}
-{% set run_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/gridss/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/gridss/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/gridss/{{ pair.name }}{% endset %}
 
 - name: gridss_somatic_{{ aligner }}
   tags: [somatic, gridss]
@@ -24,12 +24,12 @@
     {# all of the modules above get loaded with gridss at the moment, but this many not be the case on other systems #}
     module load {{ constants.tools.gridss_2_6_3.module }}
 
-    mkdir -p {{ pair_dir }}
+    mkdir -p {{ results_dir }}
 
     gridss CallVariants \
       -r {{ constants.phoenix.reference_fasta }} \
-      -w {{ run_dir }} \
-      -o {{ pair_dir }}/{{ pair.name }}.sv.vcf \
+      -w {{ temp_dir }} \
+      -o {{ results_dir }}/{{ pair.name }}.sv.vcf \
       {{ normal_bam }} {{ tumor_bam }}
 
 {% endmacro %}
