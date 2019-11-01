@@ -102,8 +102,8 @@ constants:
       website: gcc.com
       citation: >
         Todo
-    gmap_2019_09_12:
-      module: gmap/2019-09-12
+    gmap_gsnap_2019_09_12:
+      module: GMAP-GSNAP/2019-09-12-foss-2018b
       version: "2019-09-12"
       verbose: GMAP version 2019-09-12
       website: http://research-pub.gene.com/gmap/
