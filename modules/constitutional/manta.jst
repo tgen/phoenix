@@ -7,7 +7,7 @@
   tags: [{{ sample.gltype}}, constitutional, structural_caller, manta, {{ sample.name }}]
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
-    ({{ aligner }}) were called with {{ constants.tools.manta_1_4.verbose }}.
+    ({{ aligner }}) were called with {{ constants.tools.manta_1_6.verbose }}.
   input: {{ bam }}
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz

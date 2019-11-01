@@ -102,6 +102,15 @@ constants:
       website: gcc.com
       citation: >
         Todo
+    gmap_2019_09_12:
+      module: gmap/2019-09-12
+      version: "2019-09-12"
+      verbose: GMAP version 2019-09-12
+      website: http://research-pub.gene.com/gmap/
+      citation: >
+        Thomas D. Wu and Colin K. Watanabe
+        GMAP: a genomic mapping and alignment program for mRNA and EST sequences
+        Bioinformatics 2005 21:1859-1875
     gridss_2_6_3:
       module: gridss/2.6.3
       version: "2.6.3"
@@ -158,14 +167,6 @@ constants:
         Zody MC. Genome-wide somatic variant calling using localized colored de Bruijn graphs.
         Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
         (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
-    manta_1_4:
-      module: manta/1.4
-      version: "1.4"
-      verbose: Manta v1.4
-      website: https://github.com/Illumina/manta
-      citation: >
-        Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
-        cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
     manta_1_6:
       module: manta/1.6
       version: "1.6"
