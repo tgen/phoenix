@@ -145,17 +145,17 @@
     {# Compressing all vcfs #}
     bcftools view \
       --output-type z \
-      --output {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz \
+      --output-file {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz \
       {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
 
     bcftools view \
       --output-type z \
-      --output {{ temp_dir }}/{{ pass_vcf }}.gz \
+      --output-file {{ temp_dir }}/{{ pass_vcf }}.gz \
       {{ temp_dir }}/{{ pass_vcf }}
 
     bcftools view \
       --output-type z \
-      --output {{ temp_dir }}/{{ all_vcf }}.gz \
+      --output-file {{ temp_dir }}/{{ all_vcf }}.gz \
       {{ temp_dir }}/{{ all_vcf }}
 
     mkdir -p {{ results_dir }}
