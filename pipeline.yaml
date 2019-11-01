@@ -332,7 +332,7 @@ constants:
       verbose: vcfMerger2 v0.7.7
       website: https://github.com/tgen/vcfMerger2
     verifybamid2_1_0_6:
-      module: verifybamID/1.0.6
+      module: verifyBamID/1.0.6
       version: 1.0.6
       website: https://github.com/Griffan/VerifyBamID
       citation: >
