@@ -129,11 +129,11 @@ constants:
         Simon Anders, Paul Theodor Pyl, Wolfgang Huber
         HTSeq — A Python framework to work with high-throughput sequencing data
         Bioinformatics (2014), in print, online at doi:10.1093/bioinformatics/btu638
-    ichorcna_0_1_0:
-      module: R/3.4.1
+    ichorcna_0_2_0:
+      module: R/3.6.1-phoenix
       launcher: external_scripts/runIchorCNA.R
-      version: "0.1.0-1d54a1f"
-      verbose: ichorCNA v0.1.0 (1d54a1f)
+      version: "0.2.0"
+      verbose: ichorCNA v0.2.0
       website: https://github.com/broadinstitute/ichorCNA
       citation: >
         Adalsteinsson, Ha, Freeman, et al. Scalable whole-exome sequencing of
@@ -222,18 +222,10 @@ constants:
       website: https://www.python.org
       citation: >
         Python Software Foundation. Python Language Reference, version 3.6.0. Available at http://www.python.org
-    rstats_3_4_1:
-      module: R/3.4.1
-      version: "3.4.1"
-      verbose: R v3.4.1
-      website: https://www.r-project.org
-      citation: >
-        R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
-        Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-    R_3_5_2:
-      module: R/3.5.2
-      version: "3.5.2"
-      verbose: R v3.5.2
+    R_3_6_1:
+      module: R/3.6.1-phoenix
+      version: "3.6.1"
+      verbose: R v3.6.1
       website: https://www.r-project.org
       citation: >
         R Core Team (2017). R: A language and environment for statistical computing. R Foundation for

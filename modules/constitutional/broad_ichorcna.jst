@@ -35,7 +35,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.ichorcna_0_1_0.module }}
+    module load {{ constants.tools.ichorcna_0_2_0.module }}
 
     {# Purge any existing results files prior to starting #}
     rm -r "{{ temp_dir }}" || true
@@ -51,7 +51,7 @@
     # The ichorCNA launcher script does not currently get installed with
     # the rest of the package, so this path is hard coded in constants.yaml
     #}
-    Rscript {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.tools.ichorcna_0_1_0.launcher }} \
+    Rscript {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.tools.ichorcna_0_2_0.launcher }} \
       --id "{{ sample.name}}.{{ aligner }}" \
       --WIG "{{ wig }}" \
       --outDir "{{ temp_dir }}" \
