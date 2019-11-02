@@ -3,10 +3,10 @@
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set indel_candidates %}{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
-{% set pair_dir %}{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}{% endset %}
-{% set run_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}{% endset %}
-{% set all_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
-{% set pass_vcf %}{{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
 - name: strelka2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
@@ -27,8 +27,8 @@
     module load {{ constants.tools.python_2_7_15.module }}
 
     {# Purge any existing run files prior to starting #}
-    rm -r "{{ run_dir }}" || true
-    mkdir -p "{{ run_dir }}"
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
 
     {#
     # In order to restrict calling to only the specified regions
@@ -37,20 +37,20 @@
     # the run dir, and pass the path to Strelka.
     #}
     TAB=$'\t'
-    cat <<EOF > "{{ run_dir }}/callRegions.bed"
+    cat <<EOF > "{{ temp_dir }}/callRegions.bed"
     {% for contig in constants.phoenix.calling_contigs %}
     {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
     {% endfor %}
     EOF
 
-    bgzip -f "{{ run_dir }}/callRegions.bed"
-    tabix -f -p bed "{{ run_dir }}/callRegions.bed.gz"
+    bgzip -f "{{ temp_dir }}/callRegions.bed"
+    tabix -f -p bed "{{ temp_dir }}/callRegions.bed.gz"
 
     {#
     # Some settings are only configurable via an ini file. Here
     # we generate this ini file and save it to the run dir.
     #}
-    cat <<EOF > "{{ run_dir }}/config.ini"
+    cat <<EOF > "{{ temp_dir }}/config.ini"
     [StrelkaSomatic]
     isWriteRealignedBam = 1
     EOF
@@ -60,36 +60,36 @@
       {% if pair.gltype == 'exome' %}
       --exome \
       {% endif %}
-      --config "{{ run_dir }}/config.ini" \
-      --callRegions "{{ run_dir }}/callRegions.bed.gz" \
+      --config "{{ temp_dir }}/config.ini" \
+      --callRegions "{{ temp_dir }}/callRegions.bed.gz" \
       --normalBam "{{ normal_bam }}" \
       --tumorBam "{{ tumor_bam }}" \
       --indelCandidates "{{ indel_candidates }}" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
-      --runDir "{{ run_dir }}"
+      --runDir "{{ temp_dir }}"
 
     {# Execute on the local machine with 19 parallel jobs #}
-    "{{ run_dir }}/runWorkflow.py" -m local -j 19
+    "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
 
 - name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
   after: strelka2_{{ pair.name }}_{{ aligner }}
   output:
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
-    - {{ pair_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz
   cmd: |
     set -eu
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ pair_dir }}/evidence"
+    mkdir -p "{{ results_dir }}/evidence"
   
     {# Move and rename the evidence bams #}
-    mv "{{ run_dir }}/results/realigned/realigned.normal.bam" "{{ pair_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam"
-    mv "{{ run_dir }}/results/realigned/realigned.normal.bam.bai" "{{ pair_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
-    mv "{{ run_dir }}/results/realigned/realigned.tumor.bam" "{{ pair_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
-    mv "{{ run_dir }}/results/realigned/realigned.tumor.bam.bai" "{{ pair_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    mv "{{ temp_dir }}/results/realigned/realigned.normal.bam" "{{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "{{ temp_dir }}/results/realigned/realigned.normal.bam.bai" "{{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam.bai" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
 
     {# Merge the snvs and indels into a final vcf #}
     bcftools concat \
@@ -97,8 +97,8 @@
       --threads 2 \
       --output-type z \
       --output "{{ all_vcf }}" \
-      "{{ run_dir }}/results/variants/somatic.indels.vcf.gz" \
-      "{{ run_dir }}/results/variants/somatic.snvs.vcf.gz"
+      "{{ temp_dir }}/results/variants/somatic.indels.vcf.gz" \
+      "{{ temp_dir }}/results/variants/somatic.snvs.vcf.gz"
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
@@ -115,7 +115,7 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
     {# Finally remove the run dir #}
-    rm -r "{{ run_dir }}"
+    rm -r "{{ temp_dir }}"
 
 
 {% endmacro %}

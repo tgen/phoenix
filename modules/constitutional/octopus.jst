@@ -7,13 +7,14 @@
 {%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
 
-{% for batch in constants.phoenix.calling_intervals %}
+{% for batch in constants.phoenix.primary_contig_calling_intervals %}
 
 - name: octopus_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
   input: {{ bam }}
   walltime: "24:00:00"
   cpus: 8
+  retry: 2
   mem: 96G
   cmd: |
     set -eu
@@ -42,6 +43,7 @@
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
       --reads "{{ bam }}" \
       --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --skip-regions-file {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.black_list }} \
       --bamout "{{ temp_dir }}/{{ loop.index }}.realigned.bam" \
       --output "{{ temp_dir }}/{{ loop.index }}.octopus.vcf"
 
@@ -64,7 +66,7 @@
     bcftools concat \
       --output-type z \
       --output "{{ all_vcf }}" \
-      {% for b in constants.phoenix.calling_intervals %}
+      {% for b in constants.phoenix.primary_contig_calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
       {% endfor %}
 

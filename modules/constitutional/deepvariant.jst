@@ -21,7 +21,7 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.singularity_3_1_0.module }}
-    module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
+    module load {{ constants.tools.deepvariant_0_8_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
     PROJECT_ROOT=$PWD
 
@@ -56,7 +56,7 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.singularity_3_1_0.module }}
-    module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
+    module load {{ constants.tools.deepvariant_0_8_0_gpu.module }}
     export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
     PROJECT_ROOT=$PWD
 
@@ -82,7 +82,7 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.singularity_3_1_0.module }}
-    module load {{ constants.tools.deepvariant_0_7_0_gpu.module }}
+    module load {{ constants.tools.deepvariant_0_8_0_gpu.module }}
     module load {{ constants.tools.samtools_1_9.module }}
     export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
     PROJECT_ROOT=$PWD

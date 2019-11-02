@@ -1,7 +1,7 @@
 {% macro gridss_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set sample_dir %}{{ sample.gltype }}/constitutional_structural_calls/gridss/{{ sample.name }}{% endset %}
-{% set run_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/gridss/{{ sample.name }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_structural_calls/gridss/{{ sample.name }}{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/gridss/{{ sample.name }}{% endset %}
 
 - name: gridss_constitutional_{{ aligner }}
   tags: [constitutional, gridss]
@@ -16,18 +16,18 @@
 
     module load {{ constants.tools.sambamba_0_7_0.module }}
     module load {{ constants.tools.bwa_0_7_17.module }}
-    module load {{ constants.tools.R_3_5_2.module }}
+    module load {{ constants.tools.R_3_6_1.module }}
     {# gcc/5.1.0 gets loaded with R/3.5.2 on our system #}
     module load {{ constants.tools.gcc_5_1_0.module }}
     {# all of the modules above get loaded with gridss at the moment, but this many not be the case on other systems #}
     module load {{ constants.tools.gridss_2_6_3.module }}
 
-    mkdir -p {{ sample_dir }}
+    mkdir -p {{ results_dir }}
 
     gridss CallVariants \
       -r {{ constants.phoenix.reference_fasta }} \
-      -w {{ run_dir }} \
-      -o {{ sample_dir }}/{{ sample.name }}.sv.vcf \
+      -w {{ temp_dir }} \
+      -o {{ results_dir }}/{{ sample.name }}.sv.vcf \
       {{ bam }}
 
 {% endmacro %}

@@ -7,13 +7,14 @@
 {% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
 
-{% for batch in constants.phoenix.calling_intervals %}
+{% for batch in constants.phoenix.primary_contig_calling_intervals %}
 - name: octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
   cpus: 8
+  retry: 2
   mem: 96G
   walltime: "48:00:00"
   cmd: |
@@ -22,7 +23,7 @@
     module load {{ constants.tools.octopus_0_6_3b.module }}
     
     mkdir -p "{{ temp_dir }}"
-    
+
     {# Write out the regions in this batch to a bed file #}
     TAB=$'\t'
     cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
@@ -44,6 +45,7 @@
       --somatic-filter-expression "AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --skip-regions-file {{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.black_list }} \
       --reads "{{ normal_bam }}" "{{ tumor_bam }}" \
       --normal-sample "{{ pair.normal.rgsm }}" \
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
@@ -70,7 +72,7 @@
     bcftools concat \
       --output-type z \
       --output "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
-      {% for b in constants.phoenix.calling_intervals %}
+      {% for b in constants.phoenix.primary_contig_calling_intervals %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
       {% endfor %}
 

@@ -30,7 +30,13 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.star_fusion_1_8_1.module }}
+    module load {{ constants.tools.trinity_2_8_6.module }}
+    module load {{ constants.tools.gmap_gsnap_2019_09_12.module }}
     module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bowtie2_2_3_5_1.module }}
+    module load {{ constants.tools.jellyfish_2_3_0.module }}
+    module load {{ constants.tools.salmon_0_14_1.module }}
+    module load {{ constants.tools.python_3_6_0.module }}
 
     {#
     # Here we purge any existing run data prior to starting.
