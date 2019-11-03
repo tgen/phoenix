@@ -149,7 +149,7 @@ constants:
         cell-free DNA reveals high concordance with metastatic tumors. (2017)
         Nature Communications Nov 6;8(1):1324. doi: 10.1038/s41467-017-00965-y
     jellyfish_2_3_0:
-      module: Jellyfish/2.3.0-foss-2016b
+      module: Jellyfish/2.3.0-foss-2019a
       version: "2.3.0"
       verbose: jellyfish 2.3.0
       website: https://github.com/gmarcais/Jellyfish
