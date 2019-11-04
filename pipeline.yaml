@@ -292,7 +292,7 @@ constants:
         Bioinformatics. 2013 Jan 1;29(1):15-21. doi: 10.1093/bioinformatics/bts635. Epub
         2012 Oct 25. PubMed PMID: 23104886; PubMed Central PMCID: PMC3530905.
     star_fusion_1_8_1:
-      module: STAR-Fusion/1.8.1
+      module: STAR-Fusion/1.8.1-GCC-8.2.0-2.31.1-Perl-5.28.1-Python-3.7.2
       version: 1.8.1
       verbose: STAR-Fusion v1.8.1
       website: https://github.com/STAR-Fusion/STAR-Fusion
