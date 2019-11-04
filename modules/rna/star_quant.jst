@@ -2,9 +2,16 @@
 
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample, opt_dup_distance) %}
-{% set sjdb_overhang = sample.read_length|default(100) - 1 %}
-{% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
-{% set star_index = constants.phoenix.star_indices[star_index_size] %}
+{% set star_index_size %}{{ sample.read1Length|default(100) }}bpReads{% endset %}
+
+{% if star_index_size in constants.phoenix.star_indices %}
+  {% set star_index = constants.phoenix.star_indices[star_index_size] %}
+  {% set sjdb_overhang = sample.read1Length - 1 %}
+{% else %}
+  {% set star_index = constants.phoenix.star_indices['100bpReads'] %}
+  {% set sjdb_overhang = 100 - 1 %}
+{% endif %}
+
 {% set star_finaldir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
 {% set star_finalcountsdir %}{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
 {% set star_tempdir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
