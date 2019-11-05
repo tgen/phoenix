@@ -6,8 +6,6 @@ __pipeline__:
 constants:
   install_path:
     path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
-    path_to_jetstream_resources_repo: /home/tgenjetstream/git_repositories/jetstream_resources
-    path_to_grch38_crossmapping_repo: /home/tgenjetstream/git_repositories/GRCh38_CrossMapping
   tools:
     bedtools_2_29_0:
       module: BEDTools/2.29.0
@@ -344,7 +342,7 @@ constants:
     cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
     cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
-    bcftools_annotate_contig_update_ucsc2ensembl: GRCh38_UCSC_2_Ensembl_Contigs.txt
+    bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
     black_list: external_scripts/Blacklist/lists/hg38-blacklist.v2.bed.gz
     delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl

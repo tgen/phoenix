@@ -234,7 +234,7 @@
     bcftools annotate \
       --threads 2 \
       --include 'INFO/DP >= 5'
-      --rename-chrs "{{ constants.install_path.path_to_grch38_crossmapping_repo }}"/"{{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}" \
+      --rename-chrs "{{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}" \
       --output-type v \
       --output "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
 
