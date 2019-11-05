@@ -71,7 +71,10 @@
     #}
     {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
     mv "{{ temp_dir }}"/Aligned.out.bam "{{ results_dir }}"/"{{ sample.name }}"_starfusion.bam
+
+    samtools index -@ 10 {{ results_dir }}/{{ sample.name }}_starfusion.bam
     {% endif %}
+
     mv "{{ temp_dir }}"/Chimeric.out.junction "{{ results_dir }}"/"{{ sample.name }}"_starfusion_Chimeric.out.junction
     mv "{{ temp_dir }}"/star-fusion.fusion_evidence_reads_1.fq "{{ results_dir }}"/"{{ sample.name }}"_starfusion_evidence_reads_1.fq
     mv "{{ temp_dir }}"/star-fusion.fusion_evidence_reads_2.fq "{{ results_dir }}"/"{{ sample.name }}"_starfusion_evidence_reads_2.fq

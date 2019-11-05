@@ -19,14 +19,6 @@ constants:
         genomic features. Bioinformatics. 2010 Mar 15;26(6):841-2. doi:
         10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
         Central PMCID: PMC2832824.
-    bowtie2_2_3_5_1:
-      module: Bowtie2/2.3.5.1-GCC-8.2.0-2.31.1
-      version: "2.3.5.1"
-      verbose: Bowtie 2 v2.3.5.1
-      website: http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
-      citation: >
-        Langmead, B., Trapnell, C., Pop, M. et al. Ultrafast and memory-efficient alignment of short DNA
-        sequences to the human genome. Genome Biol 10, R25 (2009) doi:10.1186/gb-2009-10-3-r25
     bwa_0_7_17:
       module: bwa/0.7.17
       version: "0.7.17"
@@ -102,15 +94,6 @@ constants:
       website: gcc.com
       citation: >
         Todo
-    gmap_gsnap_2019_09_12:
-      module: GMAP-GSNAP/2019-09-12-foss-2019a
-      version: "2019-09-12"
-      verbose: GMAP version 2019-09-12
-      website: http://research-pub.gene.com/gmap/
-      citation: >
-        Thomas D. Wu and Colin K. Watanabe
-        GMAP: a genomic mapping and alignment program for mRNA and EST sequences
-        Bioinformatics 2005 21:1859-1875
     gridss_2_6_3:
       module: gridss/2.6.3
       version: "2.6.3"
@@ -148,15 +131,6 @@ constants:
         Adalsteinsson, Ha, Freeman, et al. Scalable whole-exome sequencing of
         cell-free DNA reveals high concordance with metastatic tumors. (2017)
         Nature Communications Nov 6;8(1):1324. doi: 10.1038/s41467-017-00965-y
-    jellyfish_2_3_0:
-      module: Jellyfish/2.3.0-foss-2019a
-      version: "2.3.0"
-      verbose: jellyfish 2.3.0
-      website: https://github.com/gmarcais/Jellyfish
-      citation: >
-        Guillaume Marcais and Carl Kingsford, A fast, lock-free approach for efficient
-        parallel counting of occurrences of k-mers.
-        Bioinformatics (2011) 27(6): 764-770 (first published online January 7, 2011) doi:10.1093/bioinformatics/btr011
     lancet_1_0_7:
       module: lancet/1.0.7
       version: "1.0.7"
@@ -317,16 +291,6 @@ constants:
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
-    trinity_2_8_6:
-      module: trinityrnaseq/2.8.6
-      version: "2.8.6"
-      verbose: Trinity Release v2.8.6
-      website: https://github.com/trinityrnaseq/trinityrnaseq
-      citation: >
-        Grabherr MG, Haas BJ, Yassour M, Levin JZ, Thompson DA, Amit I, Adiconis X, Fan L, Raychowdhury R,
-        Zeng Q, Chen Z, Mauceli E, Hacohen N, Gnirke A, Rhind N, di Palma F, Birren BW, Nusbaum C, Lindblad-Toh K,
-        Friedman N, Regev A. Full-length transcriptome assembly from RNA-seq data without a reference genome.
-        Nat Biotechnol. 2011 May 15;29(7):644-52. doi: 10.1038/nbt.1883. PubMed PMID: 21572440
     vardict_1_7_0:
       module: vardict/1.7.0
       version: "1.7.0"
