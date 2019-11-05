@@ -65,14 +65,14 @@
     set -o pipefail
     module load {{ constants.tools.gatk_4_1_4_0.module }}
 
+    {# Removed --emit-original-quals and --use-original-quals #}
+    {# --emit* results in a "significant increase of the file size" #}
     gatk ApplyBQSR \
       --java-options "-Xmx28G" \
-      --use-original-qualities \
       --static-quantized-quals 10 \
       --static-quantized-quals 20 \
       --static-quantized-quals 30 \
       --static-quantized-quals 40 \
-      --emit-original-quals  \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
       --bqsr-recal-file "temp/{{ sample.name }}.{{ aligner }}.recal_data.table" \
