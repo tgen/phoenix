@@ -86,7 +86,7 @@
 {% set cram_path %}{{ results_dir }}/{{ sample.name }}_starfusion.cram{% endset %}
 {% set aligner = 'star' %}
 
-- name: bam_to_cram_{{ sample.name }}_{{ aligner }}
+- name: bam_to_cram_{{ sample.name }}_{{ aligner }}_fusion
   tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
   input: {{ bam_path }}
   output: {{ cram_path }}
