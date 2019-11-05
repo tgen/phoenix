@@ -359,7 +359,7 @@ constants:
       XCSCR:
         chemistry_name: SC3Pv2
         umi_length: 10
-        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt{
+        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
       X3SC3:
         chemistry_name: SC3Pv3
         umi_length: 12
