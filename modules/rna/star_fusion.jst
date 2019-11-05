@@ -26,6 +26,7 @@
   {% for fq in r2fqlist %}
     - temp/fastqs/{{ fq.basename }}
   {% endfor %}
+  output: {{ results_dir }}/{{ sample.name }}_starfusion.bam
   cpus: 20
   mem: 60G
   walltime: "24:00:00"
@@ -68,8 +69,9 @@
       - DO WE WANT THE BAM FILE?
       - MOVING ENTIRE FUSION INSPECTOR FOLDER, NEED TO DECIDE IF THERE ARE THINGS TO KEEP
     #}
-
+    {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
     mv "{{ temp_dir }}"/Aligned.out.bam "{{ results_dir }}"/"{{ sample.name }}"_starfusion.bam
+    {% endif %}
     mv "{{ temp_dir }}"/Chimeric.out.junction "{{ results_dir }}"/"{{ sample.name }}"_starfusion_Chimeric.out.junction
     mv "{{ temp_dir }}"/star-fusion.fusion_evidence_reads_1.fq "{{ results_dir }}"/"{{ sample.name }}"_starfusion_evidence_reads_1.fq
     mv "{{ temp_dir }}"/star-fusion.fusion_evidence_reads_2.fq "{{ results_dir }}"/"{{ sample.name }}"_starfusion_evidence_reads_2.fq
@@ -78,5 +80,34 @@
     mv "{{ temp_dir }}"/star-fusion.fusion_predictions.tsv "{{ results_dir }}"/"{{ sample.name }}"_starfusion_predictions.tsv
     mv "{{ temp_dir }}"/FusionInspector-inspect "{{ results_dir }}"
 
+{% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
+{% if cram|default(true) %}
+{% set bam_path %}{{ results_dir }}/{{ sample.name }}_starfusion.bam{% endset %}
+{% set cram_path %}{{ results_dir }}/{{ sample.name }}_starfusion.cram{% endset %}
+{% set aligner = 'star' %}
+
+- name: bam_to_cram_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
+  input: {{ bam_path }}
+  output: {{ cram_path }}
+  walltime: "8:00:00"
+  cpus: 8
+  mem: 3G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    samtools view \
+      -C \
+      -@ 8 \
+      --reference "{{ constants.phoenix.star_fasta }}" \
+      -o "{{ cram_path }}" \
+      "{{ bam_path }}"
+
+    samtools index "{{ cram_path }}"
+{% endif %}
+{% endif %}
 
 {% endmacro -%}

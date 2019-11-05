@@ -6,7 +6,6 @@
 
 - name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetrics, {{ sample.name }}]
-  tags: [gatk, picard, collectwgsmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
   walltime: "24:00:00"
   cpus: 16

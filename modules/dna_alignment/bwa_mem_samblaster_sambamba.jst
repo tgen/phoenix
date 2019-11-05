@@ -55,7 +55,6 @@
 
 - name: bwa_mem_samblaster_sambamba_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, mark_duplicates, bwa, samblaster, sambamba, {{ sample.name }}]
-  tags: [bwa, bwa-mem, samblaster, sambamba, sambamba-view, sambamba-sort]
   after: cat_fastqs_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "48:00:00"
