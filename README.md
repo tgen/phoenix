@@ -19,7 +19,7 @@ Last Update October 21, 2019
 | [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.6.3 |  |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release |
 | [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | |
-| [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.1.0 | **0.2.0** | package in R/3.4.1 module |
+| [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module |
 | [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | |
