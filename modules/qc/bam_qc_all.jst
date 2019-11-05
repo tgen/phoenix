@@ -233,7 +233,7 @@
       | \
     bcftools annotate \
       --threads 2 \
-      --include 'INFO/DP >= 5'
+      --include 'INFO/DP >= 5' \
       --rename-chrs "{{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}" \
       --output-type v \
       --output "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
