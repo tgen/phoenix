@@ -159,7 +159,7 @@
 
     {# Filter out Blacklist regions. https://doi.org/10.1038/s41598-019-45839-z #}
     bcftools view \
-      --targets-file ^{{ constants.install_path.path_to_phoenix_repo }}/{{ constants.phoenix.black_list }} \
+      --targets-file ^{{ constants.phoenix.black_list }} \
       --output-type v \
       --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
