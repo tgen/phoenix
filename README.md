@@ -14,10 +14,10 @@ Last Update October 21, 2019
 | [cellranger](https://github.com/lh3/bwa/releases) | 3.1.0 | 3.1.0 | | No? |
 | [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container | |
 | [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons | Yes |
-| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions | |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions | Yes |
 | [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  | Yes |
 | [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion | Yes |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.6.3 |  | |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.7.2 |  | |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | |
 | [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | | |
 | [htslib](https://github.com/samtools/htslib/releases) | 1.9 | 1.9 | star-fusion(bgzip) | Yes |
@@ -41,7 +41,7 @@ Last Update October 21, 2019
 | [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
 | [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion | Yes |
 | [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | |
-| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.7 | 0.7.7 | | |
+| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.9 | 0.7.9 | | |
 | [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
