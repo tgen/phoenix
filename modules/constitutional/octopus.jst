@@ -19,7 +19,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.octopus_0_6_3b.module }}
+    module load {{ constants.tools.octopus.module }}
 
     mkdir -p "{{ temp_dir }}"
 
@@ -59,7 +59,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -87,7 +87,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     {# Then filter out the passing variants to a separate file #}
     bcftools filter \

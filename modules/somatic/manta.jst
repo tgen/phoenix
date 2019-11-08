@@ -9,7 +9,7 @@
   tags: [manta, manta-somatic, {{ pair.gltype }}]
   methods: > 
     Somatic structural variants and indels for {{ pair.name }} ({{ aligner }}) 
-    were called with {{ constants.tools.manta_1_6.verbose }}.
+    were called with {{ constants.tools.manta.verbose }}.
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -23,8 +23,8 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.manta_1_6.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.manta.module }}
+    module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
     {# Purge any existing run files prior to starting #}

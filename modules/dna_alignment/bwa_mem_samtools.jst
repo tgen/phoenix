@@ -66,7 +66,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bwa.module }} {{ constants.tools.samtools_1_9.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist

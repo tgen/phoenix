@@ -12,7 +12,7 @@
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
   methods: > 
     Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
-    {{ constants.tools.strelka_2_9_10.verbose }}.
+    {{ constants.tools.strelka.verbose }}.
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -22,8 +22,8 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.strelka_2_9_10.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.strelka.module }}
+    module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
     {# Purge any existing run files prior to starting #}
@@ -81,7 +81,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     mkdir -p "{{ results_dir }}/evidence"
   

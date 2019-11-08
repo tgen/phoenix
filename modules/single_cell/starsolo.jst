@@ -28,7 +28,7 @@
   tags: [{{ sample.gltype }}, single_cell, starsolo_count, {{ sample.name }}]
   methods: >
     Alignment and quantification for {{ sample.name }} was performed with
-    {{ constants.tools.star_2_7_3a.verbose }} using the genome index.
+    {{ constants.tools.star.verbose }} using the genome index.
   input:
   {% for fq in datafiles %}
       - temp/fastqs/{{ fq.basename }}
@@ -40,7 +40,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.star_2_7_3a.module }}
+    module load {{ constants.tools.star.module }}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"

@@ -12,7 +12,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     {# Write the needed header lines to a temporary file, which will be inserted into the VCF #}
     echo "##INFO=<ID=RNA_REF_COUNT,Number=.,Type=Integer,Description="Count of REF alleles seen in RNA">" > {{ temp_dir }}/temp_header
@@ -61,9 +61,9 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9.module }}
-    module load {{ constants.tools.bedtools_2_29_0.module }}
-    module load {{ constants.tools.freebayes_1_3_1.module }}
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.bedtools.module }}
+    module load {{ constants.tools.freebayes.module }}
 
     cut -f2,3 "{{ constants.phoenix.reference_dict }}" | \
       awk 'NR>1' | \

@@ -8,8 +8,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.python_3_6_0.module }}
-    module load {{ constants.tools.cuda_toolkit_10_0_0.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.cuda_toolkit.module }}
 
     {# No long options available for the following:
       -A      Gene annotation file
@@ -33,7 +33,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     bcftools filter \
       --output-type z \

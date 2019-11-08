@@ -67,7 +67,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bwa.module }} {{ constants.tools.samtools_1_9.module }}
 
     {# No long options available for the following:
      bwa mem
@@ -107,7 +107,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
@@ -145,7 +145,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.gatk.module }}
 
     gatk SortSam \
       --java-options "-Xmx28G" \
