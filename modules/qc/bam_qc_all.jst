@@ -144,7 +144,9 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.R.module }}
 
     mkdir -p "{{ stats_dir }}"
 
