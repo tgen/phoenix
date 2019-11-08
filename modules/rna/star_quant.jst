@@ -45,7 +45,7 @@
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
-    {{ constants.tools.star_2_7_3a.verbose }} followed by TODO...
+    {{ constants.tools.star.verbose }} followed by TODO...
   input:
     {% for fq in r1fqlist %}
     - {{ fq.path }}
@@ -60,7 +60,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.star_2_7_3a.module }}
+    module load {{ constants.tools.star.module }}
 
     mkdir -p "{{ star_tempdir }}"
     mkdir -p "{{ star_finaldir }}"
@@ -260,7 +260,7 @@ which appears to be working now after some code changes, keeping this here in ca
     mkdir -p "{{ star_tempdir }}/markdup_gatk"
     mkdir -p "{{ star_finaldir }}/stats_gatk/"
 
-    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
@@ -288,7 +288,7 @@ which appears to be working now after some code changes, keeping this here in ca
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.htseq_0_11_1.module }}
+    module load {{ constants.tools.htseq.module }}
     
     mkdir -p "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/"
 
@@ -333,7 +333,7 @@ which appears to be working now after some code changes, keeping this here in ca
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.subread_2_0_0.module }}
+    module load {{ constants.tools.subread.module }}
     
     mkdir -p "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/"
 

@@ -8,8 +8,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.vep_98_3.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.vep.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     {# Use VEP to create full annotation file with all transcripts #}
     vep --fork 4 \
@@ -60,8 +60,8 @@
   cmd: |
     set -euv
 
-    module load {{ constants.tools.vep_98_3.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.vep.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     {# Use VEP to create full annotation file with all transcripts #}
     vep --fork 4 \

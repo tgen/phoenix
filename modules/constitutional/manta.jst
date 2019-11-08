@@ -7,7 +7,7 @@
   tags: [{{ sample.gltype}}, constitutional, structural_caller, manta, {{ sample.name }}]
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
-    ({{ aligner }}) were called with {{ constants.tools.manta_1_6.verbose }}.
+    ({{ aligner }}) were called with {{ constants.tools.manta.verbose }}.
   input: {{ bam }}
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
@@ -19,8 +19,8 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.manta_1_6.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.manta.module }}
+    module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
     {# Purge any existing run files prior to starting #}

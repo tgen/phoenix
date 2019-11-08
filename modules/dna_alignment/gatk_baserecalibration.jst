@@ -11,7 +11,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.gatk.module }}
 
     gatk \
       --java-options "-Xmx14G" \
@@ -40,7 +40,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.gatk.module }}
 
     gatk \
       --java-options "-Xmx14G" \
@@ -55,7 +55,7 @@
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
   methods: Reads for {{ sample.name }} were processed with
-    {{ constants.tools.gatk_4_1_0_0.verbose }} BaseRecalibrator to correct
+    {{ constants.tools.gatk.verbose }} BaseRecalibrator to correct
     systematic errors in base quality scores.
   after: gather_bqsr_reports_{{ sample.name }}_{{ aligner }}
   walltime: "4:00:00"
@@ -63,7 +63,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.gatk.module }}
 
     {# Removed --emit-original-quals and --use-original-quals #}
     {# --emit* results in a "significant increase of the file size" #}
@@ -95,7 +95,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk_4_1_4_0.module }}
+    module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/"

@@ -63,9 +63,9 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.bwa_0_7_17.module }}
-    module load {{ constants.tools.samblaster_0_1_24.module }}
-    module load {{ constants.tools.sambamba_0_7_0.module }}
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.samblaster.module }}
+    module load {{ constants.tools.sambamba.module }}
 
     {# No long options available for the following:
      bwa mem

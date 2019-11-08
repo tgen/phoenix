@@ -22,7 +22,7 @@
   tags: [{{ sample.gltype }}, single_cell, cellranger_count, {{ sample.name }}]
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
-    {{ constants.tools.cellranger_3_1_0.verbose }} using the cDNA index.
+    {{ constants.tools.cellranger.verbose }} using the cDNA index.
   input:
   {% for fq in datafiles %}
    - temp/fastqs/{{ fq.basename }}
@@ -34,7 +34,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.cellranger_3_1_0.module }}
+    module load {{ constants.tools.cellranger.module }}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"

@@ -19,10 +19,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.R_3_6_1.module }}
-    module load {{ constants.tools.vardict_1_7_0.module }}
-    module load {{ constants.tools.bedtools_2_29_0.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.vardict.module }}
+    module load {{ constants.tools.bedtools.module }}
+    module load {{ constants.tools.bcftools.module }}
     
     mkdir -p "{{ temp_dir }}"
 
@@ -193,7 +193,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
     
     mkdir -p "{{ results_dir }}"
     
@@ -222,7 +222,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
     
     bcftools filter \
       --output-type z \

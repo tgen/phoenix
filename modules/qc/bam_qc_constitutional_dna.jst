@@ -13,7 +13,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.verifybamid2_1_0_6.module }}
+    module load {{ constants.tools.verifybamid2.module }}
 
     mkdir -p "{{ stats_dir }}"
 
@@ -58,7 +58,7 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
-    module load {{ constants.tools.freebayes_1_3_1.module }}
+    module load {{ constants.tools.freebayes.module }}
 
     mkdir -p "{{ temp }}/temp"
 

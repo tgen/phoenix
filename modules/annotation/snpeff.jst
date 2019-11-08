@@ -10,8 +10,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.snpeff_4_3t.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.snpeff.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     {# No long options available for the following:
       -t      Use multiple threads (implies '-noStats')

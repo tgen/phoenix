@@ -20,8 +20,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.lancet_1_0_7.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.lancet.module }}
+    module load {{ constants.tools.bcftools.module }}
     
     mkdir -p "{{ temp_dir }}"
 
@@ -70,7 +70,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -102,7 +102,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     bcftools filter \
       --output-type z \

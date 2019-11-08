@@ -42,14 +42,14 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.vcfmerger2_0_7_9.module }}
+    module load {{ constants.tools.vcfmerger2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
-    module load {{ constants.tools.R_3_6_1.module }}
-    module load {{ constants.tools.phaser_1_1_1.module }}
-    module load {{ constants.tools.python_3_6_0.module }}
-    module load {{ constants.tools.bedtools_2_29_0.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.phaser.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
     module load {{ constants.tools.python_2_7_13.module }}
-    module load {{ constants.tools.vt_0_57721.module }}
+    module load {{ constants.tools.vt.module }}
     
     mkdir -p "{{ temp_dir }}"
     gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
@@ -77,7 +77,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bcftools.module }}
 
     bcftools filter \
       --output-type v \
@@ -101,14 +101,14 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.vcfmerger2_0_7_9.module }}
+    module load {{ constants.tools.vcfmerger2.module }}
     module load {{ constants.tools.samtools_1_9.module }}
-    module load {{ constants.tools.R_3_6_1.module }}
-    module load {{ constants.tools.phaser_1_1_1.module }}
-    module load {{ constants.tools.python_3_6_0.module }}
-    module load {{ constants.tools.bedtools_2_29_0.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.phaser.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
     module load {{ constants.tools.python_2_7_13.module }}
-    module load {{ constants.tools.vt_0_57721.module }}
+    module load {{ constants.tools.vt.module }}
 
     mkdir -p "{{ results_dir }}"
     

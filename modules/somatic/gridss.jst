@@ -16,13 +16,13 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.sambamba_0_7_0.module }}
-    module load {{ constants.tools.bwa_0_7_17.module }}
-    module load {{ constants.tools.R_3_6_1.module }}
+    module load {{ constants.tools.sambamba.module }}
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.R.module }}
     {# gcc/5.1.0 gets loaded with R/3.5.2 on our system #}
-    module load {{ constants.tools.gcc_5_1_0.module }}
+    module load {{ constants.tools.gcc.module }}
     {# all of the modules above get loaded with gridss at the moment, but this many not be the case on other systems #}
-    module load {{ constants.tools.gridss_2_6_3.module }}
+    module load {{ constants.tools.gridss.module }}
 
     mkdir -p {{ results_dir }}
 

@@ -21,7 +21,7 @@
   tags: [{{ sample.gltype }}, single_cell, cellranger_count, {{ sample.name }}]
   methods: >
     T-cell and B-cell VDJ assembly for {{ sample.name }} was performed with
-    {{ constants.tools.cellranger_3_1_0.verbose }} using the included refernce package.
+    {{ constants.tools.cellranger.verbose }} using the included refernce package.
   input:
   {% for fq in datafiles %}
    - temp/fastqs/{{ fq.basename }}
@@ -33,7 +33,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.cellranger_3_1_0.module }}
+    module load {{ constants.tools.cellranger.module }}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
