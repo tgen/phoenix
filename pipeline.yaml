@@ -186,7 +186,7 @@ constants:
       citation: >
         Python Software Foundation. Python Language Reference, version 2.7.15. Available at http://www.python.org
     python_3_7_2:
-      module: Python/3.7.2-GCCcore-8.2.0
+      module: Python/3.7.2-foss-2019a
       version: 3.7.2
       verbose: Python v3.7.2
       website: https://www.python.org
