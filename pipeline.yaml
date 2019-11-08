@@ -191,7 +191,7 @@ constants:
       verbose: Python v3.7.2
       website: https://www.python.org
       citation: >
-        Python Software Foundation. Python Language Reference, version 3.6.0. Available at http://www.python.org
+        Python Software Foundation. Python Language Reference, version 3.7.2. Available at http://www.python.org
     R:
       module: R/3.6.1-phoenix
       version: "3.6.1"
@@ -240,7 +240,7 @@ constants:
       verbose: Singularity v3.1.0
       website: https://www.sylabs.io/singularity/
     snpeff:
-      module: snpEff/v4_3t
+      module: snpEff/4.3t-Java-1.8
       version: "4.3T"
       verbose: SnpEff v4.3T
       website: http://snpeff.sourceforge.net/index.html
