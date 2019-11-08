@@ -114,25 +114,25 @@
     then
       {# Sample meets depth requirements for genotype checks #}
       {# Calculate homozygous rate #}
-      HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | awk '{printf "%.3f\n", $1/$2}')
+      HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | gawk '{printf "%.3f\n", $1/$2}')
       {# Predict Sex #}
-      HOMOZYGOUS_RATE_SEX_PREDICTION=$(echo ${X_HOMOZYGOUS_RATE_THRESHOLD} ${HOMOZYGOUS_RATE} | awk '{if ($1 < $2) print "Male"; else print "Female"}')
+      HOMOZYGOUS_RATE_SEX_PREDICTION=$(echo ${X_HOMOZYGOUS_RATE_THRESHOLD} ${HOMOZYGOUS_RATE} | gawk '{if ($1 < $2) print "Male"; else print "Female"}')
 
       {# Calculate homozygous alternate alternative genotype rate BB.count/(AB.count + BB.count) #}
-      B_ALLELE_GENOTYPES=$(echo $HOMOZYGOUS_ALTERNATE $HETEROZYGOUS | awk '{printf $1+$2}')
-      BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| awk '{printf "%.3f\n", $1/$2}')
+      B_ALLELE_GENOTYPES=$(echo $HOMOZYGOUS_ALTERNATE $HETEROZYGOUS | gawk '{printf $1+$2}')
+      BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| gawk '{printf "%.3f\n", $1/$2}')
       {# Predict Sex #}
-      BB_ALT_RATE_SEX_PREDICTION=$(echo ${X_BB_ALT_RATE_THRESHOLD} ${BB_ALT_RATE} | awk '{if ($1 < $2) print "Male"; else print "Female"}')
+      BB_ALT_RATE_SEX_PREDICTION=$(echo ${X_BB_ALT_RATE_THRESHOLD} ${BB_ALT_RATE} | gawk '{if ($1 < $2) print "Male"; else print "Female"}')
     else
       {# Sample does not meet depth requirements, hard code sex predictions to "Undetermined" #}
       {# Calculate homozygous rate #}
-      HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | awk '{printf "%.3f\n", $1/$2}')
+      HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | gawk '{printf "%.3f\n", $1/$2}')
       {# Predict Sex #}
       HOMOZYGOUS_RATE_SEX_PREDICTION="Undetermined"
 
       {# Calculate homozygous alternate alternative genotype rate BB.count/(AB.count + BB.count) #}
-      B_ALLELE_GENOTYPES=$(echo $HOMOZYGOUS_ALTERNATE $HETEROZYGOUS | awk '{printf $1+$2}')
-      BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| awk '{printf "%.3f\n", $1/$2}')
+      B_ALLELE_GENOTYPES=$(echo $HOMOZYGOUS_ALTERNATE $HETEROZYGOUS | gawk '{printf $1+$2}')
+      BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| gawk '{printf "%.3f\n", $1/$2}')
       {# Predict Sex #}
       BB_ALT_RATE_SEX_PREDICTION="Undetermined"
     fi
@@ -177,11 +177,11 @@
     READS_ON_Y=`samtools view -c -q 30 -f 67 {{ bam_path }} chrY:2781480-56887902 chrY:57217416-57227415`
 
     {# Calculate the Y/(X+Y) read ratio #}
-    TOTAL_SEX_CHR_READS=$(echo $READS_ON_X $READS_ON_Y | awk '{printf $1+$2}')
-    Y_READS_SEX_CHR_RATIO=$(echo $READS_ON_Y $TOTAL_SEX_CHR_READS| awk '{printf "%.3f\n", $1/$2}')
+    TOTAL_SEX_CHR_READS=$(echo $READS_ON_X $READS_ON_Y | gawk '{printf $1+$2}')
+    Y_READS_SEX_CHR_RATIO=$(echo $READS_ON_Y $TOTAL_SEX_CHR_READS| gawk '{printf "%.3f\n", $1/$2}')
 
     {# Assign predicted sex based on defined threshold #}
-    READ_COUNT_SEX_PREDICTION=$(echo ${Y_SEX_CHR_READ_RATIO_THERSHOLD} ${Y_READS_SEX_CHR_RATIO} | awk '{if ($1 < $2) print "Male"; else print "Female"}')
+    READ_COUNT_SEX_PREDICTION=$(echo ${Y_SEX_CHR_READ_RATIO_THERSHOLD} ${Y_READS_SEX_CHR_RATIO} | gawk '{if ($1 < $2) print "Male"; else print "Female"}')
 
     {# Use READ_COUNT_SEX_PREDICTION, others are used to improve confidence level #}
     if [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Male" && $BB_ALT_RATE_SEX_PREDICTION == "Male" && $READ_COUNT_SEX_PREDICTION == "Male" ]]
