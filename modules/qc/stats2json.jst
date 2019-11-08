@@ -1,0 +1,14 @@
+# This macro is used to run the samStats2json.py script on individual
+# stats files produced by bam_qc steps to get a structured json file
+# that help facilitate downstream analysis and upload to LIMS via REST api integration.
+
+{% macro stats2json(sample, task, input_file, file_type ) %}
+- name: stats2json_{{ sample.name }}_{{ task }}
+  tags: [{{ sample.gltype }}, quality_control, stats, stats2json, {{ sample.name }}]
+  after: {{ task }}
+  walltime: "1:00:00"
+  cpus: 1
+  cmd: |
+    set -eu
+    set -o pipefail
+{% endmacro %}

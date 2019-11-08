@@ -1,0 +1,15 @@
+# This macro is used to run the TGen specific uploadStats2Lims.py script on individual
+# stats files produced by bam_qc steps that have been converted into a structured json file
+# to upload to LIMS via REST api integration.
+
+
+{% macro stats2lims(sample, task ) %}
+- name: stats2lims_{{ sample.name }}_{{ task }}
+  tags: [{{ sample.gltype }}, quality_control, stats, stats2json, {{ sample.name }}]
+  after: {{ task }}
+  walltime: "1:00:00"
+  cpus: 1
+  cmd: |
+    set -eu
+    set -o pipefail
+{% endmacro %}
