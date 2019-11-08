@@ -5,46 +5,46 @@ This workflow supports the analysis of human sequencing samples against the GRCh
 ### Tools Used by the Workflow (All tools build with public easybuild configuration files - REPO-X)
 Last Update October 21, 2019
 
-| Tool | Version Implemented | Current Version | Dependancy and Notes |
-| :---: | :---: | :---: | :--- |
-| [bcftools](https://github.com/samtools/bcftools/releases) | 1.9 | 1.9 | |
-| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | 2.29.0 | delly-filter, addmatchRNA, vardict, vcfmerger2 |
-| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | 2.3.5.1 | star-fusion |
-| [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | |
-| [cellranger](https://github.com/lh3/bwa/releases) | 3.1.0 | 3.1.0 | |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container |
-| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons |
-| [featurecounts](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package |
-| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions |
-| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  |
-| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.6.3 |  |
-| [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release |
-| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | |
-| [htslib](https://github.com/samtools/htslib/releases) | 1.9 | 1.9 | star-fusion(bgzip) |
-| [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module |
-| [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion |
-| [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | |
-| [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | |
-| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | |
-| [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion |
-| [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 |
-| [python](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 |
-| [R](https://www.r-project.org/) | 3.6.1 | 3.6.1 | gatk cnv, varDict, vcfmerger2 |
-| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | 0.7.0 | |
-| [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | |
-| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | 0.14.2 | self, star-fusion |
-| [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch |
-| [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017|
-| [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | self, star-fusion |
-| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | |
-| [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | |
-| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion |
-| [vardict](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | |
-| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.7 | 0.7.7 | |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | |
-| [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | |
-| [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | |
+| Tool | Version Implemented | Current Version | Dependancy and Notes | EasyBuild |
+| :---: | :---: | :---: | :--- | :---: |
+| [bcftools](https://github.com/samtools/bcftools/releases) | 1.9 | 1.9 | | Yes |
+| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | 2.29.0 | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
+| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | 2.3.5.1 | star-fusion | Yes |
+| [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
+| [cellranger](https://github.com/lh3/bwa/releases) | 3.1.0 | 3.1.0 | | No? |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container | |
+| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons | |
+| [featurecounts](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions | |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  | |
+| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion | Yes |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.6.3 |  | |
+| [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | |
+| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | | |
+| [htslib](https://github.com/samtools/htslib/releases) | 1.9 | 1.9 | star-fusion(bgzip) | Yes |
+| [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
+| [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
+| [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | | |
+| [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | |
+| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | |
+| [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion | Yes |
+| [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | |
+| [python](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 | Yes |
+| [R](https://www.r-project.org/) | 3.6.1 | 3.6.1 | gatk cnv, varDict, vcfmerger2 | Yes |
+| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | 0.7.0 | | |
+| [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | | |
+| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | 0.14.2 | self, star-fusion | Yes |
+| [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch | Yes |
+| [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017|  |
+| [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | self, star-fusion | Yes |
+| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | | Yes |
+| [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | | |
+| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion | Yes |
+| [vardict](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | |
+| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.7 | 0.7.7 | | |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | |
+| [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | |
+| [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
     
 #### Required PERL Modules
 XXX
