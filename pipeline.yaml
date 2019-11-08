@@ -65,7 +65,7 @@ constants:
         DELLY: structural variant discovery by integrated paired-end and split-read analysis, Bioinformatics,
         Volume 28, Issue 18, 15 September 2012, Pages i333–i339, https://doi.org/10.1093/bioinformatics/bts378
     freebayes:
-      module: freebayes/1.3.1
+      module: freebayes/1.3.1-foss-2019a
       version: "1.3.1"
       verbose: Freebayes v1.3.1
       website: https://github.com/ekg/freebayes
@@ -171,13 +171,6 @@ constants:
         Rare variant phasing and haplotypic expression from RNA sequencing with phASER
         Stephane E. Castel1,2, Pejman Mohammadi1,2, Wendy K. Chung3, Yufeng Shen2,4 & Tuuli Lappalainen1,2
         Nature Communications volume 7, Article number: 12817 (2016)
-    python_2_7_13:
-      module: python/2.7.13
-      version: 2.7.13
-      verbose: Python v2.7.13
-      website: https://www.python.org
-      citation: >
-        Python Software Foundation. Python Language Reference, version 2.7.13. Available at http://www.python.org
     python_2_7_15:
       module: Python/2.7.15-GCCcore-8.2.0
       version: 2.7.15
