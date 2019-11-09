@@ -2,8 +2,10 @@
 {% from 'modules/single_cell/cellranger_vdj.jst' import cellranger_vdj with context %}
 {% from 'modules/single_cell/starsolo.jst' import starsolo with context %}
 
+{# group dataFiles by their respective library and test if they are single cell or not #}
+{# because each library uses the same set of cell barcodes we cannot collapse by rgsm as it could create in silico cell doublets #}
 {% macro single_cell_rna(dataFiles) %}
-    {% for sample, files in dataFiles|groupby('name') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellrna' %}
+    {% for sample, files in dataFiles|groupby('rglb') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellrna' %}
         {% if tasks["SingleCellRNA_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
             {{- cellranger_count(files) }}
         {% endif %}
@@ -11,7 +13,7 @@
             {{- starsolo(files) }}
         {% endif %}
     {% endfor %}
-    {% for sample, files in dataFiles|groupby('name') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellenrichment' %}
+    {% for sample, files in dataFiles|groupby('rglb') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellenrichment' %}
         {% if tasks["SingleCellRNA_VDJ_Assembly_cellranger_vdj"]|default(true) %}
             {{- cellranger_vdj(files) }}
         {% endif %}
