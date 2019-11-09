@@ -43,11 +43,8 @@
     ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename }}"
     {% endfor %}
 
-    {{ cb_umi_list }}
-    {{ cdna_list }}
-
     {#
-    cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION
+    STAR genome index and related junction database hardcoded to 100bp read length
     #}
     ( cd {{ temp_dir }} && STAR \
       --runMode alignReads \
