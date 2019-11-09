@@ -26,7 +26,34 @@
   {% for fq in datafiles %}
    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ sample.gltype }}/cellranger_vdj/{{ sample.name }}_{{ library }}/
+  output:
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig_annotations.bed
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig_annotations.csv
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig_annotations.json
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig.bam
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig.bam.bai
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig.fasta
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig.fasta.fai
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_all_contig.fastq
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_cell_barcodes.json
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_clonotypes.csv
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_concat_ref.bam
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_concat_ref.bam.bai
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_concat_ref.fasta
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_concat_ref.fasta.fai
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_consensus_annotations.csv
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_consensus_annotations.json
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_consensus.bam
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_consensus.bam.bai
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_consensus.fasta
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_consensus.fasta.fai
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_consensus.fastq
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_filtered_contig_annotations.csv
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_filtered_contig.fasta
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_filtered_contig.fastq
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_metrics_summary.csv
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.vloupe
+    - {{ outdir }}/{{ sample.name }}_{{ library }}_web_summary.html
   cpus: 20
   mem: 80G
   walltime: "48:00:00"

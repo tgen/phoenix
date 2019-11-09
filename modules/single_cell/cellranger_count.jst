@@ -27,7 +27,15 @@
   {% for fq in datafiles %}
    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ library }}/
+  output:
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.bam
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.bam.bai
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.cloupe
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.filtered_feature_bc_matrix.h5
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.metrics_summary.csv
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.molecule_info.h5
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.raw_feature_bc_matrix.h5
+    - {{ outdir }}/{{ sample.name }}_{{ library }}.web_summary.html
   cpus: 20
   mem: 160G
   walltime: "48:00:00"
