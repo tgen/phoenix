@@ -156,7 +156,7 @@ constants:
       doi: 10.1093/bioinformatics/btw354
       PMID: 27312411
     octopus:
-      module: octopus/0.6.3-beta
+      module: Octopus/0.6.3-beta-foss-2019a
       version: 0.6.3-beta
       verbose: Octopus v0.6.3-beta
       website: https://github.com/luntergroup/octopus
@@ -228,9 +228,9 @@ constants:
         Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
         fast and bias-aware quantification of transcript expression. Nature Methods.
     singularity:
-      module: singularity/3.1.0
-      version: "3.1.0"
-      verbose: Singularity v3.1.0
+      module: singularity/3.5.0-rc2
+      version: "3.5.0"
+      verbose: Singularity v3.5.0
       website: https://www.sylabs.io/singularity/
     snpeff:
       module: snpEff/4.3t-Java-1.8
@@ -280,7 +280,7 @@ constants:
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
     vardict:
-      module: vardict/1.7.0
+      module: vardict/1.7.0-java-1.8
       version: "1.7.0"
       verbose: Vardict Java v1.7.0
       website: https://github.com/AstraZeneca-NGS/VarDictJava
@@ -294,7 +294,7 @@ constants:
       verbose: vcfMerger2 v0.7.9
       website: https://github.com/tgen/vcfMerger2
     verifybamid2:
-      module: verifyBamID/1.0.6
+      module: verifyBamID/1.0.6-foss-2019a
       version: 1.0.6
       website: https://github.com/Griffan/VerifyBamID
       citation: >
@@ -302,7 +302,7 @@ constants:
         Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
         sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
     vep:
-      module: vep/98
+      module: VEP/98.0-foss-2019a-Perl-5.28.1
       version: "98.3"
       verbose: ensembl-vep release 98.3
       website: https://github.com/Ensembl/ensembl-vep
