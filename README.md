@@ -2,13 +2,13 @@
 
 This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
 
-## Required Software
+### Required Software
 _Click to show details_
 
 <details>
-<summary><b>###Public Tools Used by the Workflow</b></summary>
+<summary><b>Public Tools Used by the Workflow</b></summary>
 All tools build with public easybuild configuration files - REPO-X.  
-Last Update October 21, 2019
+Last Update October 21, 2019 
 
 | Tool | Version Implemented | Current Version | Dependancy and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
@@ -54,26 +54,42 @@ Last Update October 21, 2019
 
 </details>
 
-#### Required PERL Modules
-XXX
+<details>
+<summary><b>Required PERL Modules</b></summary>
 
-#### Required PYTHON2 Modules
+* XXX
 
+</details>
 
-#### Required PYTHON3 Modules
+<details>
+<summary><b>Required PYTHON2 Modules</b></summary>
 
-cyvcf2
-getopt
-igv_reports
-multiprocessing
-PIL
-pybedtools
-pysam
-requests
-sys (argv, exit)
+* XXX
 
-#### Required R Libraries
-XXX
+</details>
+
+<details>
+<summary><b>Required PYTHON3 Modules</b></summary>
+
+* cyvcf2
+* getopt
+* igv_reports
+* multiprocessing
+* PIL
+* pybedtools
+* pysam
+* requests
+* sys (argv, exit)
+
+</details>
+
+<details>
+<summary><b>Required R Libraries</b></summary>
+
+* ichorCNA2.0
+* tidyverse (ggplot)
+
+</details>
 
 ### Single Cell RNA Sequencing Analysis
 Two options exist for alignment and gene expression count generation per cell.
