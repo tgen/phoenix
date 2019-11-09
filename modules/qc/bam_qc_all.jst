@@ -43,6 +43,7 @@
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ stats_dir }}/{{ bam_path|basename }}.{{ lb }}.bamstats.txt
   walltime: "4:00:00"
   cpus: 4
   mem: 8G
@@ -84,6 +85,7 @@
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt
   walltime: "4:00:00"
   cpus: 4
   mem: 8G
@@ -111,6 +113,7 @@
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
   input: {{ bam_path }}
+  output: {{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt
   walltime: "4:00:00"
   cpus: 1
   mem: 2G
@@ -207,6 +210,7 @@
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, genotype_concordance, snpSniffer, {{ sample.name }}]
   input: {{ bam_path }}
+  output: {{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf
   cpus: 4
   cmd: |
     set -eu

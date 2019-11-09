@@ -7,6 +7,7 @@
 - name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectHsMetrics, {{ sample.name }}]
   input: {{ bam_path }}
+  output: {{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt
   walltime: "8:00:00"
   cpus: 16
   cmd: |

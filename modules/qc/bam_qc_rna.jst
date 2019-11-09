@@ -8,6 +8,7 @@
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
   tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
   input: {{ bam_path }}
+  output: {{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt
   walltime: "8:00:00"
   cpus: 16
   cmd: |
@@ -36,6 +37,7 @@
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
   tags: [rna, counts, BTcellLociCounts, {{ sample.gltype }}]
   input: {{ bam_path }}
+  output: {{ stats_dir }}/{{ sample.name }}.BTcell.loci.counts.txt
   walltime: "8:00:00"
   cpus: 2
   cmd: |
