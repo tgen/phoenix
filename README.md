@@ -6,9 +6,11 @@ This workflow supports the analysis of human sequencing samples against the GRCh
 _Click to show details_
 
 <details>
-<summary><b>Public Tools Used by the Workflow</b></summary>
-All tools build with public easybuild configuration files - REPO-X.  
-Last Update October 21, 2019 
+<summary><b>Public Tools Used by the Workflow</b></summary>  
+
+All tools build with public easybuild configuration files - **REPO-X**.<br/>
+Last Update October 21, 2019  
+
 
 | Tool | Version Implemented | Current Version | Dependancy and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
