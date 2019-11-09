@@ -2,10 +2,11 @@
 
 This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
 
+## Required Software
 _Click to show details_
 
 <details>
-<summary><b>Tools Used by the Workflow</b></summary>
+<summary><b>###Public Tools Used by the Workflow</b></summary>
 All tools build with public easybuild configuration files - REPO-X.  
 Last Update October 21, 2019
 
