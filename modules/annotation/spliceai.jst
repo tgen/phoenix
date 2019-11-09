@@ -1,4 +1,4 @@
-{% macro spliceai(vcf, out) %}
+{% macro spliceai(vcf, output_vcf) %}
 {% set temp_vcf %}temp/{{ vcf|sha256 }}.vcf{% endset %}
 - name: spliceai_{{ vcf|sha256 }}
   tags: [ spliceai, annotate_vcfs]
@@ -28,7 +28,7 @@
 - name: spliceai_filter_{{ vcf|sha256 }}
   tags: [ spliceai, annotate_vcfs]
   after: spliceai_{{ vcf|sha256 }}
-  output: {{ out }}
+  output: {{ output_vcf }}
   cpus: 2
   cmd: |
     set -eu
@@ -38,7 +38,7 @@
     bcftools filter \
       --output-type z \
       --include 'INFO/SpliceAI != "."' \
-      --output "{{ out }}" \
+      --output "{{ output_vcf }}" \
       "{{ temp_vcf }}"
 
     rm "{{ temp_vcf }}"

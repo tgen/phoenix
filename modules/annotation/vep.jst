@@ -2,6 +2,8 @@
 - name: vep_all_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
   after: {{ after_task }}
+  input: {{ input_vcf }}
+  output: {{ final_vcf_prefix }}.vep.full.vcf.gz
   walltime: "8:00:00"
   cpus: 4
   cmd: |
@@ -55,6 +57,8 @@
 - name: vep_con_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
   after: {{ after_task }}
+  input: {{ input_vcf }}
+  output: {{ final_vcf_prefix }}.vep.full.vcf.gz
   walltime: "8:00:00"
   cpus: 4
   cmd: |
