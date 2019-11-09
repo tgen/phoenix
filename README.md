@@ -2,6 +2,93 @@
 
 This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
 
+## Supported Analysis
+
+_Click to show details_
+
+<details>
+  <summary><b>DNA Alignment</b></summary>
+
+  The DNA Alignment module takes fastqs to aligned BAMs, then runs BAM qc steps.
+  `dnaAlignmentStyle` can be used to select from different alignment strategies.
+
+</details>
+
+<details>
+  <summary><b>Somatic Variant Calling</b></summary>
+  
+  This module will run several somatic variant callers on tumor/normal 
+  data pairs:
+
+  - Strelka2 (Somatic mode)
+  - Mutect2
+  - Lancet
+    - We do NOT run it on genomes 
+  - VarDictJava
+  - Octopus (Only calls on primary contigs 1-22, X, Y)
+
+</details>
+
+<details>
+  <summary><b>Constitutional Variant Calling</b></summary>
+  
+  Generates constitutional variant call files (VCF) with several callers. Additionally,
+  this will create a gVCF for each sample that can be used to jointly call large
+  cohorts.
+
+  - Deepvariant (Only calls on primary contigs 1-22, X, Y)
+  - GATK HaplotypeCaller (gVCF mode)
+    - single sample calling using genotypeGVCFs and CNNscroreVariant
+  - Freebayes
+  - Strelka2 (Germline mode)
+  - Octopus (Individual) (Only calls on primary contigs 1-22, X, Y)
+
+</details>
+
+<details>
+  <summary><b>RNA Alignment</b></summary>
+
+  - STAR
+
+</details>
+
+<details>
+  <summary><b>Gene Expression Estimates</b></summary>
+
+  - Salmon
+  - Star-count - Recommended count method
+  - HtSeq
+  - FeatureCounts
+
+</details>
+
+<details>
+  <summary><b>Fusion Transcript Detection</b></summary>
+
+  - Salmon
+  - Star-count - Recommended count method
+  - HtSeq
+  - FeatureCounts
+
+</details>
+
+<details>
+  <summary><b>Single Cell Sequencing</b></summary>
+  
+  We support multiple things
+    
+  <details>
+    <summary><b>scRNAseq</b></summary>
+    XXX
+  </details>
+  
+  <details>
+    <summary><b>scDNAseq</b></summary>
+    YYY
+  </details>
+
+</details>
+
 ### Required Software
 _Click to show details_
 
@@ -35,7 +122,8 @@ Last Update October 21, 2019
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
 | [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | |
-| [python](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 | Yes |
+| [python2](https://www.python.org/downloads/) |  | 2.7.14 | | |
+| [python3](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 | Yes |
 | [R](https://www.r-project.org/) | 3.6.1 | 3.6.1 | gatk cnv, varDict, vcfmerger2 | Yes |
 | [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | 0.7.0 | | |
 | [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | | |
@@ -732,43 +820,7 @@ Now we wait for the pipeline to finish!
 
 ___
 
-## Features
 
-_Click to show details_
-
-<details>
-  <summary><b>DNA Alignment</b></summary>
-
-  The DNA Alignment module takes fastqs to aligned BAMs, then runs BAM qc steps.
-  `dnaAlignmentStyle` can be used to select from different alignment strategies.
-
-</details>
-
-<details>
-  <summary><b>Somatic Variant Calling</b></summary>
-  
-  This module will run several somatic variant callers on tumor/normal 
-  data pairs:
-
-  - Strelka2 (Somatic mode)
-  - Mutect2
-  - Lancet
-
-</details>
-
-<details>
-  <summary><b>Constitutional Variant Calling</b></summary>
-  
-  Generates constitutional variant call files (VCF) with several callers. Additionally,
-  this will create a gVCF for each sample that can be used to jointly call large
-  cohorts.
-
-  - GATK HaplotypeCaller (gVCF mode)
-  - Freebayes
-  - Strelka2 (Germline mode)
-  - Octopus (Individual)
-
-</details>
 
 
 ## Config
