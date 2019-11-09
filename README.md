@@ -106,13 +106,13 @@ Last Update October 21, 2019
 | [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | 2.3.5.1 | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
 | [cellranger](https://github.com/lh3/bwa/releases) | 3.1.0 | 3.1.0 | | No? |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container | |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container | Yes |
 | [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons | Yes |
 | [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions | Yes |
 | [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  | Yes |
 | [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion | Yes |
 | [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.7.2 |  | |
-| [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | |
+| [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | Yes |
 | [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | | |
 | [htslib](https://github.com/samtools/htslib/releases) | 1.9 | 1.9 | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
@@ -121,7 +121,7 @@ Last Update October 21, 2019
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
 | [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion | Yes |
-| [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | |
+| [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
 | [python2](https://www.python.org/downloads/) |  | 2.7.14 | | |
 | [python3](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 | Yes |
 | [R](https://www.r-project.org/) | 3.6.1 | 3.6.1 | gatk cnv, varDict, vcfmerger2 | Yes |
@@ -137,7 +137,7 @@ Last Update October 21, 2019
 | [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
 | [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion | Yes |
 | [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | Yes |
-| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.9 | 0.7.9 | | |
+| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.9 | 0.7.9 | | Yes |
 | [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | Yes |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
