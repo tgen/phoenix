@@ -2,7 +2,11 @@
 
 This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
 
-### Tools Used by the Workflow (All tools build with public easybuild configuration files - REPO-X)
+_Click to show details_
+
+<details>
+<summary><b>Tools Used by the Workflow</b></summary>
+All tools build with public easybuild configuration files - REPO-X.  
 Last Update October 21, 2019
 
 | Tool | Version Implemented | Current Version | Dependancy and Notes | EasyBuild |
@@ -23,9 +27,9 @@ Last Update October 21, 2019
 | [htslib](https://github.com/samtools/htslib/releases) | 1.9 | 1.9 | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
-| [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | | |
+| [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | | Yes |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | |
-| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | |
+| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
 | [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | |
 | [python](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 | Yes |
@@ -34,23 +38,38 @@ Last Update October 21, 2019
 | [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | | |
 | [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | 0.14.2 | self, star-fusion | Yes |
 | [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch | Yes |
+| [singularity](https://github.com/COMBINE-lab/salmon/releases) | 3.5.0-rc2 | 3.4.2 | deepvariant | Yes, release-candidate |
 | [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017| Yes |
 | [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | self, star-fusion | Yes |
 | [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | | Yes |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | | Yes |
 | [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
 | [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion | Yes |
-| [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | |
+| [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | Yes |
 | [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.9 | 0.7.9 | | |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | |
-| [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | Yes |
+| [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
-    
+
+</details>
+
 #### Required PERL Modules
 XXX
 
-#### Required PYTHON Modules
-ivg_reports, requests
+#### Required PYTHON2 Modules
+
+
+#### Required PYTHON3 Modules
+
+cyvcf2
+getopt
+igv_reports
+multiprocessing
+PIL
+pybedtools
+pysam
+requests
+sys (argv, exit)
 
 #### Required R Libraries
 XXX
@@ -70,6 +89,24 @@ Single Cell V(D)J = 737K-august-2016.txt
 CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
 CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
 CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
+
+## JJK Notes
+
+dataFiles : JSON/YAML grouping that includes all fastq metadata fields
+  * In main.main one of the first steps it so define each fastq meta data block as "file"
+    * so afterwards "file" references each fastq block, be it an R1 or R2 read
+    * then a series of additional metadata fields are added
+      * name - this is the same as sampleMergeKey unless not defined in which case it will be sampleName
+      * basename - proper fastq name not full path (ie. file.R1.fastq)
+      * gltype - lower(glType)
+      * glprep - lower(glPrep)
+      
+Single cell workflows are passed dataFiles object (ie all fastq sets)
+  * in the single_cell/main
+    * we group the dataFiles by "name" and test if the first file object is single cell or not
+      * this creates unneeded code to then separate the libraries from within the group_by names records
+      * IMPROVED code would group by library, rglb, as this is the analyzed unit for single cell
+      * then the list of files submitted would be the needed unit of library summarized data files
 
 ## Install Guide
 First, jetstream must be installed, available [here](https://github.com/tgen/jetstream/tree/master). There is an install guide for jetstream available at the link provided, but the gist of the guide is to install using pip3 using a command similar to:  
