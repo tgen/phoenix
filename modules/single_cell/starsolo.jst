@@ -1,36 +1,29 @@
-{% macro starsolo(files) %}
-{% set libraries = files|groupby('rglb') %}
+# Run Single cell analysis of 10x Genomics 3' and 5' scRNAseq assays using starSOLO
 
-{% for library, datafiles in libraries %}
-{% set sample = datafiles[0] %}
-{% set star_index_size %}{{ sample.read_length|default(100) }}bpReads{% endset %}
-{% set star_index = constants.phoenix.star_indices[star_index_size] %}
-{% set outdir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ library }}/{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ library }}/fastqs/{% endset %}
+{% macro starsolo(files) %}
+
+{% set sample = files[0] %}
+
+{% set outdir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ sample.rglb }}/fastqs/{% endset %}
 
 {# Local Temp Variables #}
-{% set CDNA_LIST = [] %}
-{% set CB_UMI_LIST = [] %}
-
-{# Generating input lists #}
-{% for rgid, rg in datafiles|groupby('rglb') %}
-  {% set r1fastq = rg|selectattr('fastqCode', 'eq', 'R1')|first %}
-  {% set r1fastq %}{{ r1fastq.basename }}{% endset %}
-  {% do CB_UMI_LIST.append(r1fastq) %}
-
-  {% set r2fastq = rg|selectattr('fastqCode', 'eq', 'R2')|first %}
-  {% set r2fastq %}{{ r2fastq.basename }}{% endset %}
-  {% do CDNA_LIST.append(r2fastq) %}
+{% set cb_umi_list = [] %}
+{% set cdna_list = [] %}
+{% for fq in files|selectattr('fastqCode', 'eq', 'R1') %}
+  {% do cb_umi_list.append(fq.basename) %}
+{% endfor %}
+{% for fq in files|selectattr('fastqCode', 'eq', 'R2') %}
+  {% do cdna_list.append(fq.basename) %}
 {% endfor %}
 
-
-- name: starsolo_count_{{ sample.name }}_{{ library }}
-  tags: [{{ sample.gltype }}, single_cell, starsolo_count, {{ sample.name }}]
+- name: starsolo_count_{{ sample.name }}_{{ sample.rglb }}
+  tags: [{{ sample.gltype }}, single_cell, starsolo_count, {{ sample.name }}_{{ sample.rglb }}]
   methods: >
-    Alignment and quantification for {{ sample.name }} was performed with
+    Alignment and quantification for {{ sample.name }}_{{ sample.rglb }} was performed with
     {{ constants.tools.star.verbose }} using the genome index.
   input:
-  {% for fq in datafiles %}
+  {% for fq in files %}
       - temp/fastqs/{{ fq.basename }}
   {% endfor %}
   output: {{ outdir }}
@@ -46,9 +39,12 @@
     mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ outdir }}"
 
-    {% for file in datafiles %}
-    ln -rs "temp/fastqs/{{ file.basename }}" "{{ temp_dir }}/{{ file.basename }}"
+    {% for fq in files %}
+    ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename }}"
     {% endfor %}
+
+    {{ cb_umi_list }}
+    {{ cdna_list }}
 
     {#
     cDNA read length-1 --> MUST MATCH THE VALUE USED FOR GENOME GENERATION
@@ -57,13 +53,13 @@
       --runMode alignReads \
       --twopassMode Basic \
       --runThreadN 19 \
-      --genomeDir {{ star_index }} \
+      --genomeDir {{ constants.phoenix.star_indices.100bpReads }} \
       --genomeLoad NoSharedMemory \
       --sjdbOverhang 99 \
       --readFilesType Fastx \
-      --readFilesIn {{ CDNA_LIST|join(',') }} {{ CB_UMI_LIST|join(',') }} \
+      --readFilesIn {{ cdna_list|join(',') }} {{ cb_umi_list|join(',') }} \
       --readFilesCommand zcat \
-      --outFileNamePrefix {{ sample.name }}_{{ library }}_ \
+      --outFileNamePrefix {{ sample.name }}_{{ sample.rglb }}_ \
       --outSAMtype BAM SortedByCoordinate \
       --outSAMmode Full \
       --outSAMunmapped Within KeepPairs \
@@ -81,15 +77,14 @@
       --soloFeatures Gene SJ GeneFull Transcript3p \
       --soloUMIdedup 1MM_All \
       --soloUMIfiltering MultiGeneUMI \
-      --soloOutFileNames Solo.out/ {{ sample.name }}_{{ library }}_genes.tsv {{ sample.name }}_{{ library }}_barcodes.tsv {{ sample.name }}_{{ library }}_matrixGene.mtx {{ sample.name }}_{{ library }}_matrixSJ.mtx {{ sample.name }}_{{ library }}_matrixGeneFull.mtx {{ sample.name }}_{{ library }}_matrixTranscripts3p.mtx \
+      --soloOutFileNames Solo.out/ {{ sample.name }}_{{ sample.rglb }}_genes.tsv {{ sample.name }}_{{ sample.rglb }}_barcodes.tsv {{ sample.name }}_{{ sample.rglb }}_matrixGene.mtx {{ sample.name }}_{{ sample.rglb }}_matrixSJ.mtx {{ sample.name }}_{{ sample.rglb }}_matrixGeneFull.mtx {{ sample.name }}_{{ sample.rglb }}_matrixTranscripts3p.mtx \
       --soloCellFilter CellRanger2.2 5000 0.99 10 )
 
     # Update permissions so files are readable by all users (first make all folders executable recursively so they can be navigated, then make all files readable)
-    chmod -R a+X {{ temp_dir }}{{ sample.name }}_{{ library }}_Solo.out
-    chmod -R +r {{ temp_dir }}{{ sample.name }}_{{ library }}_Solo.out
+    chmod -R a+X {{ temp_dir }}{{ sample.name }}_{{ sample.rglb }}_Solo.out
+    chmod -R +r {{ temp_dir }}{{ sample.name }}_{{ sample.rglb }}_Solo.out
 
     # Move results to output directory
-    mv {{ temp_dir }}{{ sample.name }}_{{ library }}_Solo.out/* {{ outdir }}
+    mv {{ temp_dir }}{{ sample.name }}_{{ sample.rglb }}_Solo.out/* {{ outdir }}
 
-{% endfor %}
 {% endmacro %}
