@@ -5,8 +5,8 @@
 
 - name: gridss_constitutional_{{ aligner }}
   tags: [constitutional, gridss]
-  input:
-    - {{ bam }}
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ sample.name }}.sv.vcf
   cpus: 20
   mem: 60G
   walltime: "48:00:00"
