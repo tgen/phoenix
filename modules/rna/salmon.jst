@@ -26,7 +26,10 @@
   {% for fq in r2fqlist %}
     - {{ fq }}
   {% endfor %}
-  output: {{ results_dir }}/
+  output:
+    - {{ results_dir }}/{{ sample.name }}.transcripts.sf
+    - {{ results_dir }}/{{ sample.name }}.genes.sf
+    - {{ results_dir }}/{{ sample.name }}.counts.json
   cpus: 14
   walltime: "24:00:00"
   cmd: |
