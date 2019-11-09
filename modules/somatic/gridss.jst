@@ -9,6 +9,7 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output: {{ results_dir }}/{{ pair.name }}.sv.vcf
   cpus: 20
   mem: 60G
   walltime: "48:00:00"
