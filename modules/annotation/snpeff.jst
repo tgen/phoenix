@@ -5,9 +5,9 @@
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
   after: {{ after_task }}
   input: {{ input_vcf }}
-  output: -
-    {{ final_vcf_prefix }}.snpeff.full.vcf.gz
-    {{ final_vcf_prefix }}.snpeff.can.vcf.gz
+  output:
+    - {{ final_vcf_prefix }}.snpeff.full.vcf.gz
+    - {{ final_vcf_prefix }}.snpeff.can.vcf.gz
   walltime: "8:00:00"
   cpus: 4
   cmd: |
