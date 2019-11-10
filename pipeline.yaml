@@ -45,7 +45,7 @@ constants:
       verbose: NVIDIA CUDA 10.0
       website: https://developer.nvidia.com/cuda-toolkit
     deepvariant:
-      module: deepvariant/0.8.0-gpu
+      module: deepvariant/0.8.0-gpu-phoenix
       version: "0.8.0-gpu"
       verbose: DeepVariant 0.8.0-gpu
       website: https://github.com/google/deepvariant
@@ -100,7 +100,7 @@ constants:
         GRIDSS: sensitive and specific genomic rearrangement detection using positional
         de Bruijn graph assembly. Genome Research, 2017 doi: 10.1101/gr.222109.117
     hmmcopy_utils:
-      module: HMM_Copy_Utils/1.0
+      module: HMMCopy_Utils/1.0.0-5911bf6
       version: "1.0"
       verbose: HMM Copy Utils v1.0
       website: https://github.com/shahcompbio/hmmcopy_utils
@@ -127,9 +127,9 @@ constants:
         cell-free DNA reveals high concordance with metastatic tumors. (2017)
         Nature Communications Nov 6;8(1):1324. doi: 10.1038/s41467-017-00965-y
     lancet:
-      module: lancet/1.0.7
-      version: "1.0.7"
-      verbose: lancet v1.0.7
+      module: lancet/1.1.x-GCC-8.2.0-2.31.1
+      version: "1.1.x"
+      verbose: lancet v1.1.x
       website: https://github.com/nygenome/lancet
       citation: >
         Narzisi G, Corvelo A, Arora K, Bergmann E, Shah M, Musunuri R, Emde AK, Robine N, Vacic V,
@@ -137,7 +137,7 @@ constants:
         Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
         (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
     manta:
-      module: manta/1.6
+      module: manta/1.6-GCCcore-8.2.0
       version: "1.6"
       verbose: Manta v1.6
       website: https://github.com/Illumina/manta
@@ -145,7 +145,7 @@ constants:
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
     multiqc:
-      module: Python/3.7.2-GCCcore-8.2.0
+      module: Python/3.7.2-foss-2019a
       version: "1.7"
       verbose: MultiQC v1.7
       website: https://multiqc.info
@@ -164,7 +164,7 @@ constants:
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke,
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
     phaser:
-      module: phASER/1.1.1
+      module: phASER/1.1.1-python-2.7.13
       version: 1.1.1
       website: https://github.com/secastel/phaser
       citation: >
@@ -289,7 +289,7 @@ constants:
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
     vcfmerger2:
-      module: vcfmerger2/0.7.9
+      module: vcfMerger2/0.7.9-phoenix
       version: "0.7.9"
       verbose: vcfMerger2 v0.7.9
       website: https://github.com/tgen/vcfMerger2
@@ -312,7 +312,7 @@ constants:
         Genome Biology Jun 6;17(1):122. (2016)
         doi:10.1186/s13059-016-0974-4
     vt:
-      module: vt/0.57721
+      module: vt/0.57721-foss-2019a
       version: "0.57721"
       verbose: normalize v0.5
       website: https://genome.sph.umich.edu/wiki/Vt#Normalization
