@@ -10,7 +10,8 @@
   input: {{ bam_path }}
   output: {{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt
   walltime: "8:00:00"
-  cpus: 16
+  cpus: 8
+  mem: 32G
   cmd: |
     set -eu
     set -o pipefail

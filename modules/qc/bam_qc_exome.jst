@@ -9,7 +9,8 @@
   input: {{ bam_path }}
   output: {{ stats_dir }}/{{ bam_path|basename }}.hs_metrics.txt
   walltime: "8:00:00"
-  cpus: 16
+  cpus: 8
+  mem: 32G
   cmd: |
     set -eu
     set -o pipefail
