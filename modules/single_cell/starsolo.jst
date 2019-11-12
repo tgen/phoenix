@@ -26,7 +26,7 @@
   {% for fq in files %}
       - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ results_dir }}
+  output: {{ results_dir }}/{{ sample.name }}_{{ sample.rglb }}_starSOLO.bam
   cpus: 20
   mem: 120G
   walltime: "48:00:00"
