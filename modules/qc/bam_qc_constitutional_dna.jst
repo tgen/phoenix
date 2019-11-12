@@ -1,13 +1,13 @@
 # These macros are run on constitutional dna bams from the dna_alignment modules.
 
 {% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: verifybamid2_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
-  input: {{ bam_path }}
-  output: {{ stats_dir }}/{{ bam_path|basename }}.verifybamid2
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ bam|basename }}.verifybamid2
   cpus: 1
   mem: 4G
   walltime: "8:00:00"
@@ -16,7 +16,7 @@
     set -o pipefail
     module load {{ constants.tools.verifybamid2.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     {# Some resources are included in the VerifyBamID home dir #}
     VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
@@ -36,22 +36,22 @@
       {% elif aligner == 'bwa' %}
       --Reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      --BamFile "{{ bam_path }}" \
-      --Output "{{ stats_dir }}/{{ bam_path|basename }}.verifybamid2"
+      --BamFile "{{ bam }}" \
+      --Output "{{ results_dir }}/{{ bam|basename }}.verifybamid2"
 
 {% endmacro %}
 
 
 {% macro sex_check(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-{% set output %}{{ stats_dir }}/{{ bam_path|basename }}.sexCheck.txt{% endset %}
-{% set temp %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
-{% set vcf %}{{ temp }}/{{ bam_path|basename }}.sexCheck.vcf{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
+{% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
 
 - name: freebayes_sex_check_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_sex_check, freebayes, {{ sample.name }}]
-  input: {{ bam_path }}
+  input: {{ bam }}
   output: {{ output }}
   cpus: 1
   mem: 2G
@@ -63,7 +63,7 @@
     module load {{ constants.tools.freebayes.module }}
     module load {{ constants.tools.bcftools.module }}
 
-    mkdir -p "{{ temp }}/temp"
+    mkdir -p "{{ temp_dir }}/temp"
 
     {# Define Sex Prediction Thresholds #}
     MINIMUM_GENOTYPES_REQUIRED=500
@@ -83,7 +83,7 @@
       --min-alternate-fraction 0.05 \
       --min-coverage 5 \
       --vcf "{{ vcf }}" \
-      {{ bam_path }}
+      {{ bam }}
 
     {# Capture the RG_SM tag that is in the VCF header #}
     SAMPLE=`grep "#CHROM" {{ vcf }} | cut -f10`
@@ -174,8 +174,8 @@
     # Only count read in the non-PAR regions
     ### WARNING: the tested regions needs to be a parameter NOT hard coded
     #}
-    READS_ON_X=`samtools view -c -q 30 -f 67 {{ bam_path }} chrX:2781480-155701382 chrX:156030896-156040895`
-    READS_ON_Y=`samtools view -c -q 30 -f 67 {{ bam_path }} chrY:2781480-56887902 chrY:57217416-57227415`
+    READS_ON_X=`samtools view -c -q 30 -f 67 {{ bam }} chrX:2781480-155701382 chrX:156030896-156040895`
+    READS_ON_Y=`samtools view -c -q 30 -f 67 {{ bam }} chrY:2781480-56887902 chrY:57217416-57227415`
 
     {# Calculate the Y/(X+Y) read ratio #}
     TOTAL_SEX_CHR_READS=$(echo $READS_ON_X $READS_ON_Y | gawk '{printf $1+$2}')
@@ -236,7 +236,7 @@
     echo -e BAM"\t"SAMPLE"\t"POSITIONS_GENOTYPED"\t"MISSING_GENOTYPES"\t"TESTED_GENOTYPES"\t"HOMOZYGOUS_TOTAL"\t"HOMOZYGOUS_REFERENCE"\t"HOMOZYGOUS_ALTERNATE"\t"HETEROZYGOUS"\t"HOMOZYGOUS_RATE"\t"HOMOZYGOUS_RATE_SEX_PREDICTION"\t"B_ALLELE_GENOTYPES"\t"BB_ALT_RATE"\t"BB_ALT_RATE_SEX_PREDICTION"\t"READS_ON_X"\t"READS_ON_Y"\t"TOTAL_SEX_CHR_READS"\t"Y_READS_SEX_CHR_RATIO"\t"READ_COUNT_SEX_PREDICTION"\t"SEX_PREDICTION"\t"SEX_PREDICTION_CONFIDENCE > {{ output }}
 
     {# Print results #}
-    echo -e {{ bam_path|basename }}"\t"${SAMPLE}"\t"${POSITIONS_GENOTYPED}"\t"${MISSING_GENOTYPES}"\t"${TESTED_GENOTYPES}"\t"${HOMOZYGOUS_TOTAL}"\t"${HOMOZYGOUS_REFERENCE}"\t"${HOMOZYGOUS_ALTERNATE}"\t"${HETEROZYGOUS}"\t"${HOMOZYGOUS_RATE}"\t"${HOMOZYGOUS_RATE_SEX_PREDICTION}"\t"${B_ALLELE_GENOTYPES}"\t"${BB_ALT_RATE}"\t"${BB_ALT_RATE_SEX_PREDICTION}"\t"${READS_ON_X}"\t"${READS_ON_Y}"\t"${TOTAL_SEX_CHR_READS}"\t"${Y_READS_SEX_CHR_RATIO}"\t"${READ_COUNT_SEX_PREDICTION}"\t"${SEX_PREDICTION}"\t"${SEX_PREDICTION_CONFIDENCE} >> {{ output }}
+    echo -e {{ bam|basename }}"\t"${SAMPLE}"\t"${POSITIONS_GENOTYPED}"\t"${MISSING_GENOTYPES}"\t"${TESTED_GENOTYPES}"\t"${HOMOZYGOUS_TOTAL}"\t"${HOMOZYGOUS_REFERENCE}"\t"${HOMOZYGOUS_ALTERNATE}"\t"${HETEROZYGOUS}"\t"${HOMOZYGOUS_RATE}"\t"${HOMOZYGOUS_RATE_SEX_PREDICTION}"\t"${B_ALLELE_GENOTYPES}"\t"${BB_ALT_RATE}"\t"${BB_ALT_RATE_SEX_PREDICTION}"\t"${READS_ON_X}"\t"${READS_ON_Y}"\t"${TOTAL_SEX_CHR_READS}"\t"${Y_READS_SEX_CHR_RATIO}"\t"${READ_COUNT_SEX_PREDICTION}"\t"${SEX_PREDICTION}"\t"${SEX_PREDICTION_CONFIDENCE} >> {{ output }}
 
 
 {% endmacro %}

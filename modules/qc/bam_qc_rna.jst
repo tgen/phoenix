@@ -1,14 +1,13 @@
 # These macros are run on rna bams from the star_quant module.
 
 {% macro bam_qc_gatk_collectrnaseqmetrics(sample, aligner='star') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
-  tags: [gatk, picard, collectrnaseqmetrics, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  output: {{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ sample.name }}.rna_metrics
   walltime: "8:00:00"
   cpus: 8
   mem: 32G
@@ -16,8 +15,9 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.R.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     gatk CollectRnaSeqMetrics \
       --IGNORE_SEQUENCE chrEBV \
@@ -25,20 +25,23 @@
       --VALIDATION_STRINGENCY LENIENT \
       --REF_FLAT "{{ constants.phoenix.ref_flat }}" \
       --RIBOSOMAL_INTERVALS "{{ constants.phoenix.ribo_locations }}" \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ sample.name }}.RNA_Metrics.txt"
+      --METRIC_ACCUMULATION_LEVEL ALL_READS \
+      --METRIC_ACCUMULATION_LEVEL SAMPLE \
+      --METRIC_ACCUMULATION_LEVEL LIBRARY \
+      --INPUT "{{ bam }}" \
+      --CHART_OUTPUT {{ results_dir }}/{{ bam|basename }}.rna_metrics.pdf \
+      --OUTPUT "{{ results_dir }}/{{ bam|basename }}.rna_metrics"
 
 {% endmacro %}
 
 {% macro bam_qc_rna_BTcell_loci(sample, aligner='star') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: rna_getBTcellLociCounts_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
-  tags: [rna, counts, BTcellLociCounts, {{ sample.gltype }}]
-  input: {{ bam_path }}
-  output: {{ stats_dir }}/{{ sample.name }}.BTcell.loci.counts.txt
+  tags: [{{ sample.gltype }}, quality_control, stats, BTcellLociCounts, {{ sample.name }}]
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ sample.name }}.BTcell.loci.counts.txt
   walltime: "8:00:00"
   cpus: 2
   cmd: |
@@ -46,8 +49,8 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
-    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam_path }}" > "{{ stats_dir }}/{{ sample.name }}.BTcell.loci.counts.txt"
+    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ results_dir }}/{{ sample.name }}.BTcell.loci.counts.txt"
 
 {% endmacro %}

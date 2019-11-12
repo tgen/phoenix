@@ -1,13 +1,13 @@
 # These macros are run on genome bams from the dna_alignment module.
 
 {% macro bam_qc_gatk_collectwgsmetrics(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetrics, {{ sample.name }}]
-  input: {{ bam_path }}
-  output: {{ stats_dir }}/{{ bam_path|basename }}.wgs_metrics.txt
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ bam|basename }}.wgs_metrics
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -16,27 +16,27 @@
     set -o pipefail
     module load {{ constants.tools.gatk.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     gatk CollectWgsMetrics \
       --USE_FAST_ALGORITHM false \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_metrics.txt" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
+      --INPUT {{ bam }} \
+      --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_metrics \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }}
 
 {% endmacro %}
 
 
 {% macro bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetricsWithNonZeroCoverage, {{ sample.name }}]
-  input: {{ bam_path }}
+  input: {{ bam }}
   output:
-    - {{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.txt
-    - {{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.pdf
+    - {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics
+    - {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics.pdf
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -46,25 +46,25 @@
     module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.R.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p {{ results_dir }}
 
     gatk CollectWgsMetricsWithNonZeroCoverage \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.txt" \
-      --CHART_OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_wnzc_metrics.pdf" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
+      --INPUT {{ bam }} \
+      --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics \
+      --CHART_OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics.pdf \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }}
 
 {% endmacro %}
 
 
 {% macro bam_qc_gatk_collectrawwgsmetrics(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRawWgsMetrics, {{ sample.name }}]
-  input: {{ bam_path }}
-  output: {{ stats_dir }}/{{ bam_path|basename }}.wgs_raw_metrics.txt
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -73,12 +73,12 @@
     set -o pipefail
     module load {{ constants.tools.gatk.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     gatk CollectRawWgsMetrics \
       --USE_FAST_ALGORITHM false \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}.wgs_raw_metrics.txt" \
+      --INPUT "{{ bam }}" \
+      --OUTPUT "{{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       --INCLUDE_BQ_HISTOGRAM true
 

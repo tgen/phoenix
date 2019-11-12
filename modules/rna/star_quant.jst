@@ -12,14 +12,14 @@
   {% set sjdb_overhang = 100 - 1 %}
 {% endif %}
 
-{% set star_finaldir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
 {% set star_finalcountsdir %}{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
-{% set star_tempdir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
-{% set star_bam_unsort %}{{ star_tempdir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
-{% set star_bam_transcript %}{{ star_tempdir }}/{{ sample.name }}.Aligned.toTranscriptome.out.bam{% endset %}
-{% set star_bam_sorted %}{{ star_tempdir }}/{{ sample.name }}.Aligned.sorted.bam{% endset %}
-{% set star_bam_md %}{{ star_tempdir }}/{{ sample.name }}.md.bam{% endset %}
-{% set star_bam_final %}{{ star_finaldir }}/{{ sample.name }}.star.bam{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
+{% set star_bam_unsort %}{{ temp_dir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
+{% set star_bam_transcript %}{{ temp_dir }}/{{ sample.name }}.Aligned.toTranscriptome.out.bam{% endset %}
+{% set star_bam_sorted %}{{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam{% endset %}
+{% set star_bam_md %}{{ temp_dir }}/{{ sample.name }}.md.bam{% endset %}
+{% set star_bam_final %}{{ results_dir }}/{{ sample.name }}.star.bam{% endset %}
 
 {# Here we build up lists of all the fastq files and rg lines for this sample #}
 {% set r1fqlist = [] %}
@@ -62,8 +62,8 @@
     set -o pipefail
     module load {{ constants.tools.star.module }}
 
-    mkdir -p "{{ star_tempdir }}"
-    mkdir -p "{{ star_finaldir }}"
+    mkdir -p "{{ temp_dir }}"
+    mkdir -p "{{ results_dir }}"
     mkdir -p "{{ star_finalcountsdir }}"
 
     {#
@@ -148,11 +148,11 @@
       --sjdbOverhang "{{ sjdb_overhang }}" \
       --genomeDir "{{ star_index }}" \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
-      --outFileNamePrefix "{{ star_tempdir }}/{{ sample.name }}."
+      --outFileNamePrefix "{{ temp_dir }}/{{ sample.name }}."
 
     mv \
-      "{{ star_tempdir }}/{{ sample.name }}.ReadsPerGene.out.tab" \
-      "{{ star_tempdir }}/{{ sample.name }}.SJ.out.tab" \
+      "{{ temp_dir }}/{{ sample.name }}.ReadsPerGene.out.tab" \
+      "{{ temp_dir }}/{{ sample.name }}.SJ.out.tab" \
       "{{ star_finalcountsdir }}"
 
 
@@ -164,15 +164,15 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_latest.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    rm -r "{{ star_tempdir }}/sort" || true
-    mkdir -p "{{ star_tempdir }}/sort"
+    rm -r "{{ temp_dir }}/sort" || true
+    mkdir -p "{{ temp_dir }}/sort"
 
     samtools fixmate \
       --threads 4 \
@@ -183,7 +183,7 @@
       -l 5 \
       -m 1G \
       --threads 4 \
-      -T "{{ star_tempdir }}/sort" \
+      -T "{{ temp_dir }}/sort" \
       - \
       -o "{{ star_bam_sorted }}"
 
@@ -206,9 +206,9 @@
     # existing temp files before making the directory again.
     #}
 {#
-    if [ -d "{{ star_tempdir }}/markdup_samtools" ]
+    if [ -d "{{ temp_dir }}/markdup_samtools" ]
     then
-      rm -r "{{ star_tempdir }}/markdup_samtools"
+      rm -r "{{ temp_dir }}/markdup_samtools"
     fi
 
     if [ -f "{{ star_bam_final }}" ]
@@ -216,17 +216,17 @@
       mv "{{ star_bam_final }}" "{{ star_bam_sorted }}"
     fi
 
-    mkdir -p "{{ star_tempdir }}/markdup"
-    mkdir -p "{{ star_finaldir }}/stats/"
+    mkdir -p "{{ temp_dir }}/markdup"
+    mkdir -p "{{ results_dir }}/stats/"
 
     samtools markdup \
       -d {{ opt_dup_distance }} \
       -s \
       --threads 10 \
-      -T "{{ star_tempdir }}/markdup" \
+      -T "{{ temp_dir }}/markdup" \
       "{{ star_bam_sorted }}" \
       "{{ star_bam_final }}" \
-      2> "{{ star_finaldir }}/stats_samtools/{{ sample.name }}.star.bam.markdup.txt"
+      2> "{{ results_dir }}/stats_samtools/{{ sample.name }}.star.bam.markdup.txt"
 
     samtools index -@ 10 "{{ star_bam_final }}"
 #}
@@ -239,30 +239,30 @@ which appears to be working now after some code changes, keeping this here in ca
 - name: markduplicates_star_gatk_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   input: {{ star_bam_sorted }}
-  output: {{ star_bam_final }}
+  output:
+    - {{ star_bam_final }}
+    - {{ results_dir }}/stats/{{ sample.name }}.md_metrics
   cpus: 10
   mem: 80G
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_latest.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    if [ -d "{{ star_tempdir }}/markdup_gatk" ]
+    if [ -d "{{ temp_dir }}/markdup" ]
     then
-      rm -r "{{ star_tempdir }}/markdup_gatk"
+      rm -r "{{ temp_dir }}/markdup"
     fi
 
-    mkdir -p "{{ star_tempdir }}/markdup_gatk"
-    mkdir -p "{{ star_finaldir }}/stats_gatk/"
+    mkdir -p "{{ temp_dir }}/markdup"
+    mkdir -p "{{ results_dir }}/stats"
 
     module load {{ constants.tools.gatk.module }}
-
-    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     gatk MarkDuplicates \
       --java-options "-Xmx31G" \
@@ -272,7 +272,7 @@ which appears to be working now after some code changes, keeping this here in ca
       --ADD_PG_TAG_TO_READS false \
       --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ opt_dup_distance }} \
       --INPUT "{{ star_bam_sorted }}" \
-      --METRICS_FILE "{{ star_finaldir }}/stats_gatk/{{ sample.name }}.mdmetrics.txt" \
+      --METRICS_FILE "{{ results_dir }}/stats/{{ sample.name }}.md_metrics" \
       --OUTPUT "{{ star_bam_final }}"
 
     samtools index -@ 10 "{{ star_bam_final }}"

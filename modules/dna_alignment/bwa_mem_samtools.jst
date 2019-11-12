@@ -61,7 +61,7 @@
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
   walltime: "48:00:00"
   cpus: 10
-  mem: 50G
+  mem: 40G
   cmd: |
     set -eu
     set -o pipefail
@@ -165,7 +165,9 @@
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools_1_9_latest.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
-  output: temp/{{ sample.name }}.bwa.md.bam
+  output:
+    - temp/{{ sample.name }}.bwa.md.bam
+    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 10
   mem: 40G

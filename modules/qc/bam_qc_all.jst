@@ -3,15 +3,15 @@
 # Currently supports any sample.
 
 {% macro bam_qc_samtools_stats(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: {{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt
+  output: {{ results_dir }}/{{ bam|basename }}.bamstats.txt
   walltime: "4:00:00"
   cpus: 4
   mem: 8G
@@ -20,12 +20,12 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     samtools view \
       --threads 4 \
       -h \
-      "{{ bam_path }}" \
+      "{{ bam }}" \
       | \
     samtools stats \
       --remove-dups \
@@ -35,7 +35,7 @@
       {% elif aligner == 'bwa' %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      > "{{ stats_dir }}/{{ bam_path|basename }}.bamstats.txt"
+      > "{{ results_dir }}/{{ bam|basename }}.bamstats.txt"
 
 {% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
@@ -43,7 +43,7 @@
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: {{ stats_dir }}/{{ bam_path|basename }}.{{ lb }}.bamstats.txt
+  output: {{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt
   walltime: "4:00:00"
   cpus: 4
   mem: 8G
@@ -52,7 +52,7 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     samtools view \
       --threads 4 \
@@ -60,7 +60,7 @@
       {% for rg in rgs %}
       -r "{{ rg.rgid }}" \
       {% endfor %}
-      "{{ bam_path }}" \
+      "{{ bam }}" \
       | \
     samtools stats \
       --remove-dups \
@@ -70,22 +70,22 @@
       {% elif aligner == 'bwa' %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      > "{{ stats_dir }}/{{ bam_path|basename }}.{{ lb }}.bamstats.txt"
+      > "{{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt"
 {% endfor %}
 
 {% endmacro %}
 
 
 {% macro bam_qc_samtools_flagstat(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_flagstat, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: {{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt
+  output: {{ results_dir }}/{{ bam|basename }}.flagstats.txt
   walltime: "4:00:00"
   cpus: 4
   mem: 8G
@@ -94,26 +94,26 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     samtools flagstat \
       --threads 4 \
-      "{{ bam_path }}" \
-      > "{{ stats_dir }}/{{ bam_path|basename }}.flagstats.txt"
+      "{{ bam }}" \
+      > "{{ results_dir }}/{{ bam|basename }}.flagstats.txt"
 
 {% endmacro %}
 
 
 {% macro bam_qc_samtools_idxstats(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
-  input: {{ bam_path }}
-  output: {{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ bam|basename }}.idxstats.txt
   walltime: "4:00:00"
   cpus: 1
   mem: 2G
@@ -122,18 +122,18 @@
     set -o pipefail
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     samtools idxstats \
-      "{{ bam_path }}" >\
-      "{{ stats_dir }}/{{ bam_path|basename }}.idxstats.txt"
+      "{{ bam }}" >\
+      "{{ results_dir }}/{{ bam|basename }}.idxstats.txt"
 
 {% endmacro %}
 
 
 {% macro bam_qc_gatk_collectmultiplemetrics(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectMultipleMetrics, {{ sample.name }}]
@@ -141,7 +141,17 @@
     and other metrics for {{ sample.name }} ({{ aligner }}) were
     gathered with {{ constants.tools.gatk.verbose }}
     CollectMultipleMetrics.
-  input: {{ bam_path }}
+  input: {{ bam }}
+  output:
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -152,11 +162,11 @@
     module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.R.module }}
 
-    mkdir -p "{{ stats_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     gatk CollectMultipleMetrics \
-      --INPUT "{{ bam_path }}" \
-      --OUTPUT "{{ stats_dir }}/{{ bam_path|basename }}" \
+      --INPUT "{{ bam }}" \
+      --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
       {% if aligner == 'star' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
@@ -179,13 +189,14 @@
 
 
 {% macro bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
-  input: {{ bam_path }}
+  input: {{ bam }}
   after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
+  output: {{ results_dir }}/{{ bam|basename }}.oxog_metrics
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -200,19 +211,19 @@
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      --INPUT_BASE "{{ stats_dir }}/{{ bam_path|basename }}"
+      --INPUT_BASE "{{ results_dir }}/{{ bam|basename }}"
 
 {% endmacro %}
 
 
 {% macro bam_qc_snpsniffer_geno(sample, aligner='bwa') %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set stats_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, genotype_concordance, snpSniffer, {{ sample.name }}]
-  input: {{ bam_path }}
-  output: {{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf
   cpus: 4
   cmd: |
     set -eu
@@ -231,7 +242,7 @@
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       --regions-file "{{ constants.phoenix.snpSniffer_sites }}" \
-      {{ bam_path }} \
+      {{ bam }} \
       | \
     bcftools call \
       --consensus-caller \
@@ -244,6 +255,6 @@
       --include 'INFO/DP >= 5' \
       --rename-chrs "{{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}" \
       --output-type v \
-      --output "{{ stats_dir }}/{{ bam_path|basename }}.snpSniffer.vcf"
+      --output "{{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf"
 
 {% endmacro %}
