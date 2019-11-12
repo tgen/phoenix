@@ -4,8 +4,8 @@
 
 {% set sample = files[0] %}
 
-{% set outdir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ sample.rglb }}/fastqs/{% endset %}
+{% set results_dir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ sample.rglb }}{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/starSOLO/{{ sample.name }}_{{ sample.rglb }}{% endset %}
 
 {# Local Temp Variables #}
 {% set cb_umi_list = [] %}
@@ -26,18 +26,20 @@
   {% for fq in files %}
       - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ outdir }}
+  output: {{ results_dir }}
   cpus: 20
   mem: 120G
   walltime: "48:00:00"
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.star.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
-    mkdir -p "{{ outdir }}"
+    mkdir -p "{{ results_dir }}"
 
     {% for fq in files %}
     ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename }}"
@@ -78,10 +80,43 @@
       --soloCellFilter CellRanger2.2 5000 0.99 10 )
 
     # Update permissions so files are readable by all users (first make all folders executable recursively so they can be navigated, then make all files readable)
-    chmod -R a+X {{ temp_dir }}{{ sample.name }}_{{ sample.rglb }}_Solo.out
-    chmod -R +r {{ temp_dir }}{{ sample.name }}_{{ sample.rglb }}_Solo.out
+    chmod -R a+X {{ temp_dir }}/{{ sample.name }}_{{ sample.rglb }}_Solo.out
+    chmod -R +r {{ temp_dir }}/{{ sample.name }}_{{ sample.rglb }}_Solo.out
 
-    # Move results to output directory
-    mv {{ temp_dir }}{{ sample.name }}_{{ sample.rglb }}_Solo.out/* {{ outdir }}
+    # Move results to results directory
+    mv {{ temp_dir }}/{{ sample.name }}_{{ sample.rglb }}_Log.final.out {{ results_dir }}/{{ sample.name }}_{{ sample.rglb }}_Log.final.out
+    mv {{ temp_dir }}/{{ sample.name }}_{{ sample.rglb }}_Aligned.sortedByCoord.out.bam {{ results_dir }}/{{ sample.name }}_{{ sample.rglb }}_starSOLO.bam
+    samtools index -@ 10 {{ results_dir }}/{{ sample.name }}_{{ sample.rglb }}_starSOLO.bam
+    mv {{ temp_dir }}/{{ sample.name }}_{{ sample.rglb }}_Solo.out/* {{ results_dir }}
+
+{% if cram|default(true) %}
+{% set bam_path %}{{ results_dir }}/{{ sample.name }}_{{ sample.rglb }}_starSOLO.bam{% endset %}
+{% set cram_path %}{{ results_dir }}/{{ sample.name }}_{{ sample.rglb }}_starSOLO.cram{% endset %}
+{% set aligner = 'starSOLO' %}
+
+- name: bam_to_cram_{{ sample.name }}_{{ sample.rglb }}_starSOLO
+  tags: [{{ sample.gltype }}, {{ sample.name }}_{{ sample.rglb }}, bam_to_cram ]
+  input: {{ bam_path }}
+  output: {{ cram_path }}
+  walltime: "8:00:00"
+  cpus: 8
+  mem: 3G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    samtools view \
+      -C \
+      -@ 8 \
+      --reference "{{ constants.phoenix.star_fasta }}" \
+      -o "{{ cram_path }}" \
+      "{{ bam_path }}"
+
+    samtools index "{{ cram_path }}"
+
+{% endif %}
+
 
 {% endmacro %}
