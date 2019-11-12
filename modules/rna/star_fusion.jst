@@ -77,7 +77,7 @@
     mv "{{ temp_dir }}"/star-fusion.fusion_predictions.abridged.coding_effect.tsv "{{ results_dir }}"/"{{ sample.name }}"_starfusion_predictions.abridged.coding_effect.tsv
     mv "{{ temp_dir }}"/star-fusion.fusion_predictions.abridged.tsv "{{ results_dir }}"/"{{ sample.name }}"_starfusion_predictions.abridged.tsv
     mv "{{ temp_dir }}"/star-fusion.fusion_predictions.tsv "{{ results_dir }}"/"{{ sample.name }}"_starfusion_predictions.tsv
-    mv "{{ temp_dir }}"/FusionInspector-inspect "{{ results_dir }}"
+    mv "{{ temp_dir }}"/FusionInspector-inspect "{{ results_dir }}" || true
 
 {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
 {% if cram|default(true) %}
