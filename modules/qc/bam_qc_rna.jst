@@ -61,6 +61,6 @@
 
     mkdir -p "{{ results_dir }}"
 
-    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ results_dir }}/{{ bam|basename }}.bam.BTcell.loci.counts.txt"
+    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ results_dir }}/{{ bam|basename }}.BTcell.loci.counts.txt"
 
 {% endmacro %}
