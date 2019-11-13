@@ -7,7 +7,9 @@
 - name: verifybamid2_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ results_dir }}/{{ bam|basename }}.verifybamid2
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.out
+    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.selfSM
   cpus: 1
   mem: 4G
   walltime: "8:00:00"

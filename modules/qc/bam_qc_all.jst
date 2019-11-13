@@ -143,15 +143,24 @@
     CollectMultipleMetrics.
   input: {{ bam }}
   output:
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
-    - {{ results_dir }}/{{ bam|basename }}
+    - {{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.bait_bias_detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.bait_bias_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle_metrics
+    - {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle.pdf
+    - {{ results_dir }}/{{ bam|basename }}.error_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.insert_size_metrics
+    - {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
+    - {{ results_dir }}/{{ bam|basename }}.pre_adapter_detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.pre_adapter_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_by_cycle_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_by_cycle.pdf
+    - {{ results_dir }}/{{ bam|basename }}.quality_distribution_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_distribution.pdf
+    - {{ results_dir }}/{{ bam|basename }}.quality_yield_metrics
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
