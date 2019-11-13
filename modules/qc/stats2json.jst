@@ -2,13 +2,18 @@
 # stats files produced by bam_qc steps to get a structured json file
 # that help facilitate downstream analysis and upload to LIMS via REST api integration.
 
-{% macro stats2json(sample, task, input_file, file_type ) %}
-- name: stats2json_{{ sample.name }}_{{ task }}
+{% macro stats2json(sample, input_file, file_type, aligner='bwa' ) %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+- name: stats2json_{{ sample.name }}_{{ file_type }}
   tags: [{{ sample.gltype }}, quality_control, stats, stats2json, {{ sample.name }}]
-  after: {{ task }}
+  input: {{ input_file }}
   walltime: "1:00:00"
   cpus: 1
   cmd: |
     set -eu
     set -o pipefail
+
+    module load {{ constants.tools.python_3_7_2.module }}
+
+
 {% endmacro %}
