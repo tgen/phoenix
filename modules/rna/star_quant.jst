@@ -241,7 +241,7 @@ which appears to be working now after some code changes, keeping this here in ca
   input: {{ star_bam_sorted }}
   output:
     - {{ star_bam_final }}
-    - {{ results_dir }}/stats/{{ sample.name }}.md_metrics
+    - {{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics
   cpus: 10
   mem: 80G
   cmd: |
@@ -272,7 +272,7 @@ which appears to be working now after some code changes, keeping this here in ca
       --ADD_PG_TAG_TO_READS false \
       --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ opt_dup_distance }} \
       --INPUT "{{ star_bam_sorted }}" \
-      --METRICS_FILE "{{ results_dir }}/stats/{{ sample.name }}.md_metrics" \
+      --METRICS_FILE "{{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics" \
       --OUTPUT "{{ star_bam_final }}"
 
     samtools index -@ 10 "{{ star_bam_final }}"
