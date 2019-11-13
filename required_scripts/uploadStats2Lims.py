@@ -251,8 +251,6 @@ try:
         # Converts data to be patched into json format
         json_patchData = json.dumps(patchData, indent=4)
 
-        print(json_patchData)
-
         # The record ID used in the patch
         recordID = str([d['recordId'] for d in parsed_postResponse1['response']['data']][0])
 
