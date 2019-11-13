@@ -216,14 +216,14 @@ try:
                   "\n" + "Message: " + str(parsed_postResponse1["messages"][0]['message']))
             raise ValueError("Something went wrong finding the study name code and project name")
 
-        db_study = parsed_postResponse1['response']['data'][0]['fieldData']['Project']
+        db_study = parsed_postResponse1['response']['data'][0]['fieldData']['DCL_Studies::Study Name Code']
         db_project = parsed_postResponse1['response']['data'][0]['fieldData']['DCL Patient ID']
 
         if not args.study == db_study:
             print("UPLOAD FAILED: Study name code does not match.")
             print("Entered value: " + args.study)
             print("Value from KBase: " + db_study)
-            raise Exception('The provided Study does not match the Project in the LIMS.')
+            raise Exception('The provided Study does not match the Study Name Code in the LIMS.')
 
         if not args.project == db_project:
             print("UPLOAD FAILED: Project name does not match.")
