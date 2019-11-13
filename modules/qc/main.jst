@@ -34,6 +34,10 @@
             {{- bam_qc_gatk_collectrnaseqmetrics(sample, aligner=aligner) }}
         {% endif %}
 
+        {% if tasks[taskPrefix+"_quality_control_stats_samtools_bedcov"]|default(true) %}
+            {{- bam_qc_rna_BTcell_loci(sample, aligner=aligner) }}
+        {% endif %}
+
     {% elif sample.gltype == 'exome' %}
         {% set taskPrefix = 'Exome' %}
 

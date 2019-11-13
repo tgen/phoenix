@@ -1,15 +1,20 @@
 # These macros are run on rna bams from the star_quant module.
 
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+{% from 'modules/qc/stats2lims.jst' import stats2lims with context %}
+
 {% macro bam_qc_gatk_collectrnaseqmetrics(sample, aligner='star') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set rna_metrics %}{{ results_dir }}/{{ bam|basename }}.rna_metrics{% endset %}
+{% set rna_metrics_json %}{{ rna_metrics }}.json{% endset %}
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
   input: {{ bam }}
   output:
-    - {{ results_dir }}/{{ bam|basename }}.rna_metrics
-    - {{ results_dir }}/{{ bam|basename }}.rna_metrics.pdf
+    - {{ rna_metrics }}
+    - {{ rna_metrics }}.pdf
   walltime: "8:00:00"
   cpus: 8
   mem: 32G
@@ -34,6 +39,9 @@
       --CHART_OUTPUT {{ results_dir }}/{{ bam|basename }}.rna_metrics.pdf \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}.rna_metrics"
 
+{{ stats2json(sample, rna_metrics, "picard_rna_metrics", aligner=aligner) }}
+{{ stats2lims(sample, rna_metrics_json, "picard_rna_metrics") }}
+
 {% endmacro %}
 
 {% macro bam_qc_rna_BTcell_loci(sample, aligner='star') %}
@@ -43,7 +51,7 @@
 - name: rna_getBTcellLociCounts_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, BTcellLociCounts, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ results_dir }}/{{ sample.name }}.BTcell.loci.counts.txt
+  output: {{ results_dir }}/{{ bam|basename }}.BTcell.loci.counts.txt
   walltime: "8:00:00"
   cpus: 2
   cmd: |
@@ -53,6 +61,6 @@
 
     mkdir -p "{{ results_dir }}"
 
-    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ results_dir }}/{{ sample.name }}.BTcell.loci.counts.txt"
+    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ results_dir }}/{{ bam|basename }}.bam.BTcell.loci.counts.txt"
 
 {% endmacro %}

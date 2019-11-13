@@ -33,6 +33,9 @@
 {% if debug is not defined %}{% set debug = False %}{% endif %}
 {# Tasks contains switches for toggling many of the features #}
 {% if tasks is not defined %}{% set tasks = {} %}{% endif %}
+{# submissionSource toggles specific tasks based on how they were submitted #}
+{% if submissionSource is not defined %}{% set submissionSource = "unknown" %}{% endif %}
+
 
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
 {% from 'modules/constitutional/main.jst' import constitutional_variant_calling with context %}

@@ -2,14 +2,29 @@
 # stats files produced by bam_qc steps that have been converted into a structured json file
 # to upload to LIMS via REST api integration.
 
+{% macro stats2lims(sample, input_file, file_type, library_name=none) %}
+{% if submissionSource == "TGenLIMS" %}
 
-{% macro stats2lims(sample, task ) %}
-- name: stats2lims_{{ sample.name }}_{{ task }}
-  tags: [{{ sample.gltype }}, quality_control, stats, stats2json, {{ sample.name }}]
-  after: {{ task }}
-  walltime: "1:00:00"
+- name: stats2lims_{{ sample.name }}_{{ file_type }}
+  tags: [{{ sample.gltype }}, quality_control, stats, stats2lims, {{ sample.name }}]
+  input: {{ input_file }}
+  walltime: "0:10:00"
   cpus: 1
   cmd: |
     set -eu
     set -o pipefail
+
+    module load {{ constants.tools.python_3_7_2.module }}
+
+    ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.stats2lims }} \
+      {% if library_name is not none %}
+      --libraryID library_name \
+      {% endif %}
+      {{ input_file }} \
+      {{ file_type }} \
+      {{ isilonPath }} \
+      {{ project }} \
+      {{ study }}
+
+ {% endif %}
 {% endmacro %}

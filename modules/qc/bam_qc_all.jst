@@ -2,6 +2,9 @@
 # A cram is made for each bam followed by running BAM qc steps with samtools and gatk.
 # Currently supports any sample.
 
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+{% from 'modules/qc/stats2lims.jst' import stats2lims with context %}
+
 {% macro bam_qc_samtools_stats(sample, aligner='bwa') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
@@ -134,6 +137,10 @@
 {% macro bam_qc_gatk_collectmultiplemetrics(sample, aligner='bwa') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set alignment_summary_metrics %}{{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics{% endset %}
+{% set alignment_summary_metrics_json %}{{ alignment_summary_metrics }}.json{% endset %}
+{% set insert_size_metrics %}{{ results_dir }}/{{ bam|basename }}.insert_size_metrics{% endset %}
+{% set insert_size_metrics_json %}{{ insert_size_metrics }}.json{% endset %}
 
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectMultipleMetrics, {{ sample.name }}]
@@ -194,6 +201,10 @@
       --PROGRAM CollectSequencingArtifactMetrics \
       --PROGRAM CollectQualityYieldMetrics
 
+{{ stats2json(sample, alignment_summary_metrics, "picard_alignment_summary_metrics", aligner=aligner) }}
+{{ stats2lims(sample, alignment_summary_metrics_json, "picard_alignment_summary_metrics") }}
+{{ stats2json(sample, insert_size_metrics, "picard_insert_size_metrics", aligner=aligner) }}
+{{ stats2lims(sample, insert_size_metrics_json, "picard_insert_size_metrics") }}
 {% endmacro %}
 
 
