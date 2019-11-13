@@ -7,7 +7,9 @@
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ results_dir }}/{{ sample.name }}.rna_metrics
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.rna_metrics
+    - {{ results_dir }}/{{ bam|basename }}.rna_metrics.pdf
   walltime: "8:00:00"
   cpus: 8
   mem: 32G
