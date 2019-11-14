@@ -58,7 +58,9 @@
 - name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   after-re: octopus_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ all_vcf }}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -86,7 +88,9 @@
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   after: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
-  output: {{ pass_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
   cmd: |
     set -eu
     set -o pipefail

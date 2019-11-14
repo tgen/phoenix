@@ -74,7 +74,9 @@
 - name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
   after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
-  output: {{ all_vcf }}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   cpus: 8
   mem: 64G
   walltime: "24:00:00"
@@ -101,7 +103,9 @@
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
   after: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
-  output: {{ pass_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
   cpus: 2
   mem: 4G
   walltime: "24:00:00"

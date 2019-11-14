@@ -15,9 +15,13 @@
     - {{ tumor_bam }}
   output: 
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi
   cpus: 20
   walltime: "24:00:00"
   cmd: |

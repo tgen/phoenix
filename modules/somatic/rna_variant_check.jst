@@ -4,7 +4,10 @@
 - name: add_rna_header_to_vcf_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input: {{ input_vcf }}
-  output: {{ output_vcf }}
+  output:
+    - {{ output_vcf }}
+    - {{ output_vcf }}.csi
+    - {{ output_vcf }}.tbi
   walltime: "8:00:00"
   cpus: 4
   mem: 3G
@@ -53,7 +56,10 @@
   input:
     - {{ input_vcf }}
     - {{ star_bam_final }}
-  output: {{ output_vcf }}
+  output:
+    - {{ output_vcf }}
+    - {{ output_vcf }}.csi
+    - {{ output_vcf }}.tbi
   walltime: "8:00:00"
   cpus: 4
   mem: 3G

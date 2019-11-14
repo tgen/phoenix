@@ -11,8 +11,11 @@
   input: {{ bam }}
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
     - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
     - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
   cpus: 32
   mem: 128G
   walltime: "48:00:00"

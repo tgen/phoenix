@@ -26,7 +26,15 @@
   {% for fq in r2fqlist %}
     - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ results_dir }}/{{ sample.name }}_starfusion.bam
+  output:
+    - {{ results_dir }}/{{ sample.name }}_starfusion.bam
+    - {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
+    - "{{ results_dir }}"/"{{ sample.name }}"_starfusion_Chimeric.out.junction
+    - {{ results_dir }}/{{ sample.name }}_starfusion_evidence_reads_1.fq
+    - {{ results_dir }}/{{ sample.name }}_starfusion_evidence_reads_2.fq
+    - {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.coding_effect.tsv
+    - {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.tsv
+    - {{ results_dir }}/{{ sample.name }}_starfusion_predictions.tsv
   cpus: 20
   mem: 60G
   walltime: "24:00:00"
@@ -71,13 +79,13 @@
     samtools index -@ 10 {{ results_dir }}/{{ sample.name }}_starfusion.bam
     {% endif %}
 
-    mv "{{ temp_dir }}"/Chimeric.out.junction "{{ results_dir }}"/"{{ sample.name }}"_starfusion_Chimeric.out.junction
-    mv "{{ temp_dir }}"/star-fusion.fusion_evidence_reads_1.fq "{{ results_dir }}"/"{{ sample.name }}"_starfusion_evidence_reads_1.fq
-    mv "{{ temp_dir }}"/star-fusion.fusion_evidence_reads_2.fq "{{ results_dir }}"/"{{ sample.name }}"_starfusion_evidence_reads_2.fq
-    mv "{{ temp_dir }}"/star-fusion.fusion_predictions.abridged.coding_effect.tsv "{{ results_dir }}"/"{{ sample.name }}"_starfusion_predictions.abridged.coding_effect.tsv
-    mv "{{ temp_dir }}"/star-fusion.fusion_predictions.abridged.tsv "{{ results_dir }}"/"{{ sample.name }}"_starfusion_predictions.abridged.tsv
-    mv "{{ temp_dir }}"/star-fusion.fusion_predictions.tsv "{{ results_dir }}"/"{{ sample.name }}"_starfusion_predictions.tsv
-    mv "{{ temp_dir }}"/FusionInspector-inspect "{{ results_dir }}" || true
+    mv {{ temp_dir }}/Chimeric.out.junction {{ results_dir }}/{{ sample.name }}_starfusion_Chimeric.out.junction
+    mv {{ temp_dir }}/star-fusion.fusion_evidence_reads_1.fq {{ results_dir }}/{{ sample.name }}_starfusion_evidence_reads_1.fq
+    mv {{ temp_dir }}/star-fusion.fusion_evidence_reads_2.fq {{ results_dir }}/{{ sample.name }}_starfusion_evidence_reads_2.fq
+    mv {{ temp_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.coding_effect.tsv
+    mv {{ temp_dir }}/star-fusion.fusion_predictions.abridged.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.tsv
+    mv {{ temp_dir }}/star-fusion.fusion_predictions.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.tsv
+    mv {{ temp_dir }}/FusionInspector-inspect {{ results_dir }} || true
 
 {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
 {% if cram|default(true) %}
@@ -88,7 +96,9 @@
 - name: bam_to_cram_{{ sample.name }}_{{ aligner }}_fusion
   tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
   input: {{ bam_path }}
-  output: {{ cram_path }}
+  output:
+    - {{ cram_path }}
+    - {{ cram_path }}.crai
   walltime: "8:00:00"
   cpus: 8
   mem: 3G

@@ -186,7 +186,9 @@
 - name: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, VarDict, {{ pair.name }}]
   after-re: vardict_{{ pair.name }}_{{ aligner }}_.*
-  output: {{ all_vcf }}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   cpus: 4
   mem: 16G
   walltime: "12:00:00"
@@ -215,7 +217,9 @@
 - name: vardict_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, VarDict, {{ pair.name }}]
   after: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
-  output: {{ pass_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
   cpus: 2
   mem: 8G
   walltime: "12:00:00"

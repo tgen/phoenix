@@ -241,6 +241,7 @@ which appears to be working now after some code changes, keeping this here in ca
   input: {{ star_bam_sorted }}
   output:
     - {{ star_bam_final }}
+    - {{ star_bam_final }}.bai
     - {{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics
   cpus: 10
   mem: 80G

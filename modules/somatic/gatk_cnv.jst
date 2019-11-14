@@ -451,7 +451,32 @@
 - name: gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
   after: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
-  output: {{ results_dir }}
+  output:
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.af.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.normal.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.re_centered.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna_withhets.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.hets.density.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_baf.png
   cpus: 1
   mem: 16G
   walltime: "24:00:00"

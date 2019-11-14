@@ -105,7 +105,6 @@
   exec: |
     import os
     os.environ.putenv('SBATCH_ACCOUNT', '{{ hpcAccount }}')
-    os.environ.putenv('MODULEPATH', '/packages/modules-3.2.9/modulefiles:/packages/easy-build/modules/all/:/packages/easy-build/modules/Phoenix')
     os.environ.putenv('PATH_TO_PHOENIX_REPO', '{{ constants.install_path.path_to_phoenix_repo }}')
 
 {# Move to utility scripts #}

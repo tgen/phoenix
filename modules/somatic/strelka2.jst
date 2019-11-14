@@ -77,19 +77,53 @@
   after: strelka2_{{ pair.name }}_{{ aligner }}
   output:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz.tbi
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz.tbi
+    {% if cram|default(true) %}
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram.crai
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram.crai
+    {% else %}
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai
+    {% endif %}
   cmd: |
     set -eu
     set -o pipefail
     module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     mkdir -p "{{ results_dir }}/evidence"
   
-    {# Move and rename the evidence bams #}
+    {# Move and rename the evidence bams or make crams #}
+    {% if cram|default(true) %}
+    samtools view \
+      -C \
+      -@ 8 \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      -o {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram \
+      {{ temp_dir }}/results/realigned/realigned.normal.bam
+
+    samtools index {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
+
+    samtools view \
+      -C \
+      -@ 8 \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      -o {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram \
+      {{ temp_dir }}/results/realigned/realigned.tumor.bam
+
+    samtools index {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram
+    {% else %}
     mv "{{ temp_dir }}/results/realigned/realigned.normal.bam" "{{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam"
     mv "{{ temp_dir }}/results/realigned/realigned.normal.bam.bai" "{{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
     mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
     mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam.bai" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    {% endif %}
 
     {# Merge the snvs and indels into a final vcf #}
     bcftools concat \

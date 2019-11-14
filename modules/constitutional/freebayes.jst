@@ -44,7 +44,9 @@
 - name: freebayes_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
   after-re: freebayes_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ all_vcf }}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -72,7 +74,9 @@
 - name: freebayes_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
   after: freebayes_merge_{{ sample.name }}_{{ aligner }}
-  output: {{ pass_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
   walltime: "24:00:00"
   cpus: 4
   mem: 16G

@@ -8,7 +8,9 @@
 - name: bam_to_cram_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
   input: {{ bam_path }}
-  output: {{ cram_path }}
+  output:
+    - {{ cram_path }}
+    - {{ cram_path }}.crai
   walltime: "8:00:00"
   cpus: 8
   mem: 3G

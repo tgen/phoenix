@@ -229,7 +229,9 @@
     - mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
     - mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
     - mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
-  output: {{ all_vcf }}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   cpus: 8
   mem: 32G
   walltime: "24:00:00"
@@ -263,7 +265,9 @@
 - name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   after: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
-  output: {{ pass_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
   cmd: |
     set -eu
     set -o pipefail

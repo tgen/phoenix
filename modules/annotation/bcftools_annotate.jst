@@ -4,7 +4,9 @@
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
   after: {{ after_task }}
   input: {{ input_vcf }}
-  output: {{ output_vcf }}
+  output:
+    - {{ output_vcf }}
+    - {{ output_vcf }}.tbi
   walltime: "8:00:00"
   cpus: 4
   cmd: |
@@ -145,7 +147,6 @@
     "{{ output_bcf }}"
 
     bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
-    bcftools index --threads 4 --force "{{ output_vcf }}"
 
     {% endif -%}
 {% endmacro -%}

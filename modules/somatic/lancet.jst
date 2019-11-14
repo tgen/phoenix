@@ -64,6 +64,7 @@
   after-re: lancet_{{ pair.name }}_{{ aligner }}_.*
   output:
     - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -99,6 +100,7 @@
   after: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   output:
     - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
   cmd: |
     set -eu
     set -o pipefail

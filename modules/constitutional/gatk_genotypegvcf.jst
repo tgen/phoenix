@@ -63,7 +63,9 @@
 - name: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
   after-re: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_.*
-  output: {{ all_vcf }}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -87,7 +89,9 @@
 - name: haplotypecaller_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
   after: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
-  output: {{ pass_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
   walltime: "24:00:00"
   cpus: 4
   mem: 16G

@@ -101,7 +101,12 @@
   input:
     - {{ pass_vcf }}
   output:
-    - {{ pair.name }}.{{ aligner }}.delly.passOnly.ann.vcf
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz.tbi
+    - {{ results_dir }}/{{ pass_vcf }}.gz
+    - {{ results_dir }}/{{ pass_vcf }}.gz.tbi
+    - {{ results_dir }}/{{ all_vcf }}.gz
+    - {{ results_dir }}/{{ all_vcf }}.gz.tbi
   cpus: 8
   walltime: "24:00:00"
   cmd: |
@@ -148,20 +153,29 @@
       --output-file {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz \
       {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
 
+    bcftools index --tbi --force {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz
+
     bcftools view \
       --output-type z \
       --output-file {{ temp_dir }}/{{ pass_vcf }}.gz \
       {{ temp_dir }}/{{ pass_vcf }}
+
+    bcftools index --tbi --force {{ temp_dir }}/{{ pass_vcf }}.gz
 
     bcftools view \
       --output-type z \
       --output-file {{ temp_dir }}/{{ all_vcf }}.gz \
       {{ temp_dir }}/{{ all_vcf }}
 
+    bcftools index --tbi --force {{ temp_dir }}/{{ all_vcf }}.gz
+
     mkdir -p {{ results_dir }}
 
-    cp {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz {{ results_dir }}
-    cp {{ temp_dir }}/{{ pass_vcf }}.gz {{ results_dir }}
-    cp {{ temp_dir }}/{{ all_vcf }}.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz.tbi {{ results_dir }}
+    mv {{ temp_dir }}/{{ pass_vcf }}.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ pass_vcf }}.gz.tbi {{ results_dir }}
+    mv {{ temp_dir }}/{{ all_vcf }}.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ all_vcf }}.gz.tbi {{ results_dir }}
 
 {% endmacro %}
