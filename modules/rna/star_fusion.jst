@@ -29,7 +29,7 @@
   output:
     - {{ results_dir }}/{{ sample.name }}_starfusion.bam
     - {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
-    - "{{ results_dir }}"/"{{ sample.name }}"_starfusion_Chimeric.out.junction
+    - {{ results_dir }}/{{ sample.name }}_starfusion_Chimeric.out.junction
     - {{ results_dir }}/{{ sample.name }}_starfusion_evidence_reads_1.fq
     - {{ results_dir }}/{{ sample.name }}_starfusion_evidence_reads_2.fq
     - {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.coding_effect.tsv
@@ -85,7 +85,21 @@
     mv {{ temp_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.coding_effect.tsv
     mv {{ temp_dir }}/star-fusion.fusion_predictions.abridged.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.tsv
     mv {{ temp_dir }}/star-fusion.fusion_predictions.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.tsv
-    mv {{ temp_dir }}/FusionInspector-inspect {{ results_dir }} || true
+
+    if [[ -d FusionInspector-inspect ]]
+    then
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.fusion_inspector_web.html {{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.html
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.fusion_inspector_web.json {{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.json
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.fa {{ results_dir }}/{{ sample.name }}_finspector.fa
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.bed {{ results_dir }}/{{ sample.name }}_finspector.bed
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.junction_reads.bam {{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.junction_reads.bam.bai {{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam.bai
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.spanning_reads.bam {{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.spanning_reads.bam.bai {{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam.bai
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz {{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz
+      mv {{ temp_dir }}/FusionInspector-inspect/finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi {{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi
+      mv {{ temp_dir }}/FusionInspector-inspect/fi_workdir/trinity_GG/Trinity-GG.fasta {{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
+    fi
 
 {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
 {% if cram|default(true) %}
