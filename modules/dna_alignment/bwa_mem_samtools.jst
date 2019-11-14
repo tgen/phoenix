@@ -107,7 +107,7 @@
       "temp/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
     {# Test if 2nd '-' is needed #}
     samtools fixmate \
-      --threads 9 \
+      --threads 1 \
       -m \
       - \
       - |\

@@ -12,7 +12,7 @@
 {% macro dna_alignment(samples) %}
   {% set alignment_style = dnaAlignmentStyle|default('tgen')|lower %}
   {# Not configurable by LIMS #}
-  {% set reads_per_chunk = reads_per_chunk|default(48000000) %}
+  {% set reads_per_chunk = reads_per_chunk|default(40000000) %}
 
   {% for sample in samples.values() if sample.gltype in ['genome', 'exome'] %}
 
