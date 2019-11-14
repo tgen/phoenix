@@ -117,8 +117,8 @@
       -m 3G \
       --threads 9 \
       --output-fmt BAM \
-      - \
-      -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+      -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
+      -
 
 {% endfor %}
 {% endfor %}
