@@ -101,7 +101,7 @@
     {% endif -%}
 
 {% if submissionSource == "TGenLIMS" %}
-- name: stats2lims_{{ sample.name }}_{{ file_type }}
+- name: stats2lims_{{ sample.name }}
   tags: [{{ sample.gltype }}, quality_control, stats, stats2lims, {{ sample.name }}]
   after-re: stats2json_{{ sample.name }}_*
   walltime: "0:10:00"
