@@ -37,9 +37,12 @@
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
       --assembly-candidate-generator ON \
+      --ignore-unmapped-contigs \
       --legacy \
       --annotations AD ADP AF SB \
       --filter-expression "AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
+      --working-directory {{ temp_dir }} \
+      --temp-directory-prefix {{ temp_dir }}temp_{{ batch }}_octopus \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
       --reads "{{ bam }}" \

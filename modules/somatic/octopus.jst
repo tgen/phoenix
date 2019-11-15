@@ -39,11 +39,14 @@
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
       --assembly-candidate-generator ON \
+      --ignore-unmapped-contigs \
       --somatics-only OFF \
       --phasing-level minimal \
       --legacy \
       --annotations AD ADP AF SB \
       --somatic-filter-expression "AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
+      --working-directory {{ temp_dir }} \
+      --temp-directory-prefix {{ temp_dir }}temp_{{ batch }}_octopus \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
       --skip-regions-file {{ constants.phoenix.black_list }} \
