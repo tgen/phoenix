@@ -1,7 +1,6 @@
 # These macros are run on exome bams from the dna_alignment module.
 
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
-{% from 'modules/qc/stats2lims.jst' import stats2lims with context %}
 
 {% macro bam_qc_gatk_collecthsmetrics(sample, aligner='bwa') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
