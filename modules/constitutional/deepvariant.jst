@@ -27,12 +27,14 @@
 
     mkdir -p "{{ temp_dir }}"
 
+    cd "{{ temp_dir }}"
+
     {#
     # Run make_examples
     # This function does not need to be run on a GPU
     # cd here in order to prevent wild temp files from polluting the project
     #}
-    (cd "{{ temp_dir }}" && make_examples \
+    make_examples \
       --logging_level WARN \
       --mode calling \
       --task {{ i }} \
@@ -60,6 +62,7 @@
     export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
     PROJECT_ROOT=$PWD
 
+    cd "{{ temp_dir }}"
     {# Run call_variants #}
     call_variants \
       {% if sample.gltype == 'exome' %}
@@ -67,8 +70,8 @@
       {% else %}
       --checkpoint  "{{ constants.phoenix.deepvariant_models.genome }}" \
       {% endif %}
-      --examples "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz" \
-      --outfile "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz"
+      --examples "{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz" \
+      --outfile "{{ sample.name }}.cvo.tfrecord.gz"
 
 
 - name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
@@ -90,11 +93,13 @@
     PROJECT_ROOT=$PWD
     
     mkdir -p "{{ results_dir }}"
+
+    cd "{{ temp_dir }}"
     
     {# Run postprocess_variants` without gVCFs #}
     postprocess_variants \
         --ref "{{ constants.phoenix.reference_fasta }}" \
-        --infile "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz" \
+        --infile "{{ sample.name }}.cvo.tfrecord.gz" \
         --outfile "${PROJECT_ROOT}/{{ all_vcf }}"
 
     bcftools index --tbi --force "{{ all_vcf }}"
