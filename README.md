@@ -105,7 +105,7 @@ Last Update November 14, 2019
 | [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | 2.29.0 | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
 | [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | 2.3.5.1 | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
-| [cellranger](https://github.com/lh3/bwa/releases) | 3.1.0 | 3.1.0 | | Yes |
+| [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | 3.1.0 | | Yes |
 | [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container | Yes |
 | [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons | Yes |
 | [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions | Yes |
