@@ -7,7 +7,6 @@
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 {% set output_file %}{{ results_dir }}/{{ bam|basename }}.hs_metrics{% endset %}
-{% set output_json %}{{ output_file }}.json{% endset %}
 
 - name: gatk_collecthsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectHsMetrics, {{ sample.name }}]
@@ -39,6 +38,5 @@
 
 
 {{ stats2json(sample, output_file, "picard_hs_metrics", aligner=aligner) }}
-{{ stats2lims(sample, output_json, "picard_hs_metrics") }}
 
 {% endmacro %}

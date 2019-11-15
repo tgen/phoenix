@@ -7,7 +7,6 @@
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 {% set rna_metrics %}{{ results_dir }}/{{ bam|basename }}.rna_metrics{% endset %}
-{% set rna_metrics_json %}{{ rna_metrics }}.json{% endset %}
 
 - name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
@@ -40,7 +39,6 @@
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}.rna_metrics"
 
 {{ stats2json(sample, rna_metrics, "picard_rna_metrics", aligner=aligner) }}
-{{ stats2lims(sample, rna_metrics_json, "picard_rna_metrics") }}
 
 {% endmacro %}
 
