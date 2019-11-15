@@ -2,7 +2,7 @@
 # stats files produced by bam_qc steps that have been converted into a structured json file
 # to upload to LIMS via REST api integration.
 
-{% macro stats2lims(sample, library_name=none, aligner='bwa',) %}
+{% macro stats2lims(sample, library_name=none, aligner='bwa') %}
 {% set bam %}{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set input_base_name %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats/{{ bam }}{% endset %}
 
