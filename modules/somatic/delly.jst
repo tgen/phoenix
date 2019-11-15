@@ -1,8 +1,8 @@
 {% macro delly_somatic(pair, aligner='bwa') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/delly{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly{{ pair.name }}{% endset %}
 {% set all_vcf %}{{ pair.name }}.{{ aligner }}.delly.allCalls.vcf{% endset %}
 {% set pass_vcf %}{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
 {% set variant_types=['DEL','DUP','INS','INV','TRA'] %}
@@ -62,13 +62,9 @@
     {% for svtype in variant_types %}
     - delly_{{ pair.name }}_{{ aligner }}_{{ svtype }}
     {% endfor %}
-  input:
-    {% for svtype in variant_types %}
-    - {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf
-    {% endfor %}
   output:
-    - {{ all_vcf }}
-    - {{ pass_vcf }}
+    - {{ temp_dir }}/{{ all_vcf }}
+    - {{ temp_dir }}/{{ pass_vcf }}
   cpus: 8
   walltime: "24:00:00"
   cmd: |
@@ -99,7 +95,7 @@
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
   after: delly_merge_{{ pair.name }}_{{ aligner }}
   input:
-    - {{ pass_vcf }}
+    - {{ temp_dir }}/{{ pass_vcf }}
   output:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz.tbi
@@ -117,30 +113,13 @@
     module load {{ constants.tools.bedtools.module }}
     module load {{ constants.tools.bcftools.module }}
 
-    if [[ -e {{ results_dir }}/{{ all_vcf }}  ]] ;
+    if [[ $(grep -m 1 -c "ENDPOSSV" {{ temp_dir }}/{{ pass_vcf }} ) -ne 1 ]]
     then
-       cp {{ results_dir }}/{{ all_vcf }} {{ temp_dir }}/
-    if [[ $? -ne 0 ]] ; then echo -e "it is probably the first run for that project so the fiel does not exist yet ; continue anyway ; This was added temporarily to accomodate the error due to the mv command previously put in line below (143 to line 145)" ; fi
-    fi
-    
-    if [[ ! -e {{ temp_dir }}/{{ pass_vcf }} ]]
+      sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ temp_dir }}/{{ pass_vcf }} > {{ temp_dir }}/{{ pass_vcf }}.mod
+      python ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.delly_addRC_to_Delly_VCF_script }} -i {{ temp_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
+    elif [[ -e {{ temp_dir }}/{{ pass_vcf }} ]]
     then
-       if [[ -e {{ results_dir }}/{{ pass_vcf }} ]]
-       then
-          cp {{ results_dir }}/{{ pass_vcf }} {{ results_dir }}/{{ all_vcf }}  {{ temp_dir }}/
-       else
-          echo -e "ERROR: FNF << {{ pass_vcf }} >> in dirs {{ temp_dir }} OR {{ results_dir }}; Aborting."
-          exit 1
-       fi
-    else 
-       if [[ $(grep -m 1 -c "ENDPOSSV" {{ temp_dir }}/{{ pass_vcf }} ) -ne 1 ]] ;
-       then
-            sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ temp_dir }}/{{ pass_vcf }} > {{ temp_dir }}/{{ pass_vcf }}.mod
-            python ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.delly_addRC_to_Delly_VCF_script }} -i {{ temp_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
-       elif [[ -e {{ temp_dir }}/{{ pass_vcf }} ]]
-       then
-            cp {{ temp_dir }}/{{ pass_vcf }} {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf
-       fi
+      cp {{ temp_dir }}/{{ pass_vcf }} {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf
     fi
     
     bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
