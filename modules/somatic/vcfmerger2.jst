@@ -108,6 +108,11 @@
     module load {{ constants.tools.bedtools.module }}
     module load {{ constants.tools.vt.module }}
 
+    if [ -d {{ results_dir }} ]
+    then
+      rm -rf {{ results_dir }}/SummaryPlots_* || true
+    fi
+
     mkdir -p "{{ results_dir }}"
     
     vcfMerger2.py \
@@ -129,7 +134,7 @@
     # the number of tools used to call variants and may change from one project to another 
     #}
     rm -rf {{ temp_dir }}/SummaryPlots_*/sets
-    rsync -vr {{ temp_dir }}/SummaryPlots_* "{{ results_dir }}"
+    mv {{ temp_dir }}/SummaryPlots_* "{{ results_dir }}"
 
 
 {% if 'rna_samples' in pair.tumor %}
