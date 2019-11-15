@@ -45,7 +45,8 @@
 
     N_CREATED=$(ls "temp/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
 
-    if [[ ${N_CREATED} -ne {{ n_chunks }} ]]; then
+    if [[ ${N_CREATED} -ne {{ n_chunks }} ]]
+    then
       echo "Chunks created does not match expected value"
       exit 1
     fi
