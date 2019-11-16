@@ -40,7 +40,7 @@
       --task {{ i }} \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --reads "${PROJECT_ROOT}/{{ bam }}" \
-      --examples "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz")
+      --examples "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz"
       
 {% endfor %}
 
