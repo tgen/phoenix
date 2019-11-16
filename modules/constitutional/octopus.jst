@@ -43,12 +43,12 @@
       --filter-expression "AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
       --working-directory {{ temp_dir }} \
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      --temp-directory-prefix "{{ temp_dir }}/{{ loop.index }}" \
+      --temp-directory-prefix "{{ loop.index }}" \
       --reads "{{ bam }}" \
-      --regions-file "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --regions-file "{{ loop.index }}.bed" \
       --skip-regions-file {{ constants.phoenix.black_list }} \
-      --bamout "{{ temp_dir }}/{{ loop.index }}.realigned.bam" \
-      --output "{{ temp_dir }}/{{ loop.index }}.octopus.vcf"
+      --bamout "{{ loop.index }}.realigned.bam" \
+      --output "{{ loop.index }}.octopus.vcf"
 
 {% endfor %}
 
