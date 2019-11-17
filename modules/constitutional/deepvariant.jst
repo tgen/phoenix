@@ -102,7 +102,7 @@
         --infile "{{ sample.name }}.cvo.tfrecord.gz" \
         --outfile "${PROJECT_ROOT}/{{ all_vcf }}"
 
-    bcftools index --tbi --force "{{ all_vcf }}"
+    bcftools index --tbi --force "${PROJECT_ROOT}/{{ all_vcf }}"
 
 
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
