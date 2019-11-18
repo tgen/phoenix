@@ -118,7 +118,8 @@ Last Update November 14, 2019
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
 | [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | | Yes |
-| [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | |
+| [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | Yes |
+| [multiQC](https://github.com/Illumina/manta/releases) | 1.7 | 1.7 | python3 pip | Yes |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
 | [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
@@ -165,6 +166,7 @@ Last Update November 14, 2019
 * getopt
 * igv_reports
 * multiprocessing
+* multiqc
 * PIL
 * pybedtools
 * pysam
