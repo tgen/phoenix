@@ -1,13 +1,14 @@
+{% from 'modules/somatic/manta.jst' import manta_somatic with context %}
 {% from 'modules/somatic/strelka2.jst' import strelka2_somatic with context %}
 {% from 'modules/somatic/mutect2.jst' import mutect2 with context %}
 {% from 'modules/somatic/lancet.jst' import lancet with context %}
-{% from 'modules/somatic/manta.jst' import manta_somatic with context %}
-{% from 'modules/somatic/octopus.jst' import octopus_somatic with context %}
 {% from 'modules/somatic/vardict.jst' import vardict_somatic with context %}
+{% from 'modules/somatic/octopus.jst' import octopus_somatic with context %}
+{% from 'modules/somatic/vcfmerger2.jst' import vcfmerger2 with context %}
 {% from 'modules/somatic/delly.jst' import delly_somatic with context %}
 {% from 'modules/somatic/gridss.jst' import gridss_somatic with context %}
 {% from 'modules/somatic/gatk_cnv.jst' import gatk_cnv with context %}
-{% from 'modules/somatic/vcfmerger2.jst' import vcfmerger2 with context %}
+
 
 # Somatic tools generally operate on pairs of DNA samples (tumor/normal).
 # WARNING - This pairs together all tumor and constitutional samples (of the same gltype)
@@ -100,12 +101,28 @@
         {{- mutect2(pair, aligner='bwa') }}
     {% endif %}
 
+    {% if tasks[taskPrefix+"_somatic_structural_caller_manta"]|default(true) %}
+        {{- manta_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_strelka2"]|default(true) %}
+        {{- strelka2_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
     {% if tasks[taskPrefix+"_somatic_snp_indel_caller_lancet"]|default(true) %}
         {{- lancet(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_somatic_structural_caller_manta"]|default(true) %}
-        {{- manta_somatic(pair, aligner='bwa') }}
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_VarDict"]|default(true) %}
+        {{- vardict_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_octopus"]|default(true) %}
+        {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
+        {{- vcfmerger2(pair, aligner='bwa', taskPrefix=taskPrefix) }}
     {% endif %}
 
     {% if tasks[taskPrefix+"_somatic_structural_caller_delly"]|default(true) %}
@@ -115,26 +132,12 @@
     {% if tasks[taskPrefix+"_somatic_structural_caller_gridss"]|default(false) %}
         {{- gridss_somatic(pair, aligner='bwa') }}
     {% endif %}
-    
-    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_strelka2"]|default(true) %}
-        {{- strelka2_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_octopus"]|default(true) %}
-        {{- octopus_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_VarDict"]|default(true) %}
-        {{- vardict_somatic(pair, aligner='bwa') }}
-    {% endif %}
 
     {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
         {{- gatk_cnv(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
-        {{- vcfmerger2(pair, aligner='bwa', taskPrefix=taskPrefix) }}
-    {% endif %}
+
 
 {% endfor %}
 
