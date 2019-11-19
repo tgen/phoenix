@@ -148,14 +148,131 @@ Last Update November 14, 2019
 <details>
 <summary><b>Required PERL Modules</b></summary>
 
-* XXX
+|	Module	|	Version	|
+|	:---:	|	:---:	|
+|	AutoLoader	|	5.74	|
+|	Bio::EnsEMBL::XS	|	2.3.2	|
+|	Carp::Assert	|	0.21	|
+|	common::sense	|	3.74	|
+|	constant	|	1.33	|
+|	Cwd	|	3.75	|
+|	Data::Dumper	|	2.173	|
+|	Data::Dumper	|	2.173	|
+|	DB_File	|	1.852	|
+|	Encode	|	3.01	|
+|	ExtUtils::CBuilder	|	0.280231	|
+|	ExtUtils::CppGuess	|	0.19	|
+|	ExtUtils::MakeMaker	|	7.36	|
+|	ExtUtils::ParseXS	|	3.35	|
+|	IO::File	|	1.39	|
+|	IO::Select	|	1.39	|
+|	IO::Socket	|	1.39	|
+|	IPC::Cmd	|	1.02	|
+|	JSON::XS	|	4.02	|
+|	List::Util	|	1.5	|
+|	Locale::Maketext::Simple	|	0.21	|
+|	MIME::Base64	|	3.15	|
+|	Module::CoreList	|	5.2019062	|
+|	Module::Load	|	0.34	|
+|	Module::Load::Conditional	|	0.68	|
+|	Module::Metadata	|	1.000036	|
+|	Net::Domain	|	3.11	|
+|	Params::Check	|	0.38	|
+|	parent	|	0.237	|
+|	Perl::OSType	|	1.01	|
+|	PerlIO::gzip	|	0.2	|
+|	Pod::Escapes	|	1.07	|
+|	Pod::Man	|	4.12	|
+|	Pod::Simple	|	3.39	|
+|	Scalar::Util	|	1.5	|
+|	Set::IntervalTree	|	0.12	|
+|	Socket	|	2.029	|
+|	Storable	|	3.15	|
+|	Test	|	1.26	|
+|	Test::More	|	1.302164	|
+|	Text::ParseWords	|	3.3	|
+|	Text::Wrap	|	2013.0523	|
+|	Time::Local	|	1.28	|
+|	Types::Serialiser	|	1	|
+|	URI::Escape	|	1.76	|
+|	XSLoader	|	0.24	|
 
 </details>
 
 <details>
 <summary><b>Required PYTHON2 Modules</b></summary>
 
-* XXX
+|	Module	|	Version	|
+|	:---:	|	:---:	|
+|	alabaster	|	0.7.12	|
+|	asn1crypto	|	0.24.0	|
+|	atomicwrites	|	1.3.0	|
+|	attrs	|	19.1.0	|
+|	Babel	|	2.6.0	|
+|	bcrypt	|	3.1.6	|
+|	bitstring	|	3.1.5	|
+|	blist	|	1.3.6	|
+|	certifi	|	2019.3.9	|
+|	cffi	|	1.12.2	|
+|	chardet	|	3.0.4	|
+|	Click	|	7	|
+|	cryptography	|	2.6.1	|
+|	Cython	|	0.29.6	|
+|	deap	|	1.2.2	|
+|	decorator	|	4.3.2	|
+|	docopt	|	0.6.2	|
+|	docutils	|	0.14	|
+|	ecdsa	|	0.13	|
+|	enum34	|	1.1.6	|
+|	funcsigs	|	1.0.2	|
+|	future	|	0.17.1	|
+|	idna	|	2.8	|
+|	imagesize	|	1.1.0	|
+|	ipaddress	|	1.0.22	|
+|	Jinja2	|	2.1	|
+|	joblib	|	0.13.2	|
+|	liac-arff	|	2.4.0	|
+|	MarkupSafe	|	1.1.1	|
+|	mock	|	2.0.0	|
+|	more-itertools	|	5.0.0	|
+|	netaddr	|	0.7.19	|
+|	netifaces	|	0.10.9	|
+|	nose	|	1.3.7	|
+|	packaging	|	19	|
+|	paramiko	|	2.4.2	|
+|	pathlib2	|	2.3.3	|
+|	paycheck	|	1.0.2	|
+|	pbr	|	5.1.3	|
+|	pip	|	19.0.3	|
+|	pluggy	|	0.9.0	|
+|	psutil	|	5.6.1	|
+|	py	|	1.8.0	|
+|	py_expression_eval	|	0.3.6	|
+|	pyasn1	|	0.4.5	|
+|	pycparser	|	2.19	|
+|	pycrypto	|	2.6.1	|
+|	Pygments	|	2.3.1	|
+|	PyNaCl	|	1.3.0	|
+|	pyparsing	|	2.3.1	|
+|	pytest	|	4.3.1	|
+|	python-dateutil	|	2.8.0	|
+|	pytz	|	2018.9	|
+|	requests	|	2.21.0	|
+|	scandir	|	1.10.0	|
+|	setuptools	|	40.8.0	|
+|	setuptools_scm	|	3.2.0	|
+|	singledispatch	|	3.4.0.3	|
+|	six	|	1.12.0	|
+|	snowballstemmer	|	1.2.1	|
+|	Sphinx	|	1.8.5	|
+|	sphinxcontrib-websupport	|	1.1.0	|
+|	tabulate	|	0.8.3	|
+|	typing	|	3.6.6	|
+|	ujson	|	1.35	|
+|	urllib3	|	1.24.1	|
+|	virtualenv	|	16.4.3	|
+|	wheel	|	0.33.1	|
+|	xlrd	|	1.2.0	|
 
 </details>
 
