@@ -289,7 +289,7 @@ constants:
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
     vcfmerger2:
-      module: vcfmerger2/0.8.0
+      module: vcfmerger2/0.8.0-phoenix
       version: "0.8.0"
       verbose: vcfMerger2 v0.8.0
       website: https://github.com/tgen/vcfMerger2
