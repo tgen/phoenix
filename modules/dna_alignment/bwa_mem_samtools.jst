@@ -164,7 +164,7 @@
 - name: samtools_markdup_{{ sample.name }}_bwa
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
-    {{ constants.tools.samtools_1_9_latest.verbose }} markdup.
+    {{ constants.tools.samtools_1_9_168_gb1e2c78.verbose }} markdup.
   input: temp/{{ sample.name }}.bwa.bam
   output:
     - temp/{{ sample.name }}.bwa.md.bam
@@ -175,7 +175,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9_latest.module }}
+    module load {{ constants.tools.samtools_1_9_168_gb1e2c78.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
