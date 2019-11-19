@@ -7,7 +7,7 @@
   'PL:{}'.format(rg.rgpl),
   'CN:{}'.format(rg.rgcn|default('tgen')),
   'PM:{}'.format(rg.rgpm),
-  'KS:{}'.format(rg.rgks|default('unknown'))
+  'BC:{}'.format(rg.rgbc|default('unknown'))
 ] %}
 {% if format == 'bwa' %}
   {# BWA requires one argument with fields separated by \t #}

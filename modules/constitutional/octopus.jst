@@ -1,0 +1,113 @@
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+
+{%- macro octopus_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
+{%- set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{%- set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}_{{ aligner }}{% endset %}
+{%- set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/octopus/{{ sample.name }}{% endset %}
+{%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
+{%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
+
+{% for batch in constants.phoenix.primary_contig_calling_intervals %}
+
+- name: octopus_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
+  input: {{ bam }}
+  walltime: "24:00:00"
+  cpus: 8
+  retry: 2
+  mem: 96G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.octopus.module }}
+
+    mkdir -p "{{ temp_dir }}"
+
+    {# Write out the regions in this batch to a file #}
+    TAB=$'\t'
+    cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+
+    octopus \
+      --caller individual \
+      --threads 8 \
+      --max-reference-cache-footprint 4GB \
+      --target-read-buffer-footprint 6GB \
+      --assembly-candidate-generator ON \
+      --ignore-unmapped-contigs \
+      --legacy \
+      --annotations AD ADP AF SB \
+      --filter-expression "QUAL < 10 | MQ < 10 | MP < 10 | BQ < 15 | DP < 1 | AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
+      --working-directory {{ temp_dir }} \
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --temp-directory-prefix "{{ loop.index }}" \
+      --reads "{{ bam }}" \
+      --regions-file "{{ loop.index }}.bed" \
+      --skip-regions-file {{ constants.phoenix.black_list }} \
+      --bamout "{{ loop.index }}.realigned.bam" \
+      --output "{{ loop.index }}.octopus.vcf"
+
+{% endfor %}
+
+- name: octopus_merge_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
+  after-re: octopus_{{ sample.name }}_{{ aligner }}_.*
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 16G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.bcftools.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    bcftools concat \
+      --output-type z \
+      --output "{{ all_vcf }}" \
+      {% for b in constants.phoenix.primary_contig_calling_intervals %}
+      "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
+      {% endfor %}
+
+    bcftools index --tbi --force "{{ all_vcf }}"
+
+    {% if not debug %}
+    rm -r "{{ temp_dir }}"
+    {% endif %}
+
+
+- name: octopus_filter_variants_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
+  after: octopus_merge_{{ sample.name }}_{{ aligner }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 16G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Then filter out the passing variants to a separate file #}
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
+      {% if sample.gltype == 'exome' %}
+      --targets-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
+
+    bcftools index --tbi --force "{{ pass_vcf }}"
+
+{%- set after_task = 'octopus_filter_variants_'+sample.name+'_'+aligner %}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional', 'snp_indel_caller') }}
+{% endmacro -%}

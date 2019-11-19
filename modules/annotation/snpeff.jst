@@ -1,26 +1,65 @@
-{% macro snpeff(input_vcf, output_vcf) %}
 
-- name: snpeff_{{ input_vcf|sha256 }}
-  tags: [snpeff, annotation]
+{%- macro snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type , analysis_type) %}
+
+- name: snpeff_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
+  tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
+  after: {{ after_task }}
   input: {{ input_vcf }}
-  output: {{ output_vcf }}
+  output:
+    - {{ final_vcf_prefix }}.snpeff.full.vcf.gz
+    - {{ final_vcf_prefix }}.snpeff.full.vcf.gz.tbi
+    - {{ final_vcf_prefix }}.snpeff.can.vcf.gz
+    - {{ final_vcf_prefix }}.snpeff.can.vcf.gz.tbi
   walltime: "8:00:00"
   cpus: 4
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
-    module load {{ constants.tools.snpeff_4_3t.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.snpeff.module }}
+    module load {{ constants.tools.bcftools.module }}
 
+    {# No long options available for the following:
+      -t      Use multiple threads (implies '-noStats')
+      -c      Config file, apparently the long form breaks stuff
+      -hgvs   Use HGVS annotations for amino acid sub-field
+      -lof    Add loss of function (LOF) and Nonsense mediated decay (NMD) tags
+    #}
+
+    {# Generate full annotation set #}
     snpEff ann \
       -t \
       -c "{{ constants.phoenix.snpeff_config }}" \
       -dataDir "{{ constants.phoenix.snpeff_data }}" \
+      -hgvs \
+      -lof \
       "{{ constants.phoenix.snpeff_db }}" \
-      "{{ input_vcf }}" |\
-    bcftools view -O z - -o "{{ output_vcf }}"
+      "{{ input_vcf }}" \
+      | \
+      bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
-    bcftools index -tf "{{ output_vcf }}"
+    bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
+
+    {# No long options available for the following:
+      -t      Use multiple threads (implies '-noStats')
+      -c      Config file, apparently the long form breaks stuff
+      -hgvs   Use HGVS annotations for amino acid sub-field
+      -lof    Add loss of function (LOF) and Nonsense mediated decay (NMD) tags
+      -canon  Only use canonical transcripts
+    #}
+    {# Generate canonical annotation set #}
+    snpEff ann \
+      -t \
+      -c "{{ constants.phoenix.snpeff_config }}" \
+      -dataDir "{{ constants.phoenix.snpeff_data }}" \
+      -canon \
+      -hgvs \
+      -lof \
+      "{{ constants.phoenix.snpeff_db }}" \
+      "{{ input_vcf }}" \
+      | \
+      bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
+
+    bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
 
 {% endmacro %}

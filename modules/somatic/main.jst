@@ -1,11 +1,14 @@
-{% from 'modules/somatic/mutect2.jst' import mutect2 with context %}
-{% from 'modules/somatic/lancet.jst' import lancet with context %}
 {% from 'modules/somatic/manta.jst' import manta_somatic with context %}
 {% from 'modules/somatic/strelka2.jst' import strelka2_somatic with context %}
-{% from 'modules/somatic/octopus.jst' import octopus_somatic with context %}
+{% from 'modules/somatic/mutect2.jst' import mutect2 with context %}
+{% from 'modules/somatic/lancet.jst' import lancet with context %}
 {% from 'modules/somatic/vardict.jst' import vardict_somatic with context %}
-{% from 'modules/somatic/tconut.jst' import tconut with context %}
+{% from 'modules/somatic/octopus.jst' import octopus_somatic with context %}
 {% from 'modules/somatic/vcfmerger2.jst' import vcfmerger2 with context %}
+{% from 'modules/somatic/delly.jst' import delly_somatic with context %}
+{% from 'modules/somatic/gridss.jst' import gridss_somatic with context %}
+{% from 'modules/somatic/gatk_cnv.jst' import gatk_cnv with context %}
+
 
 # Somatic tools generally operate on pairs of DNA samples (tumor/normal).
 # WARNING - This pairs together all tumor and constitutional samples (of the same gltype)
@@ -14,30 +17,62 @@
 
 {% macro somatic_variant_calling(samples) %}
 {% if somatic_variant_calling_pairs is defined %}
+    {#
     # Pairs can be a predefined list of objects: 
     # [{"tumor": <tumor name>, "normal": <normal name>},...]
+    #}
     {% set pairs = [] %}
     {% for pair in somatic_variant_calling_pairs %}
         {% set tumor = samples[pair.tumor] %}
         {% set normal = samples[pair.normal] %}
         {% set pair_name = normal.name + '-' + tumor.name %}
+
+        {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+            {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+                {% if 'rna_samples' not in tumor %}
+                   {% do tumor.update({'rna_samples': []}) %}
+                {% endif %}
+                {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+           {% endfor %}
+        {% endif %}
+
         {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
     {% endfor %}
 {% else %}
+    {#
     # If pairs are not predefined, build up the somatic variant calling 
     # sample pairs object by pairing every tumor to every normal of the 
     # same gltype. This will essentially permute every tumor-normal 
     # combination in the project. For projects with multiple individuals
     # this is likely NOT what you want to do, and pairs should be 
-    # predefined in the config data. 
+    # predefined in the config data.
+    #}
     {% set pairs = [] %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'exome' %}
+        {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+            {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+                {% if 'rna_samples' not in tumor %}
+                   {% do tumor.update({'rna_samples': []}) %}
+                {% endif %}
+                {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+           {% endfor %}
+        {% endif %}
+
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype == 'exome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
             {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
         {% endfor %}
     {% endfor %}
     {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'genome' %}
+        {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+            {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+                {% if 'rna_samples' not in tumor %}
+                   {% do tumor.update({'rna_samples': []}) %}
+                {% endif %}
+                {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+           {% endfor %}
+        {% endif %}
+
         {% for normal in samples.values() if normal.subGroup|lower == 'constitutional' and normal.gltype == 'genome' %}
             {% set pair_name = normal.name + '-' + tumor.name %}
             {% do pairs.append({'name': pair_name, 'gltype': normal.gltype, 'normal': normal, 'tumor': tumor}) %}
@@ -45,76 +80,65 @@
     {% endfor %}
 {% endif %}
 
+{#
 # Variant caller macros that are used should add their name to the pair.caller list 
 # and then vcfmerger will merge all variants for callers that were used.
-# For example: {# {% do pair.callers.append('mutect2') %} #}
+# For example: {% do pair.callers.append('mutect2') %}
 # This requires that the output vcfs be located and named consitently, more details
 # in vcfmerger2.jst
+#}
 {% for pair in pairs %}{% do pair.update({'callers': []}) %}{% endfor %}
 
-# Start of the macro calls that will actually add the tasks to the workflow
-{% for pair in pairs if pair.gltype == 'genome' %}
-    {% if tasks.mutect2_genome|default(True) %}
-        {{- mutect2(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.lancet_genome|default(True) %}
-        {{- lancet(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.manta_somatic_genome|default(True) %}
-        {{- manta_somatic(pair, aligner='bwa') }}
-    {% endif %}
-    
-    {% if tasks.strelka2_somatic_genome|default(True) %}
-        {{- strelka2_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.octopus_somatic_genome|default(True) %}
-        {{- octopus_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.vardict_somatic_genome|default(True) %}
-        {{- vardict_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.tconut_genome|default(True) %}
-        {{- tconut(pair, aligner='bwa') }}
-    {% endif %}
-{% endfor %}
-
-{% for pair in pairs if pair.gltype == 'exome' %}
-    {% if tasks.mutect2_exome|default(True) %}
-        {{- mutect2(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.lancet_exome|default(True) %}
-        {{- lancet(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.manta_somatic_exome|default(True) %}
-        {{- manta_somatic(pair, aligner='bwa') }}
-    {% endif %}
-    
-    {% if tasks.strelka2_somatic_exome|default(True) %}
-        {{- strelka2_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.octopus_somatic_exome|default(True) %}
-        {{- octopus_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.vardict_somatic_exome|default(True) %}
-        {{- vardict_somatic(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks.tconut_exome|default(True) %}
-        {{- tconut(pair, aligner='bwa') }}
-    {% endif %}
-{% endfor %}
-
+{# Start of the macro calls that will actually add the tasks to the workflow #}
 {% for pair in pairs %}
-    {{- vcfmerger2(pair, aligner='bwa') }}
+    {% if pair.gltype in 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+    {% elif pair.gltype in 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_gatk_mutect2"]|default(true) %}
+        {{- mutect2(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_structural_caller_manta"]|default(true) %}
+        {{- manta_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_strelka2"]|default(true) %}
+        {{- strelka2_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_lancet"]|default(true) %}
+        {{- lancet(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_VarDict"]|default(true) %}
+        {{- vardict_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_octopus"]|default(true) %}
+        {{- octopus_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
+        {{- vcfmerger2(pair, aligner='bwa', taskPrefix=taskPrefix) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_structural_caller_delly"]|default(true) %}
+        {{- delly_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_structural_caller_gridss"]|default(false) %}
+        {{- gridss_somatic(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
+        {{- gatk_cnv(pair, aligner='bwa') }}
+    {% endif %}
+
+
+
 {% endfor %}
 
 {% endmacro %}

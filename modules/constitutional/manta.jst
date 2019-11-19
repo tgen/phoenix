@@ -1,0 +1,81 @@
+{% macro manta_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
+
+- name: manta_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, constitutional, structural_caller, manta, {{ sample.name }}]
+  methods: > 
+    Constitutional structural variants and indels for {{ sample.name }} 
+    ({{ aligner }}) were called with {{ constants.tools.manta.verbose }}.
+  input: {{ bam }}
+  output:
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
+    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
+    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
+  cpus: 32
+  mem: 128G
+  walltime: "48:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.manta.module }}
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.python_2_7_15.module }}
+
+    {# Purge any existing run files prior to starting #}
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
+
+    {#
+    # In order to restrict calling to only the specified regions
+    # Manta requires a bed file (that has been bgzipped and indexed
+    # with tabix). Here we generate that file on the fly, store in
+    # the run dir, and pass the path to Manta.
+    #}
+    MANTA_BED="{{ temp_dir }}/callRegions.bed"
+    TAB=$'\t'
+    cat <<EOF > "${MANTA_BED}"
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
+    {% endfor %}
+    EOF
+
+    head -n 24 "{{ temp_dir }}/callRegions.bed" > "{{ temp_dir }}/mantaRegions.bed"
+    MANTA_BED="{{ temp_dir }}/mantaRegions.bed"
+    rm "{{ temp_dir }}/callRegions.bed"
+    bgzip -f "${MANTA_BED}"
+    tabix -f -p bed "${MANTA_BED}.gz"
+
+    {# Build the Manta run file #}
+    configManta.py \
+      {% if sample.gltype == 'exome' %}
+      --exome \
+      {% endif %}
+      --scanSizeMb 12 \
+      --callMemMb 10 \
+      --callRegions "${MANTA_BED}.gz" \
+      --bam "{{ bam }}" \
+      --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
+      --runDir "{{ temp_dir }}"
+
+    {# Execute on the local machine with 19 parallel jobs #}
+    "{{ temp_dir }}/runWorkflow.py" -m local -j 38
+
+    {# Save all the vcs in the sample dir #}
+    mkdir -p "{{ results_dir }}" || true
+
+    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz.tbi" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
+
+    {# Remove the remaining files #}
+    rm -r "{{ temp_dir }}"
+
+{% endmacro %}

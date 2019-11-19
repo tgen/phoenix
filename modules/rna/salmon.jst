@@ -1,7 +1,7 @@
 # Run Salmon RNA Quantification
 {% macro salmon(sample) %}
 {% set tempdir %}temp/{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
-{% set resultsdir %}{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
 
 {% set r1fqlist = [] %}
 {% set r2fqlist = [] %}
@@ -15,31 +15,36 @@
 {% endfor %}
 
 - name: salmon_quant_cdna_{{ sample.name }}
+  tags: [{{ sample.gltype }}, transcriptome, quantify_expression, salmon_fastqs, {{ sample.name }}]
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
-    {{ constants.tools.salmon_0_12_0.verbose }} using the cDNA index.
+    {{ constants.tools.salmon.verbose }} using the cDNA index.
   input:
-  {% for fq in r1fqlist %} 
+  {% for fq in r1fqlist %}
     - {{ fq }}
   {% endfor %}
   {% for fq in r2fqlist %}
     - {{ fq }}
   {% endfor %}
-  output: {{ resultsdir }}/
+  output:
+    - {{ results_dir }}/{{ sample.name }}.transcripts.sf
+    - {{ results_dir }}/{{ sample.name }}.genes.sf
+    - {{ results_dir }}/{{ sample.name }}.counts.json
   cpus: 14
   walltime: "24:00:00"
   cmd: |
-    set -uev
-    module load {{ constants.tools.salmon_0_12_0.module }}
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.salmon.module }}
 
     mkdir -p "{{ tempdir }}"
-    mkdir -p "{{ resultsdir }}"
+    mkdir -p "{{ results_dir }}"
 
     salmon quant \
       --validateMappings \
       --seqBias \
       --gcBias \
-      --threads 14 \
+      --threads 10 \
       --libType "{{ constants.phoenix.strandedness_options[sample.strandedness].salmon }}" \
       --index "{{ constants.phoenix.salmon_index }}" \
       --geneMap "{{ constants.phoenix.gtf }}" \
@@ -48,11 +53,11 @@
       -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
       --output "{{ tempdir }}"
-    
-    # Save back what we need and nuke the rest
-    mv "{{ tempdir }}/quant.sf" "{{ resultsdir }}/{{ sample.name }}.transcripts.sf"
-    mv "{{ tempdir }}/quant.genes.sf" "{{ resultsdir }}/{{ sample.name }}.genes.sf"
-    mv "{{ tempdir }}/lib_format_counts.json" "{{ resultsdir }}/{{ sample.name }}.counts.json"
+
+    {# Save back what we need and nuke the rest #}
+    mv "{{ tempdir }}/quant.sf" "{{ results_dir }}/{{ sample.name }}.transcripts.sf"
+    mv "{{ tempdir }}/quant.genes.sf" "{{ results_dir }}/{{ sample.name }}.genes.sf"
+    mv "{{ tempdir }}/lib_format_counts.json" "{{ results_dir }}/{{ sample.name }}.counts.json"
     rm -r "{{ tempdir }}"
   
 

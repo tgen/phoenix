@@ -1,0 +1,73 @@
+{%- from 'modules/annotation/snpeff.jst' import snpeff with context %}
+{%- from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
+{%- from 'modules/annotation/vep.jst' import vep with context %}
+
+{%- macro annotate_vcfs(sample_or_pair, temp_dir, results_dir, after_task, input_vcf, taskPrefix, aligner, variant_caller, analysis_type, task_type) %}
+
+{% if variant_caller == 'merged' %}
+  {%- set output_vcf %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.vcf.gz{% endset %}
+  {%- set temp_vcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.vcf.gz{% endset %}
+  {%- set final_vcf_prefix %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}{% endset %}
+{% else %}
+  {%- set output_vcf %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass.db.vcf.gz{% endset %}
+  {%- set temp_vcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass.db.vcf.gz{% endset %}
+  {%- set final_vcf_prefix %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass{% endset %}
+{% endif %}
+
+{%- set annotate_task_prefix = taskPrefix+'_'+analysis_type+'_annotate_vcfs_bcftools_' %}
+{%- set bcftools_task %}bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}{% endset %}
+
+{%- set flags = namespace({ 'bcftools': none, 'snpeff': none, 'vep': none }) %}
+
+{%- if tasks %}
+  {% for annotate_task in tasks %}
+    {% if annotate_task_prefix in annotate_task and tasks[annotate_task] %}
+      {% set flags.bcftools = true %}
+    {% elif annotate_task_prefix in annotate_task and tasks[annotate_task] is sameas false %}
+      {% if flags.bcftools is not sameas true %}
+        {% set flags.bcftools = false %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if flags.bcftools is none %}
+    {% set flags.bcftools = true %}
+  {% endif %}
+
+  {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_snpEff_ann"]|default(true) %}
+    {% set flags.snpeff = true %}
+  {% endif %}
+
+  {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_vep"]|default(true) %}
+    {% set flags.vep = true %}
+  {% endif %}
+{% else %}
+  {% set flags.bcftools = true %}
+  {% set flags.snpeff = true %}
+  {% set flags.vep = true %}
+{% endif %}
+
+{%- if flags.bcftools is sameas true %}
+
+  {{- bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, flags.snpeff, flags.vep ,task_type ) }}
+
+  {%- if flags.snpeff %}
+    {{- snpeff(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner, task_type, analysis_type) }}
+  {% endif %}
+
+  {%- if flags.vep %}
+    {{- vep(sample_or_pair, results_dir, bcftools_task, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner, task_type, analysis_type) }}
+  {% endif %}
+
+{% else %}
+
+  {%- if flags.snpeff %}
+    {{- snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) }}
+  {% endif %}
+
+  {%- if flags.vep %}
+    {{- vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) }}
+  {% endif %}
+
+{% endif %}
+{% endmacro %}

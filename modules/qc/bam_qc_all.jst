@@ -1,0 +1,275 @@
+# These macros are run on bams from the dna_alignment and the star_quant modules.
+# A cram is made for each bam followed by running BAM qc steps with samtools and gatk.
+# Currently supports any sample.
+
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+
+{% macro bam_qc_samtools_stats(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: samtools_stats_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_9.verbose }} stats.
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ results_dir }}/{{ bam|basename }}.bamstats.txt
+  walltime: "4:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    samtools view \
+      --threads 4 \
+      -h \
+      "{{ bam }}" \
+      | \
+    samtools stats \
+      --remove-dups \
+      --remove-overlaps \
+      {% if aligner == 'star' %}
+      --reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      > "{{ results_dir }}/{{ bam|basename }}.bamstats.txt"
+
+{% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
+- name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_9.verbose }} stats.
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt
+  walltime: "4:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    samtools view \
+      --threads 4 \
+      -h \
+      {% for rg in rgs %}
+      -r "{{ rg.rgid }}" \
+      {% endfor %}
+      "{{ bam }}" \
+      | \
+    samtools stats \
+      --remove-dups \
+      --remove-overlaps \
+      {% if aligner == 'star' %}
+      --reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      > "{{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt"
+{% endfor %}
+
+{% endmacro %}
+
+
+{% macro bam_qc_samtools_flagstat(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_flagstat, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
+  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  output: {{ results_dir }}/{{ bam|basename }}.flagstats.txt
+  walltime: "4:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    samtools flagstat \
+      --threads 4 \
+      "{{ bam }}" \
+      > "{{ results_dir }}/{{ bam|basename }}.flagstats.txt"
+
+{% endmacro %}
+
+
+{% macro bam_qc_samtools_idxstats(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
+  methods: Index stats for {{ sample.name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ bam|basename }}.idxstats.txt
+  walltime: "4:00:00"
+  cpus: 1
+  mem: 2G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.samtools_1_9.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    samtools idxstats \
+      "{{ bam }}" >\
+      "{{ results_dir }}/{{ bam|basename }}.idxstats.txt"
+
+{% endmacro %}
+
+
+{% macro bam_qc_gatk_collectmultiplemetrics(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set alignment_summary_metrics %}{{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics{% endset %}
+{% set insert_size_metrics %}{{ results_dir }}/{{ bam|basename }}.insert_size_metrics{% endset %}
+
+- name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectMultipleMetrics, {{ sample.name }}]
+  methods: Alignment metrics, base distribution, insert size, quality,
+    and other metrics for {{ sample.name }} ({{ aligner }}) were
+    gathered with {{ constants.tools.gatk.verbose }}
+    CollectMultipleMetrics.
+  input: {{ bam }}
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.bait_bias_detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.bait_bias_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle_metrics
+    - {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle.pdf
+    - {{ results_dir }}/{{ bam|basename }}.error_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.insert_size_metrics
+    - {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
+    - {{ results_dir }}/{{ bam|basename }}.pre_adapter_detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.pre_adapter_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_by_cycle_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_by_cycle.pdf
+    - {{ results_dir }}/{{ bam|basename }}.quality_distribution_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_distribution.pdf
+    - {{ results_dir }}/{{ bam|basename }}.quality_yield_metrics
+  walltime: "24:00:00"
+  cpus: 8
+  mem: 32G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.R.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    gatk CollectMultipleMetrics \
+      --INPUT "{{ bam }}" \
+      --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
+      {% if aligner == 'star' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      --METRIC_ACCUMULATION_LEVEL null \
+      --METRIC_ACCUMULATION_LEVEL LIBRARY \
+      --METRIC_ACCUMULATION_LEVEL SAMPLE \
+      --PROGRAM null \
+      --PROGRAM CollectAlignmentSummaryMetrics \
+      --PROGRAM CollectBaseDistributionByCycle \
+      --PROGRAM CollectInsertSizeMetrics \
+      --PROGRAM MeanQualityByCycle \
+      --PROGRAM QualityScoreDistribution \
+      --PROGRAM CollectGcBiasMetrics \
+      --PROGRAM CollectSequencingArtifactMetrics \
+      --PROGRAM CollectQualityYieldMetrics
+
+{{ stats2json(sample, alignment_summary_metrics, "picard_alignment_summary_metrics", aligner=aligner) }}
+{{ stats2json(sample, insert_size_metrics, "picard_insert_size_metrics", aligner=aligner) }}
+{% endmacro %}
+
+
+{% macro bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
+  input: {{ bam }}
+  after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
+  output: {{ results_dir }}/{{ bam|basename }}.oxog_metrics
+  walltime: "24:00:00"
+  cpus: 8
+  mem: 32G
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.gatk.module }}
+
+    gatk ConvertSequencingArtifactToOxoG \
+      {% if aligner == 'star' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      --INPUT_BASE "{{ results_dir }}/{{ bam|basename }}"
+
+{% endmacro %}
+
+
+{% macro bam_qc_snpsniffer_geno(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, genotype_concordance, snpSniffer, {{ sample.name }}]
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf
+  cpus: 4
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Genotype the 387 test positions across the genome, filter to calls with DP >= 5, sort, remove chr from contig names #}
+    bcftools mpileup \
+      --no-BAQ \
+      --max-depth 5000 \
+      --min-MQ 0 \
+      --min-BQ 13 \
+      {% if aligner == 'star' %}
+      --fasta-ref "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      --regions-file "{{ constants.phoenix.snpSniffer_sites }}" \
+      {{ bam }} \
+      | \
+    bcftools call \
+      --consensus-caller \
+      --skip-variants indels \
+      | \
+    bcftools sort \
+      | \
+    bcftools annotate \
+      --threads 2 \
+      --include 'INFO/DP >= 5' \
+      --rename-chrs "{{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}" \
+      --output-type v \
+      --output "{{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf"
+
+{% endmacro %}

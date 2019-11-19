@@ -6,145 +6,31 @@
 #     ? ?
 #
 # This alignment command prefix is shared by all modules using bwa
-{% from 'modules/dna_alignment/bwa_mem.jst' import bwa_mem %}
-{% from 'modules/read_group_line.jst' import read_group_line %}
+{% from 'utilities/read_group_line.jst' import read_group_line %}
 
-
-# Shared MarkDuplicates command for split and non-split alignment
-{% macro markduplicates(sample) %}
-{% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
-{% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
-  {% set distance = 2500 %}
-{% else %}
-  {% set distance = 100 %}
-{% endif %}
-gatk MarkDuplicates \
-  --java-options "-Xmx28G" \
-  --TMP_DIR "temp" \
-  --ASSUME_SORT_ORDER queryname \
-  --CLEAR_DT false \
-  --ADD_PG_TAG_TO_READS false \
-  --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ distance }} 
-{%- endmacro %}
-
-
-# Shared SortSam command for split and non-split alignment
-{% macro sortsam() %}
-gatk SortSam \
-  --java-options "-Xmx28G" \
-  --TMP_DIR "temp" \
-  --SORT_ORDER "coordinate" \
-  --CREATE_INDEX true \
-  --CREATE_MD5_FILE true \
-  --MAX_RECORDS_IN_RAM 300000
-{%- endmacro %}
-
-
-# Start of tasks
-# This macro aligns data for each read group with bwa mem then
-# marks dups and sorts with GATK/Picard tools
-{% macro bwa_mem_gatk_picard(sample) %}
-{% for rgid, rg in sample.read_groups.items() %}
-{% if rg.data_files|length != 2 %}
-    {{ raise('This module only supports paired-end data with two fastqs per rg') }}
-{% endif %}
-
-{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
-{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
-
-- name: bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}
-  tags: [bwa, samtools, samtools-view, {{ sample.gltype }}]
-  input:
-    - temp/fastqs/{{ r1fastq.basename }}
-    - temp/fastqs/{{ r2fastq.basename }}
-  walltime: "48:00:00"
-  cpus: 10
-  mem: 40G
-  cmd: |
-    set -euv
-    set -o pipefail
-
-    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
-
-    mkdir -p "temp/{{ rgid }}/"
-
-    {{ bwa_mem(threads=9) }} \
-      -R "{{ read_group_line(rg) }}" \
-      "{{ constants.phoenix.bwa_index }}" \
-      "temp/fastqs/{{ r1fastq.basename }}" \
-      "temp/fastqs/{{ r2fastq.basename }}" |\
-    samtools view \
-      -O BAM \
-      - \
-      > "temp/{{ rgid }}/{{ rgid }}.bwa.bam"
-
-{% endfor %}
-
-- name: gatk_picard_markduplicates_{{ sample.name }}
-  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
-  after-re: bwa_mem_samtools_view_{{ sample.name }}_.*
-  walltime: "48:00:00"
-  cpus: 16
-  mem: 64G
-  cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
-
-    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
-
-    {{ markduplicates(sample)|indent(2) }} \
-    {% for rgid in sample.read_groups %}
-      --INPUT "temp/{{ rgid }}/{{ rgid }}.bwa.bam" \
-    {% endfor %}
-      --METRICS_FILE "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
-      --OUTPUT "temp/{{ sample.name }}.bwa.md-uns.bam"
-
-
-- name: gatk_picard_sortsam_{{ sample.name }}
-  tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
-  after: gatk_picard_markduplicates_{{ sample.name }}
-  output: temp/{{ sample.name }}.bwa.md.bam
-  walltime: "48:00:00"
-  cpus: 16
-  mem: 64G
-  cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
-
-    {{ sortsam()|indent(4) }} \
-      --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
-      --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
-
-    # Cleanup the tempfiles
-    {% if not debug %}
-    rm "temp/{{ sample.name }}.bwa.md-uns.bam"
-    {% endif %}
-
-{% endmacro %}
-
-
-# This macro splits large fastqs into chunks prior to aligning. The inputs
-# and outputs are the same as above.
-{% macro bwa_mem_gatk_picard_chunked(sample, reads_per_chunk) %}
+# This macro splits large fastqs into chunks prior to aligning.
+# If fastq is less than reads_per_chunk (48000000) then one chunk is made.
+{% macro bwa_mem_gatk_picard_chunked(sample, reads_per_chunk, opt_dup_distance) %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
-# Calc the expected number of chunks so we can validate the output
+{# Calc the expected number of chunks so we can validate the output #}
 {% set n_lines = (reads_per_chunk * 4)|int %}
 {% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
 {% do sample['read_groups'][rgid].update({'n_chunks': n_chunks}) %}
 
+{# Think about moving to utility scripts if tgen/broad split_fastq are the same #}
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
-  tags: [split, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, split, {{ sample.name }}]
   input:
     - temp/fastqs/{{ fastq.basename }}
   cpus: 1
   walltime: "4:00:00"
   cmd: |
-    set -uev
+    set -eu
     set -o pipefail
 
     rm -r "temp/{{ rgid }}/{{ fastq.basename }}/" || true
@@ -160,7 +46,8 @@ gatk SortSam \
 
     N_CREATED=$(ls "temp/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
 
-    if [[ ${N_CREATED} -ne {{ n_chunks }} ]]; then
+    if [[ ${N_CREATED} -ne {{ n_chunks }} ]]
+    then
       echo "Chunks created does not match expected value"
       exit 1
     fi
@@ -170,7 +57,7 @@ gatk SortSam \
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
-  tags: [bwa, samtools, samtools-view, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
@@ -178,37 +65,60 @@ gatk SortSam \
   cpus: 10
   mem: 40G
   cmd: |
-    set -euv
+    set -eu
     set -o pipefail
 
-    module load {{ constants.tools.bwa_0_7_17.module }} {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bwa.module }} {{ constants.tools.samtools_1_9.module }}
 
-    {{ bwa_mem(threads=9) }} \
+    {# No long options available for the following:
+     bwa mem
+        -v INT       Verbosity: 3 = message (default = 3)
+        -Y           Use soft clipping for supplementary alignments
+        -K INT       Process INT input bases in each batch regardless of nThreads (for reproducibility)
+        -t INT       Number of threads to use
+        -R STR       Read group header line such as '@RG\tID:foo\tSM:bar' [null]
+
+     samtools view
+        -o FILE      Output file name
+        -            <in.bam>|<in.sam> - stdin from bwa mem stdout
+    #}
+    bwa mem \
+      -v 3 \
+      -Y \
+      -K 100000000 \
+      -t 9 \
       -R "{{ read_group_line(rg) }}" \
       "{{ constants.phoenix.bwa_index }}" \
       "temp/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
       "temp/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
     samtools view \
-      -O BAM \
-      - \
-      > "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+      --output-fmt BAM \
+      -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
+      -
 
 {% endfor %}
 {% endfor %}
 
 - name: chunked_gatk_picard_markduplicates_{{ sample.name }}
-  tags: [gatk, picard, picard-MarkDuplicates, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, mark_duplicates, gatk, {{ sample.name }}]
   after-re: chunked_bwa_mem_samtools_view_{{ sample.name }}_.*
   walltime: "48:00:00"
   cpus: 16
   mem: 64G
   cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
-    {{ markduplicates(sample)|indent(2) }} \
+    gatk MarkDuplicates \
+      --java-options "-Xmx28G" \
+      --TMP_DIR "temp" \
+      --ASSUME_SORT_ORDER queryname \
+      --CLEAR_DT false \
+      --ADD_PG_TAG_TO_READS false \
+      --OPTICAL_DUPLICATE_PIXEL_DISTANCE {{ opt_dup_distance }} \
     {% for rgid, rg in sample.read_groups.items() %}
     {% for i in range(rg['n_chunks']) %}
     {% set chunk_suffix = '%02d' % i %}
@@ -218,7 +128,7 @@ gatk SortSam \
       --METRICS_FILE "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md-uns.bam"
 
-    # Cleanup the tempfiles
+    {# Cleanup the tempfiles #}
     {% if not debug %}
     {% for rgid in sample.read_groups %}
     rm -r "temp/{{ rgid }}/"
@@ -227,24 +137,30 @@ gatk SortSam \
 
 
 - name: chunked_gatk_picard_sortsam_{{ sample.name }}
-  tags: [gatk, picard, picard-SortSam, {{ sample.gltype }}]
+  tags: [{{ sample.gltype }}, alignment, SortSam, gatk, {{ sample.name }}]
   after: chunked_gatk_picard_markduplicates_{{ sample.name }}
   output: temp/{{ sample.name }}.bwa.md.bam
   walltime: "48:00:00"
   cpus: 16
   mem: 64G
   cmd: |
-    set -uev
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.gatk.module }}
 
-    {{ sortsam()|indent(4) }} \
+    gatk SortSam \
+      --java-options "-Xmx28G" \
+      --TMP_DIR "temp" \
+      --SORT_ORDER "coordinate" \
+      --CREATE_INDEX true \
+      --CREATE_MD5_FILE true \
+      --MAX_RECORDS_IN_RAM 300000 \
       --INPUT "temp/{{ sample.name }}.bwa.md-uns.bam" \
       --OUTPUT "temp/{{ sample.name }}.bwa.md.bam"
     
-    # Cleanup the tempfiles
+    {# Cleanup the tempfiles #}
     {% if not debug %}
     rm "temp/{{ sample.name }}.bwa.md-uns.bam"
     {% endif %}
-
 
 {% endmacro %}

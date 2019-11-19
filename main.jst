@@ -33,14 +33,16 @@
 {% if debug is not defined %}{% set debug = False %}{% endif %}
 {# Tasks contains switches for toggling many of the features #}
 {% if tasks is not defined %}{% set tasks = {} %}{% endif %}
+{# submissionSource toggles specific tasks based on how they were submitted #}
+{% if submissionSource is not defined %}{% set submissionSource = "unknown" %}{% endif %}
+
 
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
-{% from 'modules/germline/main.jst' import germline_variant_calling with context %}
+{% from 'modules/constitutional/main.jst' import constitutional_variant_calling with context %}
 {% from 'modules/somatic/main.jst' import somatic_variant_calling with context %}
 {% from 'modules/rna/main.jst' import rna_quant with context %}
 {% from 'modules/rna/main.jst' import rna_fusion_detection with context %}
 {% from 'modules/single_cell/main.jst' import single_cell_rna with context %}
-{% from 'modules/qc/main.jst' import qc with context %}
 
 {% set samples = {} %}
 {% for file in dataFiles %}
@@ -53,6 +55,7 @@
     {% do file.update({'name': name}) %}
     {% do file.update({'basename': bn}) %}
     {% do file.update({'gltype': file.glType.lower()}) %}
+    {% do file.update({'glprep': file.glPrep.lower()}) %}
     {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
 
     {% if name not in samples %}
@@ -97,12 +100,17 @@
 
 {% if debug %}{{ log(samples|tojson(indent=4), level='CRITICAL') }}{% endif %}
 
-{% for batch in dataFiles|batch(4) %}
+{# Set the billing account for the project to use accross all tasks #}
+- name: setup_env
+  exec: |
+    import os
+    os.environ.putenv('SBATCH_ACCOUNT', '{{ hpcAccount }}')
+    os.environ.putenv('PATH_TO_PHOENIX_REPO', '{{ constants.install_path.path_to_phoenix_repo }}')
+
+{# Move to utility scripts #}
+{% for fastq in dataFiles %}
 - name: copy_fastqs_{{ loop.index }}
-  output:
-    {% for fq in batch %}
-    - temp/fastqs/{{ fq.basename }}
-    {% endfor %}
+  output: temp/fastqs/{{ fastq.basename }}
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']
   retry: 2
@@ -113,48 +121,45 @@
 
     mkdir -p temp/fastqs/
 
-    {% for fq in batch %}
-    rsync "{{ fq.fastqPath }}" "temp/fastqs/"
-    {% endfor %}
+    rsync "{{ fastq.fastqPath }}" "temp/fastqs/"
 
 {% endfor %}
 
-
+{# Move to utility scripts #}
 - name: finalize
   after-re: .*
   cpus: 1
   walltime: "4:00:00"
   cmd: | 
     set -uev
-    module load {{ constants.tools.multiqc_1_7.module }}
-    
-    mkdir -p qc
-    multiqc -o qc .
-    sendqc qc/multiqc_data.json
+    module load {{ constants.tools.multiqc.module }}
+
+    mkdir --parents qc
+    multiqc --force --outdir qc .
 
 
 # Start of module calls
-{% if tasks.dna_alignment|default(True) %}
+{# These if statements are kind of dead right now because they aren't passed by LIMS, but everything runs because of default(true) #}
+{% if tasks.dna_alignment|default(true) %}
     {{- dna_alignment(samples) }}
 {% endif %}
 
-{% if tasks.germline_variant_calling|default(True) %}
-    {{- germline_variant_calling(samples) }}
+{% if tasks.constitutional_variant_calling|default(true) %}
+    {{- constitutional_variant_calling(samples) }}
 {% endif %}
 
-{% if tasks.somatic_variant_calling|default(True) %}
+{% if tasks.somatic_variant_calling|default(true) %}
     {{- somatic_variant_calling(samples) }}
 {% endif %}
 
-{% if tasks.rna_quant|default(True) %}
+{%- if tasks.rna_quant|default(true) %}
     {{- rna_quant(samples) }}
-{% endif %}
+{% endif -%}
 
-{% if tasks.rna_fusion_detection|default(True) %}
+{%- if tasks.rna_fusion_detection|default(true) %}
     {{- rna_fusion_detection(samples) }}
-{% endif %}
+{% endif -%}
 
-{{- single_cell_rna(dataFiles) }}
-
-{{- qc(samples) }}
-
+{%- if tasks.single_cell_rna|default(true) %}
+    {{- single_cell_rna(dataFiles) }}
+{% endif -%}

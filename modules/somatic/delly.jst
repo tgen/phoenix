@@ -1,0 +1,161 @@
+{% macro delly_somatic(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/delly{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly{{ pair.name }}{% endset %}
+{% set all_vcf %}{{ pair.name }}.{{ aligner }}.delly.allCalls.vcf{% endset %}
+{% set pass_vcf %}{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
+{% set variant_types=['DEL','DUP','INS','INV','TRA'] %}
+
+{% for svtype in variant_types %}
+- name: delly_{{ pair.name }}_{{ aligner }}_{{ svtype }}
+  tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  cpus: 8
+  walltime: "72:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {% set sv_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.bcf{% endset %}
+    {% set filt_sv = {"DEL": "--minsize 2000 --maxsize 500000000", "DUP": "--minsize 100 --maxsize 500000000", "INS": "--minsize 5 --maxsize 87", "INV": "--minsize 100 --maxsize 500000000", "TRA": "--minsize 500 --maxsize 500000000"}[svtype] | default("--minsize 500 --maxsize 500000000") -%}
+    {% set filt_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
+    {% set sample_file %}sample.{{ svtype }}.{{ pair.name }}.tsv{% endset %}
+
+    module load {{ constants.tools.delly.module }}
+
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
+
+    delly call \
+     --type {{ svtype }} \
+     --genome {{ constants.phoenix.reference_fasta }} \
+     --exclude {{ constants.phoenix.delly_exclusions }} \
+     --map-qual 1 \
+     --mad-cutoff 9 \
+     --outfile {{ temp_dir }}/{{ sv_bcf }} \
+     {{ tumor_bam }} {{ normal_bam }}
+
+    {# Creating a sample file for filter step #}
+    echo -e "$(echo -e {{ pair.tumor.rgsm }} |  sed 's/\..*//')\ttumor\n$(echo -e {{ pair.normal.rgsm }} |  sed 's/\..*//')\tcontrol" > {{ sample_file }}
+
+    delly filter \
+     --type {{ svtype }} \
+     --filter somatic \
+     --samples {{ sample_file }} \
+     --altaf 0.1 \
+     --ratiogeno 0.75 \
+     --coverage 5 \
+     --controlcontamination 0 \
+     {{ filt_sv }} \
+     --outfile {{ temp_dir }}/{{ filt_bcf }} \
+     {{ temp_dir }}/{{ sv_bcf }}
+
+    rm {{ sample_file }}
+
+{% endfor %}
+
+- name: delly_merge_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
+  after:
+    {% for svtype in variant_types %}
+    - delly_{{ pair.name }}_{{ aligner }}_{{ svtype }}
+    {% endfor %}
+  output:
+    - {{ temp_dir }}/{{ all_vcf }}
+    - {{ temp_dir }}/{{ pass_vcf }}
+  cpus: 8
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.bcftools.module }}
+
+    {% set merged_vcf %}{{ pair.name }}.{{ aligner }}.delly.merged.vcf{% endset %}
+
+    cd {{ temp_dir }}
+
+    bcftools concat \
+      {% for svtype in variant_types %}
+      {{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf \
+      {% endfor %}
+      --allow-overlaps \
+      --output-type v \
+      --output {{ merged_vcf }}
+
+    bcftools sort \
+      --output-type v \
+      --output-file {{ all_vcf }} \
+      {{ merged_vcf }}
+
+    bcftools view -f PASS {{ all_vcf }} > {{ pass_vcf }}
+
+- name: delly_annotate_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
+  after: delly_merge_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ temp_dir }}/{{ pass_vcf }}
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz.tbi
+    - {{ results_dir }}/{{ pass_vcf }}.gz
+    - {{ results_dir }}/{{ pass_vcf }}.gz.tbi
+    - {{ results_dir }}/{{ all_vcf }}.gz
+    - {{ results_dir }}/{{ all_vcf }}.gz.tbi
+  cpus: 8
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
+    module load {{ constants.tools.bcftools.module }}
+
+    if [[ $(grep -m 1 -c "ENDPOSSV" {{ temp_dir }}/{{ pass_vcf }} ) -ne 1 ]]
+    then
+      sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ temp_dir }}/{{ pass_vcf }} > {{ temp_dir }}/{{ pass_vcf }}.mod
+      python ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.delly_addRC_to_Delly_VCF_script }} -i {{ temp_dir }}/{{ pass_vcf }}.mod -t {{ tumor_bam }} -n {{ normal_bam }} -s 1000
+    elif [[ -e {{ temp_dir }}/{{ pass_vcf }} ]]
+    then
+      rsync {{ temp_dir }}/{{ pass_vcf }} {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf
+    fi
+    
+    bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
+
+    python ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.delly_svtop_delly_sv_annotation_parellel_script }} -a {{ constants.phoenix.delly_annotation }} -i {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
+
+    {# Compressing all vcfs #}
+    bcftools view \
+      --output-type z \
+      --output-file {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz \
+      {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
+
+    bcftools index --tbi --force {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz
+
+    bcftools view \
+      --output-type z \
+      --output-file {{ temp_dir }}/{{ pass_vcf }}.gz \
+      {{ temp_dir }}/{{ pass_vcf }}
+
+    bcftools index --tbi --force {{ temp_dir }}/{{ pass_vcf }}.gz
+
+    bcftools view \
+      --output-type z \
+      --output-file {{ temp_dir }}/{{ all_vcf }}.gz \
+      {{ temp_dir }}/{{ all_vcf }}
+
+    bcftools index --tbi --force {{ temp_dir }}/{{ all_vcf }}.gz
+
+    mkdir -p {{ results_dir }}
+
+    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz.tbi {{ results_dir }}
+    mv {{ temp_dir }}/{{ pass_vcf }}.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ pass_vcf }}.gz.tbi {{ results_dir }}
+    mv {{ temp_dir }}/{{ all_vcf }}.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ all_vcf }}.gz.tbi {{ results_dir }}
+
+{% endmacro %}

@@ -1,0 +1,560 @@
+# The macros found in this template are used to generate the gatk4 somatic cnv workflow.
+
+{% macro gatk_cnv(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set normal_bam_stats %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/stats/{{ normal_bam|basename }}.bamstats.txt{% endset %}
+{% set tumor_bam_stats %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ tumor_bam|basename }}.bamstats.txt{% endset %}
+{% set normal_sex_check %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/stats/{{ normal_bam|basename }}.sexCheck.txt{% endset %}
+{% set deepvariant_vcf %}{{ pair.normal.gltype }}/constitutional_variant_calls/deepvariant/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}{% endset %}
+{% set config_sex %}{{ sex|default("Female") }}{% endset %}
+
+{# Step 1 #}
+- name: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+    - {{ deepvariant_vcf }}
+    - {{ normal_bam_stats }}
+    - {{ tumor_bam_stats }}
+    - {{ normal_sex_check }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Set constants for coverage and bin length for genomes. #}
+    {% if pair.gltype in 'genome' %}
+    COVERAGE_CONSTANT=30
+    BIN_LENGTH_CONSTANT=2000
+    {% endif %}
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp"
+    mkdir -p "{{ temp_dir }}/results/plots"
+
+    {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
+    SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
+    CONFIG_SEX={{ config_sex }}
+
+    if [ ${SEX} != "Male" ] && [ ${SEX} != "Female" ]
+    then
+      if [ ${CONFIG_SEX} == "Male" ] || [ ${CONFIG_SEX} == "Female" ]
+      then
+        SEX=${CONFIG_SEX}
+      else
+        SEX=Female
+      fi
+    fi
+
+    {# PreprocessIntervals #}
+    {# Make the intersect interval file that will go into PreprocessIntervals if exomes #}
+    {% if pair.gltype in 'exome' %}
+    gatk --java-options "-Xmx12g" IntervalListTools \
+      --INPUT {{ pair.normal.capture_kit.targets_interval_list }} \
+      --INPUT {{ pair.tumor.capture_kit.targets_interval_list }} \
+      --ACTION INTERSECT \
+      --OUTPUT {{ temp_dir }}/pair_intersect.interval_list
+
+    {# Remove the chrY if the sex is female #}
+    if [ ${SEX} == "Female" ]
+    then
+      {# hg38tgen specific due to the chrY contig names   #}
+      grep -v "chrY" {{ temp_dir }}/pair_intersect.interval_list > {{ temp_dir }}/temp.interval_list
+      mv {{ temp_dir }}/temp.interval_list {{ temp_dir }}/pair_intersect.interval_list
+    fi
+
+    {# Set the variable for the --low-count-filter-count-threshold option used in FilterIntervals #}
+    {# With the default padding of 250 during PreprocessIntervals set to 500 + min(interval length) #}
+    {# If the cpature kits from above are different this could reulst in a smaller than expected interval length #}
+    MAX_LENGTH=`gawk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
+
+    {# From the interect intervals file extract the smallest. If the smallest is less than 100 set the default as 100 #}
+    MIN_INTERVAL=`gawk -F'\t' -v MAX_LENGTH=${MAX_LENGTH} 'BEGIN { MIN = MAX_LENGTH } $1 !~ /@/ { if ( $3-$2 < MIN ) { MIN = $3-$2 }} END { print MIN }' {{ temp_dir }}/pair_intersect.interval_list`
+
+    if [[ ${MIN_INTERVAL} -lt 100 ]]
+    then
+      MIN_INTERVAL=100
+    fi
+
+    BIN_LENGTH=$(( 200 + MIN_INTERVAL ))
+
+    {# Divide by two to accomidate autosomes then times by ten to reach an esitmated 10x depth #}
+    {# Tried 10x and the MMRF_2118 exome still looks a little noisy. Going to try 20 #}
+    EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2*20 ))
+
+    {% elif pair.gltype in 'genome' %}
+
+    if [ ${SEX} == "Female" ]
+    then
+      INTERVALS={{ constants.phoenix.gatk_cnv_primary_contigs_female }}
+    else
+      INTERVALS={{ constants.phoenix.gatk_cnv_primary_contigs_male }}
+    fi
+
+    {# Set sample specific variables #}
+    MAX_LENGTH=`gawk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
+    NORMAL_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
+    TUMOR_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ tumor_bam_stats }}`
+
+    if [ ${NORMAL_AVERAGE_DEPTH} -lt ${TUMOR_AVERAGE_DEPTH} ]
+    then
+      AVERAGE_DEPTH=${NORMAL_AVERAGE_DEPTH}
+    else
+      AVERAGE_DEPTH=${TUMOR_AVERAGE_DEPTH}
+    fi
+
+    BIN_LENGTH_MODIFYER=`bc -l <<< ${COVERAGE_CONSTANT}/${AVERAGE_DEPTH}`
+    BIN_LENGTH=`gawk -v BIN_LENGTH_CONSTANT=${BIN_LENGTH_CONSTANT} -v BIN_LENGTH_MODIFYER=${BIN_LENGTH_MODIFYER} 'BEGIN { printf("%d\n",BIN_LENGTH_CONSTANT*BIN_LENGTH_MODIFYER)}'`
+
+    {# If the bin length is shorter than the max read length then set the bin length to the read length #}
+    if [[ ${BIN_LENGTH} -lt ${MAX_LENGTH} ]]
+    then
+      BIN_LENGTH=${MAX_LENGTH}
+    fi
+
+    {# Set the variable for the --low-count-filter-count-threshold option used in FilterIntervals #}
+    EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2 ))
+
+    {% endif %}
+
+    {# Generate an intervals list to perform CNA on #}
+    gatk --java-options "-Xmx12g" PreprocessIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      {% if pair.gltype in 'exome' %}
+      --intervals {{ temp_dir }}/pair_intersect.interval_list \
+      --bin-length 0 \
+      --padding 100 \
+      {% elif pair.gltype in 'genome' %}
+      --intervals ${INTERVALS} \
+      --bin-length ${BIN_LENGTH} \
+      {% endif %}
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY
+
+    {# Extract heterozygous snps from the matched normal excluding the PAR regions on XY#}
+    bcftools view \
+      --exclude-types indels,mnps,ref,bnd,other \
+      --genotype het \
+      --targets ^chrX:10001-2781479,chrX:155701383-156030895,chrY:10001-2781479,chrY:56887903-57217415 \
+      {% if pair.gltype in 'exome' %}
+      --exclude 'VAF<0.40 | VAF>0.60 | DP<20' \
+      {% elif pair.gltype in 'genome' %}
+      --exclude "VAF<0.333 | VAF>0.666 | DP<${NORMAL_AVERAGE_DEPTH}" \
+      {% endif %}
+      --output-type v \
+      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf \
+      {{ deepvariant_vcf }}
+
+    {# Filter out Blacklist regions. https://doi.org/10.1038/s41598-019-45839-z #}
+    bcftools view \
+      --targets-file ^{{ constants.phoenix.black_list }} \
+      --output-type v \
+      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
+
+    {# Remove preFilt.snps.vcf #}
+    rm {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
+
+    {# Perform first round of CollectReadCounts on the normal for filtering intervals with little to no reads #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --read-filter FirstOfPairReadFilter \
+      --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+
+    {#
+    Filter the intervals based on the counts from the normal.
+    EXP_1X_COUNTS is the number of expected reads for 1x depth.
+    We only want to filter based on the counts so we set the following additional options to prevent unwanted filtering.
+      --low-count-filter-percentage-of-samples 90.0 \
+      --extreme-count-filter-minimum-percentile 1.0 \
+      --extreme-count-filter-maximum-percentile 99.0 \
+      --extreme-count-filter-percentage-of-samples 90.0 \
+      --minimum-gc-content 0.1 \
+      --maximum-gc-content 0.9 \
+      --minimum-mappability 0.1 \
+      --maximum-mappability 0.9 \
+      --maximum-segmental-duplication-content 0.5 \
+    #}
+    gatk --java-options "-Xmx12g" FilterIntervals \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --low-count-filter-count-threshold ${EXP_1X_COUNTS} \
+      --low-count-filter-percentage-of-samples 0 \
+      --extreme-count-filter-minimum-percentile 0 \
+      --extreme-count-filter-maximum-percentile 100 \
+      --extreme-count-filter-percentage-of-samples 100 \
+      --minimum-gc-content 0 \
+      --maximum-gc-content 1 \
+      --minimum-mappability 0 \
+      --maximum-mappability 1 \
+      --maximum-segmental-duplication-content 1 \
+      --output {{ temp_dir }}/preprocessed_filt.interval_list
+
+    {# Annotate intervals with gc content to be used with CreateReadCountPanelOfNormals #}
+    gatk --java-options "-Xmx12g" AnnotateIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
+      --output {{ temp_dir }}/anno_preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --reference {{ constants.phoenix.reference_fasta }}
+
+
+{# Step 2a #}
+- name: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2a"
+
+    {# Collect read counts for the normal using the filtered interval list #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+      --tmp-dir {{ temp_dir }}/temp2a/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --read-filter FirstOfPairReadFilter \
+      --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+
+
+{# Step 2b #}
+- name: gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2b"
+
+    {# Collect allelic counts for the normal #}
+    gatk --java-options "-Xmx12g" CollectAllelicCounts \
+      --tmp-dir {{ temp_dir }}/temp2b/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+
+
+{# Step 2c #}
+- name: gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2c"
+
+    {# Collect read counts for the tumor using the filtered interval list #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+      --tmp-dir {{ temp_dir }}/temp2c/ \
+      --input {{ tumor_bam }} \
+      --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --read-filter FirstOfPairReadFilter \
+      --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+
+
+{# Step 2d #}
+- name: gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2d"
+
+    {# Collect allelic counts for the normal #}
+    gatk --java-options "-Xmx12g" CollectAllelicCounts \
+      --tmp-dir {{ temp_dir }}/temp2d/ \
+      --input {{ tumor_bam }} \
+      --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+
+
+{# Step 3 #}
+- name: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp3"
+
+    {#
+    Create a panel of normals file consiting of the matched normal.
+    The --minimum-interval-median-percentile option was changed from it's default to include all data from the matched normal
+      --minimum-interval-median-percentile 10.0
+    #}
+    gatk --java-options "-Xmx12g" CreateReadCountPanelOfNormals \
+      --tmp-dir {{ temp_dir }}/temp3/ \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
+      --minimum-interval-median-percentile 0.0 \
+      --annotated-intervals {{ temp_dir }}/anno_preprocessed.interval_list \
+      --output {{ temp_dir }}/cnv.pon.hdf5
+
+
+{# Step 4 #}
+- name: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after:
+    - gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp4"
+
+    {# Denoise the tumor using the panel of normals made from the matched normal #}
+    gatk --java-options "-Xmx12g" DenoiseReadCounts \
+      --tmp-dir {{ temp_dir }}/temp4/ \
+      --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
+      --count-panel-of-normals {{ temp_dir }}/cnv.pon.hdf5 \
+      --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv \
+      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+
+
+{# Step 5 #}
+- name: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp5"
+
+    {# Get the average depth of the normal if it is a genome #}
+    {% if pair.gltype in 'genome' %}
+      NORMAL_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
+    {% endif %}
+
+    {#
+    Perform segmentation
+    Non-default parameters used
+      --number-of-smoothing-iterations-per-fit 1 \
+      --number-of-changepoints-penalty-factor 0.05 \
+      --kernel-variance-allele-fraction 0.0 \
+      --kernel-scaling-allele-fraction 0.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 3.0 \
+      --smoothing-credible-interval-threshold-allele-fraction 3.0 \
+      --window-size 2 \
+      --window-size 4 \
+      --minimum-total-allele-count-normal 30 \
+      --minimum-total-allele-count-normal 6 \
+    #}
+    gatk --java-options "-Xmx12g" ModelSegments \
+      --tmp-dir {{ temp_dir }}/temp5/ \
+      --number-of-smoothing-iterations-per-fit 1 \
+      --number-of-changepoints-penalty-factor 0.05 \
+      --kernel-variance-allele-fraction 0.0 \
+      --kernel-scaling-allele-fraction 0.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 3.5 \
+      --smoothing-credible-interval-threshold-allele-fraction 3.5 \
+      --window-size 2 \
+      --window-size 4 \
+      --window-size 8 \
+      --window-size 16 \
+      --window-size 32 \
+      --window-size 64 \
+      --window-size 128 \
+      --window-size 256 \
+      {% if pair.gltype in 'exome' %}
+      --minimum-total-allele-count-normal 30 \
+      {% elif pair.gltype in 'genome' %}
+      --minimum-total-allele-count-normal ${NORMAL_AVERAGE_DEPTH} \
+      {% endif %}
+      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv \
+      --allelic-counts {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
+      --normal-allelic-counts {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
+      --output {{ temp_dir }}/results \
+      --output-prefix {{ pair.name }}.{{ aligner }}
+
+    gatk --java-options "-Xmx12g" CallCopyRatioSegments \
+      --tmp-dir {{ temp_dir }}/temp5/ \
+      --input {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.cr.seg \
+      --output {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.called.seg
+
+
+{# Step 6 #}
+- name: gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
+  after: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
+  output:
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.af.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.normal.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.re_centered.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna_withhets.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.hets.density.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_baf.png
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.R.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp6"
+
+    {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
+    SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
+    CONFIG_SEX={{ config_sex }}
+
+    if [ ${SEX} != "Male" ] && [ ${SEX} != "Female" ]
+    then
+      if [ ${CONFIG_SEX} == "Male" ] || [ ${CONFIG_SEX} == "Female" ]
+      then
+        SEX=${CONFIG_SEX}
+      else
+        SEX=Female
+      fi
+    fi
+
+    {# Get the average depth of the tumor if it is a genome #}
+    {% if pair.gltype in 'genome' %}
+      TUMOR_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ tumor_bam_stats }}`
+    {% endif %}
+
+    if [ ${SEX} == "Male" ]
+    then
+      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv > \
+        {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+
+      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg > \
+        {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+      contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrXCONTIG_DELIMITERchrY"
+      contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895CONTIG_DELIMITER57227415"
+    else
+      cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+      cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+      contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrX"
+      contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895"
+    fi
+
+    Rscript ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.plotCNVplus_Rscript }} \
+      {% if pair.gltype in 'exome' %}
+      --hetDPfilter 20 \
+      --hetAFlow 0.45 \
+      --hetAFhigh 0.55 \
+      {% elif pair.gltype in 'genome' %}
+      --hetDPfilter ${TUMOR_AVERAGE_DEPTH} \
+      --hetAFlow 0.425 \
+      --hetAFhigh 0.575 \
+      {% endif %}
+      --sample_name={{ pair.tumor.name }} \
+      --output_prefix={{ pair.name }}.{{ aligner }} \
+      --plots_directory={{ temp_dir }}/results/plots \
+      --re_center_CNA=TRUE \
+      --re_centered_seg_directory={{ temp_dir }}/results \
+      --contig_names_string=${contig_names_string} \
+      --contig_lengths_string=${contig_lengths_string} \
+      --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
+      --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
+      --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+    mkdir -p "{{ results_dir }}"
+
+    {# If the task has already been run then we need to remove the plots directory. #}
+    if [ -d {{ results_dir }}/plots ]
+    then
+      rm -rf {{ results_dir }}/plots
+    fi
+
+    mv {{ temp_dir }}/results/* {{ results_dir }}/
+
+{% endmacro %}

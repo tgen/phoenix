@@ -4,41 +4,50 @@ __pipeline__:
   description: Human GRCh38 genomics suite
   version: 0.1.1
 constants:
+  install_path:
+    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
   tools:
-    bedtools_2_26_0:
-      module: BEDTools/2.26.0
-      version: "2.26.0"
-      verbose: BEDTools v2.26.0
+    bedtools:
+      module: BEDTools/2.29.0-GCC-8.2.0-2.31.1
+      version: "2.29.0"
+      verbose: BEDTools v2.29.0
       website: https://bedtools.readthedocs.io/
       citation: >
         Quinlan AR, Hall IM. BEDTools: a flexible suite of utilities for comparing
         genomic features. Bioinformatics. 2010 Mar 15;26(6):841-2. doi:
         10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
         Central PMCID: PMC2832824.
-    bwa_0_7_17:
-      module: bwa/0.7.17
+    bcftools:
+      module: BCFtools/1.9-foss-2019a
+      version: "1.9"
+      verbose: BCFtools v1.9
+      website: http://www.htslib.org
+      citation: >
+        TODO
+    bwa:
+      module: BWA/0.7.17-GCC-8.2.0-2.31.1
       version: "0.7.17"
       verbose: Burrows-Wheeler Aligner v0.7.17
       website: http://bio-bwa.sourceforge.net
       citation: >
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
-    cellranger_3_0_2:
-      module: cellranger/3.0.2
-      version: "3.0.2"
-      verbose: 10X CellRanger v3.0.2
+    cellranger:
+      module: cellranger/3.1.0
+      version: "3.1.0"
+      verbose: 10X CellRanger v3.1.0
       website: https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger
       citation: >
         TODO
-    cuda_toolkit_10_0_0:
-      module: cuda/cuda10/toolkit/10.0.0
+    cuda_toolkit:
+      module: CUDA/10.1.243
       version: "10.0.0"
       verbose: NVIDIA CUDA 10.0
       website: https://developer.nvidia.com/cuda-toolkit
-    deepvariant_0_7_0_gpu:
-      module: deepvariant/0.7.0-gpu
-      version: "0.7.0-gpu"
-      verbose: DeepVariant 0.7.0-gpu
+    deepvariant:
+      module: deepvariant/0.8.0-gpu-phoenix
+      version: "0.8.0-gpu"
+      verbose: DeepVariant 0.8.0-gpu
       website: https://github.com/google/deepvariant
       citation: >
         Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
@@ -46,33 +55,59 @@ constants:
         universal SNP and small-indel variant caller using deep neural networks. Nat
         Biotechnol. 2018 Nov;36(10):983-987. doi: 10.1038/nbt.4235. Epub 2018 Sep 24.
         PubMed PMID: 30247488.
-    freebayes_1_2:
-      module: freebayes/1.2
-      version: "1.2"
-      verbose: Freebayes v1.2
+    delly:
+      module: Delly/0.7.6-linux_x86_64
+      version: "0.7.6"
+      verbose: DELLY2 v0.7.6
+      website: https://github.com/dellytools/delly
+      citation: >
+        Tobias Rausch, Thomas Zichner, Andreas Schlattl, Adrian M. Stütz, Vladimir Benes, Jan O. Korbel,
+        DELLY: structural variant discovery by integrated paired-end and split-read analysis, Bioinformatics,
+        Volume 28, Issue 18, 15 September 2012, Pages i333–i339, https://doi.org/10.1093/bioinformatics/bts378
+    freebayes:
+      module: freebayes/1.3.1-foss-2019a
+      version: "1.3.1"
+      verbose: Freebayes v1.3.1
       website: https://github.com/ekg/freebayes
       citation: >
         Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing.
         arXiv preprint arXiv:1207.3907 [q-bio.GN] 2012
-    gatk_4_1_0_0:
-      module: gatk/4.1.0.0
-      version: "4.1.0.0"
-      verbose: Genome Analysis Toolkit v4.1.0.0
+    gatk:
+      module: GATK/4.1.4.0-GCCcore-8.2.0-Java-1.8
+      version: "4.1.4.0"
+      verbose: Genome Analysis Toolkit v4.1.4.0
       website: https://software.broadinstitute.org/gatk/
       citation: >
         The Genome Analysis Toolkit: a MapReduce framework for analyzing
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
-    hmmcopy_utils_1_0:
-      module: HMM_Copy_Utils/1.0
+    gcc:
+      module: GCC/8.3.0
+      version: "5.1.0"
+      verbose: gcc
+      website: gcc.com
+      citation: >
+        Todo
+    gridss:
+      module: gridss/2.6.3
+      version: "2.6.3"
+      verbose: Genomic Rearrangement IDentification Software Suite v2.6.3
+      website: https://github.com/PapenfussLab/gridss
+      citation: >
+        Daniel L. Cameron, Jan Schröder, Jocelyn Sietsma Penington, Hongdo Do,
+        Ramyar Molania, Alexander Dobrovic, Terence P. Speed and Anthony T. Papenfuss.
+        GRIDSS: sensitive and specific genomic rearrangement detection using positional
+        de Bruijn graph assembly. Genome Research, 2017 doi: 10.1101/gr.222109.117
+    hmmcopy_utils:
+      module: HMMCopy_Utils/1.0.0-5911bf6
       version: "1.0"
       verbose: HMM Copy Utils v1.0
       website: https://github.com/shahcompbio/hmmcopy_utils
       citation: >
         Daniel Lai dalai@bccrc.ca Department of Molecular Oncology, BC Cancer
         Research Agency Date: August 02, 2011
-    htseq_0_11_1:
+    htseq:
       module: HTSeq/0.11.1
       version: 0.11.1
       verbose: HTSeq v0.11.1
@@ -81,38 +116,38 @@ constants:
         Simon Anders, Paul Theodor Pyl, Wolfgang Huber
         HTSeq — A Python framework to work with high-throughput sequencing data
         Bioinformatics (2014), in print, online at doi:10.1093/bioinformatics/btu638
-    ichorcna_0_1_0:
-      module: R/3.4.1
-      launcher: /home/tgenref/binaries/scripts/ichorCNA/0.1.0-1d54a1f/runIchorCNA.R
-      version: "0.1.0-1d54a1f"
-      verbose: ichorCNA v0.1.0 (1d54a1f)
+    ichorcna:
+      module: R/3.6.1-phoenix
+      launcher: required_scripts/runIchorCNA_47ce8db.R
+      version: "0.2.0"
+      verbose: ichorCNA v0.2.0
       website: https://github.com/broadinstitute/ichorCNA
       citation: >
         Adalsteinsson, Ha, Freeman, et al. Scalable whole-exome sequencing of
         cell-free DNA reveals high concordance with metastatic tumors. (2017)
         Nature Communications Nov 6;8(1):1324. doi: 10.1038/s41467-017-00965-y
-    lancet_1_0_7:
-      module: lancet/1.0.7
-      version: "1.0.7"
-      verbose: lancet v1.0.7
+    lancet:
+      module: lancet/1.1.x-GCC-8.2.0-2.31.1
+      version: "1.1.x"
+      verbose: lancet v1.1.x
       website: https://github.com/nygenome/lancet
       citation: >
         Narzisi G, Corvelo A, Arora K, Bergmann E, Shah M, Musunuri R, Emde AK, Robine N, Vacic V,
         Zody MC. Genome-wide somatic variant calling using localized colored de Bruijn graphs.
         Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
         (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
-    manta_1_4:
-      module: manta/1.4
-      version: "1.4"
-      verbose: Manta v1.4
+    manta:
+      module: manta/1.6-GCCcore-8.2.0
+      version: "1.6"
+      verbose: Manta v1.6
       website: https://github.com/Illumina/manta
       citation: >
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
-    multiqc_1_7:
-      module: python/3.6.2
+    multiqc:
+      module: Python/3.7.2-foss-2019a
       version: "1.7"
-      verbose: MultiQC v1.6
+      verbose: MultiQC v1.7
       website: https://multiqc.info
       citation: >
         MultiQC Summarize analysis results for multiple tools and samples in a single report
@@ -120,63 +155,54 @@ constants:
         Bioinformatics (2016)
       doi: 10.1093/bioinformatics/btw354
       PMID: 27312411
-    octopus_0_6_0b:
-      module: octopus/2019
-      version: 0.6.0-beta
-      verbose: Octopus v0.6.0-beta
+    octopus:
+      module: Octopus/0.6.3-beta-foss-2019a
+      version: 0.6.3-beta
+      verbose: Octopus v0.6.3-beta
       website: https://github.com/luntergroup/octopus
       citation: >
-        A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke, 
+        A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke,
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
-    peddy_0_4_3:
-      module: python/3.6.0
-      version: 0.4.3
-      verbose: Peddy v0.4.3
-      website: https://github.com/brentp/peddy
+    phaser:
+      module: phASER/1.1.1-python-2.7.13
+      version: 1.1.1
+      website: https://github.com/secastel/phaser
       citation: >
-        Pedersen and Quinlan, Who’s Who? Detecting and Resolving Sample Anomalies in Human DNA Sequencing Studies 
-        with Peddy, The American Journal of Human Genetics (2017), http://dx.doi.org/10.1016/j.ajhg.2017.01.017
+        Rare variant phasing and haplotypic expression from RNA sequencing with phASER
+        Stephane E. Castel1,2, Pejman Mohammadi1,2, Wendy K. Chung3, Yufeng Shen2,4 & Tuuli Lappalainen1,2
+        Nature Communications volume 7, Article number: 12817 (2016)
     python_2_7_15:
-      module: python/2.7.15
+      module: Python/2.7.15-GCCcore-8.2.0
       version: 2.7.15
       verbose: Python v2.7.15
       website: https://www.python.org
       citation: >
         Python Software Foundation. Python Language Reference, version 2.7.15. Available at http://www.python.org
-    python_3_6_0:
-      module: python/3.6.0
-      version: 3.6.0
-      verbose: Python v3.6.0
+    python_3_7_2:
+      module: Python/3.7.2-foss-2019a
+      version: 3.7.2
+      verbose: Python v3.7.2
       website: https://www.python.org
       citation: >
-        Python Software Foundation. Python Language Reference, version 3.6.0. Available at http://www.python.org
-    rstats_3_4_1:
-      module: R/3.4.1
-      version: "3.4.1"
-      verbose: R v3.4.1
+        Python Software Foundation. Python Language Reference, version 3.7.2. Available at http://www.python.org
+    R:
+      module: R/3.6.1-phoenix
+      version: "3.6.1"
+      verbose: R v3.6.1
       website: https://www.r-project.org
       citation: >
         R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
         Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
-    sambamba_0_7_0:
+    sambamba:
       module: sambamba/0.7.0
       version: 0.7.0
       verbose: TODO
-    samblaster_0_1_24:
+    samblaster:
       module: samblaster/0.1.24
       version: 0.1.24
       verbose: SaMBLAster TODO
-    samtools_1_7:
-      module: samtools/1.7
-      version: "1.7"
-      verbose: SAMtools v1.7
-      website: http://www.htslib.org
-      citation: >
-        Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
-        Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
-        Bioinformatics (2009) 25(16) 2078-9 [19505943]
     samtools_1_9:
-      module: samtools/1.9
+      module: SAMtools/1.9-GCC-8.2.0-2.31.1
       version: "1.9"
       verbose: SAMtools v1.9
       website: http://www.htslib.org
@@ -184,30 +210,30 @@ constants:
         Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
-    samtools_1_9_65_g1b72f1a:
-      module: samtools/1.9-65-g1b72f1a
-      version: "1.9-65-g1b72f1a"
-      verbose: SAMtools v1.9 dev branch commit g1b72f1a
+    samtools_1_9_168_gb1e2c78:
+      module: samtools/1.9-168-gb1e2c78
+      version: "1.9-168-gb1e2c78"
+      verbose: SAMtools v1.9 commit b1e2c78
       website: http://www.htslib.org
       citation: >
         Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
-    salmon_0_12_0:
-      module: salmon/0.12.0
-      version: "0.12.0"
-      verbose: Salmon v0.12.0
+    salmon:
+      module: Salmon/0.14.1-GCC-8.2.0-2.31.1
+      version: "0.14.1"
+      verbose: Salmon v0.14.1
       website: https://combine-lab.github.io/salmon/
       citation: >
         Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
         fast and bias-aware quantification of transcript expression. Nature Methods.
-    singularity_3_1_0:
-      module: singularity/3.1.0
-      version: "3.1.0"
-      verbose: Singularity v3.1.0
+    singularity:
+      module: singularity/3.5.0-rc2
+      version: "3.5.0"
+      verbose: Singularity v3.5.0
       website: https://www.sylabs.io/singularity/
-    snpeff_4_3t:
-      module: snpEff/v4_3t
+    snpeff:
+      module: snpEff/4.3t-Java-1.8
       version: "4.3T"
       verbose: SnpEff v4.3T
       website: http://snpeff.sourceforge.net/index.html
@@ -217,77 +243,127 @@ constants:
         melanogaster strain w1118; iso-2; iso-3.", Cingolani P, Platts A, Wang
         le L, Coon M, Nguyen T, Wang L, Land SJ, Lu X, Ruden DM. Fly (Austin).
         2012 Apr-Jun;6(2):80-92. PMID: 22728672
-    star_2_6_1d:
-      module: STAR/2.6.1d
-      version: 2.6.1d
-      verbose: STAR v2.6.1d
+    star:
+      module: STAR/2.7.3a-GCC-8.2.0-2.31.1
+      version: 2.7.3a
+      verbose: STAR v2.7.3a
       website: https://github.com/alexdobin/STAR
       citation: >
         Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P,
         Chaisson M, Gingeras TR. STAR: ultrafast universal RNA-seq aligner.
         Bioinformatics. 2013 Jan 1;29(1):15-21. doi: 10.1093/bioinformatics/bts635. Epub
         2012 Oct 25. PubMed PMID: 23104886; PubMed Central PMCID: PMC3530905.
-    star_fusion_1_5_0:
-      module: STAR-Fusion/1.5.0
-      version: 1.5.0
-      verbose: STAR-Fusion v1.5.0
+    star_fusion:
+      module: STAR-Fusion/1.8.1-GCC-8.2.0-2.31.1-Perl-5.28.1-Python-3.7.2
+      version: 1.8.1
+      verbose: STAR-Fusion v1.8.1
       website: https://github.com/STAR-Fusion/STAR-Fusion
       citation: >
         "STAR-Fusion: Fast and Accurate Fusion Transcript Detection from RNA-Seq
         Brian Haas, Alexander Dobin, Nicolas Stransky, Bo Li, Xiao Yang, Timothy Tickle,
         Asma Bankapur, Carrie Ganote, Thomas Doak, Natalie Pochet, Jing Sun, Catherine Wu,
         Thomas Gingeras, Aviv Regev bioRxiv 120295; doi: https://doi.org/10.1101/120295"
-    strelka_2_9_2:
-      module: strelka/2.9.2
-      version: "2.9.2"
-      verbose: Strelka2 Small Variant Caller v2.9.2
+    strelka:
+      module: strelka/2.9.10-foss-2018b
+      version: "2.9.10"
+      verbose: Strelka2 Small Variant Caller v2.9.10
       website: https://github.com/Illumina/strelka
       citation: >
         Kim, S., Scheffler, K. et al. (2018) Strelka2: fast and accurate calling of germline and somatic
         variants. Nature Methods, 15, 591-594. doi:10.1038/s41592-018-0051-x
-    subread_1_6_4:
-      module: subread/1.6.4
-      version: "1.6.4"
-      verbose: Subread v1.6.4
+    subread:
+      module: Subread/2.0.0-foss-2018b
+      version: "2.0.0"
+      verbose: Subread v2.0.0
       webiste: http://subread.sourceforge.net
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
-    vardict_1_6_0:
-      module: vardict/1.6.0
-      version: "1.6.0"
-      verbose: Vardict Java v1.6.0
+    vardict:
+      module: vardict/1.7.0-java-1.8
+      version: "1.7.0"
+      verbose: Vardict Java v1.7.0
       website: https://github.com/AstraZeneca-NGS/VarDictJava
       citation: >
         Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
-    vcfmerger2_0_7_0:
-      module: vcfmerger2/0.7.0
-      version: "0.7.0"
-      verbose: vcfMerger2 v0.7.0
+    vcfmerger2:
+      module: vcfmerger2/0.8.0-phoenix
+      version: "0.8.0"
+      verbose: vcfMerger2 v0.8.0
       website: https://github.com/tgen/vcfMerger2
-    verifybamid2_1_0_5:
-      module: verifybamID/1.0.5
-      version: 1.0.5
+    verifybamid2:
+      module: verifyBamID/1.0.6-foss-2019a
+      version: 1.0.6
       website: https://github.com/Griffan/VerifyBamID
       citation: >
         Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
         Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
         sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
+    vep:
+      module: VEP/98.0-foss-2019a-Perl-5.28.1
+      version: "98.3"
+      verbose: ensembl-vep release 98.3
+      website: https://github.com/Ensembl/ensembl-vep
+      citation: >
+        McLaren W, Gil L, Hunt SE, Riat HS, Ritchie GR, Thormann A, Flicek P, Cunningham F.
+        The Ensembl Variant Effect Predictor.
+        Genome Biology Jun 6;17(1):122. (2016)
+        doi:10.1186/s13059-016-0974-4
+    vt:
+      module: vt/0.57721-foss-2019a
+      version: "0.57721"
+      verbose: normalize v0.5
+      website: https://genome.sph.umich.edu/wiki/Vt#Normalization
   phoenix:
     species: Homo sapiens
     genome_build: grch38_hg38
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
+    reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
-    dbsnp: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b151/common_all_20180418.UCSC.vcf.gz
-    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-GRCh38-3.0.0
-    cellranger_chemistry:
-      X3SCR: SC3Pv1
-      XCSCR: SC3Pv2
-      X3SC3: SC3Pv3
-      X5SCR: SC5P-R2
-      unknown: auto
+    dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
+    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
+    gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
+    gnomad_exome_v2_1_1_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
+    gnomad_genome_v3_0_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
+    gnomad_exome_v2_1_1_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
+    gnomad_genome_v3_0_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
+    cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
+    cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
+    clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
+    bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
+    black_list: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz
+    delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
+    delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
+    delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF.py
+    delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel.py
+    plotCNVplus_Rscript: plotCNVplus_5f25b11.R
+    stats2json: samStats2json.py
+    stats2lims: uploadStats2Lims.py
+    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
+    cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
+    scrna_chemistry_options:
+      X3SCR:
+        chemistry_name: SC3Pv1
+        umi_length: 10
+        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-april-2014_rc.txt
+      XCSCR:
+        chemistry_name: SC3Pv2
+        umi_length: 10
+        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
+      X3SC3:
+        chemistry_name: SC3Pv3
+        umi_length: 12
+        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/3M-february-2018.txt.gz
+      X5SCR:
+        chemistry_name: SC5P-R2
+        umi_length: 10
+        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
+      unknown:
+        chemistry_name: auto
+        umi_lenth: 10
+        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
     gatk_known_sites:
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
@@ -297,19 +373,30 @@ constants:
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
-    gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.gtf
-    ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.refFlat.txt
-    ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.ribo.interval_list
-    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/Homo_sapiens.GRCh38.95.ucsc.transcriptome.fasta
-    salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/salmon_0.12.0/salmon_quasi_75merPlus
+    gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
+    ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
+    ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
+    gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
+    gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
+    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.transcriptome.fasta
+    salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
+    sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
+    sex_check_vcf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.vcf.gz
+    lymphocyteReceptor_loci_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
     star_indices:
       # Multiple STAR references defined here in order to accommodate 
       # RNA data with different read lengths.
-      75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/75bpReads
-      100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/100bpReads
-      150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v95/tool_resources/star_2.6.1d/150bpReads
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_v27_CTAT_lib_Feb092018/
+      75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/75bpReads
+      82bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/82bpReads
+      83bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/83bpReads
+      86bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/86bpReads
+      87bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/87bpReads
+      89bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/89bpReads
+      100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/100bpReads
+      109bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/109bpReads
+      150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/150bpReads
+    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir
     strandedness_options:
       inward-unstranded-notapplicable:
         salmon: "IU"
@@ -329,10 +416,11 @@ constants:
         featurecounts: "2"
         tophat: "-fr-firststrand"
         collectrnaseqmetrics: "SECOND_READ_TRANSCRIPTION_STRAND"
-    snpeff_config: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/snpEff.config
-    snpeff_data: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpEff_4.3T/data
-    snpeff_db: GRCh38.95
+    snpeff_config: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/snpEff.config
+    snpeff_data: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/data
+    snpeff_db: grch38.98
     snpSniffer_sites: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/snpSniffer/positions_387_hg38_ucsc.txt
+    vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
     deepvariant_models:
       exome: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wes_standard/model.ckpt
       genome: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.7.0/DeepVariant-inception_v3-0.7.0+data-wgs_standard/model.ckpt
@@ -596,6 +684,9 @@ constants:
       # Calling contigs broken down into smaller batches of intervals. These intervals
       # are taken from GATK Resource Bundle and describe regions that can be safely
       # called independently for SNP/small indel genotyping.
+      # Removed the following interval batch as both of the intervals completely overlap with an interval in the ENCODE blacklist
+      # chr3:90568829-90722458
+      # chr3:90772459-91249905
       - - {"contig": "chr1", "length": 197665, "start": 10001, "stop": 207666}
         - {"contig": "chr1", "length": 40301, "start": 257667, "stop": 297968}
         - {"contig": "chr1", "length": 188019, "start": 347969, "stop": 535988}
@@ -624,8 +715,6 @@ constants:
       - - {"contig": "chr2", "length": 141414040, "start": 97489619, "stop": 238903659}
       - - {"contig": "chr2", "length": 3279481, "start": 238904048, "stop": 242183529}
       - - {"contig": "chr3", "length": 90555294, "start": 10001, "stop": 90565295}
-      - - {"contig": "chr3", "length": 153629, "start": 90568829, "stop": 90722458}
-        - {"contig": "chr3", "length": 477446, "start": 90772459, "stop": 91249905}
       - - {"contig": "chr3", "length": 1468, "start": 91256422, "stop": 91257890}
         - {"contig": "chr3", "length": 5200, "start": 91260181, "stop": 91265381}
         - {"contig": "chr3", "length": 5180, "start": 91276995, "stop": 91282175}
@@ -1122,3 +1211,366 @@ constants:
         - {"contig": "chrUn_KI270742v1", "length": 186739, "start": 1, "stop": 186739}
         - {"contig": "chrUn_GL000216v2", "length": 176608, "start": 1, "stop": 176608}
         - {"contig": "chrUn_GL000218v1", "length": 161147, "start": 1, "stop": 161147}
+    primary_contig_calling_intervals:
+      # Calling contigs broken down into smaller batches of intervals. These intervals
+      # are taken from GATK Resource Bundle and describe regions that can be safely
+      # called independently for SNP/small indel genotyping.
+      # These intervals are from the primary contigs and have had the following interval batch removed
+      # as both of the intervals completely overlap with an interval in the ENCODE blacklist
+      # chr3:90568829-90722458
+      # chr3:90772459-91249905
+      - - {"contig": "chr1", "length": 197665, "start": 10001, "stop": 207666}
+        - {"contig": "chr1", "length": 40301, "start": 257667, "stop": 297968}
+        - {"contig": "chr1", "length": 188019, "start": 347969, "stop": 535988}
+        - {"contig": "chr1", "length": 2116792, "start": 585989, "stop": 2702781}
+        - {"contig": "chr1", "length": 10208093, "start": 2746291, "stop": 12954384}
+        - {"contig": "chr1", "length": 3794778, "start": 13004385, "stop": 16799163}
+        - {"contig": "chr1", "length": 12703069, "start": 16849164, "stop": 29552233}
+      - - {"contig": "chr1", "length": 92422623, "start": 29553836, "stop": 121976459}
+        - {"contig": "chr1", "length": 2951484, "start": 122026460, "stop": 124977944}
+        - {"contig": "chr1", "length": 151919, "start": 124978327, "stop": 125130246}
+        - {"contig": "chr1", "length": 39499, "start": 125131848, "stop": 125171347}
+        - {"contig": "chr1", "length": 11003, "start": 125173584, "stop": 125184587}
+      - - {"contig": "chr1", "length": 80374347, "start": 143184588, "stop": 223558935}
+        - {"contig": "chr1", "length": 4949428, "start": 223608936, "stop": 228558364}
+      - - {"contig": "chr1", "length": 20338057, "start": 228608365, "stop": 248946422}
+        - {"contig": "chr2", "length": 16135118, "start": 10001, "stop": 16145119}
+        - {"contig": "chr2", "length": 16721010, "start": 16146120, "stop": 32867130}
+        - {"contig": "chr2", "length": 48494, "start": 32868131, "stop": 32916625}
+      - - {"contig": "chr2", "length": 56413053, "start": 32917626, "stop": 89330679}
+        - {"contig": "chr2", "length": 155312, "start": 89530680, "stop": 89685992}
+        - {"contig": "chr2", "length": 648518, "start": 89753993, "stop": 90402511}
+        - {"contig": "chr2", "length": 735633, "start": 91402512, "stop": 92138145}
+        - {"contig": "chr2", "length": 1902411, "start": 92188146, "stop": 94090557}
+        - {"contig": "chr2", "length": 152457, "start": 94140558, "stop": 94293015}
+        - {"contig": "chr2", "length": 2943602, "start": 94496016, "stop": 97439618}
+      - - {"contig": "chr2", "length": 141414040, "start": 97489619, "stop": 238903659}
+      - - {"contig": "chr2", "length": 3279481, "start": 238904048, "stop": 242183529}
+      - - {"contig": "chr3", "length": 90555294, "start": 10001, "stop": 90565295}
+      - - {"contig": "chr3", "length": 1468, "start": 91256422, "stop": 91257890}
+        - {"contig": "chr3", "length": 5200, "start": 91260181, "stop": 91265381}
+        - {"contig": "chr3", "length": 5180, "start": 91276995, "stop": 91282175}
+        - {"contig": "chr3", "length": 2187625, "start": 91282735, "stop": 93470360}
+        - {"contig": "chr3", "length": 184773, "start": 93470801, "stop": 93655574}
+      - - {"contig": "chr3", "length": 104529984, "start": 93705575, "stop": 198235559}
+      - - {"contig": "chr4", "length": 1419357, "start": 10001, "stop": 1429358}
+        - {"contig": "chr4", "length": 1587, "start": 1434207, "stop": 1435794}
+        - {"contig": "chr4", "length": 7355924, "start": 1441553, "stop": 8797477}
+        - {"contig": "chr4", "length": 456438, "start": 8816478, "stop": 9272916}
+        - {"contig": "chr4", "length": 22496378, "start": 9322917, "stop": 31819295}
+        - {"contig": "chr4", "length": 1000446, "start": 31832570, "stop": 32833016}
+        - {"contig": "chr4", "length": 16497907, "start": 32839017, "stop": 49336924}
+        - {"contig": "chr4", "length": 171175, "start": 49486925, "stop": 49658100}
+        - {"contig": "chr4", "length": 2035850, "start": 49708101, "stop": 51743951}
+        - {"contig": "chr4", "length": 7084841, "start": 51793952, "stop": 58878793}
+      - - {"contig": "chr4", "length": 131201739, "start": 58921382, "stop": 190123121}
+      - - {"contig": "chr4", "length": 31433, "start": 190173122, "stop": 190204555}
+        - {"contig": "chr5", "length": 17520547, "start": 10001, "stop": 17530548}
+        - {"contig": "chr5", "length": 28855351, "start": 17580549, "stop": 46435900}
+        - {"contig": "chr5", "length": 583261, "start": 46485901, "stop": 47069162}
+        - {"contig": "chr5", "length": 6002, "start": 47073731, "stop": 47079733}
+        - {"contig": "chr5", "length": 218504, "start": 47082081, "stop": 47300585}
+        - {"contig": "chr5", "length": 2997, "start": 47306087, "stop": 47309084}
+        - {"contig": "chr5", "length": 1450, "start": 49591470, "stop": 49592920}
+        - {"contig": "chr5", "length": 3807, "start": 49599324, "stop": 49603131}
+        - {"contig": "chr5", "length": 2006, "start": 49609715, "stop": 49611721}
+        - {"contig": "chr5", "length": 6897, "start": 49612097, "stop": 49618994}
+        - {"contig": "chr5", "length": 6559, "start": 49621606, "stop": 49628165}
+        - {"contig": "chr5", "length": 3063, "start": 49630730, "stop": 49633793}
+        - {"contig": "chr5", "length": 8757, "start": 49641816, "stop": 49650573}
+        - {"contig": "chr5", "length": 5609, "start": 49656262, "stop": 49661871}
+        - {"contig": "chr5", "length": 393633, "start": 49666174, "stop": 50059807}
+      - - {"contig": "chr5", "length": 89342851, "start": 50109808, "stop": 139452659}
+      - - {"contig": "chr5", "length": 16306664, "start": 139453660, "stop": 155760324}
+        - {"contig": "chr5", "length": 25716934, "start": 155761325, "stop": 181478259}
+        - {"contig": "chr6", "length": 58393887, "start": 60001, "stop": 58453888}
+        - {"contig": "chr6", "length": 1276045, "start": 58553889, "stop": 59829934}
+      - - {"contig": "chr6", "length": 1127094, "start": 60229935, "stop": 61357029}
+        - {"contig": "chr6", "length": 7487, "start": 61363067, "stop": 61370554}
+        - {"contig": "chr6", "length": 33649417, "start": 61371373, "stop": 95020790}
+      - - {"contig": "chr6", "length": 72520602, "start": 95070791, "stop": 167591393}
+        - {"contig": "chr6", "length": 3104585, "start": 167641394, "stop": 170745979}
+        - {"contig": "chr7", "length": 227845, "start": 10001, "stop": 237846}
+      - - {"contig": "chr7", "length": 57879410, "start": 240243, "stop": 58119653}
+        - {"contig": "chr7", "length": 2658580, "start": 58169654, "stop": 60828234}
+        - {"contig": "chr7", "length": 449553, "start": 60878235, "stop": 61327788}
+        - {"contig": "chr7", "length": 150231, "start": 61377789, "stop": 61528020}
+        - {"contig": "chr7", "length": 386148, "start": 61578021, "stop": 61964169}
+        - {"contig": "chr7", "length": 9040, "start": 61967064, "stop": 61976104}
+        - {"contig": "chr7", "length": 430674, "start": 62026105, "stop": 62456779}
+      - - {"contig": "chr7", "length": 81144024, "start": 62506780, "stop": 143650804}
+        - {"contig": "chr7", "length": 15635168, "start": 143700805, "stop": 159335973}
+      - - {"contig": "chr8", "length": 7557126, "start": 60001, "stop": 7617127}
+        - {"contig": "chr8", "length": 4567217, "start": 7667128, "stop": 12234345}
+        - {"contig": "chr8", "length": 31699398, "start": 12284346, "stop": 43983744}
+        - {"contig": "chr8", "length": 1843520, "start": 44033745, "stop": 45877265}
+        - {"contig": "chr8", "length": 39736956, "start": 45927266, "stop": 85664222}
+      - - {"contig": "chr8", "length": 59364413, "start": 85714223, "stop": 145078636}
+        - {"contig": "chr9", "length": 41215985, "start": 10001, "stop": 41225986}
+        - {"contig": "chr9", "length": 8373, "start": 41229379, "stop": 41237752}
+      - - {"contig": "chr9", "length": 1983662, "start": 41238505, "stop": 43222167}
+        - {"contig": "chr9", "length": 27122, "start": 43236168, "stop": 43263290}
+        - {"contig": "chr9", "length": 7123, "start": 43263821, "stop": 43270944}
+        - {"contig": "chr9", "length": 1312, "start": 43274936, "stop": 43276248}
+        - {"contig": "chr9", "length": 4865, "start": 43276458, "stop": 43281323}
+        - {"contig": "chr9", "length": 49217, "start": 43282957, "stop": 43332174}
+        - {"contig": "chr9", "length": 37135, "start": 43333270, "stop": 43370405}
+        - {"contig": "chr9", "length": 6127, "start": 43371326, "stop": 43377453}
+        - {"contig": "chr9", "length": 2136278, "start": 43382280, "stop": 45518558}
+        - {"contig": "chr9", "length": 169873, "start": 60518559, "stop": 60688432}
+        - {"contig": "chr9", "length": 41088, "start": 60738433, "stop": 60779521}
+        - {"contig": "chr9", "length": 174365, "start": 60829522, "stop": 61003887}
+        - {"contig": "chr9", "length": 178078, "start": 61053888, "stop": 61231966}
+        - {"contig": "chr9", "length": 186841, "start": 61281967, "stop": 61468808}
+        - {"contig": "chr9", "length": 216559, "start": 61518809, "stop": 61735368}
+        - {"contig": "chr9", "length": 364369, "start": 61785369, "stop": 62149738}
+        - {"contig": "chr9", "length": 499093, "start": 62249739, "stop": 62748832}
+        - {"contig": "chr9", "length": 159538, "start": 62798833, "stop": 62958371}
+        - {"contig": "chr9", "length": 194490, "start": 63008372, "stop": 63202862}
+        - {"contig": "chr9", "length": 239401, "start": 63252863, "stop": 63492264}
+        - {"contig": "chr9", "length": 376182, "start": 63542265, "stop": 63918447}
+        - {"contig": "chr9", "length": 166565, "start": 63968448, "stop": 64135013}
+        - {"contig": "chr9", "length": 30148, "start": 64185014, "stop": 64215162}
+        - {"contig": "chr9", "length": 682961, "start": 64315163, "stop": 64998124}
+        - {"contig": "chr9", "length": 31957, "start": 65048125, "stop": 65080082}
+        - {"contig": "chr9", "length": 195040, "start": 65130083, "stop": 65325123}
+        - {"contig": "chr9", "length": 220067, "start": 65375124, "stop": 65595191}
+        - {"contig": "chr9", "length": 746195, "start": 65645192, "stop": 66391387}
+        - {"contig": "chr9", "length": 1329164, "start": 66591388, "stop": 67920552}
+        - {"contig": "chr9", "length": 65962539, "start": 68220553, "stop": 134183092}
+        - {"contig": "chr9", "length": 4149180, "start": 134185537, "stop": 138334717}
+      - - {"contig": "chr10", "length": 38519906, "start": 10001, "stop": 38529907}
+        - {"contig": "chr10", "length": 332697, "start": 38573339, "stop": 38906036}
+        - {"contig": "chr10", "length": 1857, "start": 38911581, "stop": 38913438}
+        - {"contig": "chr10", "length": 311648, "start": 38918270, "stop": 39229918}
+        - {"contig": "chr10", "length": 179655, "start": 39230137, "stop": 39409792}
+        - {"contig": "chr10", "length": 175049, "start": 39410238, "stop": 39585287}
+        - {"contig": "chr10", "length": 2577, "start": 39590436, "stop": 39593013}
+        - {"contig": "chr10", "length": 5263, "start": 39597436, "stop": 39602699}
+        - {"contig": "chr10", "length": 7099, "start": 39606090, "stop": 39613189}
+        - {"contig": "chr10", "length": 6734, "start": 39615619, "stop": 39622353}
+        - {"contig": "chr10", "length": 11407, "start": 39625275, "stop": 39636682}
+        - {"contig": "chr10", "length": 1906838, "start": 39686683, "stop": 41593521}
+        - {"contig": "chr10", "length": 222743, "start": 41693522, "stop": 41916265}
+        - {"contig": "chr10", "length": 5714102, "start": 42066266, "stop": 47780368}
+      - - {"contig": "chr10", "length": 76250831, "start": 47870369, "stop": 124121200}
+        - {"contig": "chr10", "length": 9568963, "start": 124121503, "stop": 133690466}
+        - {"contig": "chr10", "length": 46955, "start": 133740467, "stop": 133787422}
+      - - {"contig": "chr11", "length": 50761347, "start": 60001, "stop": 50821348}
+        - {"contig": "chr11", "length": 3346725, "start": 51078349, "stop": 54425074}
+        - {"contig": "chr11", "length": 16430621, "start": 54525075, "stop": 70955696}
+        - {"contig": "chr11", "length": 16922505, "start": 71055697, "stop": 87978202}
+      - - {"contig": "chr11", "length": 47073725, "start": 88002897, "stop": 135076622}
+        - {"contig": "chr12", "length": 7073649, "start": 10001, "stop": 7083650}
+        - {"contig": "chr12", "length": 27634756, "start": 7084651, "stop": 34719407}
+        - {"contig": "chr12", "length": 52881, "start": 34769408, "stop": 34822289}
+        - {"contig": "chr12", "length": 2356014, "start": 34829238, "stop": 37185252}
+        - {"contig": "chr12", "length": 5691, "start": 37235253, "stop": 37240944}
+        - {"contig": "chr12", "length": 9615, "start": 37245717, "stop": 37255332}
+        - {"contig": "chr12", "length": 122795, "start": 37257056, "stop": 37379851}
+      - - {"contig": "chr12", "length": 94842901, "start": 37380461, "stop": 132223362}
+        - {"contig": "chr12", "length": 1040946, "start": 132224363, "stop": 133265309}
+        - {"contig": "chr13", "length": 2051247, "start": 16000001, "stop": 18051248}
+        - {"contig": "chr13", "length": 186857, "start": 18171249, "stop": 18358106}
+      - - {"contig": "chr13", "length": 67794872, "start": 18408107, "stop": 86202979}
+        - {"contig": "chr13", "length": 25450875, "start": 86252980, "stop": 111703855}
+        - {"contig": "chr13", "length": 39585, "start": 111753856, "stop": 111793441}
+        - {"contig": "chr13", "length": 1829578, "start": 111843442, "stop": 113673020}
+        - {"contig": "chr13", "length": 631307, "start": 113723021, "stop": 114354328}
+        - {"contig": "chr14", "length": 31338, "start": 16022638, "stop": 16053976}
+        - {"contig": "chr14", "length": 7217, "start": 16054460, "stop": 16061677}
+        - {"contig": "chr14", "length": 24631, "start": 16061994, "stop": 16086625}
+        - {"contig": "chr14", "length": 15813, "start": 16089563, "stop": 16105376}
+        - {"contig": "chr14", "length": 17625, "start": 16113233, "stop": 16130858}
+        - {"contig": "chr14", "length": 7191, "start": 16133336, "stop": 16140527}
+        - {"contig": "chr14", "length": 4184, "start": 16400164, "stop": 16404348}
+        - {"contig": "chr14", "length": 489120, "start": 18223524, "stop": 18712644}
+        - {"contig": "chr14", "length": 649068, "start": 18862645, "stop": 19511713}
+      - - {"contig": "chr14", "length": 87272004, "start": 19611714, "stop": 106883718}
+        - {"contig": "chr15", "length": 2725253, "start": 17000001, "stop": 19725254}
+        - {"contig": "chr15", "length": 914049, "start": 19775255, "stop": 20689304}
+        - {"contig": "chr15", "length": 463743, "start": 20729747, "stop": 21193490}
+        - {"contig": "chr15", "length": 536411, "start": 21242091, "stop": 21778502}
+        - {"contig": "chr15", "length": 479739, "start": 21828503, "stop": 22308242}
+        - {"contig": "chr15", "length": 868631, "start": 22358243, "stop": 23226874}
+      - - {"contig": "chr15", "length": 60993191, "start": 23276875, "stop": 84270066}
+        - {"contig": "chr15", "length": 17661122, "start": 84320067, "stop": 101981189}
+        - {"contig": "chr16", "length": 18426485, "start": 10001, "stop": 18436486}
+      - - {"contig": "chr16", "length": 14728108, "start": 18486487, "stop": 33214595}
+        - {"contig": "chr16", "length": 127815, "start": 33264596, "stop": 33392411}
+        - {"contig": "chr16", "length": 846917, "start": 33442412, "stop": 34289329}
+        - {"contig": "chr16", "length": 182180, "start": 34339330, "stop": 34521510}
+        - {"contig": "chr16", "length": 5294, "start": 34571511, "stop": 34576805}
+        - {"contig": "chr16", "length": 3119, "start": 34580966, "stop": 34584085}
+        - {"contig": "chr16", "length": 1675763, "start": 34584623, "stop": 36260386}
+        - {"contig": "chr16", "length": 529, "start": 36260629, "stop": 36261158}
+        - {"contig": "chr16", "length": 1957937, "start": 36311159, "stop": 38269096}
+        - {"contig": "chr16", "length": 4923, "start": 38275759, "stop": 38280682}
+        - {"contig": "chr16", "length": 43847662, "start": 46380683, "stop": 90228345}
+        - {"contig": "chr17", "length": 388187, "start": 60001, "stop": 448188}
+        - {"contig": "chr17", "length": 1407, "start": 488988, "stop": 490395}
+        - {"contig": "chr17", "length": 21304738, "start": 491112, "stop": 21795850}
+        - {"contig": "chr17", "length": 170445, "start": 21814104, "stop": 21984549}
+        - {"contig": "chr17", "length": 6960, "start": 21985101, "stop": 21992061}
+        - {"contig": "chr17", "length": 47126, "start": 22042062, "stop": 22089188}
+        - {"contig": "chr17", "length": 674268, "start": 22089411, "stop": 22763679}
+        - {"contig": "chr17", "length": 3813330, "start": 22813680, "stop": 26627010}
+        - {"contig": "chr17", "length": 12984, "start": 26627350, "stop": 26640334}
+        - {"contig": "chr17", "length": 2847, "start": 26640621, "stop": 26643468}
+        - {"contig": "chr17", "length": 54746, "start": 26643844, "stop": 26698590}
+        - {"contig": "chr17", "length": 21421, "start": 26698999, "stop": 26720420}
+        - {"contig": "chr17", "length": 13827, "start": 26721377, "stop": 26735204}
+        - {"contig": "chr17", "length": 84290, "start": 26735775, "stop": 26820065}
+        - {"contig": "chr17", "length": 39457, "start": 26820267, "stop": 26859724}
+        - {"contig": "chr17", "length": 25813, "start": 26860167, "stop": 26885980}
+      - - {"contig": "chr17", "length": 54806561, "start": 26935981, "stop": 81742542}
+        - {"contig": "chr17", "length": 3738, "start": 81792543, "stop": 81796281}
+        - {"contig": "chr17", "length": 989, "start": 81797728, "stop": 81798717}
+        - {"contig": "chr17", "length": 1448307, "start": 81799134, "stop": 83247441}
+        - {"contig": "chr18", "length": 15400898, "start": 10001, "stop": 15410899}
+        - {"contig": "chr18", "length": 327480, "start": 15460900, "stop": 15788380}
+        - {"contig": "chr18", "length": 4773666, "start": 15791048, "stop": 20564714}
+        - {"contig": "chr18", "length": 259257, "start": 20571467, "stop": 20830724}
+        - {"contig": "chr18", "length": 29864, "start": 20831342, "stop": 20861206}
+      - - {"contig": "chr18", "length": 26058705, "start": 20911207, "stop": 46969912}
+        - {"contig": "chr18", "length": 7516661, "start": 47019913, "stop": 54536574}
+        - {"contig": "chr18", "length": 25725756, "start": 54537529, "stop": 80263285}
+        - {"contig": "chr19", "length": 24388979, "start": 60001, "stop": 24448980}
+        - {"contig": "chr19", "length": 6956, "start": 24891357, "stop": 24898313}
+        - {"contig": "chr19", "length": 3817, "start": 24904772, "stop": 24908589}
+      - - {"contig": "chr19", "length": 31366741, "start": 27240875, "stop": 58607616}
+        - {"contig": "chr20", "length": 3214, "start": 60001, "stop": 63215}
+        - {"contig": "chr20", "length": 26300399, "start": 63841, "stop": 26364240}
+        - {"contig": "chr20", "length": 16749, "start": 26365415, "stop": 26382164}
+        - {"contig": "chr20", "length": 3615, "start": 26382617, "stop": 26386232}
+        - {"contig": "chr20", "length": 154642, "start": 26436233, "stop": 26590875}
+        - {"contig": "chr20", "length": 1902994, "start": 26596364, "stop": 28499358}
+        - {"contig": "chr20", "length": 246354, "start": 28504765, "stop": 28751119}
+        - {"contig": "chr20", "length": 90810, "start": 28752591, "stop": 28843401}
+        - {"contig": "chr20", "length": 7526, "start": 28859998, "stop": 28867524}
+        - {"contig": "chr20", "length": 21882, "start": 28868453, "stop": 28890335}
+        - {"contig": "chr20", "length": 375183, "start": 28896363, "stop": 29271546}
+        - {"contig": "chr20", "length": 43515, "start": 29271827, "stop": 29315342}
+        - {"contig": "chr20", "length": 96685, "start": 29315822, "stop": 29412507}
+        - {"contig": "chr20", "length": 149392, "start": 29413578, "stop": 29562970}
+        - {"contig": "chr20", "length": 1047, "start": 29563364, "stop": 29564411}
+        - {"contig": "chr20", "length": 132009, "start": 29565354, "stop": 29697363}
+        - {"contig": "chr20", "length": 340717, "start": 29697631, "stop": 30038348}
+        - {"contig": "chr20", "length": 336779, "start": 30088349, "stop": 30425128}
+        - {"contig": "chr20", "length": 305820, "start": 30456078, "stop": 30761898}
+        - {"contig": "chr20", "length": 189609, "start": 30811899, "stop": 31001508}
+        - {"contig": "chr20", "length": 55527, "start": 31051509, "stop": 31107036}
+        - {"contig": "chr20", "length": 2082, "start": 31157037, "stop": 31159119}
+        - {"contig": "chr20", "length": 5152745, "start": 31161626, "stop": 36314371}
+        - {"contig": "chr20", "length": 28019447, "start": 36314720, "stop": 64334167}
+        - {"contig": "chr21", "length": 156245, "start": 5010001, "stop": 5166246}
+        - {"contig": "chr21", "length": 177311, "start": 5216247, "stop": 5393558}
+        - {"contig": "chr21", "length": 5453, "start": 5443559, "stop": 5449012}
+        - {"contig": "chr21", "length": 128583, "start": 5499013, "stop": 5627596}
+        - {"contig": "chr21", "length": 118412, "start": 5677597, "stop": 5796009}
+        - {"contig": "chr21", "length": 70583, "start": 5846010, "stop": 5916593}
+        - {"contig": "chr21", "length": 194777, "start": 5966594, "stop": 6161371}
+        - {"contig": "chr21", "length": 165886, "start": 6211372, "stop": 6377258}
+        - {"contig": "chr21", "length": 152922, "start": 6427259, "stop": 6580181}
+        - {"contig": "chr21", "length": 108903, "start": 6630182, "stop": 6739085}
+        - {"contig": "chr21", "length": 145133, "start": 6789086, "stop": 6934219}
+        - {"contig": "chr21", "length": 165307, "start": 6984220, "stop": 7149527}
+        - {"contig": "chr21", "length": 128337, "start": 7199528, "stop": 7327865}
+        - {"contig": "chr21", "length": 123024, "start": 7377866, "stop": 7500890}
+        - {"contig": "chr21", "length": 142809, "start": 7550891, "stop": 7693700}
+        - {"contig": "chr21", "length": 122045, "start": 7743701, "stop": 7865746}
+        - {"contig": "chr21", "length": 134092, "start": 7915747, "stop": 8049839}
+        - {"contig": "chr21", "length": 161131, "start": 8099840, "stop": 8260971}
+        - {"contig": "chr21", "length": 161388, "start": 8310972, "stop": 8472360}
+        - {"contig": "chr21", "length": 184354, "start": 8522361, "stop": 8706715}
+        - {"contig": "chr21", "length": 129888, "start": 8756716, "stop": 8886604}
+        - {"contig": "chr21", "length": 209482, "start": 8986605, "stop": 9196087}
+        - {"contig": "chr21", "length": 131055, "start": 9246088, "stop": 9377143}
+        - {"contig": "chr21", "length": 642724, "start": 9527144, "stop": 10169868}
+        - {"contig": "chr21", "length": 4458, "start": 10269869, "stop": 10274327}
+        - {"contig": "chr21", "length": 490232, "start": 10324328, "stop": 10814560}
+      - - {"contig": "chr21", "length": 30246653, "start": 12965809, "stop": 43212462}
+        - {"contig": "chr21", "length": 3437520, "start": 43262463, "stop": 46699983}
+        - {"contig": "chr22", "length": 274642, "start": 10510001, "stop": 10784643}
+        - {"contig": "chr22", "length": 39928, "start": 10834644, "stop": 10874572}
+        - {"contig": "chr22", "length": 42151, "start": 10924573, "stop": 10966724}
+        - {"contig": "chr22", "length": 52262, "start": 11016725, "stop": 11068987}
+        - {"contig": "chr22", "length": 41933, "start": 11118988, "stop": 11160921}
+        - {"contig": "chr22", "length": 167134, "start": 11210922, "stop": 11378056}
+        - {"contig": "chr22", "length": 69280, "start": 11428057, "stop": 11497337}
+        - {"contig": "chr22", "length": 83950, "start": 11547338, "stop": 11631288}
+        - {"contig": "chr22", "length": 43340, "start": 11681289, "stop": 11724629}
+        - {"contig": "chr22", "length": 202925, "start": 11774630, "stop": 11977555}
+        - {"contig": "chr22", "length": 198032, "start": 12027556, "stop": 12225588}
+        - {"contig": "chr22", "length": 163101, "start": 12275589, "stop": 12438690}
+        - {"contig": "chr22", "length": 153039, "start": 12488691, "stop": 12641730}
+        - {"contig": "chr22", "length": 34473, "start": 12691731, "stop": 12726204}
+        - {"contig": "chr22", "length": 41932, "start": 12776205, "stop": 12818137}
+        - {"contig": "chr22", "length": 36650, "start": 12868138, "stop": 12904788}
+        - {"contig": "chr22", "length": 1125353, "start": 15154319, "stop": 16279672}
+        - {"contig": "chr22", "length": 1452, "start": 16302844, "stop": 16304296}
+        - {"contig": "chr22", "length": 1620, "start": 16305428, "stop": 16307048}
+        - {"contig": "chr22", "length": 5910, "start": 16307606, "stop": 16313516}
+        - {"contig": "chr22", "length": 1925118, "start": 16314011, "stop": 18239129}
+        - {"contig": "chr22", "length": 94383, "start": 18339130, "stop": 18433513}
+        - {"contig": "chr22", "length": 176050, "start": 18483514, "stop": 18659564}
+        - {"contig": "chr22", "length": 31264300, "start": 18709565, "stop": 49973865}
+        - {"contig": "chr22", "length": 833102, "start": 49975366, "stop": 50808468}
+        - {"contig": "chrX", "length": 34820, "start": 10001, "stop": 44821}
+        - {"contig": "chrX", "length": 39049, "start": 94822, "stop": 133871}
+        - {"contig": "chrX", "length": 1726998, "start": 222347, "stop": 1949345}
+      - - {"contig": "chrX", "length": 34966267, "start": 2132995, "stop": 37099262}
+        - {"contig": "chrX", "length": 12062556, "start": 37285838, "stop": 49348394}
+        - {"contig": "chrX", "length": 700569, "start": 49528395, "stop": 50228964}
+        - {"contig": "chrX", "length": 8276614, "start": 50278965, "stop": 58555579}
+        - {"contig": "chrX", "length": 3806962, "start": 58605580, "stop": 62412542}
+      - - {"contig": "chrX", "length": 51818655, "start": 62462543, "stop": 114281198}
+        - {"contig": "chrX", "length": 1407750, "start": 114331199, "stop": 115738949}
+        - {"contig": "chrX", "length": 718829, "start": 115838950, "stop": 116557779}
+        - {"contig": "chrX", "length": 4283814, "start": 116595567, "stop": 120879381}
+        - {"contig": "chrX", "length": 23496224, "start": 120929382, "stop": 144425606}
+        - {"contig": "chrX", "length": 11555288, "start": 144475607, "stop": 156030895}
+        - {"contig": "chrY", "length": 6265434, "start": 2781480, "stop": 9046914}
+        - {"contig": "chrY", "length": 2433, "start": 9055175, "stop": 9057608}
+        - {"contig": "chrY", "length": 4259, "start": 9107609, "stop": 9111868}
+        - {"contig": "chrY", "length": 1603, "start": 9112716, "stop": 9114319}
+        - {"contig": "chrY", "length": 287341, "start": 9116372, "stop": 9403713}
+        - {"contig": "chrY", "length": 813230, "start": 9453714, "stop": 10266944}
+        - {"contig": "chrY", "length": 227094, "start": 10316945, "stop": 10544039}
+        - {"contig": "chrY", "length": 39400, "start": 10594040, "stop": 10633440}
+        - {"contig": "chrY", "length": 4155, "start": 10645834, "stop": 10649989}
+        - {"contig": "chrY", "length": 18315, "start": 10651422, "stop": 10669737}
+        - {"contig": "chrY", "length": 3325, "start": 10670733, "stop": 10674058}
+        - {"contig": "chrY", "length": 3170, "start": 10676545, "stop": 10679715}
+        - {"contig": "chrY", "length": 9130, "start": 10682443, "stop": 10691573}
+        - {"contig": "chrY", "length": 2289, "start": 10691903, "stop": 10694192}
+        - {"contig": "chrY", "length": 65478, "start": 10744193, "stop": 10809671}
+        - {"contig": "chrY", "length": 6278, "start": 10810480, "stop": 10816758}
+        - {"contig": "chrY", "length": 35607, "start": 10817293, "stop": 10852900}
+        - {"contig": "chrY", "length": 16082, "start": 10855136, "stop": 10871218}
+        - {"contig": "chrY", "length": 18521, "start": 10871898, "stop": 10890419}
+        - {"contig": "chrY", "length": 4582, "start": 10891943, "stop": 10896525}
+        - {"contig": "chrY", "length": 10334, "start": 10898185, "stop": 10908519}
+        - {"contig": "chrY", "length": 13384, "start": 10909102, "stop": 10922486}
+        - {"contig": "chrY", "length": 33303, "start": 10923565, "stop": 10956868}
+        - {"contig": "chrY", "length": 3857, "start": 10957768, "stop": 10961625}
+        - {"contig": "chrY", "length": 3160, "start": 10962534, "stop": 10965694}
+        - {"contig": "chrY", "length": 2707, "start": 10967285, "stop": 10969992}
+        - {"contig": "chrY", "length": 31655, "start": 10970621, "stop": 11002276}
+        - {"contig": "chrY", "length": 9468, "start": 11003060, "stop": 11012528}
+        - {"contig": "chrY", "length": 3945, "start": 11013047, "stop": 11016992}
+        - {"contig": "chrY", "length": 6126, "start": 11017248, "stop": 11023374}
+        - {"contig": "chrY", "length": 4075, "start": 11024267, "stop": 11028342}
+        - {"contig": "chrY", "length": 7091, "start": 11029161, "stop": 11036252}
+      - - {"contig": "chrY", "length": 555869, "start": 11037033, "stop": 11592902}
+        - {"contig": "chrY", "length": 4539, "start": 11642903, "stop": 11647442}
+        - {"contig": "chrY", "length": 12664, "start": 11647710, "stop": 11660374}
+        - {"contig": "chrY", "length": 11613, "start": 11662182, "stop": 11673795}
+        - {"contig": "chrY", "length": 8533669, "start": 11674124, "stop": 20207793}
+        - {"contig": "chrY", "length": 1481748, "start": 20257794, "stop": 21739542}
+        - {"contig": "chrY", "length": 6421, "start": 21741442, "stop": 21747863}
+        - {"contig": "chrY", "length": 1641, "start": 21748372, "stop": 21750013}
+        - {"contig": "chrY", "length": 38966, "start": 21750315, "stop": 21789281}
+        - {"contig": "chrY", "length": 4867932, "start": 21805282, "stop": 26673214}
+        - {"contig": "chrY", "length": 98294, "start": 56673215, "stop": 56771509}
+        - {"contig": "chrY", "length": 66392, "start": 56821510, "stop": 56887902}

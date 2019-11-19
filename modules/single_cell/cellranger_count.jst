@@ -1,0 +1,81 @@
+# Run 10X Cell Ranger Count pipeline
+
+{% macro cellranger_count(files) %}
+
+{% set sample = files[0] %}
+{% set assaycode = sample.assayCode|default('unknown') %}
+{% set chemistry = constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name %}
+{% set outdir %}{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
+
+{% set samples_list = [] %}
+{% for rgpu, _ in files|groupby('rgpu') %}
+  {% set sample_string %}{{ sample.name }}_{{ sample.rglb }}_{{ rgpu[:-2] }}{% endset %}
+  {% do samples_list.append(sample_string) %}
+{% endfor %}
+
+- name: cellranger_count_{{ sample.name }}_{{ sample.rglb }}
+  tags: [{{ sample.gltype }}, single_cell, cellranger_count, {{ sample.name }}]
+  methods: >
+    Transcript quantification for {{ sample.name }} was performed with
+    {{ constants.tools.cellranger.verbose }} using the cDNA index.
+  input:
+  {% for fq in files %}
+   - temp/fastqs/{{ fq.basename }}
+  {% endfor %}
+  output:
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.bam
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.bam.bai
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.cloupe
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.filtered_feature_bc_matrix.h5
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.metrics_summary.csv
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.molecule_info.h5
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.raw_feature_bc_matrix.h5
+    - {{ outdir }}/{{ sample.name }}_{{ sample.rglb }}.web_summary.html
+  cpus: 20
+  mem: 160G
+  walltime: "48:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.cellranger.module }}
+
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
+    mkdir -p "{{ outdir }}"
+    
+    {% for fq in files %}
+    ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename }}"
+    {% endfor %}
+
+    {#
+    # Cell Ranger recommended settings online are at least 8 cores and 6Gb of RAM per core
+    # We are using 20 cores and therefore a 120Gb RAM pool is recommended
+    #}
+    ( cd {{ temp_dir }} && cellranger count \
+      --localcores 20 \
+      --localmem 160 \
+      --chemistry "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name }}" \
+      --id "{{ sample.name }}_{{ sample.rglb }}" \
+      --fastqs . \
+      --sample "{{ samples_list|join(',') }}" \
+      --transcriptome "{{ constants.phoenix.cellranger_reference }}" )
+
+    # Renaming all output files, could be cleaned up a bit using 'rename' commands, might only remove one line or so
+    {% set cellranger_out %}{{ temp_dir }}{{ sample.name }}_{{ sample.rglb }}/outs{% endset %}
+    mv {{ cellranger_out }}/possorted_genome_bam.bam {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.bam
+    mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.bam.bai
+    mv {{ cellranger_out }}/cloupe.cloupe {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.cloupe
+    mv {{ cellranger_out }}/filtered_feature_bc_matrix.h5 {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.filtered_feature_bc_matrix.h5
+    mv {{ cellranger_out }}/metrics_summary.csv {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.metrics_summary.csv
+    mv {{ cellranger_out }}/molecule_info.h5 {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.molecule_info.h5
+    mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.raw_feature_bc_matrix.h5
+    mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.web_summary.html
+
+    {# removing the analysis directory as is it no longer needed #}
+    rm -rf {{ cellranger_out }}/analysis
+
+    {# move everything to the output directory #}
+    mv {{ cellranger_out }}/* {{ outdir }}
+
+{% endmacro %}

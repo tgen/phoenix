@@ -1,18 +1,20 @@
-{% macro ichorcna(sample, aligner='bwa') %}
+{% macro ichorcna(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set wig %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
-{% set run_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
+{% set results_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
+{% set wig %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
 
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
+  tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ wig }}
   walltime: "24:00:00"
   cpus: 1
   cmd: |
-    set -uev
-    module load {{ constants.tools.hmmcopy_utils_1_0.module }}
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.hmmcopy_utils.module }}
 
-    mkdir -p "{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/"
+    mkdir -p "{{ results_dir }}/"
 
     readCounter \
       --window 1000000 \
@@ -25,27 +27,40 @@
 
 
 - name: ichor_cna_{{ aligner }}_{{ sample.name }}
+  tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
   after: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
+  output:
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.params.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.RData
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig
   walltime: "24:00:00"
   cpus: 1
   cmd: |
-    set -ue
-    module load {{ constants.tools.ichorcna_0_1_0.module }}
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.ichorcna.module }}
 
-    # Purge any existing results files prior to starting
-    rm -r "{{ run_dir }}" || true
-    mkdir -p "{{ run_dir }}"
+    {# Purge any existing results files prior to starting #}
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
 
+    {#
     # ichorCNA includes some pre-built references in the source code, this command
     # finds these files dynamically with R system.find before starting
+    #}
     EXTDATA=$(Rscript <(echo "cat(system.file('extdata/', package='ichorCNA'))"))
 
+    {#
     # The ichorCNA launcher script does not currently get installed with
     # the rest of the package, so this path is hard coded in constants.yaml
-    Rscript "{{ constants.tools.ichorcna_0_1_0.launcher }}" \
+    #}
+    Rscript ${PATH_TO_PHOENIX_REPO}/{{ constants.tools.ichorcna.launcher }} \
       --id "{{ sample.name}}.{{ aligner }}" \
       --WIG "{{ wig }}" \
-      --outDir "{{ run_dir }}" \
+      --outDir "{{ temp_dir }}" \
       --includeHOMD False \
       --estimateNormal True \
       --estimatePloidy True \
@@ -53,6 +68,7 @@
       --txnE 0.9999 \
       --txnStrength 10000 \
       --genomeStyle "UCSC" \
+      --genomeBuild "hg38" \
       --chrs "c('chr1','chr2','chr3','chr4','chr5','chr6','chr7','chr8','chr9','chr10',\
       'chr11','chr12','chr13','chr14','chr15','chr16','chr17','chr18','chr19','chr20','chr21',\
       'chr22','chrX')" \
@@ -67,5 +83,15 @@
       --mapWig ${EXTDATA}/map_hg38_1000kb.wig \
       --centromere ${EXTDATA}/GRCh38.GCA_000001405.2_centromere_acen.txt \
       --normalPanel ${EXTDATA}/HD_ULP_PoN_hg38_1Mb_median_normAutosome_median.rds
+
+    {#
+    # Move the output files to the final location
+    #}
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.params.txt" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.RData" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt" "{{ results_dir }}/"
+    mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ results_dir }}/"
 
 {% endmacro %}

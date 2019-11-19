@@ -1,0 +1,244 @@
+# These macros are run on constitutional dna bams from the dna_alignment modules.
+
+{% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+- name: verifybamid2_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
+  input: {{ bam }}
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.out
+    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.selfSM
+  cpus: 1
+  mem: 4G
+  walltime: "8:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.verifybamid2.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    {# Some resources are included in the VerifyBamID home dir #}
+    VERIFY_BAM_ID_HOME="$(dirname $(dirname $(which VerifyBamID)))"
+
+    {# For some undocumented reason, there was a change between VerifyBamID 1.0.5 and 1.0.6 #}
+    {# which results in the sanity check failing the process, there are a few work arounds #}
+    {# we can either choose not to run ultra-low pass samples, revert back to 1.0.5, or disable #}
+    {# the sanity check. The sanity check ensures that more than 10,000 markers were found. #}
+    VerifyBamID \
+      --NumThread 4 \
+      --DisableSanityCheck \
+      --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.phase3.100k.b38.vcf.gz.dat.UD" \
+      --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.phase3.100k.b38.vcf.gz.dat.mu" \
+      --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.phase3.100k.b38.vcf.gz.dat.bed" \
+      {% if aligner == 'star' %}
+      --Reference "{{ constants.phoenix.star_fasta }}" \
+      {% elif aligner == 'bwa' %}
+      --Reference "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
+      --BamFile "{{ bam }}" \
+      --Output "{{ results_dir }}/{{ bam|basename }}.verifybamid2"
+
+{% endmacro %}
+
+
+{% macro sex_check(sample, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
+{% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
+
+- name: freebayes_sex_check_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, quality_control, constitutional_sex_check, freebayes, {{ sample.name }}]
+  input: {{ bam }}
+  output: {{ output }}
+  cpus: 1
+  mem: 2G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.freebayes.module }}
+    module load {{ constants.tools.bcftools.module }}
+
+    mkdir -p "{{ temp_dir }}/temp"
+
+    {# Define Sex Prediction Thresholds #}
+    MINIMUM_GENOTYPES_REQUIRED=500
+    X_HOMOZYGOUS_RATE_THRESHOLD=0.91
+    X_BB_ALT_RATE_THRESHOLD=0.5
+    Y_SEX_CHR_READ_RATIO_THERSHOLD=0.00754
+
+    {# Variable not working, would be nice for dynamic DP settings #}
+    DEPTH_REQUIREMENT=5
+
+    freebayes \
+      --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
+      --targets "{{ constants.phoenix.sex_check_targets }}" \
+      --variant-input "{{ constants.phoenix.sex_check_vcf }}" \
+      --only-use-input-alleles \
+      --min-alternate-count 2 \
+      --min-alternate-fraction 0.05 \
+      --min-coverage 5 \
+      --vcf "{{ vcf }}" \
+      {{ bam }}
+
+    {# Capture the RG_SM tag that is in the VCF header #}
+    SAMPLE=`grep "#CHROM" {{ vcf }} | cut -f10`
+
+    {## Calculate needed values to determine the genetic sex of the individual ##}
+    {# Determine the number of input positions that had at least 1x coverage, which is required for the variant to be listed #}
+    POSITIONS_GENOTYPED=`bcftools view -H --types snps {{ vcf }} | wc -l`
+
+    {# Some variants still have ./. genotypes, not exactly sure of the reason, likely covered but below quality requirements? #}
+    MISSING_GENOTYPES=`bcftools view -H --types snps --include 'GT="mis"' {{ vcf }} | wc -l`
+
+    {# Positions meeting requirements #}
+    TESTED_GENOTYPES=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT!="mis"' {{ vcf }} | wc -l`
+
+    {# Positions meeting requirements with homozygous genotypes 0/0, 1/1, 2/2, or 3/3 #}
+    HOMOZYGOUS_TOTAL=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT="hom"' {{ vcf }} | wc -l`
+
+    {# Positions meeting requirements with homozygous reference calls 0/0 (ie. AA.count) #}
+    HOMOZYGOUS_REFERENCE=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT="ref" & GT="hom"' {{ vcf }} | wc -l`
+
+    {# Positions meeting requirements with homozygous alternate calls 1/1, 2/2, or 3/3 (ie. BB.count) #}
+    HOMOZYGOUS_ALTERNATE=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT="alt" & GT="hom"' {{ vcf }} | wc -l`
+
+    {# Positions meeting requirements with heterozygous calls; 0/1, 0/2, 0/3, 1/2, 1/3, or 2/3 (ie. AB.count) #}
+    HETEROZYGOUS=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT="het"' {{ vcf }} | wc -l`
+
+    {# Determine if the sample meets TESTED_GENOTYPES requirement #}
+    if [ $TESTED_GENOTYPES -ge $MINIMUM_GENOTYPES_REQUIRED ]
+    then
+      {# Sample meets depth requirements for genotype checks #}
+      {# Calculate homozygous rate #}
+      HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | gawk '{printf "%.3f\n", $1/$2}')
+      {# Predict Sex #}
+      HOMOZYGOUS_RATE_SEX_PREDICTION=$(echo ${X_HOMOZYGOUS_RATE_THRESHOLD} ${HOMOZYGOUS_RATE} | gawk '{if ($1 < $2) print "Male"; else print "Female"}')
+
+      {# Calculate homozygous alternate alternative genotype rate BB.count/(AB.count + BB.count) #}
+      B_ALLELE_GENOTYPES=$(echo $HOMOZYGOUS_ALTERNATE $HETEROZYGOUS | gawk '{printf $1+$2}')
+      BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| gawk '{printf "%.3f\n", $1/$2}')
+      {# Predict Sex #}
+      BB_ALT_RATE_SEX_PREDICTION=$(echo ${X_BB_ALT_RATE_THRESHOLD} ${BB_ALT_RATE} | gawk '{if ($1 < $2) print "Male"; else print "Female"}')
+    else
+      {# Sample does not meet depth requirements, hard code sex predictions to "Undetermined" #}
+      {# Calculate homozygous rate #}
+      HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | gawk '{printf "%.3f\n", $1/$2}')
+      {# Predict Sex #}
+      HOMOZYGOUS_RATE_SEX_PREDICTION="Undetermined"
+
+      {# Calculate homozygous alternate alternative genotype rate BB.count/(AB.count + BB.count) #}
+      B_ALLELE_GENOTYPES=$(echo $HOMOZYGOUS_ALTERNATE $HETEROZYGOUS | gawk '{printf $1+$2}')
+      BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| gawk '{printf "%.3f\n", $1/$2}')
+      {# Predict Sex #}
+      BB_ALT_RATE_SEX_PREDICTION="Undetermined"
+    fi
+
+    {#
+    ################################################
+    ## Check total read count on Y/(X+Y)
+    ################################################
+
+    ### HUMAN X/Y chromosome lengths
+    ## GRCh38
+    # X = 156040895
+    # Y = 57227415
+    ## GRCh37
+    # X = 155270560
+    # Y = 59373566
+
+    ### HUMAN PAR REGIONS
+
+    # https://www.ncbi.nlm.nih.gov/grc/human
+    ## GRCh38
+    # chrX:10001-2781479         PAR#1	X	10,001	2,781,479
+    # chrX:155701383-156030895   PAR#2	X	155,701,383	156,030,895
+    # chrY:10001-2781479         PAR#1	Y	10,001	2,781,479
+    # chrY:56887903-57217415     PAR#2	Y	56,887,903	57,217,415
+    ## Non-PAR X Intervals = chrX:2781480-155701382,chrX:156030896-156040895
+    ## Non-PAR Y Intervals = chrY:2781480-56887902,chrY:57217416-57227415
+
+    ## GRCh37
+    # X:60001-2699520            PAR#1	X	60,001	2,699,520
+    # X:154931044-155260560      PAR#2	X	154,931,044	155,260,560
+    # Y:10001-2649520            PAR#1	Y	10,001	2,649,520
+    # Y:59034050-59363566        PAR#2	Y	59,034,050	59,363,566
+    ## Non-PAR X Intervals = X:2699521-154931043,X:155260561-155270560
+    ## Non-PAR Y Intervals = Y:2649521-59034049,Y:59363567-59373566
+
+    # Use samtools to count (-c) the first in pair reads from properly paired non-duplicate reads (-f 67) that have mapping quality above 30 (-q 30)
+    # Only count read in the non-PAR regions
+    ### WARNING: the tested regions needs to be a parameter NOT hard coded
+    #}
+    READS_ON_X=`samtools view -c -q 30 -f 67 {{ bam }} chrX:2781480-155701382 chrX:156030896-156040895`
+    READS_ON_Y=`samtools view -c -q 30 -f 67 {{ bam }} chrY:2781480-56887902 chrY:57217416-57227415`
+
+    {# Calculate the Y/(X+Y) read ratio #}
+    TOTAL_SEX_CHR_READS=$(echo $READS_ON_X $READS_ON_Y | gawk '{printf $1+$2}')
+    Y_READS_SEX_CHR_RATIO=$(echo $READS_ON_Y $TOTAL_SEX_CHR_READS| gawk '{printf "%.3f\n", $1/$2}')
+
+    {# Assign predicted sex based on defined threshold #}
+    READ_COUNT_SEX_PREDICTION=$(echo ${Y_SEX_CHR_READ_RATIO_THERSHOLD} ${Y_READS_SEX_CHR_RATIO} | gawk '{if ($1 < $2) print "Male"; else print "Female"}')
+
+    {# Use READ_COUNT_SEX_PREDICTION, others are used to improve confidence level #}
+    if [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Male" && $BB_ALT_RATE_SEX_PREDICTION == "Male" && $READ_COUNT_SEX_PREDICTION == "Male" ]]
+    then
+      SEX_PREDICTION="Male"
+      SEX_PREDICTION_CONFIDENCE="High"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Female" && $BB_ALT_RATE_SEX_PREDICTION == "Female" && $READ_COUNT_SEX_PREDICTION == "Female" ]]
+    then
+      SEX_PREDICTION="Female"
+      SEX_PREDICTION_CONFIDENCE="High"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Undetermined" && $BB_ALT_RATE_SEX_PREDICTION == "Undetermined" && $READ_COUNT_SEX_PREDICTION == "Male" ]]
+    then
+      SEX_PREDICTION="Male"
+      SEX_PREDICTION_CONFIDENCE="Medium-Low"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Undetermined" && $BB_ALT_RATE_SEX_PREDICTION == "Undetermined" && $READ_COUNT_SEX_PREDICTION == "Female" ]]
+    then
+      SEX_PREDICTION="Female"
+      SEX_PREDICTION_CONFIDENCE="Medium-Low"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Female" && $BB_ALT_RATE_SEX_PREDICTION == "Male" && $READ_COUNT_SEX_PREDICTION == "Male" ]]
+    then
+      SEX_PREDICTION="Male"
+      SEX_PREDICTION_CONFIDENCE="Medium-High"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Male" && $BB_ALT_RATE_SEX_PREDICTION == "Female" && $READ_COUNT_SEX_PREDICTION == "Male" ]]
+    then
+      SEX_PREDICTION="Male"
+      SEX_PREDICTION_CONFIDENCE="Medium"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Female" && $BB_ALT_RATE_SEX_PREDICTION == "Female" && $READ_COUNT_SEX_PREDICTION == "Male" ]]
+    then
+      {# This is likely where a Klinefelter Syndrome XXY will end up, as they will have Y data but are likely heterozygous on X #}
+      SEX_PREDICTION="Male"
+      SEX_PREDICTION_CONFIDENCE="Low"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Male" && $BB_ALT_RATE_SEX_PREDICTION == "Female" && $READ_COUNT_SEX_PREDICTION == "Female" ]]
+    then
+      SEX_PREDICTION="Female"
+      SEX_PREDICTION_CONFIDENCE="Medium-High"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Female" && $BB_ALT_RATE_SEX_PREDICTION == "Male" && $READ_COUNT_SEX_PREDICTION == "Female" ]]
+    then
+      SEX_PREDICTION="Female"
+      SEX_PREDICTION_CONFIDENCE="Medium"
+    elif [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Male" && $BB_ALT_RATE_SEX_PREDICTION == "Male" && $READ_COUNT_SEX_PREDICTION == "Female" ]]
+    then
+      {# This is where a Turner Syndrome female (X0) should end up as they have no Y, but no heterozygosity on X #}
+      SEX_PREDICTION="Female"
+      SEX_PREDICTION_CONFIDENCE="Low"
+    else
+      SEX_PREDICTION="Error"
+      SEX_PREDICTION_CONFIDENCE="Error"
+    fi
+
+    {# Print header #}
+    echo -e BAM"\t"SAMPLE"\t"POSITIONS_GENOTYPED"\t"MISSING_GENOTYPES"\t"TESTED_GENOTYPES"\t"HOMOZYGOUS_TOTAL"\t"HOMOZYGOUS_REFERENCE"\t"HOMOZYGOUS_ALTERNATE"\t"HETEROZYGOUS"\t"HOMOZYGOUS_RATE"\t"HOMOZYGOUS_RATE_SEX_PREDICTION"\t"B_ALLELE_GENOTYPES"\t"BB_ALT_RATE"\t"BB_ALT_RATE_SEX_PREDICTION"\t"READS_ON_X"\t"READS_ON_Y"\t"TOTAL_SEX_CHR_READS"\t"Y_READS_SEX_CHR_RATIO"\t"READ_COUNT_SEX_PREDICTION"\t"SEX_PREDICTION"\t"SEX_PREDICTION_CONFIDENCE > {{ output }}
+
+    {# Print results #}
+    echo -e {{ bam|basename }}"\t"${SAMPLE}"\t"${POSITIONS_GENOTYPED}"\t"${MISSING_GENOTYPES}"\t"${TESTED_GENOTYPES}"\t"${HOMOZYGOUS_TOTAL}"\t"${HOMOZYGOUS_REFERENCE}"\t"${HOMOZYGOUS_ALTERNATE}"\t"${HETEROZYGOUS}"\t"${HOMOZYGOUS_RATE}"\t"${HOMOZYGOUS_RATE_SEX_PREDICTION}"\t"${B_ALLELE_GENOTYPES}"\t"${BB_ALT_RATE}"\t"${BB_ALT_RATE_SEX_PREDICTION}"\t"${READS_ON_X}"\t"${READS_ON_Y}"\t"${TOTAL_SEX_CHR_READS}"\t"${Y_READS_SEX_CHR_RATIO}"\t"${READ_COUNT_SEX_PREDICTION}"\t"${SEX_PREDICTION}"\t"${SEX_PREDICTION_CONFIDENCE} >> {{ output }}
+
+
+{% endmacro %}

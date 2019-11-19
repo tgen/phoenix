@@ -1,17 +1,113 @@
-{% macro vep(input_vcf, output_vcf) %}
-- name: vep_{{ input_vcf|sha256 }}
-  tags: [vep, annotation]
+{% macro vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) %}
+- name: vep_all_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
+  tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
+  after: {{ after_task }}
   input: {{ input_vcf }}
-  output: {{ output_vcf }}
+  output:
+    - {{ final_vcf_prefix }}.vep.full.vcf.gz
+    - {{ final_vcf_prefix }}.vep.full.vcf.gz.tbi
+  walltime: "8:00:00"
+  cpus: 4
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.vep.module }}
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Use VEP to create full annotation file with all transcripts #}
+    vep --fork 4 \
+        --input_file "{{ input_vcf }}" \
+        --format vcf \
+        --output_file "{{ final_vcf_prefix }}.vep.full.vcf" \
+        --vcf \
+        --vcf_info_field CSQ \
+        --species homo_sapiens \
+        --force_overwrite \
+        --no_stats \
+        --cache \
+        --dir_cache "{{ constants.phoenix.vep_data }}" \
+        --cache_version 98 \
+        --offline \
+        --fasta "{{ constants.phoenix.reference_fasta }}" \
+        --buffer_size 10000 \
+        --terms SO \
+        --hgvs \
+        --hgvsg \
+        --symbol \
+        --sift b \
+        --polyphen b \
+        --humdiv \
+        --uniprot \
+        --domains \
+        --canonical \
+        --flag_pick_allele_gene \
+        --pick_order canonical,appris,tsl,biotype,rank,ccds,length
+
+    {# Convert to compressed VCF #}
+    bcftools view \
+        --threads 4 \
+        --output-type z \
+        --output-file "{{ final_vcf_prefix }}.vep.full.vcf.gz" \
+        "{{ final_vcf_prefix }}.vep.full.vcf"
+
+    rm  "{{ final_vcf_prefix }}.vep.full.vcf"
+
+    bcftools index --threads 4 --force --tbi "{{ final_vcf_prefix }}.vep.full.vcf.gz"
+
+- name: vep_con_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
+  tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
+  after: {{ after_task }}
+  input: {{ input_vcf }}
+  output:
+    - {{ final_vcf_prefix }}.vep.full.vcf.gz
+    - {{ final_vcf_prefix }}.vep.full.vcf.gz.tbi
   walltime: "8:00:00"
   cpus: 4
   cmd: |
     set -euv
 
-    module load {{ constants.tools.perlvepTODO }}
-   
-    vep \
-      -I "{{ vcf }}" \
-      -O "{{ out }}" 
+    module load {{ constants.tools.vep.module }}
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Use VEP to create full annotation file with all transcripts #}
+    vep --fork 4 \
+        --input_file "{{ input_vcf }}" \
+        --format vcf \
+        --output_file "{{ final_vcf_prefix }}.vep.pick.vcf" \
+        --vcf \
+        --vcf_info_field CSQ \
+        --species homo_sapiens \
+        --force_overwrite \
+        --no_stats \
+        --cache \
+        --dir_cache "{{ constants.phoenix.vep_data }}" \
+        --cache_version 98 \
+        --offline \
+        --fasta "{{ constants.phoenix.reference_fasta }}" \
+        --buffer_size 10000 \
+        --terms SO \
+        --hgvs \
+        --hgvsg \
+        --symbol \
+        --sift b \
+        --polyphen b \
+        --humdiv \
+        --uniprot \
+        --domains \
+        --canonical \
+        --pick_allele_gene \
+        --pick_order canonical,appris,tsl,biotype,rank,ccds,length
+
+    {# Convert to compressed VCF #}
+    bcftools view \
+        --threads 4 \
+        --output-type z \
+        --output-file "{{ final_vcf_prefix }}.vep.pick.vcf.gz" \
+        "{{ final_vcf_prefix }}.vep.pick.vcf"
+
+    rm "{{ final_vcf_prefix }}.vep.pick.vcf"
+
+    bcftools index --threads 4 --force --tbi "{{ final_vcf_prefix }}.vep.pick.vcf.gz"
 
 {% endmacro %}

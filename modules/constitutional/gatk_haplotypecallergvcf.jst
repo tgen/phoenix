@@ -1,6 +1,6 @@
-# Call germline variants with haplotype caller. In order to call 
+# Call constitutional variants with haplotype caller. In order to call
 # variants, this step must be followed with genotype gvcfs task.
-{% macro haplotypecallergvcf(sample, aligner='bwa') %}
+{% macro haplotypecallergvcf(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}{% endset %}
@@ -8,21 +8,23 @@
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
   input: {{ bam }}
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
   cmd: |
-    set -euv
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ temp_dir }}"
 
     gatk HaplotypeCaller \
       --java-options "-Xmx14G" \
       -ERC GVCF \
-      -R {{ constants.phoenix.reference_fasta }} \
-      -I "{{ bam }}" \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --input "{{ bam }}" \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
@@ -32,17 +34,21 @@
 
 
 - name: haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
   after: 
     {% for batch in constants.phoenix.calling_intervals %}
     - haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
     {% endfor %}
-  output: {{ gvcf }}
+  output:
+    - {{ gvcf }}
+    - {{ gvcf }}.tbi
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
   cmd: |
     set -eu
-    module load {{ constants.tools.gatk_4_1_0_0.module }}
+    set -o pipefail
+    module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ results_dir }}"
 
