@@ -138,7 +138,7 @@ Last Update November 14, 2019
 | [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
 | [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion | Yes |
 | [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | Yes |
-| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.7.9 | 0.7.9 | | Yes |
+| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.0 | 0.8.0 | | Yes |
 | [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | Yes |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
