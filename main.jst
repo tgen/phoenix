@@ -100,12 +100,6 @@
 
 {% if debug %}{{ log(samples|tojson(indent=4), level='CRITICAL') }}{% endif %}
 
-{# Set the billing account for the project to use accross all tasks #}
-- name: setup_env
-  exec: |
-    import os
-    os.environ.putenv('PATH_TO_PHOENIX_REPO', '{{ constants.install_path.path_to_phoenix_repo }}')
-
 {# Move to utility scripts #}
 {% for fastq in dataFiles %}
 - name: copy_fastqs_{{ loop.index }}
