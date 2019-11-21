@@ -32,8 +32,8 @@
     set -eu
     set -o pipefail
 
-    rm -r "temp/{{ rgid }}/{{ fastq.basename }}/" || true
-    mkdir -p "temp/{{ rgid }}/{{ fastq.basename }}/"
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
 
     zcat "temp/fastqs/{{ fastq.basename }}" |\
       split \
@@ -41,9 +41,9 @@
         --suffix-length 2 \
         --lines {{ n_lines }} \
         - \
-        "temp/{{ rgid }}/{{ fastq.basename }}/"
+        "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
 
-    N_CREATED=$(ls "temp/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
+    N_CREATED=$(ls "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
 
     if [[ ${N_CREATED} -ne {{ n_chunks }} ]]
     then
@@ -67,15 +67,16 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.bwa.module }} {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.samtools_1_9.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
     # that will cause errors with samtools sort. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    rm -r "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
-    mkdir -p "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
 
     {# No long options available for the following:
      bwa mem
@@ -104,21 +105,20 @@
       -t 9 \
       -R "{{ read_group_line(rg, format='bwa') }}" \
       "{{ constants.phoenix.bwa_index }}" \
-      "temp/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
-      "temp/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
-    {# Test if 2nd '-' is needed #}
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
     samtools fixmate \
       --threads 1 \
       -m \
       - \
       - |\
     samtools sort \
-      -T "temp/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/{{ chunk_suffix }}" \
+      -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/{{ chunk_suffix }}" \
       -l 2 \
       -m 3G \
       --threads 9 \
       --output-fmt BAM \
-      -o "temp/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
+      -o "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
       -
 
 {% endfor %}
@@ -127,13 +127,14 @@
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
-  output: temp/{{ sample.name }}.bwa.bam
+  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
   mem: 16G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools_1_9.module }}
 
     {# No long options available for the following:
@@ -146,9 +147,9 @@
       -c \
       -f \
       -l 6 \
-      "temp/{{ sample.name }}.bwa.bam" \
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
-      "temp/{{ rgid }}/"*.bwa.bam \
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam \
     {% endfor %}
 
     {# Cleanup the tempfiles
@@ -156,7 +157,7 @@
     #}
     {% if not debug %}
     {% for rgid in sample.read_groups %}
-    rm -r "temp/{{ rgid }}/"
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"
     {% endfor %}
     {% endif %}
 
@@ -165,9 +166,9 @@
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools_1_9_168_gb1e2c78.verbose }} markdup.
-  input: temp/{{ sample.name }}.bwa.bam
+  input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   output:
-    - temp/{{ sample.name }}.bwa.md.bam
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
     - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 10
@@ -175,6 +176,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools_1_9_168_gb1e2c78.module }}
 
     {#
@@ -182,8 +184,8 @@
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    rm -r "temp/markdup_{{ sample.name }}_bwa/" || true
-    mkdir -p "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}"
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/"
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     {#
@@ -203,15 +205,15 @@
       -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt" \
       --threads 10 \
       --write-index \
-      -T "temp/markdup_{{ sample.name }}_bwa/{{ sample.name }}" \
-      "temp/{{ sample.name }}.bwa.bam" \
-      "temp/{{ sample.name }}.bwa.md.bam"
+      -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}" \
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam"
 
     {#
     # Cleaning up the temp
     #}
     {% if not debug %}
-        rm -r "temp/markdup_{{ sample.name }}_bwa/"
+        rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/"
     {% endif %}
 
 {% endmacro %}

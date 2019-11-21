@@ -47,22 +47,24 @@
   cmd: |
     set -eu
     set -o pipefail
-    mkdir -p "temp/{{ sample.rglb }}"
 
-    cat {{ r1fastqs|join(' ') }} > temp/{{ sample.rglb }}/{{ sample.rglb }}_R1_merged.fastq.gz
-    cat {{ r2fastqs|join(' ') }} > temp/{{ sample.rglb }}/{{ sample.rglb }}_R2_merged.fastq.gz
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/temp"
+
+    cat {{ r1fastqs|join(' ') }} > temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/{{ sample.rglb }}_R1_merged.fastq.gz
+    cat {{ r2fastqs|join(' ') }} > temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/{{ sample.rglb }}_R2_merged.fastq.gz
 
 
 - name: bwa_mem_samblaster_sambamba_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, mark_duplicates, bwa, samblaster, sambamba, {{ sample.name }}]
   after: cat_fastqs_{{ sample.name }}
-  output: temp/{{ sample.name }}.bwa.md.bam
+  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
   walltime: "48:00:00"
   cpus: 10
   mem: 40G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bwa.module }}
     module load {{ constants.tools.samblaster.module }}
     module load {{ constants.tools.sambamba.module }}
@@ -84,8 +86,8 @@
       -t 9 \
       -R "{{ r_flag }}" \
       "{{ constants.phoenix.bwa_index }}" \
-      temp/{{ sample.rglb }}/{{ sample.rglb }}_R1_merged.fastq.gz \
-      temp/{{ sample.rglb }}/{{ sample.rglb }}_R2_merged.fastq.gz |\
+      temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/{{ sample.rglb }}_R1_merged.fastq.gz \
+      temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/{{ sample.rglb }}_R2_merged.fastq.gz |\
     samblaster |\
     sambamba view \
       --format bam \
@@ -94,9 +96,9 @@
     sambamba sort \
       --memory-limit 20GB \
       --nthreads 9 \
-      --tmpdir "temp/{{ sample.rglb }}/" \
+      --tmpdir "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/temp/" \
       /dev/stdin \
-      --out "temp/{{ sample.name }}.bwa.md.bam"
+      --out "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam"
 
 
 {% endmacro %}
