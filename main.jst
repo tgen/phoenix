@@ -30,12 +30,19 @@
 #               ...
 
 {# Setting debug to True retains many of the intermediate files #}
-{% if debug is not defined %}{% set debug = False %}{% endif %}
-{# Tasks contains switches for toggling many of the features #}
-{% if tasks is not defined %}{% set tasks = {} %}{% endif %}
-{# submissionSource toggles specific tasks based on how they were submitted #}
-{% if submissionSource is not defined %}{% set submissionSource = "unknown" %}{% endif %}
+{% if debug is not defined %}
+    {% set debug = False %}
+{% endif %}
 
+{# Tasks contains switches for toggling many of the features #}
+{% if tasks is not defined %}
+    {% set tasks = {} %}
+{% endif %}
+
+{# submissionSource toggles specific tasks based on how they were submitted #}
+{% if submissionSource is not defined %}
+    {% set submissionSource = "unknown" %}
+{% endif %}
 
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
 {% from 'modules/constitutional/main.jst' import constitutional_variant_calling with context %}
@@ -47,16 +54,21 @@
 {% set samples = {} %}
 {% for file in dataFiles %}
     {% set bn = file.fastqPath | basename %}
+
     {% if 'sampleMergeKey' in file %}
         {% set name = file.sampleMergeKey %}
     {% else %}
         {% set name = file.sampleName %}
     {% endif %}
+
     {% do file.update({'name': name}) %}
     {% do file.update({'basename': bn}) %}
     {% do file.update({'gltype': file.glType.lower()}) %}
     {% do file.update({'glprep': file.glPrep.lower()}) %}
-    {% if 'subGroup' not in file %}{% do file.update({'subGroup': 'constitutional'}) %}{% endif %}
+
+    {% if 'subGroup' not in file %}
+        {% do file.update({'subGroup': 'constitutional'}) %}
+    {% endif %}
 
     {% if name not in samples %}
         {% do samples.update({name: {}}) %}
@@ -67,6 +79,7 @@
 
 {% for rgid, data_files in dataFiles | groupby('rgid') %}
     {% set rg = data_files|first %}
+
     {% if 'sampleMergeKey' in rg %}
         {% set name = rg.sampleMergeKey %}
     {% else %}
@@ -75,6 +88,7 @@
     {% if not 'read_groups' in samples[name] %}
         {% do samples[name].update({'read_groups': {}}) %}
     {% endif %}
+
     {% do samples[name]['read_groups'].update({rgid: {}}) %}
     {% do samples[name]['read_groups'][rgid].update(rg) %}
     {% do samples[name]['read_groups'][rgid].update({'data_files': data_files}) %}
@@ -84,12 +98,15 @@
 {% for sample in samples.values() if sample.gltype == 'exome' %}
     {% do sample.update({'library_code': sample.assayCode[0:2]|upper}) %}
     {% do sample.update({'capture_kit_code': sample.assayCode[2:5]|upper}) %}
-    {% if sample.capture_kit_code in constants.phoenix.capture_kits %}
-        {% do sample.update({'capture_kit': constants.phoenix.capture_kits[sample.capture_kit_code]}) %}
-    {% else %}
-        {% do sample.update({'capture_kit': constants.phoenix.capture_kits['default']}) %}
-    {% endif %}
+
+    {% set targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.targets.interval_list{% endset %}
+    {% set extended_bed %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.extended.bed{% endset %}
+
+    {% do sample.update({'capture_kit': {}}) %}
+    {% do sample['capture_kit'].update({'targets_interval_list': targets_interval_list}) %}
+    {% do sample['capture_kit'].update({'extended_bed': extended_bed}) %}
 {% endfor %}
+
 {% for sample in samples.values() if sample.gltype == 'rna' %}
     {% set readOrientation=sample.readOrientation|default('inward')|lower %}
     {% set rnaStrandType=sample.rnaStrandType|default('unstranded')|lower %}
@@ -98,7 +115,9 @@
     {% do sample.update({'strandedness': strandedness}) %}
 {% endfor %}
 
-{% if debug %}{{ log(samples|tojson(indent=4), level='CRITICAL') }}{% endif %}
+{% if debug %}
+    {{ log(samples|tojson(indent=4), level='CRITICAL') }}
+{% endif %}
 
 {# Move to utility scripts #}
 {% for fastq in dataFiles %}

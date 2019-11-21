@@ -143,7 +143,7 @@
       --output-type z \
       --include 'FILTER == "PASS"' \
       {% if pair.gltype == 'exome' %}
-      --targets-file "{{ pair.normal.capture_kit.extended_bed }}" \
+      --targets-file "{{ pair.tumor.capture_kit.extended_bed }}" \
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
