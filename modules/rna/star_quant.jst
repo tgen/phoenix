@@ -2,16 +2,8 @@
 
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample, opt_dup_distance) %}
-{% set star_index_size %}{{ sample.read1Length|default(100) }}bpReads{% endset %}
-
-{% if star_index_size in constants.phoenix.star_indices %}
-  {% set star_index = constants.phoenix.star_indices[star_index_size] %}
-  {% set sjdb_overhang = sample.read1Length - 1 %}
-{% else %}
-  {% set star_index = constants.phoenix.star_indices['100bpReads'] %}
-  {% set sjdb_overhang = 100 - 1 %}
-{% endif %}
-
+{% set star_index_size %}{{ sample.read1Length|default(100, true) }}bpReads{% endset %}
+{% set sjdb_overhang %}{{ sample.read1Length - 1|default(99, true) }}{% endset %}
 {% set results_dir %}{{ sample.gltype }}/alignment/star/{{ sample.name }}{% endset %}
 {% set star_finalcountsdir %}{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
@@ -65,6 +57,33 @@
     mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ results_dir }}"
     mkdir -p "{{ star_finalcountsdir }}"
+
+    {#
+      If the star_index directory exists then set the global varaible for it or else
+      make the star_index on the with the working temp folder for use with STAR
+    #}
+    if [ -d {{ constants.phoenix.star_indices_path }}/{{ star_index_size }} ]
+    then
+      STAR_INDEX={{ constants.phoenix.star_indices_path }}/{{ star_index_size }}
+    else
+      CURRENT_DIR=`pwd`
+
+      mkdir -p {{ temp_dir }}/star_index
+
+      cd {{ temp_dir }}/star_index
+
+      STAR \
+        --runMode genomeGenerate \
+        --genomeDir ../star_index \
+        --runThreadN 19 \
+        --sjdbOverhang {{ sjdb_overhang }} \
+        --genomeFastaFiles {{ constants.phoenix.star_fasta }} \
+        --sjdbGTFfile {{ constants.phoenix.gtf }}
+
+      STAR_INDEX=${CURRENT_DIR}/{{ temp_dir }}/star_index
+
+      cd ${CURRENT_DIR}
+    fi
 
     {#
     # Custom STAR Code Options ; defaults and source justification
@@ -146,7 +165,7 @@
       {% endif %}
       --outSAMattrRGline {{ rglinelist|join(' , ') }} \
       --sjdbOverhang "{{ sjdb_overhang }}" \
-      --genomeDir "{{ star_index }}" \
+      --genomeDir ${STAR_INDEX} \
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outFileNamePrefix "{{ temp_dir }}/{{ sample.name }}."
 
