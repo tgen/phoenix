@@ -19,6 +19,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.octopus.module }}
 
     mkdir -p "{{ temp_dir }}"
@@ -36,7 +37,6 @@
       --threads 8 \
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
-      --assembly-candidate-generator ON \
       --ignore-unmapped-contigs \
       --legacy \
       --annotations AD ADP AF SB \
@@ -64,6 +64,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -94,6 +95,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     {# Then filter out the passing variants to a separate file #}

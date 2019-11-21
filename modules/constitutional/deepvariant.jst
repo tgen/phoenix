@@ -20,9 +20,11 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.singularity.module }}
     module load {{ constants.tools.deepvariant.module }}
-    export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
+
+    export PYTHONPATH=/usr/lib/python2.7 {# is this really necessary? #}
     PROJECT_ROOT=$PWD
 
     mkdir -p "{{ temp_dir }}"
@@ -57,12 +59,15 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.singularity.module }}
     module load {{ constants.tools.deepvariant.module }}
-    export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
+
+    export PYTHONPATH=/usr/lib/python2.7 {# is this really necessary? #}
     PROJECT_ROOT=$PWD
 
     cd "{{ temp_dir }}"
+
     {# Run call_variants #}
     call_variants \
       {% if sample.gltype == 'exome' %}
@@ -86,9 +91,11 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.singularity.module }}
     module load {{ constants.tools.deepvariant.module }}
     module load {{ constants.tools.bcftools.module }}
+
     export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
     PROJECT_ROOT=$PWD
     
@@ -117,6 +124,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     {# Then filter out the PASS variants to a separate file #}

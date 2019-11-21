@@ -5,12 +5,13 @@
 {% for batch in constants.phoenix.sequence_groupings %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
-  input: temp/{{ sample.name }}.{{ aligner }}.md.bam
+  input: temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam
   walltime: "4:00:00"
   cpus: 4
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     gatk \
@@ -27,8 +28,8 @@
       {% if loop.last %}
       --intervals "unmapped" \
       {% endif %}
-      --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
-      --output "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table"
+      --input "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam" \
+      --output "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table"
 
 {% endfor %}
 
@@ -40,15 +41,16 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     gatk \
       --java-options "-Xmx14G" \
       GatherBQSRReports \
       {% for b in constants.phoenix.sequence_groupings %}
-      --input "temp/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table" \
+      --input "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_data.chunk_{{ loop.index }}.table" \
       {% endfor %}
-      --output "temp/{{ sample.name }}.{{ aligner }}.recal_data.table"
+      --output "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_data.table"
 
 
 {% for batch in constants.phoenix.sequence_groupings %}
@@ -63,6 +65,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     {# Removed --emit-original-quals and --use-original-quals #}
@@ -74,15 +77,15 @@
       --static-quantized-quals 30 \
       --static-quantized-quals 40 \
       --reference "{{ constants.phoenix.reference_fasta }}" \
-      --input "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
-      --bqsr-recal-file "temp/{{ sample.name }}.{{ aligner }}.recal_data.table" \
+      --input "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam" \
+      --bqsr-recal-file "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_data.table" \
       {% for interval in batch %}
       --intervals "{{ interval }}:1+" \
       {% endfor %}
       {% if loop.last %}
       --intervals "unmapped" \
       {% endif %}
-      --output "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
+      --output "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
 
 {% endfor %}
 
@@ -90,13 +93,14 @@
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
   after-re: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_.*
   output:
-    - {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-    - {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
+    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
   walltime: "4:00:00"
   cpus: 4
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.samtools_1_9.module }}
 
@@ -104,9 +108,9 @@
 
     gatk GatherBamFiles \
       --java-options "-Xmx14G" \
-      --OUTPUT "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
+      --OUTPUT "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" \
       {% for b in constants.phoenix.sequence_groupings %}
-      --INPUT "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
+      --INPUT "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam" \
       {% endfor %}
 
     samtools index -@ 4 "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
@@ -114,33 +118,34 @@
     {# Cleanup the tempfiles #}
     {% if not debug %}
     {% for b in constants.phoenix.sequence_groupings %}
-    rm "temp/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
+    rm "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
     {% endfor %}
     {% endif %}
 
 {% endmacro %}
 
 
-# Moves the markduplicates bam without doing baserecalibration
+{# Moves the markduplicates bam without doing baserecalibration #}
 {% macro nobaserecalibration(sample, aligner='bwa') %}
 - name: no_baserecalibration_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
-  input: temp/{{ sample.name }}.{{ aligner }}.md.bam
+  input: temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam
   output:
-    - {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-    - {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
+    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
   walltime: "1:00:00"
   cpus: 10
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools_1_9.module }}
 
-    mkdir -p "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/"
+    mkdir -p "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/"
     mv \
-      "temp/{{ sample.name }}.{{ aligner }}.md.bam" \
-      "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+      "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam" \
+      "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
-    samtools index -@ 10 "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+    samtools index -@ 10 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
 {% endmacro %}

@@ -20,7 +20,9 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
+
     mkdir -p "{{ temp_dir }}"
 
     gatk GenotypeGVCFs \
@@ -43,7 +45,9 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
+
     source activate gatk
 
     gatk CNNScoreVariants \
@@ -72,6 +76,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -98,6 +103,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.bcftools.module }}
 

@@ -32,6 +32,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.strelka.module }}
     module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.python_2_7_15.module }}
@@ -116,6 +117,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     {# Then filter out the PASS variants to a separate file #}

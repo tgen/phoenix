@@ -150,10 +150,8 @@
       --readFilesIn "{{ r1fqlist|map(attribute='path')|join(',') }}" "{{ r2fqlist|map(attribute='path')|join(',') }}" \
       --outFileNamePrefix "{{ temp_dir }}/{{ sample.name }}."
 
-    mv \
-      "{{ temp_dir }}/{{ sample.name }}.ReadsPerGene.out.tab" \
-      "{{ temp_dir }}/{{ sample.name }}.SJ.out.tab" \
-      "{{ star_finalcountsdir }}"
+    mv {{ temp_dir }}/{{ sample.name }}.ReadsPerGene.out.tab {{ star_finalcountsdir }}/
+    mv {{ temp_dir }}/{{ sample.name }}.SJ.out.tab {{ star_finalcountsdir }}/{{ sample.name }}.star.junctions
 
 
 - name: fixmate_sort_star_{{ sample.name }}

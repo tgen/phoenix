@@ -66,6 +66,7 @@
   cpus: 4
   cmd: |
     set -euv
+    set -o pipefail
 
     module load {{ constants.tools.vep.module }}
     module load {{ constants.tools.bcftools.module }}
