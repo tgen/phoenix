@@ -80,7 +80,7 @@
     {% do samples[name]['read_groups'][rgid].update({'data_files': data_files}) %}
 {% endfor %}
 
-# Setup calculated props for samples
+{# Setup calculated props for samples #}
 {% for sample in samples.values() if sample.gltype == 'exome' %}
     {% do sample.update({'library_code': sample.assayCode[0:2]|upper}) %}
     {% do sample.update({'capture_kit_code': sample.assayCode[2:5]|upper}) %}
@@ -131,7 +131,7 @@
     multiqc --force --outdir qc .
 
 
-# Start of module calls
+{# Start of module calls #}
 {# These if statements are kind of dead right now because they aren't passed by LIMS, but everything runs because of default(true) #}
 {% if tasks.dna_alignment|default(true) %}
     {{- dna_alignment(samples) }}

@@ -19,6 +19,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.R.module }}
     module load {{ constants.tools.vardict.module }}
     module load {{ constants.tools.bedtools.module }}
@@ -195,6 +196,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
     
     mkdir -p "{{ results_dir }}"
@@ -226,6 +228,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
     
     bcftools filter \

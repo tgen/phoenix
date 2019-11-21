@@ -19,6 +19,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.freebayes.module }}
 
     mkdir -p "{{ temp_dir }}"
@@ -53,6 +54,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -83,6 +85,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     {# Then filter out the passing variants to a separate file #}

@@ -17,6 +17,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools_1_9.module }}
 
     samtools view \

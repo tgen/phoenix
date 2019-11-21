@@ -12,6 +12,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.hmmcopy_utils.module }}
 
     mkdir -p "{{ results_dir }}/"
@@ -41,6 +42,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.ichorcna.module }}
 
     {# Purge any existing results files prior to starting #}

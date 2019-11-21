@@ -36,7 +36,7 @@
       "{{ constants.phoenix.snpeff_db }}" \
       "{{ input_vcf }}" \
       | \
-      bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
+    bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
     bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.full.vcf.gz"
 
@@ -58,7 +58,7 @@
       "{{ constants.phoenix.snpeff_db }}" \
       "{{ input_vcf }}" \
       | \
-      bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
+    bcftools view --output-type z --output-file "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
 
     bcftools index --threads 4 --tbi --force "{{ final_vcf_prefix }}.snpeff.can.vcf.gz"
 

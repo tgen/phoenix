@@ -78,9 +78,6 @@
       {{ temp_dir }}/contig_lengths.txt
 
     {#
-    {% for rna_sample in pair.tumor.rna_samples %}
-    #}
-    {#
     # Freebayes can genotype based on an input VCF but it must be bgzip compressed with a .tbi index
     # To speed up freebayes and call indels, provide a targets file, BED format, that is 100bp padded
     # Bcftools query,  to make a BED file: chr, pos (0-based), end pos (1-based)
@@ -223,10 +220,6 @@
       else if ( $5 == 0 && $6 == 0 )
         print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT=0;RNA_ALT_COUNT=0;RNA_ALT_FREQ=0.00";
       }' {{ temp_dir }}/temp_RNA_Counts.txt >> {{ temp_dir }}/temp_RNA.vcf
-
-    {#
-    {% endfor %}
-    #}
 
     {# Compress and index to prepare for annotation step #}
     bcftools view \

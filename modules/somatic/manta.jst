@@ -27,6 +27,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.manta.module }}
     module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.python_2_7_15.module }}

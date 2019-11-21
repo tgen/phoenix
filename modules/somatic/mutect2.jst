@@ -19,23 +19,28 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
     
-    mkdir -p "{{ temp_dir }}"
+    mkdir -p "{{ temp_dir }}/temp_mutect2_{{ loop.index }}"
 
-    # Create the read orientation file
-    # This is not absolutely needed but is implemented in the Broad WDL for a cromwell issue
-    # Internally we have random failure associated with a complete MuTect run but no read orientation file created
+    {#
+      Create the read orientation file
+      This is not absolutely needed but is implemented in the Broad WDL for a cromwell issue
+      Internally we have random failure associated with a complete MuTect run but no read orientation file created
+    #}
     touch "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz"
 
-    ## we always use a matching normal from the same patient
-    # not using -pon as we often don't have a set of matching normals with the identical assay
-    # not using --alleles to force calls at specific locations
-    # might want to enable "--bam-output "{{ temp_dir }}/{{ loop.index }}.bamout.bam" \"
-    ## but it makes a very big bam file
+    {#
+      we always use a matching normal from the same patient
+      not using -pon as we often don't have a set of matching normals with the identical assay
+      not using --alleles to force calls at specific locations
+      might want to enable "--bam-output "{{ temp_dir }}/{{ loop.index }}.bamout.bam" \"
+      but it makes a very big bam file
+    #}
     gatk Mutect2 \
       --java-options "-Xmx14G" \
-      --tmp-dir temp/ \
+      --tmp-dir {{ temp_dir }}/temp_mutect2_{{ loop.index }}/ \
       --reference {{ constants.phoenix.reference_fasta }} \
       --germline-resource {{ constants.phoenix.gnomad_genome_v3_0_mutect_germlinereference }} \
       --input "{{ normal_bam }}" \
@@ -63,13 +68,16 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
-    mkdir -p "{{ temp_dir }}"
+    mkdir -p "{{ temp_dir }}/temp_GetPileupSummaries_tumor_{{ loop.index }}"
+    mkdir -p "{{ temp_dir }}/temp_GetPileupSummaries_normal_{{ loop.index }}"
 
-    ### GetPileupSummaries this can happen at the same time as the variant calling, no need to wait
-    ## Tumor pileups
+    {# GetPileupSummaries this can happen at the same time as the variant calling, no need to wait #}
+    {# Tumor pileups #}
     gatk --java-options "-Xmx14G" GetPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_GetPileupSummaries_tumor_{{ loop.index }}/ \
       --reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ tumor_bam }}" \
       --interval-set-rule UNION \
@@ -79,8 +87,9 @@
       --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
       --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
 
-    ## Normal pileups
+    {# Normal pileups #}
     gatk --java-options "-Xmx14g" GetPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_GetPileupSummaries_normal_{{ loop.index }}/ \
       -reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ normal_bam }}" \
       --interval-set-rule UNION \
@@ -106,6 +115,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
     
     bcftools concat \
@@ -129,9 +139,13 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
+    mkdir -p {{ temp_dir }}/temp_stats
+
     gatk --java-options "-Xmx6G" MergeMutectStats \
+      --tmp-dir {{ temp_dir }}/temp_stats/ \
       {% for b in constants.phoenix.calling_intervals %}
       -stats "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats" \
       {% endfor %}
@@ -149,9 +163,13 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
+    mkdir -p {{ temp_dir }}/temp_readorientationmodel
+
     gatk --java-options "-Xmx6G" LearnReadOrientationModel \
+      --tmp-dir {{ temp_dir }}/temp_readorientationmodel/ \
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz" \
       {% endfor %}
@@ -169,18 +187,24 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
-    # Merge tumor pileup
+    mkdir -p {{ temp_dir }}/temp_merge_tumor
+    mkdir -p {{ temp_dir }}/temp_merge_normal
+
+    {# Merge tumor pileup #}
     gatk --java-options "-Xmx6G" GatherPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_merge_tumor/ \
       --sequence-dictionary {{ constants.phoenix.reference_dict }} \
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.tumor-pileups.table" \
       {% endfor %}
       -O {{ temp_dir }}/merged.tumor-pileups.table.tsv
 
-    # Merge normal pileup
+    {# Merge normal pileup #}
     gatk --java-options "-Xmx6G" GatherPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_merge_normal/ \
       --sequence-dictionary {{ constants.phoenix.reference_dict }} \
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.normal-pileups.table" \
@@ -199,9 +223,13 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
+    mkdir -p {{ temp_dir }}/temp_calculate_contamination
+
     gatk --java-options "-Xmx6G" CalculateContamination \
+      --tmp-dir {{ temp_dir }}/temp_calculate_contamination/ \
       -I "{{ temp_dir }}/merged.tumor-pileups.table.tsv" \
       -matched "{{ temp_dir }}/merged.normal-pileups.table.tsv" \
       -O "{{ temp_dir }}/contamination.table" \
@@ -223,19 +251,14 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ results_dir }}"
-
-    ### removed the following, need to investigate if needed
-    #  {% if pair.gltype == 'genome' %}
-    #  --strict-strand-bias true \
-    #  {% endif %}
-
-    ### Additional step that could be added
-    # FilterAlignmentArtifacts
+    mkdir -p {{ temp_dir }}/temp_filter
 
     gatk FilterMutectCalls \
+      --tmp-dir {{ temp_dir }}/temp_filter/ \
       --java-options "-Xmx28G" \
       --reference {{ constants.phoenix.reference_fasta }} \
       --max-alt-allele-count 2 \
@@ -256,6 +279,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
     
     bcftools filter \

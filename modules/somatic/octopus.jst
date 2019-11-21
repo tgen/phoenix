@@ -20,6 +20,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.octopus.module }}
     
     mkdir -p "{{ temp_dir }}"
@@ -69,6 +70,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -96,6 +98,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     bcftools filter \

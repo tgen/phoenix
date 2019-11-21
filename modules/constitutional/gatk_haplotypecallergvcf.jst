@@ -16,6 +16,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ temp_dir }}"
@@ -48,6 +49,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ results_dir }}"
