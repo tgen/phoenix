@@ -86,7 +86,7 @@
     mv {{ temp_dir }}/star-fusion.fusion_predictions.abridged.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.abridged.tsv
     mv {{ temp_dir }}/star-fusion.fusion_predictions.tsv {{ results_dir }}/{{ sample.name }}_starfusion_predictions.tsv
 
-    if [[ -d FusionInspector-inspect ]]
+    if [[ -d {{ temp_dir }}/FusionInspector-inspect ]]
     then
       mv {{ temp_dir }}/FusionInspector-inspect/finspector.fusion_inspector_web.html {{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.html
       mv {{ temp_dir }}/FusionInspector-inspect/finspector.fusion_inspector_web.json {{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.json

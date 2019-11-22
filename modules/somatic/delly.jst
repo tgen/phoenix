@@ -1,8 +1,8 @@
 {% macro delly_somatic(pair, aligner='bwa') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/delly{{ pair.name }}{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
 {% set all_vcf %}{{ pair.name }}.{{ aligner }}.delly.allCalls.vcf{% endset %}
 {% set pass_vcf %}{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
 {% set variant_types=['DEL','DUP','INS','INV','TRA'] %}
