@@ -381,7 +381,10 @@
 {# Step 5 #}
 - name: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+  after:
+    - gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
