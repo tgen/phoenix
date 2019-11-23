@@ -26,8 +26,8 @@
 
     module load {{ constants.tools.delly.module }}
 
-    rm -r "{{ temp_dir }}" || true
-    mkdir -p "{{ temp_dir }}"
+    rm -r "{{ temp_dir }}/{{ svtype }}" || true
+    mkdir -p "{{ temp_dir }}/{{ svtype }}"
 
     delly call \
       --type {{ svtype }} \
@@ -35,7 +35,7 @@
       --exclude {{ constants.phoenix.delly_exclusions }} \
       --map-qual 1 \
       --mad-cutoff 9 \
-      --outfile {{ temp_dir }}/{{ sv_bcf }} \
+      --outfile {{ temp_dir }}/{{ svtype }}/{{ sv_bcf }} \
       {{ tumor_bam }} {{ normal_bam }}
 
     {# Creating a sample file for filter step #}
@@ -50,8 +50,8 @@
       --coverage 5 \
       --controlcontamination 0 \
       {{ filt_sv }} \
-      --outfile {{ temp_dir }}/{{ filt_bcf }} \
-      {{ temp_dir }}/{{ sv_bcf }}
+      --outfile {{ temp_dir }}/{{ svtype }}/{{ filt_bcf }} \
+      {{ temp_dir }}/{{ svtype }}/{{ sv_bcf }}
 
     rm {{ sample_file }}
 
@@ -80,7 +80,7 @@
 
     bcftools concat \
       {% for svtype in variant_types %}
-      {{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf \
+        {{ svtype }}/{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf \
       {% endfor %}
       --allow-overlaps \
       --output-type v \
