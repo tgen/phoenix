@@ -92,6 +92,7 @@
     - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam
     - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai
     {% endif %}
+  cpus: 8
   cmd: |
     set -eu
     set -o pipefail
