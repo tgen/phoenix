@@ -129,13 +129,24 @@
     else
       {# Sample does not meet depth requirements, hard code sex predictions to "Undetermined" #}
       {# Calculate homozygous rate #}
-      HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | gawk '{printf "%.3f\n", $1/$2}')
+      if [ $TESTED_GENOTYPES -eq 0 ]
+      then
+        HOMOZYGOUS_RATE=0.0
+      else
+        HOMOZYGOUS_RATE=$(echo $HOMOZYGOUS_TOTAL $TESTED_GENOTYPES | gawk '{printf "%.3f\n", $1/$2}')
+      fi
       {# Predict Sex #}
       HOMOZYGOUS_RATE_SEX_PREDICTION="Undetermined"
 
       {# Calculate homozygous alternate alternative genotype rate BB.count/(AB.count + BB.count) #}
       B_ALLELE_GENOTYPES=$(echo $HOMOZYGOUS_ALTERNATE $HETEROZYGOUS | gawk '{printf $1+$2}')
-      BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| gawk '{printf "%.3f\n", $1/$2}')
+      {# Check if one of the values is zero #}
+      if [ $B_ALLELE_GENOTYPES -eq 0 ]
+      then
+        BB_ALT_RATE=0.0
+      else
+        BB_ALT_RATE=$(echo $HOMOZYGOUS_ALTERNATE $B_ALLELE_GENOTYPES| gawk '{printf "%.3f\n", $1/$2}')
+      fi
       {# Predict Sex #}
       BB_ALT_RATE_SEX_PREDICTION="Undetermined"
     fi
