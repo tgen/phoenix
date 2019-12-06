@@ -69,7 +69,7 @@
     set -o pipefail
 
     module load {{ constants.tools.bwa.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -136,7 +136,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {# No long options available for the following:
       -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
@@ -169,7 +169,7 @@
 - name: samtools_markdup_{{ sample.name }}_bwa
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
-    {{ constants.tools.samtools_1_9_168_gb1e2c78.verbose }} markdup.
+    {{ constants.tools.samtools.verbose }} markdup.
   input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   output:
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
@@ -181,7 +181,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9_168_gb1e2c78.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist

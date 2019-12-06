@@ -1,3 +1,4 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 # Run 10X Cell Ranger Count pipeline
 
 {% macro cellranger_count(files) %}
@@ -73,7 +74,9 @@
     mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.web_summary.html
 
     {# removing the analysis directory as is it no longer needed #}
-    rm -rf {{ cellranger_out }}/analysis
+    {% set task %}cellranger_count_{{ sample.name }}_{{ sample.rglb }}{% endset %}
+    {% set directory %}{{ cellranger_out }}/analysis{% endset %}
+    {{- remove_files(directory,none,task) }}
 
     {# move everything to the output directory #}
     mv {{ cellranger_out }}/* {{ outdir }}

@@ -99,8 +99,8 @@
     mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ results_dir }}/"
 
     {# Remove the remaining files #}
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
+    {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

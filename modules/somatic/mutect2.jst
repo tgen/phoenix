@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 {% macro mutect2(pair, aligner='bwa') %}
 {% do pair.callers.append('mutect2') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
@@ -108,7 +110,7 @@
   after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
-    then merged together with {{ constants.tools.samtools_1_9.verbose }} concat.
+    then merged together with {{ constants.tools.samtools.verbose }} concat.
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
