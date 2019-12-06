@@ -1,4 +1,5 @@
 {% from 'utilities/read_group_line.jst' import read_group_line %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample, opt_dup_distance) %}
