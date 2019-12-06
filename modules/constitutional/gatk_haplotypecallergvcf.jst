@@ -64,7 +64,7 @@
       --OUTPUT "{{ gvcf }}"
 
     {# Remove the remaining files #}
-    {% set task %}haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}{% endset %}
+    {% set task %}haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 
