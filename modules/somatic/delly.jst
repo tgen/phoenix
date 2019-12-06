@@ -159,4 +159,9 @@
     mv {{ temp_dir }}/{{ all_vcf }}.gz {{ results_dir }}
     mv {{ temp_dir }}/{{ all_vcf }}.gz.tbi {{ results_dir }}
 
+    {# Remove the remaining files #}
+    {% if not debug %}
+    rm -r "{{ temp_dir }}"
+    {% endif %}
+
 {% endmacro %}

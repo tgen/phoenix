@@ -101,6 +101,11 @@
       mv {{ temp_dir }}/FusionInspector-inspect/fi_workdir/trinity_GG/Trinity-GG.fasta {{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
     fi
 
+    {# Remove the remaining files #}
+    {% if not debug %}
+    rm -r "{{ temp_dir }}"
+    {% endif %}
+
 {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
 {% if cram|default(true) %}
 {% set bam_path %}{{ results_dir }}/{{ sample.name }}_starfusion.bam{% endset %}

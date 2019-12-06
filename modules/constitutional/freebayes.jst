@@ -1,4 +1,5 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {%- macro freebayes(sample, aligner='bwa', taskPrefix='Genome') %}
 
@@ -68,10 +69,6 @@
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
-
 
 - name: freebayes_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
@@ -99,6 +96,11 @@
       > "{{ pass_vcf }}"
 
     bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {# Remove the remaining files #}
+    {% if not debug %}
+    rm -r "{{ temp_dir }}"
+    {% endif %}
 
 {%- set after_task = 'freebayes_filter_variants_'+sample.name+'_'+aligner %}
 {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'freebayes', 'constitutional', 'snp_indel_caller') }}

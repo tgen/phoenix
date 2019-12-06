@@ -1,3 +1,4 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 # This macro adds tasks for running GATK BaseRecalibrator on the output
 # from markdups.
 {% macro baserecalibration(sample, aligner='bwa') %}
@@ -115,12 +116,9 @@
 
     samtools index -@ 4 "{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
-    {# Cleanup the tempfiles #}
-    {% if not debug %}
     {% for b in constants.phoenix.sequence_groupings %}
     rm "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.recal_chunk_{{ loop.index }}.bam"
     {% endfor %}
-    {% endif %}
 
 {% endmacro %}
 
@@ -147,5 +145,9 @@
       "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
     samtools index -@ 10 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+
+{% set task %}no_baserecalibration_{{ sample.name }}_{{ aligner }}{% endset %}
+{% set directory %}temp/{{ sample.gltype }}/alignment/{% endset %}
+{{- remove(directory, task) }}
 
 {% endmacro %}

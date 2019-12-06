@@ -8,6 +8,7 @@
 
 # This alignment command prefix is shared by all modules using bwa
 {% from 'utilities/read_group_line.jst' import read_group_line with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
@@ -150,6 +151,9 @@
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam \
+      {% if loop.last %}
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam
+      {% endif %}
     {% endfor %}
 
     {# Cleanup the tempfiles

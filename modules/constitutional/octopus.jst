@@ -1,4 +1,5 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {%- macro octopus_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
 {%- set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
@@ -77,10 +78,6 @@
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
-
 
 - name: octopus_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
@@ -108,6 +105,11 @@
       > "{{ pass_vcf }}"
 
     bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {# Remove the remaining files #}
+    {% if not debug %}
+    rm -r "{{ temp_dir }}"
+    {% endif %}
 
 {%- set after_task = 'octopus_filter_variants_'+sample.name+'_'+aligner %}
 {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional', 'snp_indel_caller') }}

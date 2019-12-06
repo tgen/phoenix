@@ -1,4 +1,5 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {%- macro genotypegvcf(sample, aligner='bwa', taskPrefix='Genome') %}
 
@@ -131,6 +132,7 @@
 
     bcftools index --tbi --force "{{ pass_vcf }}"
 
+    {# Remove the remaining files #}
     {% if not debug %}
     rm -r "{{ temp_dir }}"
     {% endif %}

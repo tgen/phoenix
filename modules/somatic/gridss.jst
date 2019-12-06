@@ -33,4 +33,9 @@
       -o {{ results_dir }}/{{ pair.name }}.sv.vcf \
       {{ normal_bam }} {{ tumor_bam }}
 
+    {# Remove the remaining files #}
+    {% if not debug %}
+    rm -r "{{ temp_dir }}"
+    {% endif %}
+
 {% endmacro %}
