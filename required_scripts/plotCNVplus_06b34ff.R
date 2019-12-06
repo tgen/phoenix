@@ -104,7 +104,15 @@ option_list = list(
   make_option(c("--hetAFhigh", "-F"), dest="hetAFhigh", action="store", default=0.6,
               help = "[Optional] Max allele frequency to keep hets [default %default]"),
   make_option(c("--point_size", "-p"), dest="point_size", action="store", default=2,
-              help = "[Optional] Size of points to be ploted [default %default]")
+              help = "[Optional] Size of points to be ploted [default %default]"),
+  make_option(c("--lowerCNvalidatePeakOffset", "-j"), dest="lowerCNvalidatePeakOffset", action="store", default=0.125,
+              help = "[Optional] The lower real copy number offset used for the selection of hets around a mode in the copy number density plot of hets used for validating the mode to be used for centering. [default %default]"),
+  make_option(c("--UpperCNvalidatePeakOffset", "-J"), dest="UpperCNvalidatePeakOffset", action="store", default=0.125,
+              help = "[Optional] The upper real copy number offset used for the selection of hets around a mode in the copy number density plot of hets used for validating the mode to be used for centering. [default %default]"),
+  make_option(c("--lowerCNcenteringPeakOffset", "-i"), dest="lowerCNcenteringPeakOffset", action="store", default=0.25,
+              help = "[Optional] The lower real copy number offset used for the selection of hets around a mode in the copy number density plot of hets used for centering of all segments. [default %default]"),
+  make_option(c("--UpperCNcenteringPeakOffset", "-I"), dest="UpperCNcenteringPeakOffset", action="store", default=0.25,
+              help = "[Optional] The upper real copy number offset used for the selection of hets around a mode in the copy number density plot of hets used for centering of all segments. [default %default]")
 )
 
 opt = parse_args(OptionParser(option_list=option_list))
@@ -141,6 +149,10 @@ hetDPfilter = opt[["hetDPfilter"]]
 hetAFlow = opt[["hetAFlow"]]
 hetAFhigh = opt[["hetAFhigh"]]
 point_size = opt[["point_size"]]
+lowerCNvalidatePeakOffset = opt[["lowerCNvalidatePeakOffset"]]
+UpperCNvalidatePeakOffset = opt[["UpperCNvalidatePeakOffset"]]
+lowerCNcenteringPeakOffset = opt[["lowerCNcenteringPeakOffset"]]
+UpperCNcenteringPeakOffset = opt[["UpperCNcenteringPeakOffset"]]
 
 #### Validation ####
 
@@ -239,8 +251,10 @@ if (re_center_CNA == TRUE) {
     
     MAINPEAK <- density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x[modes_values[1]]
     MAINPEAKlinear <- (2^MAINPEAK)*2
-    CUTOFF <- log2((MAINPEAKlinear-0.25)/2)
-    CUTOFF2 <- log2((MAINPEAKlinear+0.25)/2)
+    
+    CUTOFF <- log2((MAINPEAKlinear - lowerCNcenteringPeakOffset)/2)
+    CUTOFF2 <- log2((MAINPEAKlinear + UpperCNcenteringPeakOffset)/2)
+    
     POSITIONS <- hets[ hets$LOG2_COPY_RATIO > CUTOFF & hets$LOG2_COPY_RATIO < CUTOFF2 ,]
     
     AVE_CR <- mean(POSITIONS$LOG2_COPY_RATIO)
@@ -251,11 +265,14 @@ if (re_center_CNA == TRUE) {
     
     MAINPEAK <- density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x[modes_values[1]]
     MAINPEAKlinear <- (2^MAINPEAK)*2
-    CUTOFF <- log2((MAINPEAKlinear-0.25)/2)
-    CUTOFF2 <- log2((MAINPEAKlinear+0.25)/2)
+    
+    CUTOFF <- log2((MAINPEAKlinear - lowerCNcenteringPeakOffset)/2)
+    CUTOFF2 <- log2((MAINPEAKlinear + UpperCNcenteringPeakOffset)/2)
+    CUTOFF3 <- log2((MAINPEAKlinear - lowerCNvalidatePeakOffset)/2)
+    CUTOFF4 <- log2((MAINPEAKlinear + UpperCNvalidatePeakOffset)/2)
     
     densityList <- density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x
-    densityListFilt <- which(densityList >= CUTOFF & densityList <= CUTOFF2)
+    densityListFilt <- which(densityList >= CUTOFF3 & densityList <= CUTOFF4)
     densityListFiltSum <- sum(density(hets$LOG2_COPY_RATIO, adjust = 1.4)$y[densityListFilt])
     
     POSITIONS <- hets[ hets$LOG2_COPY_RATIO > CUTOFF & hets$LOG2_COPY_RATIO < CUTOFF2 ,]
@@ -273,11 +290,14 @@ if (re_center_CNA == TRUE) {
         
         MAINPEAK <- density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x[modes_values[INCVAR]]
         MAINPEAKlinear <- (2^MAINPEAK)*2
-        CUTOFF <- log2((MAINPEAKlinear-0.25)/2)
-        CUTOFF2 <- log2((MAINPEAKlinear+0.25)/2)
+        
+        CUTOFF <- log2((MAINPEAKlinear - lowerCNcenteringPeakOffset)/2)
+        CUTOFF2 <- log2((MAINPEAKlinear + UpperCNcenteringPeakOffset)/2)
+        CUTOFF3 <- log2((MAINPEAKlinear - lowerCNvalidatePeakOffset)/2)
+        CUTOFF4 <- log2((MAINPEAKlinear + UpperCNvalidatePeakOffset)/2)
         
         densityList <- density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x
-        densityListFilt <- which(densityList >= CUTOFF & densityList <= CUTOFF2)
+        densityListFilt <- which(densityList >= CUTOFF3 & densityList <= CUTOFF4)
         densityListFiltSum <- sum(density(hets$LOG2_COPY_RATIO, adjust = 1.4)$y[densityListFilt])
         
         POSITIONS <- hets[ hets$LOG2_COPY_RATIO > CUTOFF & hets$LOG2_COPY_RATIO < CUTOFF2 ,]
@@ -297,9 +317,15 @@ if (re_center_CNA == TRUE) {
     }
   }
   
-  png(filename = paste(plots_directory, "/", output_prefix, ".hets.density.png", sep=""), width = 648, height = 368, units = "mm", res = 300)
-  plot(density(hets$LOG2_COPY_RATIO, adjust = 1.4)) + abline(v=CUTOFF) + abline(v=CUTOFF2) + abline(v=MAINPEAK)
-  dev.off()
+  if (length(density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x[modes_values]) == 1) {
+    png(filename = paste(plots_directory, "/", output_prefix, ".hets.density.png", sep=""), width = 648, height = 368, units = "mm", res = 300)
+    plot(density(hets$LOG2_COPY_RATIO, adjust = 1.4)) + abline(v=CUTOFF) + abline(v=CUTOFF2) + abline(v=MAINPEAK)
+    dev.off()
+  } else {
+    png(filename = paste(plots_directory, "/", output_prefix, ".hets.density.png", sep=""), width = 648, height = 368, units = "mm", res = 300)
+    plot(density(hets$LOG2_COPY_RATIO, adjust = 1.4)) + abline(v=CUTOFF) + abline(v=CUTOFF2) + abline(v=CUTOFF3, lty=2) + abline(v=CUTOFF4, lty=2) + abline(v=MAINPEAK)
+    dev.off()
+  }
   
   # Adjust all of the input tables with COPY RATIO based on the AVE_CR
   hets$LOG2_COPY_RATIO <- hets$LOG2_COPY_RATIO - AVE_CR
