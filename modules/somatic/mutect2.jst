@@ -124,7 +124,11 @@
       --output-type z \
       --output "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi --force "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz"

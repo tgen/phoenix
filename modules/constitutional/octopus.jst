@@ -73,7 +73,11 @@
       --output-type z \
       --output "{{ all_vcf }}" \
       {% for b in constants.phoenix.primary_contig_calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi --force "{{ all_vcf }}"

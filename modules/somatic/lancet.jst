@@ -82,7 +82,11 @@
       --output-type z \
       --output "{{ all_vcf }}" \
       {% for b in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.lancet.vcf" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi --force "{{ all_vcf }}"
