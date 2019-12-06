@@ -86,7 +86,11 @@
       --output-type z \
       --output "{{ all_vcf }}" \
       {% for batch in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi --force "{{ all_vcf }}"

@@ -150,8 +150,9 @@
       -l 6 \
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
+      {% if not loop.last %}
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam \
-      {% if loop.last %}
+      {% else %}
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam
       {% endif %}
     {% endfor %}
