@@ -560,4 +560,8 @@
 
     mv {{ temp_dir }}/results/* {{ results_dir }}/
 
+    {% set task %}gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 {% endmacro %}

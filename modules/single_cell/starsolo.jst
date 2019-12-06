@@ -35,7 +35,7 @@
     set -o pipefail
 
     module load {{ constants.tools.star.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
@@ -105,7 +105,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     samtools view \
       -C \

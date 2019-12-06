@@ -211,9 +211,9 @@
     
     bcftools index --tbi --force "{{ all_vcf }}"
     
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
+    {% set task %}vardict_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 
 - name: vardict_filter_variants_{{ pair.name }}_{{ aligner }}

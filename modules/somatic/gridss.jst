@@ -34,8 +34,8 @@
       {{ normal_bam }} {{ tumor_bam }}
 
     {# Remove the remaining files #}
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
+    {% set task %}gridss_somatic_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

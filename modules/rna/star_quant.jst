@@ -181,7 +181,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -215,7 +215,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9_168_gb1e2c78.module }}
+    module load {{ constants.tools.samtools.module }}
 #}
     {#
     # If this task was interrupted previously, temp files may exist
@@ -265,7 +265,7 @@ which appears to be working now after some code changes, keeping this here in ca
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist

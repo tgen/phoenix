@@ -85,15 +85,15 @@
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
+    {% set task %}lancet_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
     {#
     # This version of Lancet leaves behind a config.txt file in the top 
     # of the project dir. This was patched in a later versions so that
     # we can remove later.
     #}
     rm config.txt || true
-    {% endif %}
 
 
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}

@@ -108,7 +108,7 @@
   after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
-    then merged together with {{ constants.tools.samtools_1_9.verbose }} concat.
+    then merged together with {{ constants.tools.samtools.verbose }} concat.
   cpus: 4
   mem: 16G
   walltime: "24:00:00"

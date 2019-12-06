@@ -98,7 +98,7 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}/evidence"
   
@@ -152,7 +152,9 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
     {# Finally remove the run dir #}
-    rm -r "{{ temp_dir }}"
+    {% set task %}strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 
 {% endmacro %}
