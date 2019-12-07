@@ -148,7 +148,7 @@
 
 {% set task %}no_baserecalibration_{{ sample.name }}_{{ aligner }}{% endset %}
 {% set before %}freebayes_sex_check_{{ sample.name }}_{{ aligner }}{% endset %}
-{% set directory %}temp/{{ sample.gltype }}/alignment/{% endset %}
+{% set directory %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{% endset %}
 {{- remove_files(directory,before,task) }}
 
 {% endmacro %}
