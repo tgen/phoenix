@@ -11,7 +11,7 @@
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
-    generated with {{ constants.tools.samtools_1_9.verbose }} stats.
+    generated with {{ constants.tools.samtools.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output: {{ results_dir }}/{{ bam|basename }}.bamstats.txt
   walltime: "4:00:00"
@@ -20,7 +20,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -43,7 +43,7 @@
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
-    generated with {{ constants.tools.samtools_1_9.verbose }} stats.
+    generated with {{ constants.tools.samtools.verbose }} stats.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output: {{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt
   walltime: "4:00:00"
@@ -52,7 +52,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -85,7 +85,7 @@
 - name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_flagstat, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
-    generated with {{ constants.tools.samtools_1_9.verbose }} flagstat.
+    generated with {{ constants.tools.samtools.verbose }} flagstat.
   input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
   output: {{ results_dir }}/{{ bam|basename }}.flagstats.txt
   walltime: "4:00:00"
@@ -94,7 +94,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -113,7 +113,7 @@
 - name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
-    generated with {{ constants.tools.samtools_1_9.verbose }} idxstats.
+    generated with {{ constants.tools.samtools.verbose }} idxstats.
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.idxstats.txt
   walltime: "4:00:00"
@@ -122,7 +122,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 

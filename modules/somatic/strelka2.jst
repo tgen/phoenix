@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 {% macro strelka2_somatic(pair, aligner='bwa') %}
 {% do pair.callers.append('strelka2') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
@@ -98,7 +100,7 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}/evidence"
   
@@ -152,7 +154,9 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
     {# Finally remove the run dir #}
-    rm -r "{{ temp_dir }}"
+    {% set task %}strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 
 {% endmacro %}
