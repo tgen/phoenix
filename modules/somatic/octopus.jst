@@ -117,5 +117,9 @@
     
     bcftools index --tbi --force "{{ pass_vcf }}"
 
+    {% set task %}octopus_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 
 {% endmacro %}

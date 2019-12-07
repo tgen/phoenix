@@ -217,9 +217,9 @@
     {#
     # Cleaning up the temp
     #}
-    {% if not debug %}
-        rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/"
-    {% endif %}
+    {% set task %}samtools_markdup_{{ sample.name }}_bwa{% endset %}
+    {% set directory %}temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}
 
