@@ -147,7 +147,8 @@
     samtools index -@ 10 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
 {% set task %}no_baserecalibration_{{ sample.name }}_{{ aligner }}{% endset %}
+{% set before %}freebayes_sex_check_{{ sample.name }}_{{ aligner }}{% endset %}
 {% set directory %}temp/{{ sample.gltype }}/alignment/{% endset %}
-{{- remove_files(directory,none,task) }}
+{{- remove_files(directory,before,task) }}
 
 {% endmacro %}

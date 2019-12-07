@@ -130,10 +130,6 @@
 
     bcftools index --tbi --force "{{ pass_vcf }}"
 
-    {# Remove the remaining files #}
-    {% set task %}strelka2_filter_variants_{{ sample.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
 
 {%- set after_task = 'strelka2_filter_variants_'+sample.name+'_'+aligner %}
 {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'strelka2', 'constitutional', 'snp_indel_caller' ) }}

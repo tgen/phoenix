@@ -296,6 +296,11 @@ which appears to be working now after some code changes, keeping this here in ca
 
     samtools index -@ 10 "{{ star_bam_final }}"
 
+    {# Remove the remaining files #}
+    {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 {% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
 - name: htseq_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, HTseq, {{ sample.name }}]
