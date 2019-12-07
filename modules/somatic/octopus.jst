@@ -89,10 +89,6 @@
 
     bcftools index --tbi "{{ all_vcf }}"
 
-    {% if not debug %}
-    rm -r "temp/{{ pair.gltype }}/somatic_variant_calls/octopus/{{ pair.name }}_{{ aligner }}/"
-    {% endif %}
-
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
