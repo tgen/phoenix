@@ -18,7 +18,7 @@ constants:
         10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
         Central PMCID: PMC2832824.
     bcftools:
-      module: BCFtools/BCFtools/1.10-foss-2019a
+      module: BCFtools/1.10-foss-2019a
       version: "1.10"
       verbose: BCFtools v1.10
       website: http://www.htslib.org
@@ -280,9 +280,9 @@ constants:
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
     vcfmerger2:
-      module: vcfMerger2/0.8.4-phoenix
-      version: "0.8.4"
-      verbose: vcfMerger2 v0.8.4
+      module: vcfMerger2/0.8.5-phoenix
+      version: "0.8.5"
+      verbose: vcfMerger2 v0.8.5
       website: https://github.com/tgen/vcfMerger2
     verifybamid2:
       module: verifyBamID/1.0.6-foss-2019a
