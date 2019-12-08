@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 {% macro ichorcna(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
@@ -95,5 +97,10 @@
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.RData" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt" "{{ results_dir }}/"
     mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ results_dir }}/"
+
+    {# Remove the remaining files #}
+    {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

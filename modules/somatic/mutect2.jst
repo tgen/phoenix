@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 {% macro mutect2(pair, aligner='bwa') %}
 {% do pair.callers.append('mutect2') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
@@ -108,7 +110,7 @@
   after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
-    then merged together with {{ constants.tools.samtools_1_9.verbose }} concat.
+    then merged together with {{ constants.tools.samtools.verbose }} concat.
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -122,7 +124,11 @@
       --output-type z \
       --output "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi --force "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz"
@@ -292,5 +298,9 @@
       > "{{ pass_vcf }}"
     
     bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {% set task %}mutect2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

@@ -1,0 +1,16 @@
+{% macro remove_files(directory, before, after) %}
+
+- name: removing_files_{{ after }}
+  {% if before is not none %}
+  before-re: {{ before }}
+  {% endif %}
+  after-re: {{ after }}
+  walltime: "0:10:00"
+  cpus: 1
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    rm -r {{ directory }}
+
+{% endmacro %}

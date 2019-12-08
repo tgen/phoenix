@@ -1,3 +1,4 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 # The macros found in this template are used to generate the gatk4 somatic cnv workflow.
 
 {% macro gatk_cnv(pair, aligner='bwa') %}
@@ -381,7 +382,10 @@
 {# Step 5 #}
 - name: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+  after:
+    - gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -556,5 +560,9 @@
     fi
 
     mv {{ temp_dir }}/results/* {{ results_dir }}/
+
+    {% set task %}gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

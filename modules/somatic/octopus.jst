@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 {% macro octopus_somatic(pair, aligner='bwa') %}
 {% do pair.callers.append('octopus') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
@@ -78,14 +80,14 @@
       --output-type z \
       --output "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz" \
       {% for b in constants.phoenix.primary_contig_calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi "{{ all_vcf }}"
-
-    {% if not debug %}
-    rm -r "temp/{{ pair.gltype }}/somatic_variant_calls/octopus/{{ pair.name }}_{{ aligner }}/"
-    {% endif %}
 
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
@@ -110,6 +112,10 @@
       > "{{ pass_vcf }}"
     
     bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {% set task %}octopus_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 
 {% endmacro %}

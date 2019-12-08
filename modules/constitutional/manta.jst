@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 {% macro manta_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
@@ -16,8 +18,8 @@
     - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
     - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
     - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
-  cpus: 32
-  mem: 128G
+  cpus: 20
+  mem: 80G
   walltime: "48:00:00"
   cmd: |
     set -eu
@@ -77,6 +79,8 @@
     mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
 
     {# Remove the remaining files #}
-    rm -r "{{ temp_dir }}"
+    {% set task %}manta_{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

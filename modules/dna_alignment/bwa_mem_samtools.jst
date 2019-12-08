@@ -8,6 +8,7 @@
 
 # This alignment command prefix is shared by all modules using bwa
 {% from 'utilities/read_group_line.jst' import read_group_line with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
@@ -68,7 +69,7 @@
     set -o pipefail
 
     module load {{ constants.tools.bwa.module }}
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -135,7 +136,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {# No long options available for the following:
       -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
@@ -149,7 +150,11 @@
       -l 6 \
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \
     {% for rgid in sample.read_groups %}
+      {% if not loop.last %}
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam \
+      {% else %}
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam
+      {% endif %}
     {% endfor %}
 
     {# Cleanup the tempfiles
@@ -165,7 +170,7 @@
 - name: samtools_markdup_{{ sample.name }}_bwa
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
-    {{ constants.tools.samtools_1_9_168_gb1e2c78.verbose }} markdup.
+    {{ constants.tools.samtools.verbose }} markdup.
   input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   output:
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
@@ -177,7 +182,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9_168_gb1e2c78.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -212,9 +217,9 @@
     {#
     # Cleaning up the temp
     #}
-    {% if not debug %}
-        rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/"
-    {% endif %}
+    {% set task %}samtools_markdup_{{ sample.name }}_bwa{% endset %}
+    {% set directory %}temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}
 

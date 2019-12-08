@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 # Run STAR-Fusion for detecting gene fusions
 
 {% macro star_fusion(sample) %}
@@ -101,6 +103,11 @@
       mv {{ temp_dir }}/FusionInspector-inspect/fi_workdir/trinity_GG/Trinity-GG.fasta {{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
     fi
 
+    {# Remove the remaining files #}
+    {% set task %}star_fusion_{{ sample.name }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
 {% if cram|default(true) %}
 {% set bam_path %}{{ results_dir }}/{{ sample.name }}_starfusion.bam{% endset %}
@@ -120,7 +127,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools_1_9.module }}
+    module load {{ constants.tools.samtools.module }}
 
     samtools view \
       -C \

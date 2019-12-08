@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 # Call constitutional variants with haplotype caller. In order to call
 # variants, this step must be followed with genotype gvcfs task.
 {% macro haplotypecallergvcf(sample, aligner='bwa', taskPrefix='Genome') %}
@@ -61,9 +63,10 @@
       {% endfor %}
       --OUTPUT "{{ gvcf }}"
 
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
+    {# Remove the remaining files #}
+    {% set task %}haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}
 

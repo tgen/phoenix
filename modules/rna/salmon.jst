@@ -1,6 +1,8 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 # Run Salmon RNA Quantification
 {% macro salmon(sample) %}
-{% set tempdir %}temp/{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
 {% set results_dir %}{{ sample.gltype }}/quant/salmon/{{ sample.name }}{% endset %}
 
 {% set r1fqlist = [] %}
@@ -30,14 +32,15 @@
     - {{ results_dir }}/{{ sample.name }}.transcripts.sf
     - {{ results_dir }}/{{ sample.name }}.genes.sf
     - {{ results_dir }}/{{ sample.name }}.counts.json
-  cpus: 14
+  cpus: 10
+  mem: 32G
   walltime: "24:00:00"
   cmd: |
     set -eu
     set -o pipefail
     module load {{ constants.tools.salmon.module }}
 
-    mkdir -p "{{ tempdir }}"
+    mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ results_dir }}"
 
     salmon quant \
@@ -52,13 +55,16 @@
       {% if r2fqlist %}
       -2 {{ r2fqlist|join(' ') }} \
       {% endif %}
-      --output "{{ tempdir }}"
+      --output "{{ temp_dir }}"
 
     {# Save back what we need and nuke the rest #}
-    mv "{{ tempdir }}/quant.sf" "{{ results_dir }}/{{ sample.name }}.transcripts.sf"
-    mv "{{ tempdir }}/quant.genes.sf" "{{ results_dir }}/{{ sample.name }}.genes.sf"
-    mv "{{ tempdir }}/lib_format_counts.json" "{{ results_dir }}/{{ sample.name }}.counts.json"
-    rm -r "{{ tempdir }}"
-  
+    mv "{{ temp_dir }}/quant.sf" "{{ results_dir }}/{{ sample.name }}.transcripts.sf"
+    mv "{{ temp_dir }}/quant.genes.sf" "{{ results_dir }}/{{ sample.name }}.genes.sf"
+    mv "{{ temp_dir }}/lib_format_counts.json" "{{ results_dir }}/{{ sample.name }}.counts.json"
+
+    {# Remove the remaining files #}
+    {% set task %}salmon_quant_cdna_{{ sample.name }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

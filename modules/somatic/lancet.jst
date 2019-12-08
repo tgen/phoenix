@@ -1,3 +1,5 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
 {% macro lancet(pair, aligner='bwa') %}
 {% do pair.callers.append('lancet') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
@@ -80,20 +82,25 @@
       --output-type z \
       --output "{{ all_vcf }}" \
       {% for b in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.lancet.vcf" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
     {#
-    # This version of Lancet leaves behind a config.txt file in the top 
+    # This version of Lancet leaves behind a config.txt file in the top
     # of the project dir. This was patched in a later versions so that
     # we can remove later.
     #}
     rm config.txt || true
-    {% endif %}
+
+    {% set task %}lancet_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
 
 
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}

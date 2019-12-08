@@ -1,4 +1,5 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {%- macro genotypegvcf(sample, aligner='bwa', taskPrefix='Genome') %}
 
@@ -85,7 +86,11 @@
       --output-type z \
       --output "{{ all_vcf }}" \
       {% for batch in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.scored.vcf.gz"
+      {% endif %}
       {% endfor %}
 
     bcftools index --tbi --force "{{ all_vcf }}"
@@ -131,9 +136,6 @@
 
     bcftools index --tbi --force "{{ pass_vcf }}"
 
-    {% if not debug %}
-    rm -r "{{ temp_dir }}"
-    {% endif %}
 
 {%- set after_task = 'haplotypecaller_filter_variants_'+sample.name+'_'+aligner %}
 {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'hc', 'constitutional', 'genotype_hc_gvcf') }}
