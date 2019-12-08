@@ -18,7 +18,7 @@ constants:
         10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
         Central PMCID: PMC2832824.
     bcftools:
-      module: BCFtools/1.10-foss-2019a
+      module: BCFtools/1.9-foss-2019a
       version: "1.10"
       verbose: BCFtools v1.10
       website: http://www.htslib.org
