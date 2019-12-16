@@ -166,6 +166,7 @@ constants:
     pairoscope:
       module: pairoscope/0.4.2
       version: 0.4.2
+      verbose: pairoscope v0.4.2
       website: https://github.com/genome/pairoscope
       citation: >
         TBD
