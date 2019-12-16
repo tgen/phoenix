@@ -163,6 +163,12 @@ constants:
       citation: >
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke,
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
+    pairoscope:
+      module: pairoscope/0.4.2
+      version: 0.4.2
+      website: https://github.com/genome/pairoscope
+      citation: >
+        TBD
     phaser:
       module: phASER/1.1.1-python-2.7.13
       version: 1.1.1
@@ -332,6 +338,7 @@ constants:
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
     delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF.py
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel.py
+    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
     plotCNVplus_Rscript: plotCNVplus_06b34ff.R
     stats2json: samStats2json.py
     stats2lims: uploadStats2Lims.py
