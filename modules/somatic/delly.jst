@@ -15,7 +15,8 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
-  cpus: 8
+  cpus: 2
+  mem: 16G
   walltime: "72:00:00"
   cmd: |
     set -eu
@@ -68,7 +69,8 @@
   output:
     - {{ temp_dir }}/{{ all_vcf }}
     - {{ temp_dir }}/{{ pass_vcf }}
-  cpus: 8
+  cpus: 1
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -107,7 +109,8 @@
     - {{ results_dir }}/{{ pass_vcf }}.gz.tbi
     - {{ results_dir }}/{{ all_vcf }}.gz
     - {{ results_dir }}/{{ all_vcf }}.gz.tbi
-  cpus: 8
+  cpus: 1
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
     set -eu
