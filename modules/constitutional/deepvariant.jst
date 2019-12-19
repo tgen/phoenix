@@ -21,7 +21,6 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.singularity.module }}
     module load {{ constants.tools.deepvariant.module }}
 
     export PYTHONPATH=/usr/lib/python2.7 {# is this really necessary? #}
@@ -60,7 +59,6 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.singularity.module }}
     module load {{ constants.tools.deepvariant.module }}
 
     export PYTHONPATH=/usr/lib/python2.7 {# is this really necessary? #}
@@ -92,7 +90,6 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.singularity.module }}
     module load {{ constants.tools.deepvariant.module }}
     module load {{ constants.tools.bcftools.module }}
 

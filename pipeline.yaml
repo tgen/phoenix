@@ -45,9 +45,9 @@ constants:
       verbose: NVIDIA CUDA 10.0
       website: https://developer.nvidia.com/cuda-toolkit
     deepvariant:
-      module: deepvariant/0.8.0-gpu-phoenix
-      version: "0.8.0-gpu"
-      verbose: DeepVariant 0.8.0-gpu
+      module: deepvariant/0.9.0-gpu-phoenix
+      version: "0.9.0-gpu"
+      verbose: DeepVariant 0.9.0-gpu
       website: https://github.com/google/deepvariant
       citation: >
         Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
@@ -233,9 +233,9 @@ constants:
         Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
         fast and bias-aware quantification of transcript expression. Nature Methods.
     singularity:
-      module: singularity/3.5.0-rc2
-      version: "3.5.0"
-      verbose: Singularity v3.5.0
+      module: singularity/3.5.2-phoenix
+      version: "3.5.2"
+      verbose: Singularity v3.5.2
       website: https://www.sylabs.io/singularity/
     snpeff:
       module: snpEff/4.3t-Java-1.8
