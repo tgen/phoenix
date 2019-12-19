@@ -26,7 +26,7 @@
     set -o pipefail
 
     module load {{ constants.tools.strelka.module }}
-    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.htslib.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
     {# Purge any existing run files prior to starting #}

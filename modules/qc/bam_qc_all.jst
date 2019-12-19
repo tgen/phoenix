@@ -20,21 +20,50 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bedtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
+    {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
+    {% if sample.gltype == 'exome' %}
+    bedtools intersect \
+      -a {{ constants.phoenix.reference_non_N_bed }} \
+      -b {{ sample.capture_kit.no_header_targets_interval_list }} \
+      > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt
+    {% endif %}
+
+    {#
+      samtools view
+        -q INT   only include reads with mapping quality >= INT [0]
+        -h       include header in SAM output
+
+      samtools stats
+       --filtering-flag 256
+            not primary alignment (0x100)
+       --coverage <int>,<int>,<int>    Coverage distribution min,max,step [1,1000,1]
+    #}
     samtools view \
       --threads 4 \
+      -q 20 \
       -h \
       "{{ bam }}" \
       | \
     samtools stats \
       --remove-dups \
       --remove-overlaps \
+      --filtering-flag 256 \
+      --coverage 1,2500,1 \
       {% if aligner == 'star' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
+      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
       {% elif aligner == 'bwa' %}
+      {% if sample.gltype == 'exome' %}
+      --target-regions {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt \
+      {% else %}
+      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      {% endif %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       > "{{ results_dir }}/{{ bam|basename }}.bamstats.txt"
@@ -52,12 +81,33 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bedtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
+    {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
+    {% if sample.gltype == 'exome' %}
+    bedtools intersect \
+      -a {{ constants.phoenix.reference_non_N_bed }} \
+      -b {{ sample.capture_kit.no_header_targets_interval_list }} \
+      > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.{{ lb }}.samstats_no_N_1based_target_regions.txt
+    {% endif %}
+
+    {#
+      samtools view
+        -q INT   only include reads with mapping quality >= INT [0]
+        -h       include header in SAM output
+
+      samtools stats
+       --filtering-flag 256
+            not primary alignment (0x100)
+       --coverage <int>,<int>,<int>    Coverage distribution min,max,step [1,1000,1]
+     #}
     samtools view \
       --threads 4 \
+      -q 20 \
       -h \
       {% for rg in rgs %}
       -r "{{ rg.rgid }}" \
@@ -67,9 +117,17 @@
     samtools stats \
       --remove-dups \
       --remove-overlaps \
+      --filtering-flag 256 \
+      --coverage 1,2500,1 \
       {% if aligner == 'star' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
+      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
       {% elif aligner == 'bwa' %}
+      {% if sample.gltype == 'exome' %}
+      --target-regions {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.{{ lb }}.samstats_no_N_1based_target_regions.txt \
+      {% else %}
+      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      {% endif %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       > "{{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt"

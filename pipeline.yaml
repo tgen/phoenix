@@ -18,9 +18,9 @@ constants:
         10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
         Central PMCID: PMC2832824.
     bcftools:
-      module: BCFtools/1.9-foss-2019a
-      version: "1.10"
-      verbose: BCFtools v1.10
+      module: BCFtools/1.10.1-foss-2019a
+      version: "1.10.1"
+      verbose: BCFtools v1.10.1
       website: http://www.htslib.org
       citation: >
         TODO
@@ -45,9 +45,9 @@ constants:
       verbose: NVIDIA CUDA 10.0
       website: https://developer.nvidia.com/cuda-toolkit
     deepvariant:
-      module: deepvariant/0.8.0-gpu-phoenix
-      version: "0.8.0-gpu"
-      verbose: DeepVariant 0.8.0-gpu
+      module: deepvariant/0.9.0-gpu-phoenix
+      version: "0.9.0-gpu"
+      verbose: DeepVariant 0.9.0-gpu
       website: https://github.com/google/deepvariant
       citation: >
         Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
@@ -107,6 +107,13 @@ constants:
       citation: >
         Daniel Lai dalai@bccrc.ca Department of Molecular Oncology, BC Cancer
         Research Agency Date: August 02, 2011
+    htslib:
+      module: HTSlib/1.10.1-foss-2019a
+      version: "1.10.1"
+      verbose: HTSlib v1.10.1
+      website: http://www.htslib.org
+      citation: >
+        TODO
     htseq:
       module: HTSeq/0.11.1
       version: 0.11.1
@@ -163,6 +170,13 @@ constants:
       citation: >
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke,
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
+    pairoscope:
+      module: pairoscope/0.4.2
+      version: 0.4.2
+      verbose: pairoscope v0.4.2
+      website: https://github.com/genome/pairoscope
+      citation: >
+        TBD
     phaser:
       module: phASER/1.1.1-python-2.7.13
       version: 1.1.1
@@ -219,9 +233,9 @@ constants:
         Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
         fast and bias-aware quantification of transcript expression. Nature Methods.
     singularity:
-      module: singularity/3.5.0-rc2
-      version: "3.5.0"
-      verbose: Singularity v3.5.0
+      module: singularity/3.5.2-phoenix
+      version: "3.5.2"
+      verbose: Singularity v3.5.2
       website: https://www.sylabs.io/singularity/
     snpeff:
       module: snpEff/4.3t-Java-1.8
@@ -280,9 +294,9 @@ constants:
         JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
     vcfmerger2:
-      module: vcfMerger2/0.8.5-phoenix
-      version: "0.8.5"
-      verbose: vcfMerger2 v0.8.5
+      module: vcfMerger2/0.8.7-phoenix
+      version: "0.8.7"
+      verbose: vcfMerger2 v0.8.7
       website: https://github.com/tgen/vcfMerger2
     verifybamid2:
       module: verifyBamID/1.0.6-foss-2019a
@@ -316,6 +330,7 @@ constants:
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
+    reference_non_N_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
     dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
     gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
     gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
@@ -332,6 +347,7 @@ constants:
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
     delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF.py
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel.py
+    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
     plotCNVplus_Rscript: plotCNVplus_06b34ff.R
     stats2json: samStats2json.py
     stats2lims: uploadStats2Lims.py
