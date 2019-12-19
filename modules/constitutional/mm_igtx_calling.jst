@@ -29,6 +29,7 @@
     {# Purge any existing run files prior to starting #}
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     # Run pairoscope process
     pairoscope -q 0 -m 1000000 -H 1400 -W 1024 -u 2000 -l 200 \
