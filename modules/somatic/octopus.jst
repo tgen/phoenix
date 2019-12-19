@@ -73,7 +73,7 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-{#    module load {{ constants.tools.samtools.module }}#}
+    module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -90,41 +90,32 @@
       {% endfor %}
 
     bcftools index --tbi "{{ all_vcf }}"
-{##}
+    {#
     {# No long options available for the following:
-{#      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]#}
-{#      -f           Overwrite the output BAM if exist#}
-{#      -l INT       Compression level, from 0 to 9 [-1]#}
-{#    #}
-    {# Tumor evidence bam merge #}
-{#    samtools merge \#}
-{#      --threads 4 \#}
-{#      -c \#}
-{#      -f \#}
-{#      -l 6 \#}
-{#      "{{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.octopus.bam" \#}
-{#      {% for b in constants.phoenix.primary_contig_calling_intervals %}#}
-{#      {% if not loop.last %}#}
-{#      "{{ temp_dir }}/{{ loop.index }}.realigned.bam/{{ pair.tumor.name }}.{{ aligner }}.bam" \#}
-{#      {% else %}#}
-{#      "{{ temp_dir }}/{{ loop.index }}.realigned.bam/{{ pair.tumor.name }}.{{ aligner }}.bam"#}
-{#      {% endif %}#}
-{#      {% endfor %}#}
-{##}
-    {# Normal evidence bam merge #}
-{#    samtools merge \#}
-{#      --threads 4 \#}
-{#      -c \#}
-{#      -f \#}
-{#      -l 6 \#}
-{#      "{{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.octopus.bam" \#}
-{#      {% for b in constants.phoenix.primary_contig_calling_intervals %}#}
-{#      {% if not loop.last %}#}
-{#      "{{ temp_dir }}/{{ loop.index }}.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam" \#}
-{#      {% else %}#}
-{#      "{{ temp_dir }}/{{ loop.index }}.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam"#}
-{#      {% endif %}#}
-{#      {% endfor %}#}
+      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
+      -f           Overwrite the output BAM if exist
+      -l INT       Compression level, from 0 to 9 [-1]
+    #}
+    {# Tumor evidence bam merge - the * in {{ temp_dir }}/*.realigned.bam requires us to not #}
+    {# use quotes in order to allow bash/shell to expand out to grab everything that matches #}
+    samtools merge \
+      --threads 4 \
+      -c \
+      -f \
+      -l 6 \
+      {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.octopus.bam \
+      {{ temp_dir }}/*.realigned.bam/{{ pair.tumor.name }}.{{ aligner }}.bam
+
+    {# Normal evidence bam merge - the * in {{ temp_dir }}/*.realigned.bam requires us to not #}
+    {# use quotes in order to allow bash/shell to expand out to grab everything that matches #}
+    samtools merge \
+      --threads 4 \
+      -c \
+      -f \
+      -l 6 \
+      {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.octopus.bam \
+      {{ temp_dir }}/*.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam
+    #}
 
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
