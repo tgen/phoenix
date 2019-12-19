@@ -101,11 +101,13 @@
 
     {% set targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.targets.interval_list{% endset %}
     {% set no_header_targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.no.header.targets.interval_list{% endset %}
+    {% set baits_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.baits.interval_list{% endset %}
     {% set extended_bed %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.extended.bed{% endset %}
 
     {% do sample.update({'capture_kit': {}}) %}
     {% do sample['capture_kit'].update({'targets_interval_list': targets_interval_list}) %}
     {% do sample['capture_kit'].update({'no_header_targets_interval_list': no_header_targets_interval_list}) %}
+    {% do sample['capture_kit'].update({'baits_interval_list': baits_interval_list}) %}
     {% do sample['capture_kit'].update({'extended_bed': extended_bed}) %}
 {% endfor %}
 
