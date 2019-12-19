@@ -90,32 +90,30 @@
       {% endfor %}
 
     bcftools index --tbi "{{ all_vcf }}"
-    {#
     {# No long options available for the following:
-      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
-      -f           Overwrite the output BAM if exist
-      -l INT       Compression level, from 0 to 9 [-1]
-    #}
+{#      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]#}
+{#      -f           Overwrite the output BAM if exist#}
+{#      -l INT       Compression level, from 0 to 9 [-1]#}
+{#    #}
     {# Tumor evidence bam merge - the * in {{ temp_dir }}/*.realigned.bam requires us to not #}
     {# use quotes in order to allow bash/shell to expand out to grab everything that matches #}
-    samtools merge \
-      --threads 4 \
-      -c \
-      -f \
-      -l 6 \
-      {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.octopus.bam \
-      {{ temp_dir }}/*.realigned.bam/{{ pair.tumor.name }}.{{ aligner }}.bam
-
+{#    samtools merge \#}
+{#      --threads 4 \#}
+{#      -c \#}
+{#      -f \#}
+{#      -l 6 \#}
+{#      {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.octopus.bam \#}
+{#      {{ temp_dir }}/*.realigned.bam/{{ pair.tumor.name }}.{{ aligner }}.bam#}
+{##}
     {# Normal evidence bam merge - the * in {{ temp_dir }}/*.realigned.bam requires us to not #}
     {# use quotes in order to allow bash/shell to expand out to grab everything that matches #}
-    samtools merge \
-      --threads 4 \
-      -c \
-      -f \
-      -l 6 \
-      {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.octopus.bam \
-      {{ temp_dir }}/*.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam
-    #}
+{#    samtools merge \#}
+{#      --threads 4 \#}
+{#      -c \#}
+{#      -f \#}
+{#      -l 6 \#}
+{#      {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.octopus.bam \#}
+{#      {{ temp_dir }}/*.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam#}
 
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
