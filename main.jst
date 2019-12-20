@@ -153,6 +153,90 @@
     mkdir --parents qc
     multiqc --force --outdir qc .
 
+    mkdir --parents igv_symbolic_links
+    cd igv_symbolic_links
+
+    {# Create symbolic links to deepvariant pass vcf, ichorCNA seg file, gatk igv seg file, merged vcf, and bams/crams #}
+    {% for general_library_type, data_files in dataFiles | groupby('gltype') %}
+      {% if general_library_type in 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+
+        {% if tasks[taskPrefix+"_constitutional_snp_indel_caller_deepvariant"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/constitutional_variant_calls/deepvariant -name "*.deepvariant.pass.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_variant_calls/vcfmerger2 -name "*.merged.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_copy_number/gatk -name "*.re_centered.cr.igv.seg"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
+      {% elif general_library_type in 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+
+        {% if tasks[taskPrefix+"_constitutional_snp_indel_caller_deepvariant"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/constitutional_variant_calls/deepvariant -name "*.deepvariant.pass.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_constitutional_cna_caller_ichor"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/copy_number_analysis/ichorCNA -name "*.ichorCNA.cna.seg"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_variant_calls/vcfmerger2 -name "*.merged.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_copy_number/gatk -name "*.re_centered.cr.igv.seg"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
+      {% elif general_library_type in 'rna' %}
+        {% set taskPrefix = 'RNA' %}
+
+      {% endif %}
+
+
+    {% if cram|default(true) %}
+      for line in `find ../{{ general_library_type }}/alignment -name "*.cram"`
+      do
+        ln --symbolic --force ${line}
+        ln --symbolic --force ${line}.crai
+      done
+    {% else %}
+      for line in `find ../{{ general_library_type }}/alignment -name "*.bam"`
+      do
+        ln --symbolic --force ${line}
+        ln --symbolic --force ${line}.bai
+      done
+    {% endif %}
+
+  {% endfor %}
+
 
 {# Start of module calls #}
 {# These if statements are kind of dead right now because they aren't passed by LIMS, but everything runs because of default(true) #}
