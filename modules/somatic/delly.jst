@@ -118,8 +118,9 @@
 
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.bedtools.module }}
+    {# Hardcoded bcftools/1.9 because 1.10* is failing to index the delly.passOnly.vcf, most likely due to stricter vcf validation #}
     module load BCFtools/1.9-foss-2019a
-    {# Hardcoded bcftools/1.9 because 1.10* has issues #}
+
     if [[ $(grep -m 1 -c "ENDPOSSV" {{ temp_dir }}/{{ pass_vcf }} ) -ne 1 ]]
     then
       sed 's/ID=END/ID=ENDPOSSV/ ; s/;END=/;ENDPOSSV=/' {{ temp_dir }}/{{ pass_vcf }} > {{ temp_dir }}/{{ pass_vcf }}.mod
