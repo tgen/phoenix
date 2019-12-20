@@ -96,7 +96,7 @@
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.RData" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg.txt" "{{ results_dir }}/"
-    mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ results_dir }}/"
+    mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/*.pdf "{{ results_dir }}/"
 
     {# Remove the remaining files #}
     {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}
