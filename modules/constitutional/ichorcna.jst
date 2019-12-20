@@ -62,7 +62,7 @@
     # the rest of the package, so this path is hard coded in constants.yaml
     #}
     Rscript ${PATH_TO_PHOENIX_REPO}/{{ constants.tools.ichorcna.launcher }} \
-      --id "{{ sample.name}}.{{ aligner }}" \
+      --id "{{ sample.name}}.{{ aligner }}.ichorCNA" \
       --WIG "{{ wig }}" \
       --outDir "{{ temp_dir }}" \
       --includeHOMD False \
@@ -91,12 +91,12 @@
     {#
     # Move the output files to the final location
     #}
-    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg" "{{ results_dir }}/"
-    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt" "{{ results_dir }}/"
-    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.params.txt" "{{ results_dir }}/"
-    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.RData" "{{ results_dir }}/"
-    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt" "{{ results_dir }}/"
-    mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}/*.pdf "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.cna.seg" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.correctedDepth.txt" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.RData" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg.txt" "{{ results_dir }}/"
+    mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/*.pdf "{{ results_dir }}/"
 
     {# Remove the remaining files #}
     {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}

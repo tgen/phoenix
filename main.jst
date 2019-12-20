@@ -100,10 +100,14 @@
     {% do sample.update({'capture_kit_code': sample.assayCode[2:5]|upper}) %}
 
     {% set targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.targets.interval_list{% endset %}
+    {% set no_header_targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.no.header.targets.interval_list{% endset %}
+    {% set baits_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.baits.interval_list{% endset %}
     {% set extended_bed %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.extended.bed{% endset %}
 
     {% do sample.update({'capture_kit': {}}) %}
     {% do sample['capture_kit'].update({'targets_interval_list': targets_interval_list}) %}
+    {% do sample['capture_kit'].update({'no_header_targets_interval_list': no_header_targets_interval_list}) %}
+    {% do sample['capture_kit'].update({'baits_interval_list': baits_interval_list}) %}
     {% do sample['capture_kit'].update({'extended_bed': extended_bed}) %}
 {% endfor %}
 
@@ -148,6 +152,90 @@
 
     mkdir --parents qc
     multiqc --force --outdir qc .
+
+    mkdir --parents igv_symbolic_links
+    cd igv_symbolic_links
+
+    {# Create symbolic links to deepvariant pass vcf, ichorCNA seg file, gatk igv seg file, merged vcf, and bams/crams #}
+    {% for general_library_type, data_files in dataFiles | groupby('gltype') %}
+      {% if general_library_type in 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+
+        {% if tasks[taskPrefix+"_constitutional_snp_indel_caller_deepvariant"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/constitutional_variant_calls/deepvariant -name "*.deepvariant.pass.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_variant_calls/vcfmerger2 -name "*.merged.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_copy_number/gatk -name "*.re_centered.cr.igv.seg"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
+      {% elif general_library_type in 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+
+        {% if tasks[taskPrefix+"_constitutional_snp_indel_caller_deepvariant"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/constitutional_variant_calls/deepvariant -name "*.deepvariant.pass.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_constitutional_cna_caller_ichor"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/copy_number_analysis/ichorCNA -name "*.ichorCNA.cna.seg"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_merge_vcfs_vcfMerger2"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_variant_calls/vcfmerger2 -name "*.merged.vcf.gz"`
+          do
+            ln --symbolic --force ${line}
+            ln --symbolic --force ${line}.tbi
+          done
+        {% endif %}
+
+        {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/somatic_copy_number/gatk -name "*.re_centered.cr.igv.seg"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
+      {% elif general_library_type in 'rna' %}
+        {% set taskPrefix = 'RNA' %}
+
+      {% endif %}
+
+
+    {% if cram|default(true) %}
+      for line in `find ../{{ general_library_type }}/alignment -name "*.cram"`
+      do
+        ln --symbolic --force ${line}
+        ln --symbolic --force ${line}.crai
+      done
+    {% else %}
+      for line in `find ../{{ general_library_type }}/alignment -name "*.bam"`
+      do
+        ln --symbolic --force ${line}
+        ln --symbolic --force ${line}.bai
+      done
+    {% endif %}
+
+  {% endfor %}
 
 
 {# Start of module calls #}

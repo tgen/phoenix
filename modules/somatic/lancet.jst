@@ -49,8 +49,14 @@
     # 
     # bcftools requires gz or bcf files and we tabix them as a workaround for the improper header given by lancet
     #}
-    bgzip --force --threads 4 "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
-    tabix --force "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
+
+    bcftools view \
+      --output-type z \
+      --output-file "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz" \
+      "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
+
+    bcftools index --tbi --force "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
+
     bcftools sort \
       --max-mem 768M \
       --temp-dir {{ temp_dir }}/temp_{{ loop.index }}/ \

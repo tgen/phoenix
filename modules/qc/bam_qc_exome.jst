@@ -29,11 +29,7 @@
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}.hs_metrics" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       --TARGET_INTERVALS "{{ sample.capture_kit.targets_interval_list }}" \
-      {% if sample.capture_kit.baits_interval_list is defined %}
       --BAIT_INTERVALS "{{ sample.capture_kit.baits_interval_list }}"
-      {% else %}
-      --BAIT_INTERVALS  "{{ sample.capture_kit.targets_interval_list }}"
-      {% endif %}
 
 
 {{ stats2json(sample, output_file, "picard_hs_metrics", aligner=aligner) }}
