@@ -228,8 +228,8 @@
     - {{ results_dir }}/{{ bam|basename }}.quality_distribution.pdf
     - {{ results_dir }}/{{ bam|basename }}.quality_yield_metrics
   walltime: "24:00:00"
-  cpus: 8
-  mem: 32G
+  cpus: 2
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail
