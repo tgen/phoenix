@@ -31,6 +31,8 @@
     bedtools intersect \
       -a {{ constants.phoenix.reference_non_N_bed }} \
       -b {{ sample.capture_kit.no_header_targets_interval_list }} \
+      | \
+    sort -k1,1 -k2,2n \
       > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt
     {% endif %}
 
@@ -92,6 +94,8 @@
     bedtools intersect \
       -a {{ constants.phoenix.reference_non_N_bed }} \
       -b {{ sample.capture_kit.no_header_targets_interval_list }} \
+      | \
+    sort -k1,1 -k2,2n \
       > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.{{ lb }}.samstats_no_N_1based_target_regions.txt
     {% endif %}
 
