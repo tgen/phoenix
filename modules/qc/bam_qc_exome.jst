@@ -22,6 +22,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk CollectHsMetrics \
+      --java-options "-Xmx7G" \
       --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL ALL_READS \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \

@@ -15,7 +15,7 @@
     - {{ rna_metrics }}.pdf
   walltime: "8:00:00"
   cpus: 2
-  mem: 32G
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail
@@ -25,6 +25,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk CollectRnaSeqMetrics \
+      --java-options "-Xmx14G" \
       --IGNORE_SEQUENCE chrEBV \
       --STRAND_SPECIFICITY {{ constants.phoenix.strandedness_options[sample.strandedness].collectrnaseqmetrics }} \
       --VALIDATION_STRINGENCY LENIENT \
