@@ -240,6 +240,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk CollectMultipleMetrics \
+      --java-options "-Xmx7G" \
       --INPUT "{{ bam }}" \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
       {% if aligner == 'star' %}

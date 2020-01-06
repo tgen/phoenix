@@ -25,6 +25,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk CollectRnaSeqMetrics \
+      --java-options "-Xmx14G" \
       --IGNORE_SEQUENCE chrEBV \
       --STRAND_SPECIFICITY {{ constants.phoenix.strandedness_options[sample.strandedness].collectrnaseqmetrics }} \
       --VALIDATION_STRINGENCY LENIENT \
