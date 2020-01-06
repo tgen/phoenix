@@ -19,6 +19,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk CollectWgsMetrics \
+      --java-options "-Xmx7G" \
       --USE_FAST_ALGORITHM false \
       --INPUT {{ bam }} \
       --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_metrics \
@@ -49,6 +50,7 @@
     mkdir -p {{ results_dir }}
 
     gatk CollectWgsMetricsWithNonZeroCoverage \
+      --java-options "-Xmx7G" \
       --INPUT {{ bam }} \
       --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics \
       --CHART_OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics.pdf \
@@ -76,6 +78,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk CollectRawWgsMetrics \
+      --java-options "-Xmx7G" \
       --USE_FAST_ALGORITHM false \
       --INPUT "{{ bam }}" \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics" \
