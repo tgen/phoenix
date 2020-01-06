@@ -13,7 +13,7 @@
   output: {{ output_file }}
   walltime: "8:00:00"
   cpus: 2
-  mem: 8G
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail
@@ -22,7 +22,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk CollectHsMetrics \
-      --java-options "-Xmx7G" \
+      --java-options "-Xmx14G" \
       --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL ALL_READS \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
