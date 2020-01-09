@@ -45,9 +45,9 @@ constants:
       verbose: NVIDIA CUDA 10.0
       website: https://developer.nvidia.com/cuda-toolkit
     deepvariant:
-      module: deepvariant/0.8.0-gpu-phoenix
-      version: "0.8.0-gpu"
-      verbose: DeepVariant 0.8.0-gpu
+      module: deepvariant/0.9.0-gpu-phoenix
+      version: "0.9.0-gpu"
+      verbose: DeepVariant 0.9.0-gpu
       website: https://github.com/google/deepvariant
       citation: >
         Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
@@ -395,7 +395,7 @@ constants:
     lymphocyteReceptor_loci_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
     star_indices_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir
+    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v32_CTAT_lib_Dec062019.plug-n-play/ctat_genome_lib_build_dir
     strandedness_options:
       inward-unstranded-notapplicable:
         salmon: "IU"

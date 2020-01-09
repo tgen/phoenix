@@ -23,7 +23,6 @@
 
     module load {{ constants.tools.deepvariant.module }}
 
-    export PYTHONPATH=/usr/lib/python2.7 {# is this really necessary? #}
     PROJECT_ROOT=$PWD
 
     mkdir -p "{{ temp_dir }}"
@@ -61,7 +60,6 @@
 
     module load {{ constants.tools.deepvariant.module }}
 
-    export PYTHONPATH=/usr/lib/python2.7 {# is this really necessary? #}
     PROJECT_ROOT=$PWD
 
     cd "{{ temp_dir }}"
@@ -93,7 +91,6 @@
     module load {{ constants.tools.deepvariant.module }}
     module load {{ constants.tools.bcftools.module }}
 
-    export PYTHONPATH=/usr/lib/python2.7  {# is this really necessary? #}
     PROJECT_ROOT=$PWD
     
     mkdir -p "{{ results_dir }}"
