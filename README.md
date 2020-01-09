@@ -95,51 +95,52 @@ _Click to show details_
 <details>
 <summary><b>Public Tools Used by the Workflow</b></summary>  
 
-All tools build with public easybuild configuration files - **REPO-X**.<br/>
-Last Update November 14, 2019  
+All tools build with public easybuild configuration files, available [here](https://github.com/easybuilders/easybuild).<br/>
+Last Update January 9, 2020  
 
 
-| Tool | Version Implemented | Current Version | Dependancy and Notes | EasyBuild |
+| Tool | Version Implemented | Current Version | Dependency and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
-| [bcftools](https://github.com/samtools/bcftools/releases) | 1.9 | 1.9 | | Yes |
-| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | 2.29.0 | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
+| [bcftools](https://github.com/samtools/bcftools/releases) | 1.10.1 | **1.10.2** | | Yes |
+| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | **2.29.2** | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
 | [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | 2.3.5.1 | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
 | [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | 3.1.0 | | Yes |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container | Yes |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.9.0 | 0.9.0 | singularity container | Yes |
 | [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons | Yes |
-| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions | Yes |
-| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  | Yes |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.2** | 1.3.2 ensures python3 compatibility | Yes |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4.0 | **4.1.4.1** |  | Yes |
 | [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion | Yes |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.7.2 |  | |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.7.3** |  | |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | Yes |
 | [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | | |
-| [htslib](https://github.com/samtools/htslib/releases) | 1.9 | 1.9 | star-fusion(bgzip) | Yes |
+| [htslib](https://github.com/samtools/htslib/releases) | 1.10.1 | **1.10.2** | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
-| [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | | Yes |
+| [lancet](https://github.com/nygenome/lancet/releases) | 1.1.0 | 1.1.0 | | Yes |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | Yes |
-| [multiQC](https://github.com/Illumina/manta/releases) | 1.7 | 1.7 | python3 pip | Yes |
+| [multiQC](https://github.com/ewels/MultiQC/releases) | 1.7 | **1.8** | python3 pip | Yes |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
-| [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion | Yes |
+| [pairoscope](https://github.com/genome/pairoscope/releases) | 0.4.2 | 0.4.2 | | Yes |
+| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.31.7** | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
-| [python2](https://www.python.org/downloads/) | 2.7.15 | 2.7.15 | | Yes |
-| [python3](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 | Yes |
-| [R](https://www.r-project.org/) | 3.6.1 | 3.6.1 | gatk cnv, varDict, vcfmerger2 | Yes |
-| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | 0.7.0 | | |
+| [python2](https://www.python.org/downloads/) | 2.7.15 | **2.7.17** | | Yes |
+| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.8.1** | star-fusion, vcfmerger2 | Yes |
+| [R](https://www.r-project.org/) | 3.6.1 | **3.6.2** | gatk cnv, varDict, vcfmerger2 | Yes |
+| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | **0.7.1** | | |
 | [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | | |
-| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | 0.14.2 | self, star-fusion | Yes |
-| [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch | Yes |
-| [singularity](https://github.com/COMBINE-lab/salmon/releases) | 3.5.0-rc2 | 3.4.2 | deepvariant | Yes, release-candidate |
+| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | **1.1.0** | self, star-fusion | Yes |
+| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | 1.10 | markdup needs unreleased patch | Yes |
+| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | 3.5.2 | deepvariant | Yes, release-candidate |
 | [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017| Yes |
 | [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | self, star-fusion | Yes |
 | [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | | Yes |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | | Yes |
 | [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
-| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion | Yes |
+| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.9.0** | star-fusion | Yes |
 | [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | Yes |
-| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.3 | 0.8.3 | | Yes |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | Yes |
+| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.7 | 0.8.7 | | Yes |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | 98.3 | | Yes |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
 
@@ -302,7 +303,7 @@ Last Update November 14, 2019
 
 ### Single Cell RNA Sequencing Analysis
 Two options exist for alignment and gene expression count generation per cell.
-* 10x Genomics Cell Ranger 3.1.1
+* 10x Genomics Cell Ranger 3.1.0
 * starSOLO 2.7.3a
 
 **Cell Barcode Whitelist Notes:**
@@ -353,49 +354,9 @@ By running the following command you should be able to see the settings that jet
 ```
 $ jetstream settings -v
 ```
-The -v enables a verbose view. The important settings we need to change are slurm and pipelines home, by default they should look similar to this (please note that a bulk amount of settings were omitted from this block, only relevant settings are shown):
-```
-backend: local
-backends:
-  local:
-    (): jetstream.backends.local.LocalBackend
-    blocking_io_penalty: 30
-    cpus: null
-  slurm:
-    (): jetstream.backends.slurm.SlurmBackend
-    job_monitor_max_fails: 5
-    sacct_fields:
-    - JobID
-    - JobName
-    - Partition
-    - Account
-    - AllocCPUS
-    - State
-    - ExitCode
-    - Elapsed
-    - MaxRSS
-    sacct_frequency: 10
-.
-.
-.
-pipelines:
-  home: null
-projects:
-  history_filename: '%Y-%m-%dT%H-%M-%SZ.yaml'
-  history_max_tries: 10
-  id_format: p{id}
-  lock_timeout: 60
-runner:
-  autosave_max: 60
-  autosave_min: 5
-  id_format: js{id}
-  max_concurrency: null
-  throttle: 0.1
-tasks:
-  summary_fields:
-  - name
-  - state.status
-```
+The -v enables a verbose view. The important settings we need to change are the backend and pipelines home.
+
+
 We need to change the backend to be slurm for running at TGen and we also need to change the home location of our pipelines to the parent directory of the phoenix pipeline that we downloaded earlier. To do this, we simply need to edit the config.yaml file for jetstream or create the config file if it does not exist already. The location for this file is, by default, located in the .config/jetstream directory of our home directory. The following commands will allow you to find and edit/create this file:
 ```
 $ jetstream settings -c -b "slurm" -P "/home/USERNAME/jetstream_pipelines/"
@@ -410,7 +371,7 @@ This may return more than one result. The one we are looking for should look sim
 We're nearly done now. At the time of writing, jetstream/phoenix is not entirely environment agnostic. The phoenix pipeline currently looks for reference data within our /home/tgenref/ directory. If we have/want to use data not within /home/tgenref/ we simply need to modify the pipeline.yaml for phoenix. 
 We can view the pipeline.yaml by changing directories to where we downloaded the phoenix pipeline:  
 ```
-$ cd ./jetstream_pipelines/phoenix-development/
+$ cd ./jetstream_pipelines/phoenix/
 $ less pipeline.yaml
 ```  
 The areas that we are interested in are:
