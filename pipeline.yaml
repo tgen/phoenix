@@ -144,7 +144,7 @@ constants:
         Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
         (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
     manta:
-      module: manta/1.6-GCCcore-8.2.0
+      module: manta/1.6
       version: "1.6"
       verbose: Manta v1.6
       website: https://github.com/Illumina/manta
