@@ -2,10 +2,10 @@ __pipeline__:
   name: phoenix
   main: main.jst
   description: Human GRCh38 genomics suite
-  version: development
+  version: v0.4.2
 constants:
   install_path:
-    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
+    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-v0_4_2
   tools:
     bedtools:
       module: BEDTools/2.29.0-GCC-8.2.0-2.31.1
@@ -144,7 +144,7 @@ constants:
         Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
         (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
     manta:
-      module: manta/1.6-GCCcore-8.2.0
+      module: manta/1.6
       version: "1.6"
       verbose: Manta v1.6
       website: https://github.com/Illumina/manta
@@ -170,6 +170,17 @@ constants:
       citation: >
         A unified haplotype-based method for accurate and comprehensive variant calling Daniel P Cooke,
         David C Wedge, Gerton Lunter bioRxiv 456103; doi: https://doi.org/10.1101/456103
+    openmpi:
+      module: openmpi/3.1.3
+      version: 3.1.3
+      verbose: openmpi v3.1.3
+      website: https://www-lb.open-mpi.org/software/ompi/v3.1/
+      citation: >
+        Open MPI: Goals, Concept, and Design of a Next Generation MPI Implementation. Edgar Gabriel,
+        Graham E. Fagg, George Bosilca, Thara Angskun, Jack J. Dongarra, Jeffrey M. Squyres, Vishal Sahay,
+        Prabhanjan Kambadur, Brian Barrett, Andrew Lumsdaine, Ralph H. Castain, David J. Daniel, Richard
+        L. Graham, and Timothy S. Woodall. In Proceedings, 11th European PVM/MPI Users' Group Meeting,
+        Budapest, Hungary, September 2004.
     pairoscope:
       module: pairoscope/0.4.2
       version: 0.4.2
