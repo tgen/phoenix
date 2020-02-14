@@ -2,7 +2,7 @@ __pipeline__:
   name: phoenix
   main: main.jst
   description: Human GRCh38 genomics suite
-  version: v0.4.2
+  version: development
 constants:
   install_path:
     path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-v0_4_2
