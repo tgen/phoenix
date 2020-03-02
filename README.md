@@ -887,8 +887,6 @@ Now we wait for the pipeline to finish!
 ___
 
 
-
-
 ## Config
 
 ### Data file attributes
@@ -901,40 +899,20 @@ ___
 
   - *glPrep* [genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]
 
-    Not used yet.
-
-  - rnaStrandDirection [NotApplicable|]
-    rnaStrandType [NotApplicable|]
-    readOrientation [Inward|]
-    assayCode
-    fastqCode [R1|R2]
-    fastqPath
-    fileType
-    numberOfReads
-    
-    rgcn
-    rgid
-    rgks
-    rglb
-    rgpl
-    rgpm
-    rgpu
-    rgsm
-
-    sampleMergeKey
-    sampleName
-    subGroup
+    Used for determining the prep used to create the sample and then modifying how the
+    pipeline runs depending on the prep. This is used for single cell as well as CHIP preps
+    at the moment.
 
 # TGen Naming Convention
-- The naming format used in the LIMS trys to ensures all specimens have unique file names based on specific metadata fields
+- The naming format used in the LIMS tries to ensure that all specimens have unique file names based on specific metadata fields
 
 STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY<br/>
------------------ PatientID<br/>
----------------------- VisitID<br/>
---------------------------------- SpecimenID<br/>
------------------------------------------------------------------ SampleID<br/>
------------------------------------------------------------------ RG.SM (VCF file genotype column header)<br/>
-------------------------------------------------------------------------- sampleMergeKey (BAM filename)<br/>
+-------- PatientID<br/>
+---------------- VisitID<br/>
+------------------------ SpecimenID<br/>
+-------------------------------- SampleID<br/>
+---------------------------------------- RG.SM (VCF file genotype column header)<br/>
+------------------------------------------------ sampleMergeKey (BAM filename)<br/>
 
 # sampleName vs RG.SM vs sample_mergeKey
 
