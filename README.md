@@ -917,7 +917,10 @@ but we will explain the more unique variables. Here is an example:
 There are restrictions on what some of these variables can be assigned to, these will be denoted in the [ ]'s. 
 If the attribute isn't strictly required then it is not included in this list.
 
-  - *assayCode* [*WGS|*WGL|]  
+  - *assayCode*  
+    Genome: [*] We are not concerned about the assayCode for genomes.  
+    *Note: We have a number of bed files supporting our exome captures, these are the shortened capture codes*  
+    Exome: [ *AG2 | *E61 | *S5U | *S5X | *S6U | *S6X | *S7X | *ST2 | *STL | *STX | *TS1 | *V6C ]   
     Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
     tasks to the final workflow. Each sample discovered will take this attribute from
     the first file encountered for that sample in the config file.
