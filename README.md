@@ -96,24 +96,23 @@ _Click to show details_
 <summary><b>Public Tools Used by the Workflow</b></summary>  
 
 All tools build with public easybuild configuration files, available [here](https://github.com/easybuilders/easybuild).<br/>
-Last Update January 9, 2020  
-
+*Last Updated March 4th, 2020*  
 
 | Tool | Version Implemented | Current Version | Dependency and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
 | [bcftools](https://github.com/samtools/bcftools/releases) | 1.10.1 | **1.10.2** | | Yes |
 | [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | **2.29.2** | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
-| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.0** | star-fusion | Yes |
+| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.1** | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
 | [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | 3.1.0 | | Yes |
 | [deepvariant](https://github.com/google/deepvariant/releases) | 0.9.0 | 0.9.0 | singularity container | Yes |
 | [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.2** | staying with 0.7.6 for compatibility reasons | Yes |
 | [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.2** | 1.3.2 ensures python3 compatibility | Yes |
-| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4.0 | **4.1.4.1** |  | Yes |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4.0 | **4.1.5.0** |  | Yes |
 | [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion | Yes |
 | [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.8.0** |  | |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | Yes |
-| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | | |
+| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | **0.11.3** | | |
 | [htslib](https://github.com/samtools/htslib/releases) | 1.10.1 | **1.10.2** | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
@@ -122,7 +121,7 @@ Last Update January 9, 2020
 | [multiQC](https://github.com/ewels/MultiQC/releases) | 1.7 | **1.8** | python3 pip | Yes |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
 | [pairoscope](https://github.com/genome/pairoscope/releases) | 0.4.2 | 0.4.2 | | Yes |
-| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.31.9** | star-fusion | Yes |
+| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.30.2-RC1** | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
 | [python2](https://www.python.org/downloads/) | 2.7.15 | **2.7.17** | | Yes |
 | [python3](https://www.python.org/downloads/) | 3.7.2 | **3.8.2** | star-fusion, vcfmerger2 | Yes |
@@ -300,22 +299,6 @@ Last Update January 9, 2020
 * tidyverse (ggplot)
 
 </details>
-
-### Single Cell RNA Sequencing Analysis
-Two options exist for alignment and gene expression count generation per cell.
-* 10x Genomics Cell Ranger 3.1.0
-* starSOLO 2.7.3a
-
-**Cell Barcode Whitelist Notes:**
-PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
-Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
-Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
-Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
-Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
-Single Cell V(D)J = 737K-august-2016.txt
-CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
-CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
-CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
 
 ## Install Guide
 Please see the [wiki](https://github.com/tgen/phoenix/wiki) for a detailed install guide
@@ -887,23 +870,124 @@ Now we wait for the pipeline to finish!
 ___
 
 
-## Config
+## Required Configuration Variables
 
-### Data file attributes
+For each of our data files/fastqs we have some required data, many of which are self explained,
+but we will explain the more unique variables. Here is an example:
 
-  - *glType* [genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]
-    
+```json
+"dataFiles": [
+    {
+        "assayCode": "TPFWG",
+        "dnaRnaMergeKey": "GIAB_NA12878_1_CL_Whole",
+        "fastqCode": "R1",
+        "fastqPath": "/home/tgenref/homo_sapiens/control_files/giab/fastq/NA12878_140407_D00360_0016_ASUPERFQS01/Project_GIAB_NA12878_1_TPFWG/Sample_GIAB_NA12878_1_CL_Whole_C1_TPFWG_K18088_SUPERFQS01/GIAB_NA12878_1_CL_Whole_C1_TPFWG_K18088_SUPERFQS01_NoIndex_L001_R1_001.fastq.gz",
+        "fileType": "fastq",
+        "fraction": "Whole",
+        "glPrep": "Genome",
+        "glType": "Genome",
+        "index1Length": 6,
+        "index2Length": 0,
+        "limsLibraryRecordId": 64391,
+        "numberOfReads": 228228468,
+        "read1Length": 148,
+        "read2Length": 148,
+        "readOrientation": "Inward",
+        "rgcn": "TGen",
+        "rgid": "SUPERFQS01_1_K18088",
+        "rgks": "ATCACG",
+        "rglb": "K18088",
+        "rgpl": "ILLUMINA",
+        "rgpm": "HiSeq2500",
+        "rgpu": "SUPERFQS01_1",
+        "rgsm": "GIAB_NA12878_1_CL_Whole_C1",
+        "rnaStrandDirection": "NotApplicable",
+        "rnaStrandType": "NotApplicable",
+        "sampleMergeKey": "GIAB_NA12878_1_CL_Whole_C1_TPFWG",
+        "sampleName": "GIAB_NA12878_1_CL_Whole_C1_TPFWG_K18088",
+        "subGroup": "Constitutional",
+        "umiInLine": "false",
+        "umiLength": 0,
+        "umiRead": false
+    }
+```
+
+## Data file attributes
+
+There are restrictions on what some of these variables can be assigned to, these will be denoted in the [ ]'s. 
+If the attribute isn't strictly required then it is not included in this list.
+
+  - *assayCode* `[*WGS|*WGL|]`  
     Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
     tasks to the final workflow. Each sample discovered will take this attribute from
     the first file encountered for that sample in the config file.
 
-  - *glPrep* [genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]
+  - *dnaRnaMergeKey*  
+    Used during STAR alignment of RNA.
+    
+  - *fastqCode* `[R1|R2]`  
+    Assigns the read number of the fastq.
+    
+  - *fastqPath*   
+    Assigns the path to the fastq.
 
+  - *fileType*  
+    Assigns the file type.
+
+  - *glPrep* `[genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]`  
     Used for determining the prep used to create the sample and then modifying how the
     pipeline runs depending on the prep. This is used for single cell as well as CHIP preps
     at the moment.
 
-# TGen Naming Convention
+  - *glType* `[genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]`  
+    Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
+    tasks to the final workflow. Each sample discovered will take this attribute from
+    the first file encountered for that sample in the config file.
+
+  - *limsLibraryRecordId*  
+    Generated by our LIMS, this allows for the input of data back into the LIMS.
+
+  - *numberOfReads*  
+    Used for assigning the number of chunks during alignment.
+    
+  - *read1Length / read2Length*   
+    Used to assign the STAR indexes.
+    
+  - *readOrientation* `[inward|outward]`  
+    Used to set the strandedness of RNA. Used in conjunction with rnaStrandDirection and rnaStrandType.
+
+  - *rg values*  
+    These are standards set in the [SAM/BAM Format Specification](https://samtools.github.io/hts-specs/SAMv1.pdf):  
+    rgcn - Name of sequencing center producing the read  
+    rgid - Read group identifier.  
+    rgks - The array of nucleotide bases that correspond to the key sequence of each read.  
+    rglb - Library.  
+    rgpl - Platform/technology used to produce the reads.  
+    rgpm - Platform model. Free-form text providing further details of the platform/technology used.  
+    rgpu - Platform unit (e.g., flowcell-barcode.lane for Illumina or slide for SOLiD). Unique identifier.  
+    rgsm - Sample. Use pool name where a pool is being sequenced.  
+    
+  - *fraction*  
+    Relevant to the TGen naming scheme. See TGen Naming Convention.
+
+  - *rnaStrandDirection* `[notapplicable|forward|reverse]`  
+    Used during STAR alignment of RNA.
+    
+  - *rnaStrandType* `[unstranded|stranded]`  
+    Assigns the strandedness of RNA
+    
+  - *sampleMergeKey*   
+    This is the expected BAM filename and is used to merge data from multiple sequencing 
+    lanes or flowcells for data from the same specimen tested with the same assay
+
+  - *sampleName*  
+    This is the expected base FASTQ filename.
+
+  - *subGroup*   
+    Sets where the data file is for tumour or constitutional, changes the analysis of the data file as well as sets
+    the distinction of files during somatic analysis.
+
+## TGen Naming Convention
 - The naming format used in the LIMS tries to ensure that all specimens have unique file names based on specific metadata fields
 
 STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY<br/>
@@ -913,28 +997,3 @@ STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY<br/>
 -------------------------------- SampleID<br/>
 ---------------------------------------- RG.SM (VCF file genotype column header)<br/>
 ------------------------------------------------ sampleMergeKey (BAM filename)<br/>
-
-# sampleName vs RG.SM vs sample_mergeKey
-
-sampleName is used for naming files and merging together multiple input read files (fastqs) into 
-a single bam for the sample. RG SM is very similar but intentionally left separate to support 
-several "samples" from a single "specimen". 
-
-#### RG.SM
-
-`STUDY_1234_1_PB_Whole_C1`
-- This is the value we expect to be in the header of any VCF genotype column related to sample in question
-- Allows rapid comparison between assays for the same patient
-
-#### sampleMergeKey
-
-`STUDY_1234_1_PB_Whole_C1_KHWGS`
-- This key is used to merge data from multiple sequencing lanes or flowcells for data from the same specimen tested with the same assay
-- This is the expected BAM filename
-
-#### sampleName
-
-`STUDY_1234_1_PB_Whole_C1_KHWGS_K12345`
-- This is the expected base FASTQ filename
-
-
