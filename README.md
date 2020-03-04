@@ -917,7 +917,7 @@ but we will explain the more unique variables. Here is an example:
 There are restrictions on what some of these variables can be assigned to, these will be denoted in the [ ]'s. 
 If the attribute isn't strictly required then it is not included in this list.
 
-  - *assayCode* `[*WGS|*WGL|]`  
+  - *assayCode* [*WGS|*WGL|]  
     Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
     tasks to the final workflow. Each sample discovered will take this attribute from
     the first file encountered for that sample in the config file.
@@ -925,7 +925,7 @@ If the attribute isn't strictly required then it is not included in this list.
   - *dnaRnaMergeKey*  
     Used during STAR alignment of RNA.
     
-  - *fastqCode* `[R1|R2]`  
+  - *fastqCode* [R1|R2]  
     Assigns the read number of the fastq.
     
   - *fastqPath*   
@@ -934,12 +934,11 @@ If the attribute isn't strictly required then it is not included in this list.
   - *fileType*  
     Assigns the file type.
 
-  - *glPrep* `[genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]`  
+  - *glPrep* [genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]  
     Used for determining the prep used to create the sample and then modifying how the
-    pipeline runs depending on the prep. This is used for single cell as well as CHIP preps
-    at the moment.
+    pipeline runs depending on the prep. This is used for single cell as well as CHIP preps.
 
-  - *glType* `[genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]`  
+  - *glType* [genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]  
     Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
     tasks to the final workflow. Each sample discovered will take this attribute from
     the first file encountered for that sample in the config file.
@@ -953,7 +952,7 @@ If the attribute isn't strictly required then it is not included in this list.
   - *read1Length / read2Length*   
     Used to assign the STAR indexes.
     
-  - *readOrientation* `[inward|outward]`  
+  - *readOrientation* [inward|outward]  
     Used to set the strandedness of RNA. Used in conjunction with rnaStrandDirection and rnaStrandType.
 
   - *rg values*  
@@ -970,10 +969,10 @@ If the attribute isn't strictly required then it is not included in this list.
   - *fraction*  
     Relevant to the TGen naming scheme. See TGen Naming Convention.
 
-  - *rnaStrandDirection* `[notapplicable|forward|reverse]`  
+  - *rnaStrandDirection* [notapplicable|forward|reverse]  
     Used during STAR alignment of RNA.
     
-  - *rnaStrandType* `[unstranded|stranded]`  
+  - *rnaStrandType* [unstranded|stranded]  
     Assigns the strandedness of RNA
     
   - *sampleMergeKey*   
