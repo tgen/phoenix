@@ -1,6 +1,17 @@
 # Phoenix Workflow - A JetStream Workflow
 
-This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
+This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome 
+using ensembl version 98 gene models.  The workflow is designed to support project level analysis 
+that can include one or multiple types of data. Though not required the expectation is a project contains 
+data from a single individual thus centralizing all data types in a standardized output structure. The 
+workflow template supports a diverse array of analysis methods required to analyze DNA, RNA, and Single cell 
+data.  Based on standardized variables it also supports integrated analysis between data types.  For some 
+processes multiple options are provided that can be individually enabled or disabled by configuration 
+parameters. Like all JetStream workflows developed at TGen this workflow is designed to facilitate dynamic 
+analysis needs while ensuring compute and storage resources are used efficiently and not wasted. The primary 
+input is a JSON record from the TGen LIMS but hand created inputs in the form of a JSON or EXCEL worksheet can 
+also be provided when run manually or by submission to the related JetStream Centro (https://github.com/tgen/jetstream_centro) 
+web portal.
 
 ## Supported Analysis
 
@@ -9,51 +20,95 @@ _Click to show details_
 <details>
   <summary><b>DNA Alignment</b></summary>
 
-  The DNA Alignment module takes fastqs to aligned BAMs, then runs BAM qc steps.
-  `dnaAlignmentStyle` can be used to select from different alignment strategies.
+  The DNA Alignment module supports the generation of processed BAM or CRAM files from input fastqs files. 
+  The configuration files define one of three different alignment style variables (`dnaAlignmentStyle`) that 
+  all use BWA as the aligner but use different tools for alignment processing. Additionally, baserecalibration 
+  and/or conversion to CRAM for archiving can be enabled for any project.
+  
+  <img src="/images/DNA_Alignment_Options.png" width="768" height="512" title="DNA Alignment Options">
+  
+  - TGen [`tgen`] (default)
+    - Fastq files are chunked to 40M reads
+    - Chunks are aligned with BWA, processed with samtools fixmate and samtools sort
+    - Individual chunks are merged with samtools merge
+    - PCR duplicates and platform (optical) duplicates are marked with samtools markdup
+  - GATK Best Paractices [`broad`]("Like" - does not support uBAM inputs)
+    - Fastq files are chunked to 40M reads
+    - Chunks are aligned with BWA, and converted to BAM files with samtools view
+    - In one step individual chunks are merged and PCR or platform (optical) duplicates are marked with GATK/Picard markduplicates
+    - Alignment records are sorted using GATK/Picard SortSAM
+  - Clinical [`ashion`]
+    - Fastq files are concatenated
+    - In one step reads are aligned with BWA, duplicates are marked with samblaster, converted to BAM and sorted using sambamba
+  - Base Recalibration (optional, off by default)
+    - chunked baserecalibration using GATK
+  - BAM to CRAM (enabled by default)
+    - samtools view
 
 </details>
 
 <details>
-  <summary><b>Somatic Variant Calling</b></summary>
+  <summary><b>Constitutional Analysis</b></summary>
+  
+  These modules support the discovery of small variants (SNV/INDELs), structural abnormalities (deletions, 
+  duplications, inversions, translocations), and copy number abnormalities.
+
+  - Variant Discovery (SNV/INDEL)
+    - Deepvariant (Only calls on primary contigs 1-22, X, Y)
+      - requires a GPU compute resource
+    - GATK HaplotypeCaller (gVCF mode)
+      - gVCF generation
+      - single sample calling using genotypeGVCFs and CNNscroreVariant
+    - Freebayes
+    - Strelka2 (Germline mode)
+    - Octopus (Individual) (Only calls on primary contigs 1-22, X, Y)
+  - Structural Variant Detection
+    - Manta
+  - Copy Number Analysis
+    - iCHOR (operates on genomes only)
+
+</details>
+
+<details>
+  <summary><b>Somatic Analysis</b></summary>
   
   This module will run several somatic variant callers on tumor/normal 
   data pairs:
 
-  - Strelka2 (Somatic mode)
-  - Mutect2
-  - Lancet
-    - We do NOT run it on genomes 
-  - VarDictJava
-  - Octopus (Only calls on primary contigs 1-22, X, Y)
+  - Variant Discovery (SNV/INDEL)
+    - Strelka2 (Somatic mode)
+    - Mutect2
+    - Lancet
+      - Currently NOT enabled for genomes by default 
+    - VarDictJava
+    - Octopus (Only calls on primary contigs 1-22, X, Y)
+  - Structural Variant Detection
+    - Manta
+    - Delly
+  - Copy Number Analysis
+    - GATK CNV
+    - iCHOR (operates on genomes only)
 
 </details>
 
-<details>
-  <summary><b>Constitutional Variant Calling</b></summary>
-  
-  Generates constitutional variant call files (VCF) with several callers. Additionally,
-  this will create a gVCF for each sample that can be used to jointly call large
-  cohorts.
 
-  - Deepvariant (Only calls on primary contigs 1-22, X, Y)
-  - GATK HaplotypeCaller (gVCF mode)
-    - single sample calling using genotypeGVCFs and CNNscroreVariant
-  - Freebayes
-  - Strelka2 (Germline mode)
-  - Octopus (Individual) (Only calls on primary contigs 1-22, X, Y)
-
-</details>
 
 <details>
   <summary><b>RNA Alignment</b></summary>
 
   - STAR
+    - 2-pass mode
+    - outputs unsorted BAM by default
+      - option to output TranscriptomeSAM
+  - unsorted BAM is processed with samtools fixmate and samtools sort to output a sorted BAM
+  - PCR duplicates and platform duplicates (optical) are optionally marked as a QC step
+    - samtools markdup
+    - GATK/Picard MarkDuplicates (default recommendation)
 
 </details>
 
 <details>
-  <summary><b>Gene Expression Estimates</b></summary>
+  <summary><b>Gene and Transcript Expression Estimates</b></summary>
 
   - Salmon
   - Star-count - Recommended count method
@@ -65,28 +120,19 @@ _Click to show details_
 <details>
   <summary><b>Fusion Transcript Detection</b></summary>
 
-  - Salmon
-  - Star-count - Recommended count method
-  - HtSeq
-  - FeatureCounts
+  - Star-Fusion
 
 </details>
 
 <details>
-  <summary><b>Single Cell Sequencing</b></summary>
+  <summary><b>Single Cell RNA Sequencing</b></summary>
   
-  We support multiple things
+  - 10x Genomics Cell Ranger
+    - Supports 3' and 5' assays
+    - Supports VDJ analysis
+  - starSOLO
+    - Supports 3' and 5' assays
     
-  <details>
-    <summary><b>scRNAseq</b></summary>
-    XXX
-  </details>
-  
-  <details>
-    <summary><b>scDNAseq</b></summary>
-    YYY
-  </details>
-
 </details>
 
 ### Required Software
