@@ -1,6 +1,19 @@
+<img src="/images/TGen_Color_LOGO_medium.png" width="208.3" height="78" title="TGen Logo"> <br/>
 # Phoenix Workflow - A JetStream Workflow
 
-This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
+This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome 
+using ensembl version 98 gene models.  The workflow is designed to support project level analysis 
+that can include one or multiple types of data. Though not required the expectation is a project contains 
+data from a single individual thus centralizing all data types in a standardized output structure. The 
+workflow template supports a diverse array of analysis methods required to analyze DNA, RNA, and single cell 
+data.  Based on standardized variables it also supports integrated analysis between data types.  For some 
+processes multiple options are provided that can be individually enabled or disabled by configuration 
+parameters. Like all JetStream workflows developed at TGen this workflow is designed to facilitate our dynamic and 
+time sensitive analysis needs while ensuring compute and storage resources are used efficiently. The primary 
+input is a JSON record from the TGen LIMS but hand created inputs in the form of a JSON or EXCEL worksheet can 
+also be provided when run manually or by submission to the related JetStream Centro (https://github.com/tgen/jetstream_centro) 
+web portal. All required files defined the the `pipeline.yaml` can be created using code provided in the JetStream Resources
+repository (https://github.com/tgen/jetstream_resources).
 
 ## Supported Analysis
 
@@ -9,137 +22,287 @@ _Click to show details_
 <details>
   <summary><b>DNA Alignment</b></summary>
 
-  The DNA Alignment module takes fastqs to aligned BAMs, then runs BAM qc steps.
-  `dnaAlignmentStyle` can be used to select from different alignment strategies.
+  The DNA Alignment module supports the generation of processed BAM or CRAM files from input fastqs files. 
+  The configuration files define one of three different alignment style variables (`dnaAlignmentStyle`) that 
+  all use BWA as the aligner but use different tools for alignment processing. Additionally, baserecalibration 
+  and/or conversion to CRAM for archiving can be enabled for any project.
+  
+  <img src="/images/DNA_Alignment_Options.png" width="768" height="512" title="DNA Alignment Options">
+  
+  - TGen [`tgen`] (default)
+    - Fastq files are chunked to 40M reads
+    - Chunks are aligned with BWA, processed with samtools fixmate and samtools sort
+    - Individual chunks are merged with samtools merge
+    - PCR duplicates and platform (optical) duplicates are marked with samtools markdup
+  - GATK Best Paractices [`broad`]("Like" - does not support uBAM inputs)
+    - Fastq files are chunked to 40M reads
+    - Chunks are aligned with BWA, and converted to BAM files with samtools view
+    - In one step individual chunks are merged and PCR or platform (optical) duplicates are marked with GATK/Picard markduplicates
+    - Alignment records are sorted using GATK/Picard SortSAM
+  - Clinical [`ashion`]
+    - Fastq files are concatenated
+    - In one step reads are aligned with BWA, duplicates are marked with samblaster, converted to BAM and sorted using sambamba
+  - Base Recalibration (optional, off by default)
+    - chunked baserecalibration using GATK
+  - BAM to CRAM (enabled by default)
+    - samtools view
 
 </details>
 
 <details>
-  <summary><b>Somatic Variant Calling</b></summary>
+  <summary><b>Constitutional Analysis</b></summary>
+  
+  These modules support the discovery of small variants (SNV/INDELs), structural abnormalities (deletions, 
+  duplications, inversions, translocations), and copy number abnormalities on single constitutional samples
+  
+  <img src="/images/Constitutional_Analysis_Options.png" width="768" height="512" title="Constitutional Analysis">
+
+  - Variant Discovery (SNV/INDEL)
+    - Deepvariant (Only calls on primary contigs 1-22, X, Y)
+      - requires a GPU compute resource
+    - GATK HaplotypeCaller (gVCF mode)
+      - gVCF generation
+      - single sample calling using genotypeGVCFs and CNNscroreVariant
+    - Freebayes
+    - Strelka2 (Germline mode)
+    - Octopus (Individual) (Only calls on primary contigs 1-22, X, Y)
+  - Structural Variant Detection
+    - Manta
+  - Copy Number Analysis
+    - iCHOR (operates on genomes only)
+
+</details>
+
+<details>
+  <summary><b>Somatic Analysis</b></summary>
   
   This module will run several somatic variant callers on tumor/normal 
   data pairs:
-
-  - Strelka2 (Somatic mode)
-  - Mutect2
-  - Lancet
-    - We do NOT run it on genomes 
-  - VarDictJava
-  - Octopus (Only calls on primary contigs 1-22, X, Y)
-
-</details>
-
-<details>
-  <summary><b>Constitutional Variant Calling</b></summary>
   
-  Generates constitutional variant call files (VCF) with several callers. Additionally,
-  this will create a gVCF for each sample that can be used to jointly call large
-  cohorts.
+  <img src="/images/Somatic_Analysis_Options.png" width="768" height="512" title="Somatic Analysis">
 
-  - Deepvariant (Only calls on primary contigs 1-22, X, Y)
-  - GATK HaplotypeCaller (gVCF mode)
-    - single sample calling using genotypeGVCFs and CNNscroreVariant
-  - Freebayes
-  - Strelka2 (Germline mode)
-  - Octopus (Individual) (Only calls on primary contigs 1-22, X, Y)
-
-</details>
-
-<details>
-  <summary><b>RNA Alignment</b></summary>
-
-  - STAR
+  - Variant Discovery (SNV/INDEL)
+    - Strelka2 (Somatic mode)
+    - Mutect2
+    - Lancet
+      - Currently NOT enabled for genomes by default 
+    - VarDictJava
+    - Octopus (Only calls on primary contigs 1-22, X, Y)
+  - Structural Variant Detection
+    - Manta
+    - Delly
+  - Copy Number Analysis
+    - GATK CNV
+    - iCHOR (operates on genomes only)
 
 </details>
 
 <details>
-  <summary><b>Gene Expression Estimates</b></summary>
-
-  - Salmon
-  - Star-count - Recommended count method
-  - HtSeq
-  - FeatureCounts
-
-</details>
-
-<details>
-  <summary><b>Fusion Transcript Detection</b></summary>
-
-  - Salmon
-  - Star-count - Recommended count method
-  - HtSeq
-  - FeatureCounts
-
-</details>
-
-<details>
-  <summary><b>Single Cell Sequencing</b></summary>
+  <summary><b>RNA Analysis</b></summary>
   
-  We support multiple things
+  <img src="/images/RNA_Alignment_Quantitation_Options.png" width="768" height="512" title="RNA Analysis">
+ 
+  - RNA Alignment
+    - STAR
+      - 2-pass mode
+      - outputs unsorted BAM by default
+        - option to output TranscriptomeSAM
+    - unsorted BAM is processed with samtools fixmate and samtools sort to output a sorted BAM
+    - PCR duplicates and platform duplicates (optical) are optionally marked as a QC step
+      - samtools markdup
+      - GATK/Picard MarkDuplicates (default recommendation)
+  - Gene and Transcript Expression Estimates
+    - Salmon
+    - Star-count - Recommended count method
+    - HtSeq
+    - FeatureCounts
+  - Fusion Transcript Detection
+    - Star-Fusion
+
+</details>
+
+<details>
+  <summary><b>Single Cell RNA Sequencing</b></summary>
+  
+  - 10x Genomics Cell Ranger
+    - Supports 3' and 5' assays
+    - Supports VDJ analysis
+  - starSOLO
+    - Supports 3' and 5' assays
     
-  <details>
-    <summary><b>scRNAseq</b></summary>
-    XXX
-  </details>
+</details>
+
+## Output Folder Structure
+All final output files are placed in a standardized folder structure that generally reflects the relationship of files or 
+the processing order.
+```
+Project
+|--GeneralLibaryType
+|  |--AnalysisType
+|  |  |--Tool
+|  |  |  |--SampleName
+|  |  |     |--ResultFiles
+|  |  |--Tool
+|  |--AnalysisType
+|--GeneralLibaryType
+```
+
+<details>
+  <summary><b>Project Folder Example</b></summary>
   
-  <details>
-    <summary><b>scDNAseq</b></summary>
-    YYY
-  </details>
+``` 
+# Only Directories are Shown
+MMRF_1499
+├── exome
+│   ├── alignment
+│   │   └── bwa
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   │       │   └── stats
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   │           └── stats
+│   ├── constitutional_structural_calls
+│   │   └── manta
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   ├── constitutional_variant_calls
+│   │   ├── deepvariant
+│   │   │   └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   │   └── haplotypecaller
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   ├── somatic_copy_number
+│   │   └── gatk
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   ├── somatic_structural_calls
+│   │   ├── manta
+│   │   │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   │   └── pairoscope
+│   │       └── MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   └── somatic_variant_calls
+│       ├── lancet
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── mutect2
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── octopus
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── strelka2
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── vardict
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       └── vcfmerger2
+│           └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+├── genome
+│   ├── alignment
+│   │   └── bwa
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │       │   └── stats
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   │           └── stats
+│   ├── constitutional_structural_calls
+│   │   └── manta
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── constitutional_variant_calls
+│   │   ├── deepvariant
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   │   └── haplotypecaller
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── copy_number_analysis
+│   │   └── ichorCNA
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── somatic_copy_number
+│   │   └── gatk
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   ├── somatic_structural_calls
+│   │   ├── delly
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │   ├── manta
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │   └── pairoscope
+│   │       └── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   └── somatic_variant_calls
+│       ├── mutect2
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── octopus
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── strelka2
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── vardict
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       └── vcfmerger2
+│           └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+├── igv_symbolic_links
+├── jetstream
+│   ├── history
+│   └── logs
+├── qc
+│   └── multiqc_data
+└── rna
+    ├── alignment
+    │   └── star
+    │       └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+    │           └── stats
+    ├── fusions
+    │   └── starfusion
+    │       └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+    └── quant
+        ├── salmon
+        │   └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+        └── star
+            └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+```
 
 </details>
 
-### Required Software
+## Required Software
 _Click to show details_
 
 <details>
 <summary><b>Public Tools Used by the Workflow</b></summary>  
 
-All tools build with public easybuild configuration files - **REPO-X**.<br/>
-Last Update November 14, 2019  
+All tools build with public easybuild configuration files, available [here](https://github.com/easybuilders/easybuild).<br/>
+*Last Updated March 4th, 2020*  
 
-
-| Tool | Version Implemented | Current Version | Dependancy and Notes | EasyBuild |
+| Tool | Version Implemented | Current Version | Dependency and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
-| [bcftools](https://github.com/samtools/bcftools/releases) | 1.9 | 1.9 | | Yes |
-| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | 2.29.0 | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
-| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | 2.3.5.1 | star-fusion | Yes |
+| [bcftools](https://github.com/samtools/bcftools/releases) | 1.10.1 | **1.10.2** | | Yes |
+| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | **2.29.2** | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
+| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.1** | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
 | [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | 3.1.0 | | Yes |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.8.0 | 0.8.0 | singularity container | Yes |
-| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.1** | staying with 0.7.6 for compatibility reasons | Yes |
-| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | 1.3.1 | update allows skipping of high coverage regions | Yes |
-| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4 | 4.1.4 |  | Yes |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.9.0 | 0.9.0 | singularity container | Yes |
+| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.2** | staying with 0.7.6 for compatibility reasons | Yes |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.2** | 1.3.2 ensures python3 compatibility | Yes |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4.0 | **4.1.5.0** |  | Yes |
 | [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion | Yes |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | 2.7.2 |  | |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.8.0** |  | |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | Yes |
-| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | 0.11.1 | | |
-| [htslib](https://github.com/samtools/htslib/releases) | 1.9 | 1.9 | star-fusion(bgzip) | Yes |
+| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | **0.11.3** | | |
+| [htslib](https://github.com/samtools/htslib/releases) | 1.10.1 | **1.10.2** | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
-| [lancet](https://github.com/nygenome/lancet/releases) | 1.0.7 | 1.0.7 | | Yes |
+| [lancet](https://github.com/nygenome/lancet/releases) | 1.1.0 | 1.1.0 | | Yes |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | Yes |
-| [multiQC](https://github.com/Illumina/manta/releases) | 1.7 | 1.7 | python3 pip | Yes |
+| [multiQC](https://github.com/ewels/MultiQC/releases) | 1.7 | **1.8** | python3 pip | Yes |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
-| [perl](https://github.com/Illumina/manta/releases) | 5.28.1 | 5.30.0 | star-fusion | Yes |
+| [pairoscope](https://github.com/genome/pairoscope/releases) | 0.4.2 | 0.4.2 | | Yes |
+| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.30.2-RC1** | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
-| [python2](https://www.python.org/downloads/) | 2.7.15 | 2.7.15 | | Yes |
-| [python3](https://www.python.org/downloads/) | 3.7.2 | 3.8.0 | star-fusion, vcfmerger2 | Yes |
-| [R](https://www.r-project.org/) | 3.6.1 | 3.6.1 | gatk cnv, varDict, vcfmerger2 | Yes |
-| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | 0.7.0 | | |
+| [python2](https://www.python.org/downloads/) | 2.7.15 | **2.7.17** | | Yes |
+| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.8.2** | star-fusion, vcfmerger2 | Yes |
+| [R](https://www.r-project.org/) | 3.6.1 | **3.6.3** | gatk cnv, varDict, vcfmerger2 | Yes |
+| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | **0.7.1** | | |
 | [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | | |
-| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | 0.14.2 | self, star-fusion | Yes |
-| [samtools](https://github.com/samtools/samtools/releases) | 1.9 & 1.9-168-gb1e2c78 | 1.9 | markdup needs unreleased patch | Yes |
-| [singularity](https://github.com/COMBINE-lab/salmon/releases) | 3.5.0-rc2 | 3.4.2 | deepvariant | Yes, release-candidate |
+| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | **1.1.0** | self, star-fusion | Yes |
+| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | 1.10 | markdup needs unreleased patch | Yes |
+| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | **3.5.3** | deepvariant | Yes, release-candidate |
 | [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017| Yes |
 | [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | self, star-fusion | Yes |
 | [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | | Yes |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | | Yes |
 | [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
-| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | 2.8.6 | star-fusion | Yes |
+| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.9.1** | star-fusion | Yes |
 | [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | Yes |
-| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.3 | 0.8.3 | | Yes |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.2 | 98.2 | | Yes |
+| [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.7 | 0.8.7 | | Yes |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | **99.2** | | Yes |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
 
@@ -300,236 +463,27 @@ Last Update November 14, 2019
 
 </details>
 
-### Single Cell RNA Sequencing Analysis
-Two options exist for alignment and gene expression count generation per cell.
-* 10x Genomics Cell Ranger 3.1.1
-* starSOLO 2.7.3a
-
-**Cell Barcode Whitelist Notes:**
-PATH = /packages/cellranger/3.0.2/cellranger-cs/3.0.2/lib/python/cellranger/barcodes
-Single Cell 5' Gene Expression, transcript on R1 only = 737K-august-2016.txt
-Single Cell 5' Gene Expression, transcript on R2 only = 737K-august-2016.txt
-Single Cell 5' Gene Expression, paired-end = 737K-august-2016.txt
-Single Cell V(D)J, transcript on R2 only = 737K-august-2016.txt
-Single Cell V(D)J = 737K-august-2016.txt
-CHEMISTRY_SC3P_V1 = 737K-april-2014_rc.txt
-CHEMISTRY_SC3P_V2 = 737K-august-2016.txt
-CHEMISTRY_SC3P_V3 = 3M-february-2018.txt.gz
-
-## JJK Notes
-
-dataFiles : JSON/YAML grouping that includes all fastq metadata fields
-  * In main.main one of the first steps it so define each fastq meta data block as "file"
-    * so afterwards "file" references each fastq block, be it an R1 or R2 read
-    * then a series of additional metadata fields are added
-      * name - this is the same as sampleMergeKey unless not defined in which case it will be sampleName
-      * basename - proper fastq name not full path (ie. file.R1.fastq)
-      * gltype - lower(glType)
-      * glprep - lower(glPrep)
-      
-Single cell workflows are passed dataFiles object (ie all fastq sets)
-  * in the single_cell/main
-    * we group the dataFiles by "name" and test if the first file object is single cell or not
-      * this creates unneeded code to then separate the libraries from within the group_by names records
-      * IMPROVED code would group by library, rglb, as this is the analyzed unit for single cell
-      * then the list of files submitted would be the needed unit of library summarized data files
-
 ## Install Guide
-First, jetstream must be installed, available [here](https://github.com/tgen/jetstream/tree/master). There is an install guide for jetstream available at the link provided, but the gist of the guide is to install using pip3 using a command similar to:  
-```
-$ pip3 install --upgrade --user git+https://github.com/tgen/jetstream.git@master
-```  
-Then the recommended install method for installing the phoenix-development pipeline is:
-```
-$ cd ~
-$ mkdir jetstream_pipelines
-$ cd jetstream_pipelines
-$ git clone --single-branch --branch develop https://github.com/tgen/phoenix
-$ mv phoenix phoenix-development
-```  
-We're getting close to being able to easily run the pipeline now, and from this point you might be able to hack your way to make everything run. But it is recommended that you use similar settings to the ones detailed here in order to get the best support possible.
-
-By running the following command you should be able to see the settings that jetstream is currently using:
-```
-$ jetstream settings -v
-```
-The -v enables a verbose view. The important settings we need to change are slurm and pipelines home, by default they should look similar to this (please note that a bulk amount of settings were omitted from this block, only relevant settings are shown):
-```
-backend: local
-backends:
-  local:
-    (): jetstream.backends.local.LocalBackend
-    blocking_io_penalty: 30
-    cpus: null
-  slurm:
-    (): jetstream.backends.slurm.SlurmBackend
-    job_monitor_max_fails: 5
-    sacct_fields:
-    - JobID
-    - JobName
-    - Partition
-    - Account
-    - AllocCPUS
-    - State
-    - ExitCode
-    - Elapsed
-    - MaxRSS
-    sacct_frequency: 10
-.
-.
-.
-pipelines:
-  home: null
-projects:
-  history_filename: '%Y-%m-%dT%H-%M-%SZ.yaml'
-  history_max_tries: 10
-  id_format: p{id}
-  lock_timeout: 60
-runner:
-  autosave_max: 60
-  autosave_min: 5
-  id_format: js{id}
-  max_concurrency: null
-  throttle: 0.1
-tasks:
-  summary_fields:
-  - name
-  - state.status
-```
-We need to change the backend to be slurm for running at TGen and we also need to change the home location of our pipelines to the parent directory of the phoenix pipeline that we downloaded earlier. To do this, we simply need to edit the config.yaml file for jetstream or create the config file if it does not exist already. The location for this file is, by default, located in the .config/jetstream directory of our home directory. The following commands will allow you to find and edit/create this file:
-```
-$ jetstream settings -c -b "slurm" -P "/home/USERNAME/jetstream_pipelines/"
-```  
-Note that USERNAME is replaced by your username, e.g. "/home/jsmith/jetstream_pipelines/" for a user name John Smith within TGen. Also, the home location will differ by install and should be the location of our downloaded pipelines. If you aren't sure where they are downloaded, use
-```
-$ cd ~
-$ find . -name pipeline.yaml
-```
-This may return more than one result. The one we are looking for should look similar to "./jetstream_pipelines/phoenix/pipeline.yaml". The ./ means that we have jetstream_pipelines in our current directory. Which means that the true path to our pipelines is /home/USER/jetstream_pipeline/. Note that USER is your username, within TGen this is generally your first initial and then last name. Like the John Smith example above.  
-
-We're nearly done now. At the time of writing, jetstream/phoenix is not entirely environment agnostic. The phoenix pipeline currently looks for reference data within our /home/tgenref/ directory. If we have/want to use data not within /home/tgenref/ we simply need to modify the pipeline.yaml for phoenix. 
-We can view the pipeline.yaml by changing directories to where we downloaded the phoenix pipeline:  
-```
-$ cd ./jetstream_pipelines/phoenix-development/
-$ less pipeline.yaml
-```  
-The areas that we are interested in are:
-```
-__pipeline__:
-  name: phoenix
-  main: main.jst
-  description: Human GRCh38 genomics suite
-  version: development
-constants:
-  install_path:
-    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-development
-.
-.
-.
-phoenix:
-    species: Homo sapiens
-    genome_build: grch38_hg38
-    reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
-    reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
-    reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
-    dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
-    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
-    gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
-    gnomad_exome_v2_1_1_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
-    gnomad_genome_v3_0_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
-    gnomad_exome_v2_1_1_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
-    gnomad_genome_v3_0_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
-    cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
-    cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
-    clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
-    bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
-    black_list: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz
-    delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
-    delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
-    delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF.py
-    delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel.py
-    plotCNVplus_Rscript: plotCNVplus_06b34ff.R
-    stats2json: samStats2json.py
-    stats2lims: uploadStats2Lims.py
-    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
-    cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
-    scrna_chemistry_options:
-      X3SCR:
-        chemistry_name: SC3Pv1
-        umi_length: 10
-        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-april-2014_rc.txt
-      XCSCR:
-        chemistry_name: SC3Pv2
-        umi_length: 10
-        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
-      X3SC3:
-        chemistry_name: SC3Pv3
-        umi_length: 12
-        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/3M-february-2018.txt.gz
-      X5SCR:
-        chemistry_name: SC5P-R2
-        umi_length: 10
-        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
-      unknown:
-        chemistry_name: auto
-        umi_lenth: 10
-        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
-    gatk_known_sites:
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-    gatk_cnn_resources:
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/hapmap_3.3.hg38.vcf.gz
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-    bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
-    gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
-    ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
-    ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
-    gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
-    gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
-    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.transcriptome.fasta
-    salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
-    sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
-    sex_check_vcf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.vcf.gz
-    lymphocyteReceptor_loci_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
-    star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
-    star_indices:
-      # Multiple STAR references defined here in order to accommodate 
-      # RNA data with different read lengths.
-      75bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/75bpReads
-      82bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/82bpReads
-      83bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/83bpReads
-      86bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/86bpReads
-      87bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/87bpReads
-      89bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/89bpReads
-      100bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/100bpReads
-      109bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/109bpReads
-      150bpReads: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a/150bpReads
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/STAR-fusion/GRCh38_gencode_v31_CTAT_lib_Oct012019.plug-n-play/ctat_genome_lib_build_dir
-.
-.
-.
-```
-In order to change the location that phoenix looks for reference data, one can either manually modify each individual line, or as long as we have not left the phoenix directory, we can use:
-```
-sed -i 's|/home/tgenref|/home/newLocation|g' pipeline.yaml
-```
-To change all /home/tgenref text to /home/newLocation where /home/newLocation is the location of where our new references are. We can also use sed to replace more of the paths to reference data if needed simply by replicating the pattern above.  
-
-Congratulations! That's it! We now have jetstream and the phoenix pipeline installed. In the next section we will discuss how we can actually run the pipeline from the command line.  
+Please see the [wiki](https://github.com/tgen/phoenix/wiki) for a detailed install guide
 
 ## Running from command line
-Now that we have phoenix installed and ready to run, we need to setup a project to run. To do so, we need to create a config file for our project. The general format is as follows:
+In order to run from the command line, we need to create a config file for our project. The general format is as follows:
 ```json
 {
-  "project": "",
-  "study": "",
-  "email": "",
-  "hpcAccount": "",
-  "isilonPath": "",
-  "pipeline": "phoenix",
-  "dataFiles": []
+    "project": "",
+    "study": "",
+    "email": "",
+    "hpcAccount": "",
+    "isilonPath": "",
+    "pipeline": "phoenix",
+    "dataFiles": [],
+    "dnaAlignmentStyle": "tgen",
+    "email": "somebody@tgen.org",
+    "isilonPath": "",
+    "pipeline": "phoenix@version",
+    "project": "Project_Name",
+    "submitter": "somebody",
+    "tasks": {},
 }
 ```
 
@@ -823,38 +777,148 @@ Here is a larger example with actual data for running the phoenix pipeline on a 
     "project": "GIAB_NA12878",
     "sex": "Female",
     "study": "GIAB",
-    "submitter": "euser",
+    "submitter": "user",
     "submitterEmail": "examplet@tgen.org",
     "tasks": {
-        "Exome_base_recalibration_gatk": false,
-        "Exome_deepvariant_deepvariant": false,
-        "Exome_freebayes_freebayes": false,
-        "Exome_genotype_hc_gvcf_gatk": false,
-        "Exome_hc_gvcf_gatk": true,
-        "Exome_hmmcopy_make_wig_HMM_Copy_Utils": true,
-        "Exome_ichor_cna_ichor": true,
-        "Exome_mark_duplicates_gatk": false,
-        "Exome_mark_duplicates_samblaster": false,
-        "Exome_mark_duplicates_samtools": true,
-        "Exome_mutect2_gatk": true,
-        "Exome_octopus_octopus": false,
-        "Exome_strelka2_strelka2": true,
-        "Genome_base_recalibration_gatk": false,
-        "Genome_deepvariant_deepvariant": false,
-        "Genome_freebayes_freebayes": false,
-        "Genome_genotype_hc_gvcf_gatk": false,
-        "Genome_hc_gvcf_gatk": true,
-        "Genome_hmmcopy_make_wig_HMM_Copy_Utils": true,
-        "Genome_ichor_cna_ichor": true,
-        "Genome_mark_duplicates_gatk": false,
-        "Genome_mark_duplicates_samblaster": false,
-        "Genome_mark_duplicates_samtools": true,
-        "Genome_mutect2_gatk": true,
-        "Genome_octopus_octopus": false,
-        "Genome_strelka2_strelka2": true
+        "Exome_alignment_base_recalibration_gatk": false,
+        "Exome_alignment_mark_duplicates_gatk": false,
+        "Exome_alignment_mark_duplicates_samblaster": false,
+        "Exome_alignment_mark_duplicates_samtools": true,
+        "Exome_constitutional_annotate_vcfs_bcftools_clinvar_20190715": true,
+        "Exome_constitutional_annotate_vcfs_bcftools_cosmic_coding_v89": true,
+        "Exome_constitutional_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
+        "Exome_constitutional_annotate_vcfs_bcftools_dbsnp_v152": true,
+        "Exome_constitutional_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
+        "Exome_constitutional_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
+        "Exome_constitutional_annotate_vcfs_snpEff_ann": true,
+        "Exome_constitutional_annotate_vcfs_vep": true,
+        "Exome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs": false,
+        "Exome_constitutional_snp_indel_caller_deepvariant": true,
+        "Exome_constitutional_snp_indel_caller_freebayes": false,
+        "Exome_constitutional_snp_indel_caller_gatk_HaplotypeCaller": true,
+        "Exome_constitutional_snp_indel_caller_octopus": false,
+        "Exome_constitutional_snp_indel_caller_strelka2": false,
+        "Exome_constitutional_structural_caller_manta": true,
+        "Exome_quality_control_constitutional_contamination_check_VerifyBamID": true,
+        "Exome_quality_control_constitutional_sex_check_freebayes": true,
+        "Exome_quality_control_genotype_concordance_snpSniffer": true,
+        "Exome_quality_control_stats_gatk_CollectHsMetrics": true,
+        "Exome_quality_control_stats_gatk_CollectMultipleMetrics": true,
+        "Exome_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG": true,
+        "Exome_quality_control_stats_samtools_flagstat": true,
+        "Exome_quality_control_stats_samtools_idxstats": true,
+        "Exome_quality_control_stats_samtools_stats": true,
+        "Exome_somatic_annotate_vcfs_bcftools_clinvar_20190715": true,
+        "Exome_somatic_annotate_vcfs_bcftools_cosmic_coding_v89": true,
+        "Exome_somatic_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
+        "Exome_somatic_annotate_vcfs_bcftools_dbsnp_v152": true,
+        "Exome_somatic_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
+        "Exome_somatic_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
+        "Exome_somatic_annotate_vcfs_snpEff_ann": true,
+        "Exome_somatic_annotate_vcfs_vep": true,
+        "Exome_somatic_cna_caller_gatk": true,
+        "Exome_somatic_merge_vcfs_vcfMerger2": true,
+        "Exome_somatic_snp_indel_caller_VarDict": true,
+        "Exome_somatic_snp_indel_caller_gatk_mutect2": true,
+        "Exome_somatic_snp_indel_caller_lancet": true,
+        "Exome_somatic_snp_indel_caller_octopus": true,
+        "Exome_somatic_snp_indel_caller_strelka2": true,
+        "Exome_somatic_structural_caller_delly": false,
+        "Exome_somatic_structural_caller_manta": true,
+        "Exome_tumor_mm_igtx_pairoscope": true,
+        "Genome_alignment_base_recalibration_gatk": false,
+        "Genome_alignment_mark_duplicates_gatk": false,
+        "Genome_alignment_mark_duplicates_samblaster": false,
+        "Genome_alignment_mark_duplicates_samtools": true,
+        "Genome_constitutional_annotate_vcfs_bcftools_clinvar_20190715": true,
+        "Genome_constitutional_annotate_vcfs_bcftools_cosmic_coding_v89": true,
+        "Genome_constitutional_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
+        "Genome_constitutional_annotate_vcfs_bcftools_dbsnp_v152": true,
+        "Genome_constitutional_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
+        "Genome_constitutional_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
+        "Genome_constitutional_annotate_vcfs_snpEff_ann": true,
+        "Genome_constitutional_annotate_vcfs_vep": true,
+        "Genome_constitutional_cna_caller_ichor": true,
+        "Genome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs": false,
+        "Genome_constitutional_snp_indel_caller_deepvariant": true,
+        "Genome_constitutional_snp_indel_caller_freebayes": false,
+        "Genome_constitutional_snp_indel_caller_gatk_HaplotypeCaller": true,
+        "Genome_constitutional_snp_indel_caller_octopus": false,
+        "Genome_constitutional_snp_indel_caller_strelka2": false,
+        "Genome_constitutional_structural_caller_manta": true,
+        "Genome_quality_control_constitutional_contamination_check_VerifyBamID": true,
+        "Genome_quality_control_constitutional_sex_check_freebayes": true,
+        "Genome_quality_control_genotype_concordance_snpSniffer": true,
+        "Genome_quality_control_stats_gatk_CollectMultipleMetrics": true,
+        "Genome_quality_control_stats_gatk_CollectRawWgsMetrics": true,
+        "Genome_quality_control_stats_gatk_CollectWgsMetrics": true,
+        "Genome_quality_control_stats_gatk_CollectWgsMetricsWithNonZeroCoverage": true,
+        "Genome_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG": true,
+        "Genome_quality_control_stats_samtools_flagstat": true,
+        "Genome_quality_control_stats_samtools_idxstats": true,
+        "Genome_quality_control_stats_samtools_stats": true,
+        "Genome_somatic_annotate_vcfs_bcftools_clinvar_20190715": true,
+        "Genome_somatic_annotate_vcfs_bcftools_cosmic_coding_v89": true,
+        "Genome_somatic_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
+        "Genome_somatic_annotate_vcfs_bcftools_dbsnp_v152": true,
+        "Genome_somatic_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
+        "Genome_somatic_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
+        "Genome_somatic_annotate_vcfs_snpEff_ann": true,
+        "Genome_somatic_annotate_vcfs_vep": true,
+        "Genome_somatic_cna_caller_gatk": true,
+        "Genome_somatic_merge_vcfs_vcfMerger2": true,
+        "Genome_somatic_snp_indel_caller_VarDict": true,
+        "Genome_somatic_snp_indel_caller_gatk_mutect2": true,
+        "Genome_somatic_snp_indel_caller_lancet": false,
+        "Genome_somatic_snp_indel_caller_octopus": true,
+        "Genome_somatic_snp_indel_caller_strelka2": true,
+        "Genome_somatic_structural_caller_delly": true,
+        "Genome_somatic_structural_caller_manta": true,
+        "Genome_tumor_mm_igtx_pairoscope": true,
+        "RNA_alignment_rna_alignment_STAR": true,
+        "RNA_quality_control_genotype_concordance_snpSniffer": true,
+        "RNA_quality_control_stats_gatk_CollectMultipleMetrics": true,
+        "RNA_quality_control_stats_gatk_CollectRnaSeqMetrics": true,
+        "RNA_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG": true,
+        "RNA_quality_control_stats_samtools_bedcov": true,
+        "RNA_quality_control_stats_samtools_flagstat": true,
+        "RNA_quality_control_stats_samtools_idxstats": true,
+        "RNA_quality_control_stats_samtools_stats": true,
+        "RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM": false,
+        "RNA_transcriptome_fusion_caller_STAR_Fusion": true,
+        "RNA_transcriptome_quantify_expression_HTseq": false,
+        "RNA_transcriptome_quantify_expression_RSEM": false,
+        "RNA_transcriptome_quantify_expression_salmon_bam": false,
+        "RNA_transcriptome_quantify_expression_salmon_fastqs": true,
+        "RNA_transcriptome_quantify_expression_subread_featureCounts": false,
+        "SingleCellRNA_VDJ_Assembly_cellranger_vdj": true,
+        "SingleCellRNA_transcriptome_quantify_expression_STARsolo": true,
+        "SingleCellRNA_transcriptome_quantify_expression_cellranger_count": true
     },
     "varDB": false
 }
+```
+
+Looking at the block of objects between the datafiles and the tasks one might notice some objects not mentioned in the minimal example provided in the general example. Some of these might be specific to the project and your environment. The common ones that we use in our primary use case are:
+```json
+    "dnaAlignmentStyle": "",
+    "email": "",
+    "ethnicity": "",
+    "familyCode": "",
+    "holdConfig": false,
+    "hpcAccount": "",
+    "isilonPath": "",
+    "matchedNormal": true,
+    "matchedNormalToUse": "",
+    "maternalID": "",
+    "patCode": "",
+    "paternalID": "",
+    "pipeline": "",
+    "project": "",
+    "sex": "",
+    "study": "",
+    "submissionSource": "",
+    "submitter": "",
 ```
   </p>
 </details>
@@ -969,76 +1033,137 @@ Now we wait for the pipeline to finish!
 ___
 
 
+## Required Configuration Variables
 
+For each of our data files/fastqs we have some required data, many of which are self explained,
+but we will explain the more unique variables. Here is an example:
 
-## Config
+```json
+"dataFiles": [
+    {
+        "assayCode": "TPFWG",
+        "dnaRnaMergeKey": "GIAB_NA12878_1_CL_Whole",
+        "fastqCode": "R1",
+        "fastqPath": "/home/tgenref/homo_sapiens/control_files/giab/fastq/NA12878_140407_D00360_0016_ASUPERFQS01/Project_GIAB_NA12878_1_TPFWG/Sample_GIAB_NA12878_1_CL_Whole_C1_TPFWG_K18088_SUPERFQS01/GIAB_NA12878_1_CL_Whole_C1_TPFWG_K18088_SUPERFQS01_NoIndex_L001_R1_001.fastq.gz",
+        "fileType": "fastq",
+        "fraction": "Whole",
+        "glPrep": "Genome",
+        "glType": "Genome",
+        "index1Length": 6,
+        "index2Length": 0,
+        "limsLibraryRecordId": 64391,
+        "numberOfReads": 228228468,
+        "read1Length": 148,
+        "read2Length": 148,
+        "readOrientation": "Inward",
+        "rgcn": "TGen",
+        "rgid": "SUPERFQS01_1_K18088",
+        "rgks": "ATCACG",
+        "rglb": "K18088",
+        "rgpl": "ILLUMINA",
+        "rgpm": "HiSeq2500",
+        "rgpu": "SUPERFQS01_1",
+        "rgsm": "GIAB_NA12878_1_CL_Whole_C1",
+        "rnaStrandDirection": "NotApplicable",
+        "rnaStrandType": "NotApplicable",
+        "sampleMergeKey": "GIAB_NA12878_1_CL_Whole_C1_TPFWG",
+        "sampleName": "GIAB_NA12878_1_CL_Whole_C1_TPFWG_K18088",
+        "subGroup": "Constitutional",
+        "umiInLine": "false",
+        "umiLength": 0,
+        "umiRead": false
+    }
+```
 
-### Data file attributes
+## Data file attributes
 
-  - *glType* [genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]
-    
+There are restrictions on what some of these variables can be assigned to, these will be denoted in the [ ]'s. 
+If the attribute isn't strictly required then it is not included in this list.
+
+  - *assayCode*  
+    Genome: [*] We are not concerned about the assayCode for genomes.  
+    *Note: We have a number of bed files supporting our exome captures, these are the shortened capture codes*  
+    Exome: [ *AG2 | *E61 | *S5U | *S5X | *S6U | *S6X | *S7X | *ST2 | *STL | *STX | *TS1 | *V6C ]   
     Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
     tasks to the final workflow. Each sample discovered will take this attribute from
     the first file encountered for that sample in the config file.
 
-  - *glPrep* [genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]
-
-    Not used yet.
-
-  - rnaStrandDirection [NotApplicable|]
-    rnaStrandType [NotApplicable|]
-    readOrientation [Inward|]
-    assayCode
-    fastqCode [R1|R2]
-    fastqPath
-    fileType
-    numberOfReads
+  - *dnaRnaMergeKey*  
+    Used during DNA/RNA integrations steps. It defines the pairing of DNA and RNA samples as a project might have 
+    multiple DNA and RNA pairs, for instance it can be used to ensure the diagnosis exome and RNA are paired together
+    and the relapse exome is not paired with the diagnosis RNA.
     
-    rgcn
-    rgid
-    rgks
-    rglb
-    rgpl
-    rgpm
-    rgpu
-    rgsm
+  - *fastqCode* [R1|R2]  
+    Assigns the read number of the fastq following standard Illumina paired-end nomenclature.
+    
+  - *fastqPath*   
+    Assigns the path to the fastq.
 
-    sampleMergeKey
-    sampleName
-    subGroup
+  - *fileType*  
+    Assigns the file type.
 
-# TGen Naming Convention
-- The naming format used in the LIMS trys to ensures all specimens have unique file names based on specific metadata fields
+  - *glPrep* [genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]  
+    Used for determining the prep used to create the sample and then modifying how the
+    pipeline runs depending on the prep. This is used to configure single cell as well as CHIP preps.
 
-STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY<br/>
------------------ PatientID<br/>
----------------------- VisitID<br/>
---------------------------------- SpecimenID<br/>
------------------------------------------------------------------ SampleID<br/>
------------------------------------------------------------------ RG.SM (VCF file genotype column header)<br/>
-------------------------------------------------------------------------- sampleMergeKey (BAM filename)<br/>
+  - *glType* [genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]  
+    Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
+    tasks to the final workflow. Each sample discovered will take this attribute from
+    the first file encountered for that sample in the config file.
 
-# sampleName vs RG.SM vs sample_mergeKey
+  - *limsLibraryRecordId*  
+    Generated by our LIMS, this allows for the input of data back into the LIMS via a REST-API.
 
-sampleName is used for naming files and merging together multiple input read files (fastqs) into 
-a single bam for the sample. RG SM is very similar but intentionally left separate to support 
-several "samples" from a single "specimen". 
+  - *numberOfReads*  
+    Used for validatint the number of chunks created during alignment.
+    
+  - *read1Length / read2Length*   
+    Used to select the correct STAR indexes.
+    
+  - *readOrientation* [inward|outward]  
+    Used to set the strand orientation of RNA assays. Used in conjunction with rnaStrandDirection and rnaStrandType.
 
-#### RG.SM
+  - *rg values*  
+    These are standards set in the [SAM/BAM Format Specification](https://samtools.github.io/hts-specs/SAMv1.pdf):  
+    rgcn - Name of sequencing center producing the read  
+    rgid - Read group identifier.  
+    rgks - The array of nucleotide bases that correspond to the key sequence of each read.  
+    rglb - Unique identifier for the library.  
+    rgpl - Platform/technology used to produce the reads.  
+    rgpm - Platform model. Used to configure platform duplicate marking thresholds. Free-form text providing further details of the platform/technology used.  
+    rgpu - Platform unit (e.g., flowcell-barcode.lane for Illumina or slide for SOLiD). Unique identifier.  
+    rgsm - Sample. Use pool name where a pool is being sequenced.  
+    
+  - *fraction*  
+    Relevant to the TGen naming scheme. See TGen Naming Convention.
 
-`STUDY_1234_1_PB_Whole_C1`
-- This is the value we expect to be in the header of any VCF genotype column related to sample in question
-- Allows rapid comparison between assays for the same patient
+  - *rnaStrandDirection* [notapplicable|forward|reverse]  
+    Used during STAR alignment of RNA.
+    
+  - *rnaStrandType* [unstranded|stranded]  
+    Assigns the strand orientation of an RNA library
+    
+  - *sampleMergeKey*   
+    This is the expected BAM filename and is used to merge data from multiple sequencing 
+    lanes or flowcells for data from the same specimen (rgsm) tested with the same assay
 
-#### sampleMergeKey
+  - *sampleName*  
+    This is the expected base FASTQ filename.
 
-`STUDY_1234_1_PB_Whole_C1_KHWGS`
-- This key is used to merge data from multiple sequencing lanes or flowcells for data from the same specimen tested with the same assay
-- This is the expected BAM filename
+  - *subGroup*   
+    Sets where the data file is for tumour or constitutional, changes the analysis of the data file as well as sets
+    the distinction of files during somatic analysis.
 
-#### sampleName
+## TGen Naming Convention
+Many of the naming structures used are defined by the standardize naming structure used at TGen that ensures all files 
+have a unique but descriptive name. It is designed to support serial collection and multiple collections from 
+difference sources on a single day.  Furthermore, sample processing methods can be encoded.
 
-`STUDY_1234_1_PB_Whole_C1_KHWGS_K12345`
-- This is the expected base FASTQ filename
+STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY
 
-
+Patient_ID = STUDY_PATIENT<br/>
+Visit_ID = STUDY_PATIENT_VISIT<br/>
+Specimen_ID = STUDY_PATIENT_VISIT_SOURCE<br/>
+Sample_ID = STUDY_PATIENT_VISIT_SOURCE_FRACTION<br/>
+RG.SM = STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement (VCF file genotype column header)<br/>
+sampleMergeKey = STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY (BAM filename, ensures different assays are not merged together)<br/>
