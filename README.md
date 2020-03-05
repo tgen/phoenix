@@ -130,7 +130,127 @@ _Click to show details_
     
 </details>
 
-### Required Software
+## Output Folder Structure
+All final output files are placed in a standardized folder structure that generally reflects the relationship of files or 
+the processing order.
+```
+Project
+|--GeneralLibaryType
+|  |--AnalysisType
+|  |  |--Tool
+|  |  |  |--SampleName
+|  |  |     |--ResultFiles
+|  |  |--Tool
+|  |--AnalysisType
+|--GeneralLibaryType
+```
+
+<details>
+  <summary><b>Project Folder Example</b></summary>
+  
+``` 
+# Only Directories are Shown
+MMRF_1499
+├── exome
+│   ├── alignment
+│   │   └── bwa
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   │       │   └── stats
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   │           └── stats
+│   ├── constitutional_structural_calls
+│   │   └── manta
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   ├── constitutional_variant_calls
+│   │   ├── deepvariant
+│   │   │   └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   │   └── haplotypecaller
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   ├── somatic_copy_number
+│   │   └── gatk
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   ├── somatic_structural_calls
+│   │   ├── manta
+│   │   │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   │   └── pairoscope
+│   │       └── MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   └── somatic_variant_calls
+│       ├── lancet
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── mutect2
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── octopus
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── strelka2
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── vardict
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       └── vcfmerger2
+│           └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+├── genome
+│   ├── alignment
+│   │   └── bwa
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │       │   └── stats
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   │           └── stats
+│   ├── constitutional_structural_calls
+│   │   └── manta
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── constitutional_variant_calls
+│   │   ├── deepvariant
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   │   └── haplotypecaller
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── copy_number_analysis
+│   │   └── ichorCNA
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── somatic_copy_number
+│   │   └── gatk
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   ├── somatic_structural_calls
+│   │   ├── delly
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │   ├── manta
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │   └── pairoscope
+│   │       └── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   └── somatic_variant_calls
+│       ├── mutect2
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── octopus
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── strelka2
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── vardict
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       └── vcfmerger2
+│           └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+├── igv_symbolic_links
+├── jetstream
+│   ├── history
+│   └── logs
+├── qc
+│   └── multiqc_data
+└── rna
+    ├── alignment
+    │   └── star
+    │       └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+    │           └── stats
+    ├── fusions
+    │   └── starfusion
+    │       └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+    └── quant
+        ├── salmon
+        │   └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+        └── star
+            └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+```
+
+</details>
+
+## Required Software
 _Click to show details_
 
 <details>
@@ -1034,7 +1154,7 @@ If the attribute isn't strictly required then it is not included in this list.
 
 ## TGen Naming Convention
 Many of the naming structures used are defined by the standardize naming structure used at TGen that ensures all files 
-have a unique name but descriptive name. It is designed to support serial collection and multiple collections from 
+have a unique but descriptive name. It is designed to support serial collection and multiple collections from 
 difference sources on a single day.  Furthermore, sample processing methods can be encoded.
 
 STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY
