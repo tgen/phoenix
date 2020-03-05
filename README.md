@@ -1,17 +1,19 @@
+<img src="/images/TGen_Color_LOGO_medium.png" width="208.3" height="78" title="TGen Logo"> <br/>
 # Phoenix Workflow - A JetStream Workflow
 
 This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome 
 using ensembl version 98 gene models.  The workflow is designed to support project level analysis 
 that can include one or multiple types of data. Though not required the expectation is a project contains 
 data from a single individual thus centralizing all data types in a standardized output structure. The 
-workflow template supports a diverse array of analysis methods required to analyze DNA, RNA, and Single cell 
+workflow template supports a diverse array of analysis methods required to analyze DNA, RNA, and single cell 
 data.  Based on standardized variables it also supports integrated analysis between data types.  For some 
 processes multiple options are provided that can be individually enabled or disabled by configuration 
 parameters. Like all JetStream workflows developed at TGen this workflow is designed to facilitate dynamic 
 analysis needs while ensuring compute and storage resources are used efficiently and not wasted. The primary 
 input is a JSON record from the TGen LIMS but hand created inputs in the form of a JSON or EXCEL worksheet can 
 also be provided when run manually or by submission to the related JetStream Centro (https://github.com/tgen/jetstream_centro) 
-web portal.
+web portal. All required files beyond sample level files can be created using code provided in the JetStream Resources
+repository (https://github.com/tgen/jetstream_resources)
 
 ## Supported Analysis
 
