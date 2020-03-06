@@ -1,6 +1,19 @@
+<img src="/images/TGen_Color_LOGO_medium.png" width="208.3" height="78" title="TGen Logo"> <br/>
 # Phoenix Workflow - A JetStream Workflow
 
-This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome using the ensembl version 98 gene models
+This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome 
+using ensembl version 98 gene models.  The workflow is designed to support project level analysis 
+that can include one or multiple types of data. Though not required the expectation is a project contains 
+data from a single individual thus centralizing all data types in a standardized output structure. The 
+workflow template supports a diverse array of analysis methods required to analyze DNA, RNA, and single cell 
+data.  Based on standardized variables it also supports integrated analysis between data types.  For some 
+processes multiple options are provided that can be individually enabled or disabled by configuration 
+parameters. Like all JetStream workflows developed at TGen this workflow is designed to facilitate our dynamic and 
+time sensitive analysis needs while ensuring compute and storage resources are used efficiently. The primary 
+input is a JSON record from the TGen LIMS but hand created inputs in the form of a JSON or EXCEL worksheet can 
+also be provided when run manually or by submission to the related JetStream Centro (https://github.com/tgen/jetstream_centro) 
+web portal. All required files defined the the `pipeline.yaml` can be created using code provided in the JetStream Resources
+repository (https://github.com/tgen/jetstream_resources).
 
 ## Supported Analysis
 
@@ -9,87 +22,237 @@ _Click to show details_
 <details>
   <summary><b>DNA Alignment</b></summary>
 
-  The DNA Alignment module takes fastqs to aligned BAMs, then runs BAM qc steps.
-  `dnaAlignmentStyle` can be used to select from different alignment strategies.
+  The DNA Alignment module supports the generation of processed BAM or CRAM files from input fastqs files. 
+  The configuration files define one of three different alignment style variables (`dnaAlignmentStyle`) that 
+  all use BWA as the aligner but use different tools for alignment processing. Additionally, baserecalibration 
+  and/or conversion to CRAM for archiving can be enabled for any project.
+  
+  <img src="/images/DNA_Alignment_Options.png" width="768" height="512" title="DNA Alignment Options">
+  
+  - TGen [`tgen`] (default)
+    - Fastq files are chunked to 40M reads
+    - Chunks are aligned with BWA, processed with samtools fixmate and samtools sort
+    - Individual chunks are merged with samtools merge
+    - PCR duplicates and platform (optical) duplicates are marked with samtools markdup
+  - GATK Best Paractices [`broad`]("Like" - does not support uBAM inputs)
+    - Fastq files are chunked to 40M reads
+    - Chunks are aligned with BWA, and converted to BAM files with samtools view
+    - In one step individual chunks are merged and PCR or platform (optical) duplicates are marked with GATK/Picard markduplicates
+    - Alignment records are sorted using GATK/Picard SortSAM
+  - Clinical [`ashion`]
+    - Fastq files are concatenated
+    - In one step reads are aligned with BWA, duplicates are marked with samblaster, converted to BAM and sorted using sambamba
+  - Base Recalibration (optional, off by default)
+    - chunked baserecalibration using GATK
+  - BAM to CRAM (enabled by default)
+    - samtools view
 
 </details>
 
 <details>
-  <summary><b>Somatic Variant Calling</b></summary>
+  <summary><b>Constitutional Analysis</b></summary>
+  
+  These modules support the discovery of small variants (SNV/INDELs), structural abnormalities (deletions, 
+  duplications, inversions, translocations), and copy number abnormalities on single constitutional samples
+  
+  <img src="/images/Constitutional_Analysis_Options.png" width="768" height="512" title="Constitutional Analysis">
+
+  - Variant Discovery (SNV/INDEL)
+    - Deepvariant (Only calls on primary contigs 1-22, X, Y)
+      - requires a GPU compute resource
+    - GATK HaplotypeCaller (gVCF mode)
+      - gVCF generation
+      - single sample calling using genotypeGVCFs and CNNscroreVariant
+    - Freebayes
+    - Strelka2 (Germline mode)
+    - Octopus (Individual) (Only calls on primary contigs 1-22, X, Y)
+  - Structural Variant Detection
+    - Manta
+  - Copy Number Analysis
+    - iCHOR (operates on genomes only)
+
+</details>
+
+<details>
+  <summary><b>Somatic Analysis</b></summary>
   
   This module will run several somatic variant callers on tumor/normal 
   data pairs:
-
-  - Strelka2 (Somatic mode)
-  - Mutect2
-  - Lancet
-    - We do NOT run it on genomes 
-  - VarDictJava
-  - Octopus (Only calls on primary contigs 1-22, X, Y)
-
-</details>
-
-<details>
-  <summary><b>Constitutional Variant Calling</b></summary>
   
-  Generates constitutional variant call files (VCF) with several callers. Additionally,
-  this will create a gVCF for each sample that can be used to jointly call large
-  cohorts.
+  <img src="/images/Somatic_Analysis_Options.png" width="768" height="512" title="Somatic Analysis">
 
-  - Deepvariant (Only calls on primary contigs 1-22, X, Y)
-  - GATK HaplotypeCaller (gVCF mode)
-    - single sample calling using genotypeGVCFs and CNNscroreVariant
-  - Freebayes
-  - Strelka2 (Germline mode)
-  - Octopus (Individual) (Only calls on primary contigs 1-22, X, Y)
-
-</details>
-
-<details>
-  <summary><b>RNA Alignment</b></summary>
-
-  - STAR
+  - Variant Discovery (SNV/INDEL)
+    - Strelka2 (Somatic mode)
+    - Mutect2
+    - Lancet
+      - Currently NOT enabled for genomes by default 
+    - VarDictJava
+    - Octopus (Only calls on primary contigs 1-22, X, Y)
+  - Structural Variant Detection
+    - Manta
+    - Delly
+  - Copy Number Analysis
+    - GATK CNV
+    - iCHOR (operates on genomes only)
 
 </details>
 
 <details>
-  <summary><b>Gene Expression Estimates</b></summary>
-
-  - Salmon
-  - Star-count - Recommended count method
-  - HtSeq
-  - FeatureCounts
-
-</details>
-
-<details>
-  <summary><b>Fusion Transcript Detection</b></summary>
-
-  - Salmon
-  - Star-count - Recommended count method
-  - HtSeq
-  - FeatureCounts
-
-</details>
-
-<details>
-  <summary><b>Single Cell Sequencing</b></summary>
+  <summary><b>RNA Analysis</b></summary>
   
-  We support multiple things
+  <img src="/images/RNA_Alignment_Quantitation_Options.png" width="768" height="512" title="RNA Analysis">
+ 
+  - RNA Alignment
+    - STAR
+      - 2-pass mode
+      - outputs unsorted BAM by default
+        - option to output TranscriptomeSAM
+    - unsorted BAM is processed with samtools fixmate and samtools sort to output a sorted BAM
+    - PCR duplicates and platform duplicates (optical) are optionally marked as a QC step
+      - samtools markdup
+      - GATK/Picard MarkDuplicates (default recommendation)
+  - Gene and Transcript Expression Estimates
+    - Salmon
+    - Star-count - Recommended count method
+    - HtSeq
+    - FeatureCounts
+  - Fusion Transcript Detection
+    - Star-Fusion
+
+</details>
+
+<details>
+  <summary><b>Single Cell RNA Sequencing</b></summary>
+  
+  - 10x Genomics Cell Ranger
+    - Supports 3' and 5' assays
+    - Supports VDJ analysis
+  - starSOLO
+    - Supports 3' and 5' assays
     
-  <details>
-    <summary><b>scRNAseq</b></summary>
-    XXX
-  </details>
+</details>
+
+## Output Folder Structure
+All final output files are placed in a standardized folder structure that generally reflects the relationship of files or 
+the processing order.
+```
+Project
+|--GeneralLibaryType
+|  |--AnalysisType
+|  |  |--Tool
+|  |  |  |--SampleName
+|  |  |     |--ResultFiles
+|  |  |--Tool
+|  |--AnalysisType
+|--GeneralLibaryType
+```
+
+<details>
+  <summary><b>Project Folder Example</b></summary>
   
-  <details>
-    <summary><b>scDNAseq</b></summary>
-    YYY
-  </details>
+``` 
+# Only Directories are Shown
+MMRF_1499
+├── exome
+│   ├── alignment
+│   │   └── bwa
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   │       │   └── stats
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   │           └── stats
+│   ├── constitutional_structural_calls
+│   │   └── manta
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   ├── constitutional_variant_calls
+│   │   ├── deepvariant
+│   │   │   └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   │   └── haplotypecaller
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U
+│   ├── somatic_copy_number
+│   │   └── gatk
+│   │       └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   ├── somatic_structural_calls
+│   │   ├── manta
+│   │   │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   │   └── pairoscope
+│   │       └── MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│   └── somatic_variant_calls
+│       ├── lancet
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── mutect2
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── octopus
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── strelka2
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       ├── vardict
+│       │   └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+│       └── vcfmerger2
+│           └── MMRF_1499_2_PB_Whole_C7_KHS5U-MMRF_1499_1_BM_CD138pos_T2_KAS5U
+├── genome
+│   ├── alignment
+│   │   └── bwa
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │       │   └── stats
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   │           └── stats
+│   ├── constitutional_structural_calls
+│   │   └── manta
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── constitutional_variant_calls
+│   │   ├── deepvariant
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   │   └── haplotypecaller
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── copy_number_analysis
+│   │   └── ichorCNA
+│   │       ├── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL
+│   ├── somatic_copy_number
+│   │   └── gatk
+│   │       └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   ├── somatic_structural_calls
+│   │   ├── delly
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │   ├── manta
+│   │   │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   │   └── pairoscope
+│   │       └── MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│   └── somatic_variant_calls
+│       ├── mutect2
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── octopus
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── strelka2
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       ├── vardict
+│       │   └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+│       └── vcfmerger2
+│           └── MMRF_1499_2_PB_Whole_C1_KAWGL-MMRF_1499_1_BM_CD138pos_T2_KAWGL
+├── igv_symbolic_links
+├── jetstream
+│   ├── history
+│   └── logs
+├── qc
+│   └── multiqc_data
+└── rna
+    ├── alignment
+    │   └── star
+    │       └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+    │           └── stats
+    ├── fusions
+    │   └── starfusion
+    │       └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+    └── quant
+        ├── salmon
+        │   └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+        └── star
+            └── MMRF_1499_1_BM_CD138pos_T1_TSMRU
+```
 
 </details>
 
-### Required Software
+## Required Software
 _Click to show details_
 
 <details>
@@ -917,16 +1080,21 @@ but we will explain the more unique variables. Here is an example:
 There are restrictions on what some of these variables can be assigned to, these will be denoted in the [ ]'s. 
 If the attribute isn't strictly required then it is not included in this list.
 
-  - *assayCode* [*WGS|*WGL|]  
+  - *assayCode*  
+    Genome: [*] We are not concerned about the assayCode for genomes.  
+    *Note: We have a number of bed files supporting our exome captures, these are the shortened capture codes*  
+    Exome: [ *AG2 | *E61 | *S5U | *S5X | *S6U | *S6X | *S7X | *ST2 | *STL | *STX | *TS1 | *V6C ]   
     Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
     tasks to the final workflow. Each sample discovered will take this attribute from
     the first file encountered for that sample in the config file.
 
   - *dnaRnaMergeKey*  
-    Used during STAR alignment of RNA.
+    Used during DNA/RNA integrations steps. It defines the pairing of DNA and RNA samples as a project might have 
+    multiple DNA and RNA pairs, for instance it can be used to ensure the diagnosis exome and RNA are paired together
+    and the relapse exome is not paired with the diagnosis RNA.
     
   - *fastqCode* [R1|R2]  
-    Assigns the read number of the fastq.
+    Assigns the read number of the fastq following standard Illumina paired-end nomenclature.
     
   - *fastqPath*   
     Assigns the path to the fastq.
@@ -936,7 +1104,7 @@ If the attribute isn't strictly required then it is not included in this list.
 
   - *glPrep* [genome|capture|rna|singlecellrna|singlecellenrichment|singlecellcdna|singlecelltargetamp|matepair|chip]  
     Used for determining the prep used to create the sample and then modifying how the
-    pipeline runs depending on the prep. This is used for single cell as well as CHIP preps.
+    pipeline runs depending on the prep. This is used to configure single cell as well as CHIP preps.
 
   - *glType* [genome|genomephased|exome|rna|singlecellrna|singlecelldna|matepair|chip]  
     Used for determining if the sample is DNA/RNA/etc. and adding the corresponding
@@ -944,25 +1112,25 @@ If the attribute isn't strictly required then it is not included in this list.
     the first file encountered for that sample in the config file.
 
   - *limsLibraryRecordId*  
-    Generated by our LIMS, this allows for the input of data back into the LIMS.
+    Generated by our LIMS, this allows for the input of data back into the LIMS via a REST-API.
 
   - *numberOfReads*  
-    Used for assigning the number of chunks during alignment.
+    Used for validatint the number of chunks created during alignment.
     
   - *read1Length / read2Length*   
-    Used to assign the STAR indexes.
+    Used to select the correct STAR indexes.
     
   - *readOrientation* [inward|outward]  
-    Used to set the strandedness of RNA. Used in conjunction with rnaStrandDirection and rnaStrandType.
+    Used to set the strand orientation of RNA assays. Used in conjunction with rnaStrandDirection and rnaStrandType.
 
   - *rg values*  
     These are standards set in the [SAM/BAM Format Specification](https://samtools.github.io/hts-specs/SAMv1.pdf):  
     rgcn - Name of sequencing center producing the read  
     rgid - Read group identifier.  
     rgks - The array of nucleotide bases that correspond to the key sequence of each read.  
-    rglb - Library.  
+    rglb - Unique identifier for the library.  
     rgpl - Platform/technology used to produce the reads.  
-    rgpm - Platform model. Free-form text providing further details of the platform/technology used.  
+    rgpm - Platform model. Used to configure platform duplicate marking thresholds. Free-form text providing further details of the platform/technology used.  
     rgpu - Platform unit (e.g., flowcell-barcode.lane for Illumina or slide for SOLiD). Unique identifier.  
     rgsm - Sample. Use pool name where a pool is being sequenced.  
     
@@ -973,11 +1141,11 @@ If the attribute isn't strictly required then it is not included in this list.
     Used during STAR alignment of RNA.
     
   - *rnaStrandType* [unstranded|stranded]  
-    Assigns the strandedness of RNA
+    Assigns the strand orientation of an RNA library
     
   - *sampleMergeKey*   
     This is the expected BAM filename and is used to merge data from multiple sequencing 
-    lanes or flowcells for data from the same specimen tested with the same assay
+    lanes or flowcells for data from the same specimen (rgsm) tested with the same assay
 
   - *sampleName*  
     This is the expected base FASTQ filename.
@@ -987,12 +1155,15 @@ If the attribute isn't strictly required then it is not included in this list.
     the distinction of files during somatic analysis.
 
 ## TGen Naming Convention
-- The naming format used in the LIMS tries to ensure that all specimens have unique file names based on specific metadata fields
+Many of the naming structures used are defined by the standardize naming structure used at TGen that ensures all files 
+have a unique but descriptive name. It is designed to support serial collection and multiple collections from 
+difference sources on a single day.  Furthermore, sample processing methods can be encoded.
 
-STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY<br/>
--------- PatientID<br/>
----------------- VisitID<br/>
------------------------- SpecimenID<br/>
--------------------------------- SampleID<br/>
----------------------------------------- RG.SM (VCF file genotype column header)<br/>
------------------------------------------------- sampleMergeKey (BAM filename)<br/>
+STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY
+
+Patient_ID = STUDY_PATIENT<br/>
+Visit_ID = STUDY_PATIENT_VISIT<br/>
+Specimen_ID = STUDY_PATIENT_VISIT_SOURCE<br/>
+Sample_ID = STUDY_PATIENT_VISIT_SOURCE_FRACTION<br/>
+RG.SM = STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement (VCF file genotype column header)<br/>
+sampleMergeKey = STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY (BAM filename, ensures different assays are not merged together)<br/>
