@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#SBATCH -n 1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=16
+#SBATCH -t 50:00:00
+#SBATCH -J BamCoverage
+#SBATCH -e /scratch/jlang/logs/BamCoverage%j.err
+#SBATCH -o /scratch/jlang/logs/BamCoverage%j.out
+#SBATCH --mail-type=BEGIN,END,FAILED
+#SBATCH --mail-user=jlang@tgen.org
+#SBATCH --mem=4gb
+
+#########################
+# deepTools BamCoverage #
+#########################
+
+cd /scratch/jlang/bams/
+module load python/3.6.2
+source /home/jlang/tools/deeptoolsvenv/bin/activate
+
+# ! make list of bams
+for i in `ls *_hg38.bam`
+do
+        date
+        echo $i
+        fn=${i%.bam}
+        bamCoverage -b $i -o ../deepTools/$fn".bw" -of bigwig -p max --effectiveGenomeSize 2913022398
+# EffectiveGenomeSizes: value for hg38 including multimapped reads included. For all else: https://deeptools.readthedocs.io/en/latest/content/feature/effectiveGenomeSize.html
+# --extendReads not needed for paired end sequencing. For single-end sequencing, use 1) Value from library prep information on fragment size, 2) Estimate from MACS predictd tool, or 3) 300 as an estimate
+        date
+done

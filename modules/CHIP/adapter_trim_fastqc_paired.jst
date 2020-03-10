@@ -1,0 +1,31 @@
+#!/bin/bash
+
+#SBATCH -n 1
+#SBATCH --ntasks-per-node=1
+#SBATCH -t 50:00:00
+#SBATCH -J adaptertrim_fastqc
+#SBATCH -e /scratch/jlang/logs/adaptertrim_fastqc_%j.err
+#SBATCH -o /scratch/jlang/logs/adaptertrim_fastqc_%j.out
+#SBATCH --mail-type=BEGIN,END,FAILED
+#SBATCH --mail-user=jlang@tgen.org
+
+###########################
+### Trim_Galore & FastQC###
+###########################
+
+#This will run TrimGalore and FastQC on all .fastq.gz files in /scratch/jlang/fastq/
+#This script is written for PAIRED samples
+
+module load TrimGalore/0.4.4
+cd /scratch/jlang/fastq/
+
+for i in `ls *R1_001.fastq.gz`;
+do
+        date
+        echo $i
+        fn=${i%R1_001.fastq.gz}
+        mv $i $fn"_1.fastq.gz"
+        mv $fn"R2_001.fastq.gz" $fn"_2.fastq.gz"
+        trim_galore --paired --illumina --fastqc_args "--outdir /scratch/jlang/fastq/qc/" -o /scratch/jlang/fastq/adapter_trimmed/ $fn"_1.fastq.gz" $fn"_2.fastq.gz"
+        date
+done

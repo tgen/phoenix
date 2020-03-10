@@ -1,0 +1,38 @@
+#!/bin/bash
+
+#SBATCH -n 1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=16
+#SBATCH -t 50:00:00
+#SBATCH -J fastq2bam
+#SBATCH -e /scratch/jlang/logs/fastq2bam%j.err
+#SBATCH -o /scratch/jlang/logs/fastq2bam%j.out
+#SBATCH --mail-type=BEGIN,END,FAILED
+#SBATCH --mail-user=jlang@tgen.org
+#SBATCH --mem=6gb
+
+######################################################
+# fastq to sam with bowtie, sam to bam with samtools #
+######################################################
+
+
+cd /scratch/jlang/fastq/adapter_trimmed/
+module load bowtie2/2.3.0
+module load samtools/1.9
+
+cp /home/jlang/refgenomeindex/hs38dh/bowtie2/* /scratch/jlang/fastq/adapter_trimmed/
+cp /home/jlang/refgenomeindex/Ecoli/bowtie2/* /scratch/jlang/fastq/adapter_trimmed/
+
+for i in `ls *_1_val_1.fq.gz`
+do
+        date
+        echo $i
+        fn=${i%_1_val_1.fq.gz}
+        bowtie2 -p $SLURM_CPUS_PER_TASK --local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -I 10 -X 700 -q -x hs38dh -1 $i -2 $fn"_2_val_2.fq.gz" | samtools sort -o /scratch/jlang/bams/$fn"_hg38.bam" -O bam
+        samtools index /scratch/jlang/bams/$fn"_hg38.bam" /scratch/jlang/bams/$fn"_hg38.bam.bai"
+
+#for E coli alignment
+        bowtie2 -p $SLURM_CPUS_PER_TASK --local --very-sensitive-local --no-unal --no-mixed --no-discordant --phred33 -I 10 -X 700 --no-overlap --no-dovetail -x U00096.3 -1 $i -2 $fn"_2_val_2.fq.gz" | samtools sort -o /scratch/jlang/bams/$fn"_ecoli.bam" -O bam
+        samtools index /scratch/jlang/bams/$fn"_ecoli.bam" /scratch/jlang/bams/$fn"_ecoli.bam.bai"
+        date
+done

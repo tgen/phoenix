@@ -1,0 +1,34 @@
+#!/bin/bash
+
+#SBATCH -n 1
+#SBATCH --ntasks-per-node=1
+#SBATCH -t 50:00:00
+#SBATCH -J MACS
+#SBATCH -e /scratch/jlang/logs/MACS%j.err
+#SBATCH -o /scratch/jlang/logs/MACS%j.out
+#SBATCH --mail-type=BEGIN,END,FAILED
+#SBATCH --mail-user=jlang@tgen.org
+#SBATCH --mem=4gb
+
+##################
+# MACS2 Callpeak #
+##################
+
+cd /scratch/jlang/bams/
+module load python/3.6.2
+module load BEDTools/2.26.0
+source /home/jlang/tools/deeptoolsvenv/bin/activate
+
+#provide samplename.txt file listing files
+#1st column: CUT&RUN.bam name
+#2nd column: MACS sample name
+
+while read line; do
+        date
+        echo $line
+        CHIP=$(echo $line | awk '{print $1}')
+        MACS=$(echo $line | awk '{print $2}')
+        macs2 callpeak -t $CHIP -f BAM -n $MACS --outdir /scratch/jlang/MACS/ -B -q 0.01 --keep-dup all
+        bedtools intersect -v -a /scratch/jlang/MACS/$MACS"_peaks.narrowPeak" -b /home/jlang/refgenomeindex/hs38dh/ChIP_blacklist/hg38_blacklist.bed > /scratch/jlang/MACS/$MACS"_peaksfilter.narrowPeak"
+        date
+done < samplename.txt
