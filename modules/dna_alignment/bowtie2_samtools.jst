@@ -1,0 +1,233 @@
+# Aligns fastqs for a sample using bowtie2 MEM. Samples may have multiple read
+# groups.
+#
+#     ? ?
+#   ? -----fastqs--> temp/<sample.name>.bowtie2.bam
+#     ? ?
+#
+
+# This alignment command prefix is shared by all modules using bowtie2
+{% from 'utilities/read_group_line.jst' import read_group_line with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+# This macro splits large fastqs into chunks prior to aligning.
+# If fastq is less than reads_per_chunk (48000000) then one chunk is made.
+{% macro bowtie2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) %}
+{% for rgid, rg in sample.read_groups.items() %}
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+
+{# Comment about the math, using the assumed legacy illumina interpretation, it is a TGen modification #}
+{% set n_lines = (reads_per_chunk * 4)|int %}
+{% set n_chunks = (r1fastq.numberOfReads / 2 / reads_per_chunk)|round(0, method='ceil')|int %}
+{% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
+
+{% for fastq in [r1fastq, r2fastq] %}
+- name: adapter_trim_fastqc_{{ fastq }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, trim, {{ sample.name }}]
+  input:
+    - temp/fastqs/{{ fastq.basename }}
+  cpus: 1
+  walltime: "4:00:00"
+  cmd: |
+    module load {{ constants.tools.trim_galore.module }}
+
+    trim_galore --paired --illumina --fastqc_args "--outdir /scratch/jlang/fastq/qc/" -o /scratch/jlang/fastq/adapter_trimmed/ $fn"_1.fastq.gz" $fn"_2.fastq.gz"
+
+- name: split_fastq_{{ fastq.fastqPath|sha256 }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, split, {{ sample.name }}]
+  input:
+    - temp/fastqs/{{ fastq.basename }}
+  cpus: 1
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    rm -r "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
+
+    zcat "temp/fastqs/{{ fastq.basename }}" |\
+      split \
+        --numeric-suffixes \
+        --suffix-length 2 \
+        --lines {{ n_lines }} \
+        - \
+        "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
+
+    N_CREATED=$(ls "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
+
+    if [[ ${N_CREATED} -ne {{ n_chunks }} ]]
+    then
+      echo "Chunks created does not match expected value"
+      exit 1
+    fi
+
+{% endfor %}
+
+{% for i in range(n_chunks) %}
+{% set chunk_suffix = '%02d' % i %}
+- name: chunked_bowtie2_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, {{ sample.name }}]
+  after:
+    - split_fastq_{{ r1fastq.fastqPath|sha256 }}
+    - split_fastq_{{ r2fastq.fastqPath|sha256 }}
+  walltime: "48:00:00"
+  cpus: 10
+  mem: 50G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bowtie2.module }}
+    module load {{ constants.tools.samtools.module }}
+    
+    export BOWTIE2_INDEXES={{ constants.phoenix.bowtie2_index_path }}
+
+    {#
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools sort. Here, we purge any
+    # existing temp files before making the directory again.
+    #}
+    rm -r "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
+
+    {# No long options available for the following:
+     bowtie2
+        -q          query input files are FASTQ .fq/.fastq
+        -x          The basename of the index for the reference genome
+
+     samtools fixmate
+        -m           Add mate score tag, REQUIRED for samtools markdup
+        -            Input from stdin
+        -            Output to stdout
+
+     samtools sort
+        -l INT       Set compression level, from 0 (uncompressed) to 9 (best)
+        -m INT       Set maximum memory per thread; suffix K/M/G recognized [768M]
+        -T PREFIX    Write temporary files to PREFIX.nnnn.bam
+        -            Input from stdin
+        -o FILE      Write final output to FILE rather than standard output
+    #}
+    bowtie2 \
+      --threads 10 \
+      --local \
+      --very-sensitive-local \
+      --no-unal \
+      --no-mixed \
+      --no-discordant \
+      --phred33 \
+      --minins 10 \
+      --maxins 700 \
+      -q \
+      -x {{ constants.phoenix.bowtie2_index }} \
+      -1 "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
+      -2 "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
+    samtools fixmate \
+      --threads 1 \
+      -m \
+      - \
+      - |\
+    samtools sort \
+      -T "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/{{ chunk_suffix }}" \
+      -l 2 \
+      -m 3G \
+      --threads 9 \
+      --output-fmt BAM \
+      -o "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bowtie2.bam" \
+      -
+
+{% endfor %}
+{% endfor %}
+
+- name: chunked_samtools_merge_rg_bams_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, {{ sample.name }}]
+  after-re: chunked_bowtie2_mem_samtools_fixmate_{{ sample.name }}_.*
+  output: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
+  walltime: "24:00:00"
+  cpus: 8
+  mem: 16G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.samtools.module }}
+
+    {# No long options available for the following:
+      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
+      -f           Overwrite the output BAM if exist
+      -l INT       Compression level, from 0 to 9 [-1]
+    #}
+    samtools merge \
+      --threads 8 \
+      -c \
+      -f \
+      -l 6 \
+      "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam" \
+    {% for rgid in sample.read_groups %}
+      {% if not loop.last %}
+      "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/"*.bowtie2.bam \
+      {% else %}
+      "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/"*.bowtie2.bam
+      {% endif %}
+    {% endfor %}
+
+    {# Cleanup the tempfiles
+    # removes fastq chunks and intermediate chunk bam files
+    #}
+    {% if not debug %}
+    {% for rgid in sample.read_groups %}
+    rm -r "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/"
+    {% endfor %}
+    {% endif %}
+
+
+- name: samtools_markdup_{{ sample.name }}_bowtie2
+  tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
+  methods: Duplicate reads for {{ sample.name }} were marked with
+    {{ constants.tools.samtools.verbose }} markdup.
+  input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
+  output:
+    - temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
+    - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam.samtools.markdup.txt
+  walltime: "48:00:00"
+  cpus: 10
+  mem: 40G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.samtools.module }}
+
+    {#
+    # If this task was interrupted previously, temp files may exist
+    # that will cause errors with samtools markdup. Here, we purge any
+    # existing temp files before making the directory again.
+    #}
+    rm -r "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/markdup_temp/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/markdup_temp/"
+    mkdir -p "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/"
+
+    {#
+    # Choose an optical distance based on sequencer
+    #}
+
+    {# No long options available for the following:
+     -d      Optical distance
+     -S      Mark supplemenary alignments of duplicates as duplicates (slower)
+     -f      Write stats to named file. Implies -s (report stats)
+     -T      PREFIX    Write temporary files to PREFIX.samtools.nnnn.nnnn.tmp
+     2>      Stats are output to stderr which is redirected to ".bowtie2.bam.markdup.txt"
+    #}
+    samtools markdup \
+      -d {{ opt_dup_distance }} \
+      -S \
+      -f "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam.samtools.markdup.txt" \
+      --threads 10 \
+      --write-index \
+      -T "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/markdup_temp/{{ sample.name }}" \
+      "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam" \
+      "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam"
+
+{% endmacro %}
+

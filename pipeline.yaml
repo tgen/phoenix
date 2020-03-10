@@ -24,6 +24,13 @@ constants:
       website: http://www.htslib.org
       citation: >
         TODO
+    bowtie2:
+      module: Bowtie2/2.3.5.1-GCC-8.2.0-2.31.1
+      version: "2.3.5.1"
+      verbose: bowtie2 v2.3.5.1
+      website: http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
+      citation: >
+        TODO
     bwa:
       module: BWA/0.7.17-GCC-8.2.0-2.31.1
       version: "0.7.17"
@@ -342,6 +349,8 @@ constants:
     reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
     reference_non_N_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
+    bowtie2_index_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bowtie2_2.3.5.1
+    bowtie2_index: GRCh38tgen_decoy
     dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
     gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
     gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
