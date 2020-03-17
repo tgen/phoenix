@@ -21,6 +21,7 @@
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.salmon.verbose }} using the cDNA index.
+  reset: predecessors
   input:
   {% for fq in r1fqlist %}
     - {{ fq }}
