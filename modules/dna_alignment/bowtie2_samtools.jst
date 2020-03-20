@@ -234,7 +234,7 @@
 - name: spike_in_calibration_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, cutnrun, {{ sample.name }}]
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
-  output:
+  output: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli_norm.bedgraph
   walltime: "48:00:00"
   cpus: 10
   mem: 40G
