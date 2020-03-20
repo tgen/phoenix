@@ -117,7 +117,11 @@
       --rg PM:{{ rg.rgpm }}' \
       --rg BC:{{ rg.rgbc|default('unknown') }} \
       -q \
+      {% if sample.gltype == 'CHIP' %}
+      -x {{ constants.phoenix.bowtie2_chip_index }} \
+      {% else %}
       -x {{ constants.phoenix.bowtie2_index }} \
+      {% endif %}
       -1 "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
       -2 "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
     samtools fixmate \
@@ -225,6 +229,56 @@
       -T "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/markdup_temp/{{ sample.name }}" \
       "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam" \
       "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam"
+
+{% if sample.glprep == 'CUTNRUN' %}
+- name: spike_in_calibration_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, cutnrun, {{ sample.name }}]
+  input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
+  output:
+  walltime: "48:00:00"
+  cpus: 10
+  mem: 40G
+  cmd: |
+    module load {{ constants.tools.bedtools.module }}
+    module load {{ constants.tools.samtools.module }}
+
+    {# Extracting ecoli alignments #}
+    samtools index -@ 10 "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam"
+
+    samtools view \
+      -b
+      -o "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli.md.bam"
+      "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam" \
+      "U00096.3"
+
+    {# Converting bams to beds for genome cov #}
+    bedtools bamtobed \
+      -i "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam" \
+      > "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bed"
+
+    bedtools bamtobed \
+      -i "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli.md.bam" \
+      > "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli.md.bed"
+
+    {# Calculating spike and scale for genomecov #}
+    SPIKE=$(wc -l < "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli.md.bed")
+    SCALE=$(echo "10000 / $SPIKE" | bc -l)
+
+    TAB=$'\t'
+    cat <<EOF > "temp/{{ sample.gltype }}/alignment/bowtie2/callRegions.bed"
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}{{ contig.length }}
+    {% endfor %}
+    EOF
+
+    bedtools genomecov \
+      -bg \
+      -scale $SCALE \
+      -i "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bed" \
+      -g "temp/{{ sample.gltype }}/alignment/bowtie2/callRegions.bed" \
+      > "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli_norm.bedgraph"
+
+{% endif %}
 
 {% endmacro %}
 
