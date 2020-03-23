@@ -1,0 +1,27 @@
+{% from 'modules/CHIP/plot_fingerprint.jst' import plot_fingerprint with context %}
+
+# Constitutional tools generally operate on a single DNA samples and should not run
+# on "tumor" samples with the exception of ichor that cna be run on tumor or constitutional.
+
+{%- macro chip_workflow(samples) %}
+
+{%- for sample in samples.values() if sample.gltype in ('chip', 'cutnrun') %}
+
+    {% if tasks.CHIP_plot_fingerprint|default(true) %}
+       {{- plot_fingerprint(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_bam_coverage|default(true) %}
+       {{- bam_coverage(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_compute_GCBias|default(true) %}
+       {{- compute_GCBias(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_plot_coverage|default(true) %}
+       {{- plot_coverage(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_macs2_callpeak|default(true) %}
+       {{- macs2_callpeaks(sample) }}
+    {% endif %}
+
+{% endfor %}
+{% endmacro %}
