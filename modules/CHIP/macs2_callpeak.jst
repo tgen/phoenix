@@ -1,34 +1,39 @@
-#!/bin/bash
 
-#SBATCH -n 1
-#SBATCH --ntasks-per-node=1
-#SBATCH -t 50:00:00
-#SBATCH -J MACS
-#SBATCH -e /scratch/jlang/logs/MACS%j.err
-#SBATCH -o /scratch/jlang/logs/MACS%j.out
-#SBATCH --mail-type=BEGIN,END,FAILED
-#SBATCH --mail-user=jlang@tgen.org
-#SBATCH --mem=4gb
+{% macro macs2_callpeak(sample) %}
 
-##################
-# MACS2 Callpeak #
-##################
+- name: macs2_callpeak_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
+  input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
+  output:
+  walltime: "48:00:00"
+  cpus: 16
+  mem: 40G
+  cmd: |
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ consants.tools.bedtools.module }}
 
-cd /scratch/jlang/bams/
-module load python/3.6.2
-module load BEDTools/2.26.0
-source /home/jlang/tools/deeptoolsvenv/bin/activate
+    #provide samplename.txt file listing files
+    #1st column: CUT&RUN.bam name
+    #2nd column: MACS sample name
 
-#provide samplename.txt file listing files
-#1st column: CUT&RUN.bam name
-#2nd column: MACS sample name
+    while read line; do
+      echo $line
+      CHIP=$(echo $line | awk '{print $1}')
+      MACS=$(echo $line | awk '{print $2}')
+      macs2 callpeak \
+        -t $CHIP \
+        -f BAM \
+        -n $MACS \
+        --outdir /scratch/jlang/MACS/ \
+        -B \
+        -q 0.01 \
+        --keep-dup all
 
-while read line; do
-        date
-        echo $line
-        CHIP=$(echo $line | awk '{print $1}')
-        MACS=$(echo $line | awk '{print $2}')
-        macs2 callpeak -t $CHIP -f BAM -n $MACS --outdir /scratch/jlang/MACS/ -B -q 0.01 --keep-dup all
-        bedtools intersect -v -a /scratch/jlang/MACS/$MACS"_peaks.narrowPeak" -b /home/jlang/refgenomeindex/hs38dh/ChIP_blacklist/hg38_blacklist.bed > /scratch/jlang/MACS/$MACS"_peaksfilter.narrowPeak"
-        date
-done < samplename.txt
+      bedtools intersect \
+        -v \
+        -a /scratch/jlang/MACS/$MACS"_peaks.narrowPeak" \
+        -b /home/jlang/refgenomeindex/hs38dh/ChIP_blacklist/hg38_blacklist.bed \
+        > /scratch/jlang/MACS/$MACS"_peaksfilter.narrowPeak"
+    done < samplename.txt
+
+{% endmacro %}
