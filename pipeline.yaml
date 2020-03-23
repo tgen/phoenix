@@ -160,8 +160,8 @@ constants:
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
     multiqc:
       module: Python/3.7.2-foss-2019a
-      version: "1.7"
-      verbose: MultiQC v1.7
+      version: "1.8"
+      verbose: MultiQC v1.8
       website: https://multiqc.info
       citation: >
         MultiQC Summarize analysis results for multiple tools and samples in a single report

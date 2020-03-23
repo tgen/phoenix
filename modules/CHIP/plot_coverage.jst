@@ -1,27 +1,20 @@
-#!/bin/bash
 
-#SBATCH -n 1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16
-#SBATCH -t 50:00:00
-#SBATCH -J plotCoverage
-#SBATCH -e /scratch/jlang/logs/plotCoverage%j.err
-#SBATCH -o /scratch/jlang/logs/plotCoverage%j.out
-#SBATCH --mail-type=BEGIN,END,FAILED
-#SBATCH --mail-user=jlang@tgen.org
-#SBATCH --mem=4gb
+{% macro plot_coverage(sample) %}
 
-##########################
-# deepTools plotCoverage #
-##########################
+- name: plot_coverage_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
+  input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
+  output:
+  walltime: "48:00:00"
+  cpus: 16
+  mem: 40G
+  cmd: |
+    module load {{ constants.tools.python_3_7_2.module }}
 
-cd /scratch/jlang/bams/
-module load python/3.6.2
-source /home/jlang/tools/deeptoolsvenv/bin/activate
+    plotCoverage \
+     --bamfiles temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam \
+     --plotFile {{ sample.name }}.bowtie2.md.bam_plotCoverage.png \
+     --smartLabels \
+     --numberOfProcessors max
 
-# ! make list of bams
-i=$(ls *_hg38.bam)
-date
-plotCoverage -b $i -o ../deepTools/plotCoverage.png  --smartLabels -p max
-# --extendReads not needed for paired end sequencing. For single-end sequencing, use 1) Value from library prep information on fragment size, 2) Estimate from MACS predictd tool, or 3) 300 as an estimate
-date
+{% endmacro %}
