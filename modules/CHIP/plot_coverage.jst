@@ -4,16 +4,18 @@
 - name: plot_coverage_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
-  output:
+  output: {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam_plotCoverage.png
   walltime: "48:00:00"
   cpus: 16
   mem: 40G
   cmd: |
     module load {{ constants.tools.python_3_7_2.module }}
 
+    mkdir -p "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/"
+
     plotCoverage \
      --bamfiles temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam \
-     --plotFile {{ sample.name }}.bowtie2.md.bam_plotCoverage.png \
+     --plotFile {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam_plotCoverage.png \
      --smartLabels \
      --numberOfProcessors max
 
