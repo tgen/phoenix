@@ -263,3 +263,7 @@
 {%- if tasks.single_cell_rna|default(true) %}
     {{- single_cell_rna(dataFiles) }}
 {% endif -%}
+
+{%- if tasks.chip_workflow|default(true) %}
+    {{- chip_workflow(samples) }}
+{% endif -%}
