@@ -117,7 +117,7 @@
       --rg PM:{{ rg.rgpm }}' \
       --rg BC:{{ rg.rgbc|default('unknown') }} \
       -q \
-      {% if sample.gltype == 'CHIP' %}
+      {% if sample.gltype == 'chip' %}
       -x {{ constants.phoenix.bowtie2_chip_index }} \
       {% else %}
       -x {{ constants.phoenix.bowtie2_index }} \
@@ -230,7 +230,7 @@
       "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam" \
       "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam"
 
-{% if sample.glprep == 'CUTNRUN' %}
+{% if sample.glprep == 'cutnrun' %}
 - name: spike_in_calibration_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, cutnrun, {{ sample.name }}]
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
