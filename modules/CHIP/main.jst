@@ -24,7 +24,7 @@
        {{- plot_coverage(sample) }}
     {% endif %}
     {% if tasks.CHIP_macs2_callpeak|default(true) %}
-       {{- macs2_callpeaks(sample) }}
+       {{- macs2_callpeak(sample) }}
     {% endif %}
 
 {% endfor %}
