@@ -114,7 +114,7 @@
       --rg SM:{{ rg.rgsm|default(rg.sampleName) }} \
       --rg PL:{{ rg.rgpl }} \
       --rg CN:{{ rg.rgcn|default('tgen') }} \
-      --rg PM:{{ rg.rgpm }}' \
+      --rg PM:{{ rg.rgpm }} \
       --rg BC:{{ rg.rgbc|default('unknown') }} \
       -q \
       {% if sample.gltype == 'chip' %}
