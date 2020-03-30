@@ -17,7 +17,7 @@
 
     computeGCBias \
      --bamfile temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam \
-     --genome {{ constants.phoenix.reference_fasta_2bit }}
+     --genome {{ constants.phoenix.reference_fasta_2bit }} \
      --GCbiasFrequenciesFile {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam_GCbias.txt \
      --biasPlot {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam_GCbias.pdf \
      --fragmentLength 50 \

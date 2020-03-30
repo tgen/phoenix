@@ -143,7 +143,7 @@
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, {{ sample.name }}]
-  after-re: chunked_bowtie2_mem_samtools_fixmate_{{ sample.name }}_.*
+  after-re: chunked_bowtie2_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
   walltime: "24:00:00"
   cpus: 8
