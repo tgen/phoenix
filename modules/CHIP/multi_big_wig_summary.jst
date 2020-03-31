@@ -16,7 +16,7 @@
     mkdir -p "chip/summary/"
 
     multiBigwigSummary bins \
-     --bwfiles {% for sample in samples.values() %}"{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw "{% endfor %} \
+     --bwfiles {% for sample in samples.values() %}{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw {% endfor %} \
      --outFileName chip/summary/multiBigWigSummary.npz \
      --smartLabels \
      --numberOfProcessors max

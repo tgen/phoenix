@@ -22,7 +22,7 @@
 
     bedtools intersect \
       -v \
-      -a temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}_peaks.narrowPeak" \
+      -a temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}_peaks.narrowPeak \
       -b /home/jlang/refgenomeindex/hs38dh/ChIP_blacklist/hg38_blacklist.bed \
       > temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}_peaksfilter.narrowPeak
 
