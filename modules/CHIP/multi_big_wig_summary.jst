@@ -3,7 +3,8 @@
 
 {% set chip_bws = [] %}
 {% for sample in samples.values() if sample.gltype in ['chip', 'cutnrun'] %}
-    {% do chip_bws.append({{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw) %}
+  {% set chip_bw %}{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw{% endset %}
+  {% do chip_bws.append(chip_bw) %}
 {% endfor %}
 
 - name: multi_big_wig_summary
