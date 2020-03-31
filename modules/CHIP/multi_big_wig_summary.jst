@@ -13,13 +13,11 @@
   cmd: |
     module load {{ constants.tools.python_3_7_2.module }}
 
-    mkdir -p "{{ sample.gltype }}/summary/"
+    mkdir -p "chip/summary/"
 
     multiBigwigSummary bins \
-     --bwfiles {% for sample in samples.values() %}
-     "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw "
-     {% endfor %} \
-     --outFileName {{ sample.gltype }}/summary/multiBigWigSummary.npz \
+     --bwfiles {% for sample in samples.values() %}"{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw "{% endfor %} \
+     --outFileName chip/summary/multiBigWigSummary.npz \
      --smartLabels \
      --numberOfProcessors max
 
