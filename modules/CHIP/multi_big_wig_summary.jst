@@ -1,26 +1,26 @@
-#!/bin/bash
 
-#SBATCH -n 1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=16
-#SBATCH -t 20:00:00
-#SBATCH -J MultiBigWigSummary
-#SBATCH -e /scratch/jlang/logs/MultiBigWigSummary%j.err
-#SBATCH -o /scratch/jlang/logs/MultiBigWigSummary%j.out
-#SBATCH --mail-type=BEGIN,END,FAILED
-#SBATCH --mail-user=jlang@tgen.org
-#SBATCH --mem=4gb
+{% macro multi_big_wig_summary(samples) %}
 
-################################
-# deepTools MultiBigWigSummary #
-################################
+- name: multi_big_wig_summary
+  tags: [ cutnrun, chip ]
+  after-re: bam_coverage_.*
+  input:
+  {% for sample in samples.values() %}
+    {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw
+  {% endfor %}
+  walltime: "48:00:00"
+  cpus: 16
+  cmd: |
+    module load {{ constants.tools.python_3_7_2.module }}
 
-cd /scratch/jlang/deepTools/
-module load python/3.6.2
-source /home/jlang/tools/deeptoolsvenv/bin/activate
+    mkdir -p "{{ sample.gltype }}/summary/"
 
-# ! make list of bws
-i=$(ls *.bw)
-date
-multiBigwigSummary bins -b $i -o ../deepTools/multiBigWigSummary.npz --smartLabels -p max
-date
+    multiBigwigSummary bins \
+     --bwfiles {% for sample in samples.values() %}
+     "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw "
+     {% endfor %} \
+     --outFileName {{ sample.gltype }}/summary/multiBigWigSummary.npz \
+     --smartLabels \
+     --numberOfProcessors max
+
+{% endmacro %}
