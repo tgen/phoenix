@@ -79,7 +79,7 @@
       --runDir "{{ temp_dir }}"
 
     {# Execute on the local machine with 20 parallel jobs #}
-    "{{ temp_dir }}/runWorkflow.py" -m local -j 20
+    "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
     {# Save all the vcs in the sample dir #}
     mkdir -p "{{ results_dir }}" || true
