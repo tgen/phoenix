@@ -65,7 +65,7 @@
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
       --runDir "{{ temp_dir }}"
 
-    {# Execute on the local machine with 20 parallel jobs #}
+    {# Execute on the local machine with 19 parallel jobs #}
     "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
     {# Save all the vcs in the sample dir #}
