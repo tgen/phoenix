@@ -21,6 +21,7 @@
 
 - name: star_fusion_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
+  reset: predecessors
   input:
   {% for fq in r1fqlist %}
     - temp/fastqs/{{ fq.basename }}
