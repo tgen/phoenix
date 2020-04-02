@@ -25,6 +25,7 @@
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, split, {{ sample.name }}]
+  reset: predecessors
   input:
     - temp/fastqs/{{ fastq.basename }}
   cpus: 1
@@ -58,6 +59,7 @@
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
+  reset: predecessors
   after: 
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}

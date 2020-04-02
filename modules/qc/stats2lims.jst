@@ -2,23 +2,27 @@
 # stats files produced by bam_qc steps that have been converted into a structured json file
 # to upload to LIMS via REST api integration.
 
-{% macro stats2lims(sample, library_name=none, aligner='bwa') %}
+{% macro stats2lims(sample, taskPrefix, library_name=none, aligner='bwa') %}
 {% set bam %}{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set input_base_name %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats/{{ bam }}{% endset %}
 
+    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"]|default(true) %}
     ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.stats2lims }} \
       {{ input_base_name }}.alignment_summary_metrics.json \
       picard_alignment_summary_metrics \
       {{ isilonPath }} \
       {{ project }} \
       {{ study }}
+    {% endif %}
 
+    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"]|default(true) %}
     ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.stats2lims }} \
       {{ input_base_name }}.insert_size_metrics.json \
       picard_insert_size_metrics \
       {{ isilonPath }} \
       {{ project }} \
       {{ study }}
+    {% endif %}
 
     {% if sample.gltype == 'rna' %}
     ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.stats2lims }} \

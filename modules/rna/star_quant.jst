@@ -39,6 +39,7 @@
   methods: >
     Transcript quantification for {{ sample.name }} was performed with
     {{ constants.tools.star.verbose }} followed by TODO...
+  reset: predecessors
   input:
     {% for fq in r1fqlist %}
     - {{ fq.path }}

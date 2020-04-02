@@ -23,6 +23,7 @@
   methods: >
     Alignment and quantification for {{ sample.name }}_{{ sample.rglb }} was performed with
     {{ constants.tools.star.verbose }} using the genome index.
+  reset: predecessors
   input:
   {% for fq in files %}
       - temp/fastqs/{{ fq.basename }}

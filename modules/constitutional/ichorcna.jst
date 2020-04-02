@@ -92,6 +92,7 @@
     # Move the output files to the final location
     #}
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.cna.seg" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.correctedDepth.txt" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.RData" "{{ results_dir }}/"
