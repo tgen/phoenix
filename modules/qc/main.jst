@@ -112,7 +112,7 @@
 
     module load {{ constants.tools.python_3_7_2.module }}
 
-    {{ stats2lims(sample, aligner=aligner)}}
+    {{ stats2lims(sample, taskPrefix, aligner=aligner)}}
 
 {% endif %}
 

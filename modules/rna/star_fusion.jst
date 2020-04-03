@@ -21,6 +21,7 @@
 
 - name: star_fusion_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
+  reset: predecessors
   input:
   {% for fq in r1fqlist %}
     - temp/fastqs/{{ fq.basename }}
@@ -76,8 +77,14 @@
       - MOVING ENTIRE FUSION INSPECTOR FOLDER, NEED TO DECIDE IF THERE ARE THINGS TO KEEP
     #}
     {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
-    mv "{{ temp_dir }}"/Aligned.out.bam "{{ results_dir }}"/"{{ sample.name }}"_starfusion.bam
-
+    samtools sort \
+      -T {{ temp_dir }}/{{ sample.name }} \
+      -l 2 \
+      -m 3G \
+      --threads 10 \
+      --output-fmt BAM \
+      -o {{ results_dir }}/{{ sample.name }}_starfusion.bam \
+      {{ temp_dir }}/Aligned.out.bam
     samtools index -@ 10 {{ results_dir }}/{{ sample.name }}_starfusion.bam
     {% endif %}
 

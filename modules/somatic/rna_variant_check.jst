@@ -19,9 +19,9 @@
     module load {{ constants.tools.bcftools.module }}
 
     {# Write the needed header lines to a temporary file, which will be inserted into the VCF #}
-    echo "##INFO=<ID=RNA_REF_COUNT,Number=.,Type=Integer,Description="Count of REF alleles seen in RNA">" > {{ temp_dir }}/temp_header
-    echo "##INFO=<ID=RNA_ALT_FREQ,Number=.,Type=Float,Description="Frequency of ALT alleles seen in RNA">" >> {{ temp_dir }}/temp_header
-    echo "##INFO=<ID=RNA_ALT_COUNT,Number=.,Type=Integer,Description="Count of ALT alleles seen in RNA">" >> {{ temp_dir }}/temp_header
+    echo "##INFO=<ID=RNA_REF_COUNT,Number=.,Type=Integer,Description=\"Count of REF alleles seen in RNA\">" > {{ temp_dir }}/temp_header
+    echo "##INFO=<ID=RNA_ALT_FREQ,Number=.,Type=Float,Description=\"Frequency of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_header
+    echo "##INFO=<ID=RNA_ALT_COUNT,Number=.,Type=Integer,Description=\"Count of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_header
 
     {#
     #Add the RNA count headers to the VCF, this ensures all
@@ -188,9 +188,9 @@
 
     {# Write the header for a new RNA VCF #}
     echo "##fileformat=VCFv4.2" > {{ temp_dir }}/temp_RNA.vcf
-    echo "##INFO=<ID=RNA_REF_COUNT,Number=.,Type=Integer,Description="Count of REF alleles seen in RNA">" >> {{ temp_dir }}/temp_RNA.vcf
-    echo "##INFO=<ID=RNA_ALT_FREQ,Number=.,Type=Float,Description="Frequency of ALT alleles seen in RNA">" >> {{ temp_dir }}/temp_RNA.vcf
-    echo "##INFO=<ID=RNA_ALT_COUNT,Number=.,Type=Integer,Description="Count of ALT alleles seen in RNA">" >> {{ temp_dir }}/temp_RNA.vcf
+    echo "##INFO=<ID=RNA_REF_COUNT,Number=.,Type=Integer,Description=\"Count of REF alleles seen in RNA\">" >> {{ temp_dir }}/temp_RNA.vcf
+    echo "##INFO=<ID=RNA_ALT_FREQ,Number=.,Type=Float,Description=\"Frequency of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_RNA.vcf
+    echo "##INFO=<ID=RNA_ALT_COUNT,Number=.,Type=Integer,Description=\"Count of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_RNA.vcf
     echo $'#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO' >> {{ temp_dir }}/temp_RNA.vcf
 
     {# Print a temp file with the variant info and the split AD counts #}
