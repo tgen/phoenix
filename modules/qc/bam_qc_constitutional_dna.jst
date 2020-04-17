@@ -17,6 +17,7 @@
     set -eu
     set -o pipefail
     module load {{ constants.tools.verifybamid2.module }}
+    module load {{ constants.tools.R.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -40,6 +41,17 @@
       {% endif %}
       --BamFile "{{ bam }}" \
       --Output "{{ results_dir }}/{{ bam|basename }}.verifybamid2"
+
+    {# Process Output to produce needed graph #}
+    SAMPLE_PC1=`head -n3 "{{ results_dir }}/{{ bam|basename }}.verifybamid2.out" | tail -n1 | cut -f1 | sed 's/Intended Sample PC1://g'`
+    SAMPLE_PC2=`head -n3 "{{ results_dir }}/{{ bam|basename }}.verifybamid2.out" | tail -n1 | cut -f2 | sed 's/PC2://g'`
+    echo -e "{{ bam|basename }}""\t"${SAMPLE_PC1}"\t"${SAMPLE_PC2} > "{{ results_dir }}/{{ bam|basename }}.verifybamid2.plot.txt"
+
+    sh $VERIFY_BAM_ID_HOME/bin/run.plot.sh \
+      -r 1000g \
+      -g FALSE \
+      -i "{{ results_dir }}/{{ bam|basename }}.verifybamid2.plot.txt" \
+      -o "{{ results_dir }}/{{ bam|basename }}.verifybamid2.plot"
 
 {% endmacro %}
 
