@@ -10,6 +10,8 @@
   output:
     - {{ results_dir }}/{{ bam|basename }}.verifybamid2.out
     - {{ results_dir }}/{{ bam|basename }}.verifybamid2.selfSM
+    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.plot.txt
+    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.plot.pdf
   cpus: 1
   mem: 4G
   walltime: "8:00:00"
