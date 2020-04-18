@@ -4,16 +4,37 @@
 
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
-{% macro bam_qc_samtools_stats(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_samtools_stats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) %}
+{% if tasks[taskPrefix+"_quality_control_stats_samtools_stats"]|default(true) %}
 
-- name: samtools_stats_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+    {% set regions %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+    {% set regions %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt{% endset %}
+  {% endif %}
+
+- name: samtools_stats_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} stats.
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: {{ results_dir }}/{{ bam|basename }}.bamstats.txt
+  input: {{ bam }}
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.bamstats.txt
+    - {{ results_dir }}/{{ bam|basename }}.samstats_no_N_1based_target_regions.txt
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.bamstats.txt
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "4:00:00"
   cpus: 4
   mem: 8G
@@ -33,7 +54,11 @@
       -b {{ sample.capture_kit.no_header_targets_interval_list }} \
       | \
     sort -k1,1 -k2,2n \
-      > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt
+      > {{ regions }}
+
+      {% if libraryCount == 1 %}
+      cp {{ regions }} {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt
+      {% endif %}
     {% endif %}
 
     {#
@@ -62,7 +87,7 @@
       --target-regions {{ constants.phoenix.reference_non_N_bed }} \
       {% elif aligner == 'bwa' %}
       {% if sample.gltype == 'exome' %}
-      --target-regions {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt \
+      --target-regions {{ regions }} \
       {% else %}
       --target-regions {{ constants.phoenix.reference_non_N_bed }} \
       {% endif %}
@@ -70,92 +95,48 @@
       {% endif %}
       > "{{ results_dir }}/{{ bam|basename }}.bamstats.txt"
 
-{% for lb, rgs in sample.read_groups.values()|groupby('rglb') %}
-- name: samtools_stats_{{ sample.name }}_{{ aligner }}_{{ lb }}
-  tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
-  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
-    generated with {{ constants.tools.samtools.verbose }} stats.
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: {{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt
-  walltime: "4:00:00"
-  cpus: 4
-  mem: 8G
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.samtools.module }}
-    module load {{ constants.tools.bedtools.module }}
-
-    mkdir -p "{{ results_dir }}"
-
-    {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
-    {% if sample.gltype == 'exome' %}
-    bedtools intersect \
-      -a {{ constants.phoenix.reference_non_N_bed }} \
-      -b {{ sample.capture_kit.no_header_targets_interval_list }} \
-      | \
-    sort -k1,1 -k2,2n \
-      > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.{{ lb }}.samstats_no_N_1based_target_regions.txt
+    {% if libraryCount == 1 %}
+      cp {{ results_dir }}/{{ bam|basename }}.bamstats.txt {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.bamstats.txt
     {% endif %}
 
-    {#
-      samtools view
-        -q INT   only include reads with mapping quality >= INT [0]
-        -h       include header in SAM output
-
-      samtools stats
-       --filtering-flag 256
-            not primary alignment (0x100)
-       --coverage <int>,<int>,<int>    Coverage distribution min,max,step [1,1000,1]
-     #}
-    samtools view \
-      --threads 4 \
-      -q 20 \
-      -h \
-      {% for rg in rgs %}
-      -r "{{ rg.rgid }}" \
-      {% endfor %}
-      "{{ bam }}" \
-      | \
-    samtools stats \
-      --remove-dups \
-      --remove-overlaps \
-      --filtering-flag 256 \
-      --coverage 1,2500,1 \
-      {% if aligner == 'star' %}
-      --reference "{{ constants.phoenix.star_fasta }}" \
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
-      {% elif aligner == 'bwa' %}
-      {% if sample.gltype == 'exome' %}
-      --target-regions {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.{{ lb }}.samstats_no_N_1based_target_regions.txt \
-      {% else %}
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
-      {% endif %}
-      --reference "{{ constants.phoenix.reference_fasta }}" \
-      {% endif %}
-      > "{{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt"
-{% endfor %}
-
+{% endif %}
 {% endmacro %}
 
 
-{% macro bam_qc_samtools_flagstat(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_samtools_flagstat(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) %}
+{% if tasks[taskPrefix+"_quality_control_stats_samtools_flagstat"]|default(true) %}
 
-- name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+- name: samtools_flagstat_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_flagstat, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} flagstat.
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-  output: {{ results_dir }}/{{ bam|basename }}.flagstats.txt
+  input: {{ bam }}
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.flagstats.txt
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.flagstats.txt
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "4:00:00"
   cpus: 4
   mem: 8G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -165,25 +146,48 @@
       "{{ bam }}" \
       > "{{ results_dir }}/{{ bam|basename }}.flagstats.txt"
 
+    {% if libraryCount == 1 %}
+      cp {{ results_dir }}/{{ bam|basename }}.flagstats.txt {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.flagstats.txt
+    {% endif %}
+
+{% endif %}
 {% endmacro %}
 
 
-{% macro bam_qc_samtools_idxstats(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_samtools_idxstats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) %}
+{% if tasks[taskPrefix+"_quality_control_stats_samtools_idxstats"]|default(true) %}
 
-- name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+- name: samtools_idxstats_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} idxstats.
   input: {{ bam }}
-  output: {{ results_dir }}/{{ bam|basename }}.idxstats.txt
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.idxstats.txt
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.txt
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "4:00:00"
   cpus: 1
   mem: 2G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -192,12 +196,28 @@
       "{{ bam }}" >\
       "{{ results_dir }}/{{ bam|basename }}.idxstats.txt"
 
+    {% if libraryCount == 1 %}
+      cp {{ results_dir }}/{{ bam|basename }}.idxstats.txt {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.txt
+    {% endif %}
+
+{% endif %}
 {% endmacro %}
 
 
-{% macro bam_qc_gatk_collectmultiplemetrics(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_gatk_collectmultiplemetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) %}
+{% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"]|default(true) %}
+
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
 {% set alignment_summary_metrics %}{{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics{% endset %}
 {% set insert_size_metrics %}{{ results_dir }}/{{ bam|basename }}.insert_size_metrics{% endset %}
 
@@ -227,6 +247,21 @@
     - {{ results_dir }}/{{ bam|basename }}.quality_distribution_metrics
     - {{ results_dir }}/{{ bam|basename }}.quality_distribution.pdf
     - {{ results_dir }}/{{ bam|basename }}.quality_yield_metrics
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.base_distribution_by_cycle_metrics
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.base_distribution_by_cycle.pdf
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.error_summary_metrics
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_by_cycle_metrics
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_by_cycle.pdf
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_distribution_metrics
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_distribution.pdf
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_yield_metrics
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.bam.gc_bias.pdf
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.insert_size_histogram.pdf
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "24:00:00"
   cpus: 2
   mem: 8G
@@ -261,14 +296,40 @@
       --PROGRAM CollectSequencingArtifactMetrics \
       --PROGRAM CollectQualityYieldMetrics
 
+    {% if libraryCount == 1 %}
+      cp {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle_metrics {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.base_distribution_by_cycle_metrics
+      cp {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.base_distribution_by_cycle.pdf
+      cp {{ results_dir }}/{{ bam|basename }}.error_summary_metrics {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.error_summary_metrics
+      cp {{ results_dir }}/{{ bam|basename }}.quality_by_cycle_metrics {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_by_cycle_metrics
+      cp {{ results_dir }}/{{ bam|basename }}.quality_by_cycle.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_by_cycle.pdf
+      cp {{ results_dir }}/{{ bam|basename }}.quality_distribution_metrics {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_distribution_metrics
+      cp {{ results_dir }}/{{ bam|basename }}.quality_distribution.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_distribution.pdf
+      cp {{ results_dir }}/{{ bam|basename }}.quality_yield_metrics {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_yield_metrics
+
+      pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias%d.pdf
+      mv {{ results_dir }}/{{ bam|basename }}.gc_bias2.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.gc_bias.pdf
+
+      pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram%d.pdf
+      mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.insert_size_histogram.pdf
+    {% elif bam_level is sameas false %}
+      pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias%d.pdf
+      mv {{ results_dir }}/{{ bam|basename }}.gc_bias2.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf
+
+      pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram%d.pdf
+      mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
+    {% endif %}
+
 {{ stats2json(sample, alignment_summary_metrics, "picard_alignment_summary_metrics", aligner=aligner) }}
 {{ stats2json(sample, insert_size_metrics, "picard_insert_size_metrics", aligner=aligner) }}
+{% endif %}
 {% endmacro %}
 
 
-{% macro bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_gatk_convertsequencingarrtifacttooxog(sample, taskPrefix=taskPrefix, aligner=aligner) %}
+{% if tasks[taskPrefix+"_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG"]|default(true) %}
+
+  {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
@@ -281,6 +342,7 @@
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     gatk ConvertSequencingArtifactToOxoG \
@@ -291,21 +353,40 @@
       {% endif %}
       --INPUT_BASE "{{ results_dir }}/{{ bam|basename }}"
 
+{% endif %}
 {% endmacro %}
 
 
-{% macro bam_qc_snpsniffer_geno(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_snpsniffer_geno(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) %}
+{% if tasks[taskPrefix+"_quality_control_genotype_concordance_snpSniffer"]|default(true) %}
 
-- name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+- name: snpsniffer_geno_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, genotype_concordance, snpSniffer, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.snpSniffer.vcf
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   cpus: 4
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.bcftools.module }}
 
     {# Genotype the 387 test positions across the genome, filter to calls with DP >= 5, sort, remove chr from contig names #}
@@ -335,4 +416,9 @@
       --output-type v \
       --output "{{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf"
 
+    {% if libraryCount == 1 %}
+      cp {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.snpSniffer.vcf
+    {% endif %}
+
+{% endif %}
 {% endmacro %}

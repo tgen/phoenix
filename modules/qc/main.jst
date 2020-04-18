@@ -1,5 +1,8 @@
 # Adds bam_to_cram, bam_qc and other quality control tasks
 
+# Splits a bam if the sample has more than one library
+{% from 'modules/qc/split_bam.jst' import split_bam with context %}
+
 # Performed on all bams
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_stats with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_flagstat with context %}
@@ -27,78 +30,68 @@
 
 {% macro bam_qc(sample, aligner='bwa') %}
 
+    {% set sample_lbs = sample.read_groups.values()|groupby('rglb') %}
+    {% set libraryCount = sample_lbs|length %}
+    {% set sample_lb = sample_lbs[0][0] %}
+
     {# General Library type specific tasks #}
     {% if sample.gltype == 'rna' %}
-        {% set taskPrefix = 'RNA' %}
-
-        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectRnaSeqMetrics"]|default(true) %}
-            {{- bam_qc_gatk_collectrnaseqmetrics(sample, aligner=aligner) }}
-        {% endif %}
-
-        {% if tasks[taskPrefix+"_quality_control_stats_samtools_bedcov"]|default(true) %}
-            {{- bam_qc_rna_BTcell_loci(sample, aligner=aligner) }}
-        {% endif %}
-
+      {% set taskPrefix = 'RNA' %}
+      {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
+      {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner=aligner) }}
     {% elif sample.gltype == 'exome' %}
-        {% set taskPrefix = 'Exome' %}
-
-        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectHsMetrics"]|default(true) %}
-            {{- bam_qc_gatk_collecthsmetrics(sample, aligner=aligner) }}
-        {% endif %}
-
+      {% set taskPrefix = 'Exome' %}
+      {{- bam_qc_gatk_collecthsmetrics(sample, aligner=aligner) }}
     {% elif sample.gltype == 'genome' %}
-        {% set taskPrefix = 'Genome' %}
-
-        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectWgsMetrics"]|default(true) %}
-            {{- bam_qc_gatk_collectwgsmetrics(sample, aligner=aligner) }}
-        {% endif %}
-
-        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectWgsMetricsWithNonZeroCoverage"]|default(true) %}
-            {{- bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, aligner=aligner) }}
-        {% endif %}
-
-        {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectRawWgsMetrics"]|default(true) %}
-            {{- bam_qc_gatk_collectrawwgsmetrics(sample, aligner=aligner) }}
-        {% endif %}
-
+      {% set taskPrefix = 'Genome' %}
+      {{- bam_qc_gatk_collectwgsmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
+      {{- bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, libraryCount, sample_lb, aligner=aligner) }}
+      {{- bam_qc_gatk_collectrawwgsmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
     {% endif %}
 
-    {# Cnstitutional dna specific tasks #}
+    {# Constitutional dna specific tasks #}
     {% if sample.subGroup|lower == 'constitutional' and ( sample.gltype|lower == 'genome' or sample.gltype|lower == 'exome' )  %}
-        {% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
-           {{- bam_qc_verifybamid2(sample, aligner=aligner) }}
-        {% endif %}
-
-        {% if tasks[taskPrefix+"_quality_control_constitutional_sex_check_freebayes"]|default(true) %}
-           {{- sex_check(sample, aligner=aligner) }}
-        {% endif %}
-
-     {% endif %}
+      {{- bam_qc_verifybamid2(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+      {{- sex_check(sample, libraryCount, sample_lb, aligner=aligner) }}
+    {% endif %}
 
     {# Tasks performed on all bams #}
-    {% if tasks[taskPrefix+"_quality_control_stats_samtools_stats"]|default(true) %}
-        {{- bam_qc_samtools_stats(sample, aligner=aligner) }}
-    {% endif %}
+    {{- bam_qc_samtools_stats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+    {{- bam_qc_samtools_flagstat(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+    {{- bam_qc_samtools_idxstats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+    {{- bam_qc_gatk_collectmultiplemetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+    {{- bam_qc_gatk_convertsequencingarrtifacttooxog(sample, taskPrefix=taskPrefix, aligner=aligner) }}
+    {{- bam_qc_snpsniffer_geno(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
 
-    {% if tasks[taskPrefix+"_quality_control_stats_samtools_flagstat"]|default(true) %}
-        {{- bam_qc_samtools_flagstat(sample, aligner=aligner) }}
-    {% endif %}
+    {% if libraryCount > 1 %}
+      {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
 
-    {% if tasks[taskPrefix+"_quality_control_stats_samtools_idxstats"]|default(true) %}
-        {{- bam_qc_samtools_idxstats(sample, aligner=aligner) }}
-    {% endif %}
+        {{- split_bam(sample, sample_lb, sample_rgs, aligner=aligner) }}
 
-    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"]|default(true) %}
-        {{- bam_qc_gatk_collectmultiplemetrics(sample, aligner=aligner) }}
-    {% endif %}
+        {# General Library type specific tasks #}
+        {% if sample.gltype == 'rna' %}
+          {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
+          {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
+        {% elif sample.gltype == 'genome' %}
+          {{- bam_qc_gatk_collectwgsmetrics(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
+          {{- bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
+          {{- bam_qc_gatk_collectrawwgsmetrics(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
+        {% endif %}
 
-    {% if tasks[taskPrefix+"_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG"]|default(true) %}
-        {{- bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner=aligner) }}
-    {% endif %}
+        {# Constitutional dna specific tasks #}
+        {% if sample.subGroup|lower == 'constitutional' and ( sample.gltype|lower == 'genome' or sample.gltype|lower == 'exome' )  %}
+          {{- bam_qc_verifybamid2(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+          {{- sex_check(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+        {% endif %}
 
-    {%- if tasks[taskPrefix+"_quality_control_genotype_concordance_snpSniffer"]|default(true) %}
-        {{- bam_qc_snpsniffer_geno(sample, aligner=aligner) }}
-    {% endif -%}
+        {# Tasks performed on all bams #}
+        {{- bam_qc_samtools_stats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+        {{- bam_qc_samtools_flagstat(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+        {{- bam_qc_samtools_idxstats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+        {{- bam_qc_gatk_collectmultiplemetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+        {{- bam_qc_snpsniffer_geno(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+      {% endfor %}
+    {% endif %}
 
 {% if submissionSource == "TGenLIMS" %}
 - name: stats2lims_{{ sample.name }}

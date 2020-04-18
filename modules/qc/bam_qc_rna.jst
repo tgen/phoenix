@@ -2,23 +2,41 @@
 
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
-{% macro bam_qc_gatk_collectrnaseqmetrics(sample, aligner='star') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-{% set rna_metrics %}{{ results_dir }}/{{ bam|basename }}.rna_metrics{% endset %}
+{% macro bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner='star', bam_level=true) %}
+{% if tasks["RNA_quality_control_stats_gatk_CollectRnaSeqMetrics"]|default(true) %}
 
-- name: gatk_collectrnaseqmetrics_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set rna_metrics %}{{ results_dir }}/{{ bam|basename }}.rna_metrics{% endset %}
+
+- name: gatk_collectrnaseqmetrics_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
   input: {{ bam }}
   output:
     - {{ rna_metrics }}
     - {{ rna_metrics }}.pdf
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.rna_metrics.pdf
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "8:00:00"
   cpus: 2
   mem: 16G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.R.module }}
 
@@ -35,30 +53,64 @@
       --METRIC_ACCUMULATION_LEVEL SAMPLE \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
       --INPUT "{{ bam }}" \
-      --CHART_OUTPUT {{ results_dir }}/{{ bam|basename }}.rna_metrics.pdf \
-      --OUTPUT "{{ results_dir }}/{{ bam|basename }}.rna_metrics"
+      --CHART_OUTPUT "{{ rna_metrics }}.pdf" \
+      --OUTPUT "{{ rna_metrics }}"
 
-{{ stats2json(sample, rna_metrics, "picard_rna_metrics", aligner=aligner) }}
+    {% if libraryCount == 1 %}
+      pdfseparate -f 3 "{{ rna_metrics }}.pdf" {{ rna_metrics }}%d.pdf
+      mv {{ rna_metrics }}3.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.rna_metrics.pdf
+    {% elif bam_level is sameas false %}
+      pdfseparate -f 3 "{{ rna_metrics }}.pdf" {{ rna_metrics }}%d.pdf
+      mv {{ rna_metrics }}3.pdf {{ rna_metrics }}.pdf
+    {% endif %}
 
+  {% if bam_level is sameas true %}
+    {{ stats2json(sample, rna_metrics, "picard_rna_metrics", aligner=aligner) }}
+  {% endif %}
+{% endif %}
 {% endmacro %}
 
-{% macro bam_qc_rna_BTcell_loci(sample, aligner='star') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner='star', bam_level=true) %}
+{% if tasks["RNA_quality_control_stats_samtools_bedcov"]|default(true) %}
 
-- name: rna_getBTcellLociCounts_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.BTcell.loci.counts.txt{% endset %}
+
+- name: rna_getBTcellLociCounts_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, BTcellLociCounts, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ results_dir }}/{{ bam|basename }}.BTcell.loci.counts.txt
+  output:
+    - {{ output }}
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.txt
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "8:00:00"
   cpus: 2
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
-    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ results_dir }}/{{ bam|basename }}.BTcell.loci.counts.txt"
+    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ output }}"
 
+    {% if libraryCount == 1 %}
+      cp "{{ output }}" {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.txt
+    {% endif %}
+{% endif %}
 {% endmacro %}

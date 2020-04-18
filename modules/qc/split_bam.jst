@@ -1,0 +1,36 @@
+# This macro is used to split a bam by library when there are more than one library within the bam.
+# Some qc steps only report stats at the bam level and spliting the bam allows for collecting those same
+# stats at the library level.
+
+{% macro split_bam(sample, sample_lb, sample_rgs, aligner='bwa') %}
+{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+{% set temp_lb_bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+
+- name: split_bam_{{ sample.name }}_{{ sample_lb }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, {{ sample.name }}, {{ sample_lb }}, split_bam ]
+  input: {{ bam }}
+  output:
+    - {{ temp_lb_bam }}
+    - {{ temp_lb_bam }}.csi
+  walltime: "1:00:00"
+  cpus: 10
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.samtools.module }}
+
+    mkdir -p {{ temp_dir }}
+
+    samtools view \
+      --threads 10 \
+      -b \
+      --write-index \
+      {% for rg in sample_rgs %}
+      -r "{{ rg.rgid }}" \
+      {% endfor %}
+      -o {{ temp_lb_bam }} \
+      "{{ bam }}"
+
+{% endmacro %}

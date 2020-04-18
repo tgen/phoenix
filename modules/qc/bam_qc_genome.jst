@@ -1,19 +1,39 @@
 # These macros are run on genome bams from the dna_alignment module.
 
-{% macro bam_qc_gatk_collectwgsmetrics(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_gatk_collectwgsmetrics(sample, libraryCount, sample_lb, aligner='bwa', bam_level=true) %}
+{% if tasks["Genome_quality_control_stats_gatk_CollectWgsMetrics"]|default(true) %}
 
-- name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set dna_metrics %}{{ results_dir }}/{{ bam|basename }}.wgs_metrics{% endset %}
+
+- name: gatk_collectwgsmetrics_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetrics, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ results_dir }}/{{ bam|basename }}.wgs_metrics
+  output:
+    - {{ dna_metrics }}
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_metrics
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "24:00:00"
   cpus: 2
   mem: 8G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -22,28 +42,53 @@
       --java-options "-Xmx7G" \
       --USE_FAST_ALGORITHM false \
       --INPUT {{ bam }} \
-      --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_metrics \
+      --OUTPUT {{ dna_metrics }} \
       --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }}
 
+    {% if libraryCount == 1 %}
+      cp {{ dna_metrics }} {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_metrics
+    {% endif %}
+
+{% endif %}
 {% endmacro %}
 
 
-{% macro bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, libraryCount, sample_lb, aligner='bwa', bam_level=true) %}
+{% if tasks["Genome_quality_control_stats_gatk_CollectWgsMetricsWithNonZeroCoverage"]|default(true) %}
 
-- name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set dna_metrics %}{{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics{% endset %}
+
+- name: gatk_collectwgsmetricswithnonzerocoverage_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetricsWithNonZeroCoverage, {{ sample.name }}]
   input: {{ bam }}
   output:
-    - {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics
-    - {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics.pdf
+    - {{ dna_metrics }}
+    - {{ dna_metrics }}.pdf
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics.pdf
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "24:00:00"
   cpus: 2
   mem: 8G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.R.module }}
 
@@ -52,27 +97,53 @@
     gatk CollectWgsMetricsWithNonZeroCoverage \
       --java-options "-Xmx7G" \
       --INPUT {{ bam }} \
-      --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics \
-      --CHART_OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics.pdf \
+      --OUTPUT {{ dna_metrics }} \
+      --CHART_OUTPUT {{ dna_metrics }}.pdf \
       --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }}
 
+    {% if libraryCount == 1 %}
+      cp {{ dna_metrics }} {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics
+      cp {{ dna_metrics }}.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics.pdf
+    {% endif %}
+
+{% endif %}
 {% endmacro %}
 
 
-{% macro bam_qc_gatk_collectrawwgsmetrics(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_gatk_collectrawwgsmetrics(sample, libraryCount, sample_lb, aligner='bwa', bam_level=true) %}
+{% if tasks["Genome_quality_control_stats_gatk_CollectRawWgsMetrics"]|default(true) %}
 
-- name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set dna_metrics %}{{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics{% endset %}
+
+- name: gatk_collectrawwgsmetrics_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRawWgsMetrics, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics
+  output:
+    - {{ dna_metrics }}
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_raw_metrics
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   walltime: "24:00:00"
   cpus: 2
   mem: 8G
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -81,8 +152,13 @@
       --java-options "-Xmx7G" \
       --USE_FAST_ALGORITHM false \
       --INPUT "{{ bam }}" \
-      --OUTPUT "{{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics" \
+      --OUTPUT "{{ dna_metrics }}" \
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       --INCLUDE_BQ_HISTOGRAM true
 
+    {% if libraryCount == 1 %}
+      cp {{ dna_metrics }} {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_raw_metrics
+    {% endif %}
+
+{% endif %}
 {% endmacro %}

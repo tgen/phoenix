@@ -1,21 +1,41 @@
 # These macros are run on constitutional dna bams from the dna_alignment modules.
 
-{% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% macro bam_qc_verifybamid2(sample, libraryCount, sample_lb, taskPrefix='Genome', aligner='bwa', bam_level=true) %}
+{% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
 
-- name: verifybamid2_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set metrics %}{{ results_dir }}/{{ bam|basename }}.verifybamid2{% endset %}
+
+- name: verifybamid2_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
   input: {{ bam }}
   output:
-    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.out
-    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.selfSM
+    - {{ metrics }}.out
+    - {{ metrics }}.selfSM
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.out
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.selfSM
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   cpus: 1
   mem: 4G
   walltime: "8:00:00"
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.verifybamid2.module }}
 
     mkdir -p "{{ results_dir }}"
@@ -39,22 +59,45 @@
       --Reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       --BamFile "{{ bam }}" \
-      --Output "{{ results_dir }}/{{ bam|basename }}.verifybamid2"
+      --Output "{{ metrics }}"
 
+    {% if libraryCount == 1 %}
+      cp {{ metrics }}.out {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.out
+      cp {{ metrics }}.selfSM {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.selfSM
+    {% endif %}
+
+{% endif %}
 {% endmacro %}
 
 
-{% macro sex_check(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-{% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
-{% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
+{% macro sex_check(sample, libraryCount, sample_lb, taskPrefix='Genome', aligner='bwa', bam_level=true) %}
+{% if tasks[taskPrefix+"_quality_control_constitutional_sex_check_freebayes"]|default(true) %}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
-- name: freebayes_sex_check_{{ sample.name }}_{{ aligner }}
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
+
+- name: freebayes_sex_check_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_sex_check, freebayes, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ output }}
+  output:
+    - {{ output }}
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.txt
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   cpus: 1
   mem: 2G
   cmd: |
@@ -65,7 +108,7 @@
     module load {{ constants.tools.freebayes.module }}
     module load {{ constants.tools.bcftools.module }}
 
-    mkdir -p "{{ temp_dir }}/temp"
+    mkdir -p "{{ temp_dir }}"
 
     {# Define Sex Prediction Thresholds #}
     MINIMUM_GENOTYPES_REQUIRED=500
@@ -251,5 +294,9 @@
     {# Print results #}
     echo -e {{ bam|basename }}"\t"${SAMPLE}"\t"${POSITIONS_GENOTYPED}"\t"${MISSING_GENOTYPES}"\t"${TESTED_GENOTYPES}"\t"${HOMOZYGOUS_TOTAL}"\t"${HOMOZYGOUS_REFERENCE}"\t"${HOMOZYGOUS_ALTERNATE}"\t"${HETEROZYGOUS}"\t"${HOMOZYGOUS_RATE}"\t"${HOMOZYGOUS_RATE_SEX_PREDICTION}"\t"${B_ALLELE_GENOTYPES}"\t"${BB_ALT_RATE}"\t"${BB_ALT_RATE_SEX_PREDICTION}"\t"${READS_ON_X}"\t"${READS_ON_Y}"\t"${TOTAL_SEX_CHR_READS}"\t"${Y_READS_SEX_CHR_RATIO}"\t"${READ_COUNT_SEX_PREDICTION}"\t"${SEX_PREDICTION}"\t"${SEX_PREDICTION_CONFIDENCE} >> {{ output }}
 
+    {% if libraryCount == 1 %}
+      cp {{ output }} {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.txt
+    {% endif %}
 
+{% endif %}
 {% endmacro %}
