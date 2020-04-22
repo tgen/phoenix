@@ -17,6 +17,7 @@
   {% endif %}
 
   {% set rna_metrics %}{{ results_dir }}/{{ bam|basename }}.rna_metrics{% endset %}
+  {% set rna_metrics_json %}{{ rna_metrics }}.json{% endset %}
 
 - name: gatk_collectrnaseqmetrics_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRnaSeqMetrics, {{ sample.name }}]
@@ -65,7 +66,7 @@
     {% endif %}
 
   {% if bam_level is sameas true %}
-    {{ stats2json(sample, rna_metrics, "picard_rna_metrics", aligner=aligner) }}
+    {{ stats2json(sample, task, rna_metrics, rna_metrics_json, "picard_rna_metrics") }}
   {% endif %}
 {% endif %}
 {% endmacro %}
@@ -85,6 +86,8 @@
   {% endif %}
 
   {% set output %}{{ results_dir }}/{{ bam|basename }}.BTcell.loci.counts.txt{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.txt{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.json{% endset %}
 
 - name: rna_getBTcellLociCounts_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, BTcellLociCounts, {{ sample.name }}]
@@ -92,13 +95,13 @@
   output:
     - {{ output }}
     {% if libraryCount == 1 %}
-    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.txt
+    - {{ sample_lb_output }}
     {% endif %}
   {% if bam_level is sameas false %}
   reset: predecessors
   {% endif %}
   walltime: "8:00:00"
-  cpus: 2
+  cpus: 6
   cmd: |
     set -eu
     set -o pipefail
@@ -107,10 +110,27 @@
 
     mkdir -p "{{ results_dir }}"
 
-    samtools bedcov "{{ constants.phoenix.lymphocyteReceptor_loci_bed }}" "{{ bam }}" > "{{ output }}"
+    IGK=$(samtools view -@ 5 -c {{ bam }} chr2:88857160-90367699)
+    TRB=$(samtools view -@ 5 -c {{ bam }} chr7:142299176-142802748)
+    TRA=$(samtools view -@ 5 -c {{ bam }} chr14:21621837-22552156)
+    IGH=$(samtools view -@ 5 -c {{ bam }} chr14:105583730-106879812)
+    IGL=$(samtools view -@ 5 -c {{ bam }} chr22:21991098-22923034)
+
+    echo -e "chr2\t88857160\t90367699\tIGK\t${IGK}" > {{ output }}
+    echo -e "chr7\t142299176\t142802748\tTRB\t${TRB}" >> {{ output }}
+    echo -e "chr14\t21621837\t22552156\tTRA\t${TRA}" >> {{ output }}
+    echo -e "chr14\t105583730\t106879812\tIGH\t${IGH}" >> {{ output }}
+    echo -e "chr22\t21991098\t22923034\tIGL\t${IGL}" >> {{ output }}
 
     {% if libraryCount == 1 %}
-      cp "{{ output }}" {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.txt
+      cp {{ output }} {{ sample_lb_output }}
     {% endif %}
+
+  {% if libraryCount == 1 %}
+    {{ stats2json(sample, task, sample_lb_output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
+  {% elif bam_level is sameas false %}
+    {{ stats2json(sample, task, output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
+  {% endif %}
+
 {% endif %}
 {% endmacro %}

@@ -92,22 +92,5 @@
         {{- bam_qc_snpsniffer_geno(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
       {% endfor %}
     {% endif %}
-
-{% if submissionSource == "TGenLIMS" %}
-- name: stats2lims_{{ sample.name }}
-  tags: [{{ sample.gltype }}, quality_control, stats, stats2lims, {{ sample.name }}]
-  after-re: stats2json_{{ sample.name }}_.*
-  walltime: "0:10:00"
-  cpus: 1
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.python_3_7_2.module }}
-
-    {{ stats2lims(sample, taskPrefix, aligner=aligner)}}
-
-{% endif %}
-
 {% endmacro %}
 

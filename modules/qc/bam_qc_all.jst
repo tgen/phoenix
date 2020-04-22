@@ -218,8 +218,10 @@
     {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
   {% endif %}
 
-{% set alignment_summary_metrics %}{{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics{% endset %}
-{% set insert_size_metrics %}{{ results_dir }}/{{ bam|basename }}.insert_size_metrics{% endset %}
+  {% set alignment_summary_metrics %}{{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics{% endset %}
+  {% set alignment_summary_metrics_json %}{{ alignment_summary_metrics }}.json{% endset %}
+  {% set insert_size_metrics %}{{ results_dir }}/{{ bam|basename }}.insert_size_metrics{% endset %}
+  {% set insert_size_metrics_json %}{{ insert_size_metrics }}.json{% endset %}
 
 - name: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectMultipleMetrics, {{ sample.name }}]
@@ -319,8 +321,11 @@
       mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
     {% endif %}
 
-{{ stats2json(sample, alignment_summary_metrics, "picard_alignment_summary_metrics", aligner=aligner) }}
-{{ stats2json(sample, insert_size_metrics, "picard_insert_size_metrics", aligner=aligner) }}
+  {% if bam_level is sameas true %}
+    {{ stats2json(sample, task, alignment_summary_metrics, alignment_summary_metrics_json, "picard_alignment_summary_metrics") }}
+    {{ stats2json(sample, task, insert_size_metrics, insert_size_metrics_json, "picard_insert_size_metrics") }}
+  {% endif %}
+
 {% endif %}
 {% endmacro %}
 
