@@ -15,8 +15,8 @@
   {% endif %}
 
   {% set metrics %}{{ results_dir }}/{{ bam|basename }}.verifybamid2{% endset %}
-  {% set output %}{{ results_dir }}/{{ bam|basename }}.verifybamid2.out{% endset %}
-  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.out{% endset %}
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.verifybamid2.plot.txt{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.txt{% endset %}
   {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.json{% endset %}
 
 - name: verifybamid2_{{ task }}
@@ -72,13 +72,16 @@
     {# Process Output to produce needed graph #}
     SAMPLE_PC1=`head -n3 "{{ metrics }}.out" | tail -n1 | cut -f1 | sed 's/Intended Sample PC1://g'`
     SAMPLE_PC2=`head -n3 "{{ metrics }}.out" | tail -n1 | cut -f2 | sed 's/PC2://g'`
+    SAMPLE_ALPHA=`head -n4 "{{ metrics }}.out" | tail -n1 | cut -d: -f2`
     echo -e "{{ bam|basename }}""\t"${SAMPLE_PC1}"\t"${SAMPLE_PC2} > "{{ metrics }}.plot.txt"
 
     sh $VERIFY_BAM_ID_HOME/bin/run.plot.sh \
       -r 1000g \
       -g FALSE \
-      -i "{{ metrics }}.plot.txt" \
+      -i "$(pwd)/{{ metrics }}.plot.txt" \
       -o "{{ metrics }}.plot"
+
+    echo -e "{{ bam|basename }}""\t"${SAMPLE_PC1}"\t"${SAMPLE_PC2}"\t"${SAMPLE_ALPHA} > "{{ metrics }}.plot.txt"
 
     {% if libraryCount == 1 %}
       cp {{ metrics }}.out {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.out
