@@ -15,6 +15,9 @@
   {% endif %}
 
   {% set metrics %}{{ results_dir }}/{{ bam|basename }}.verifybamid2{% endset %}
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.verifybamid2.out{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.out{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.json{% endset %}
 
 - name: verifybamid2_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
@@ -83,6 +86,12 @@
       cp {{ metrics }}.plot.txt {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.txt
       cp {{ metrics }}.plot.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.pdf
     {% endif %}
+
+  {% if libraryCount == 1 %}
+    {{ stats2json(sample, task, sample_lb_output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
+  {% elif bam_level is sameas false %}
+    {{ stats2json(sample, task, output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
+  {% endif %}
 
 {% endif %}
 {% endmacro %}
