@@ -114,6 +114,8 @@
 
   {% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
   {% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.txt{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.json{% endset %}
 
 - name: freebayes_sex_check_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_sex_check, freebayes, {{ sample.name }}]
@@ -323,8 +325,14 @@
     echo -e {{ bam|basename }}"\t"${SAMPLE}"\t"${POSITIONS_GENOTYPED}"\t"${MISSING_GENOTYPES}"\t"${TESTED_GENOTYPES}"\t"${HOMOZYGOUS_TOTAL}"\t"${HOMOZYGOUS_REFERENCE}"\t"${HOMOZYGOUS_ALTERNATE}"\t"${HETEROZYGOUS}"\t"${HOMOZYGOUS_RATE}"\t"${HOMOZYGOUS_RATE_SEX_PREDICTION}"\t"${B_ALLELE_GENOTYPES}"\t"${BB_ALT_RATE}"\t"${BB_ALT_RATE_SEX_PREDICTION}"\t"${READS_ON_X}"\t"${READS_ON_Y}"\t"${TOTAL_SEX_CHR_READS}"\t"${Y_READS_SEX_CHR_RATIO}"\t"${READ_COUNT_SEX_PREDICTION}"\t"${SEX_PREDICTION}"\t"${SEX_PREDICTION_CONFIDENCE} >> {{ output }}
 
     {% if libraryCount == 1 %}
-      cp {{ output }} {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.txt
+      cp {{ output }} {{ sample_lb_output }}
     {% endif %}
+
+  {% if libraryCount == 1 %}
+    {{ stats2json(sample, task, sample_lb_output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
+  {% elif bam_level is sameas false %}
+    {{ stats2json(sample, task, output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
+  {% endif %}
 
 {% endif %}
 {% endmacro %}
