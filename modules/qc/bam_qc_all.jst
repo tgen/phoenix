@@ -340,7 +340,11 @@
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
   input: {{ bam }}
   after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
-  output: {{ results_dir }}/{{ bam|basename }}.oxog_metrics
+  output:
+    - {{ results_dir }}/{{ bam|basename }}.oxog_metrics
+    {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv
+    {% endfor %}
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -358,6 +362,36 @@
       {% endif %}
       --INPUT_BASE "{{ results_dir }}/{{ bam|basename }}"
 
+    for library in `tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | cut -f2 | sort | uniq | awk 'NR > 1'`
+    do
+      OXIDATION_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
+        grep ${library} | \
+        cut -f12 | \
+        sort -n | \
+        awk 'NR == 3')
+
+      C_REF_OXO_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
+        grep ${library} | \
+        cut -f18 | \
+        sort -n | \
+        awk 'NR == 3')
+
+      G_REF_OXO_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
+        grep ${library} | \
+        cut -f20 | \
+        sort -n | \
+        awk 'NR == 3')
+
+      echo -e "OXIDATION_Q_MIN\tC_REF_OXO_Q_MIN\tG_REF_OXO_Q_MIN" > {{ results_dir }}/{{ sample.name }}_${library}.{{ aligner }}.bam.oxog_metrics_summary.tsv
+      echo -e "${OXIDATION_Q_MIN}\t${C_REF_OXO_Q_MIN}\t${G_REF_OXO_Q_MIN}" >> {{ results_dir }}/{{ sample.name }}_${library}.{{ aligner }}.bam.oxog_metrics_summary.tsv
+    done
+
+  {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set input %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
+    {% set output_json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
+    {{ stats2json(sample, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample_lb) }}
+  {% endfor %}
 {% endif %}
 {% endmacro %}
 
