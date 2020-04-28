@@ -93,9 +93,9 @@
     {% endif %}
 
   {% if libraryCount == 1 %}
-    {{ stats2json(sample, task, sample_lb_output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
   {% elif bam_level is sameas false %}
-    {{ stats2json(sample, task, output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
   {% endif %}
 
 {% endif %}
@@ -334,9 +334,9 @@
     {% endif %}
 
   {% if libraryCount == 1 %}
-    {{ stats2json(sample, task, sample_lb_output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
   {% elif bam_level is sameas false %}
-    {{ stats2json(sample, task, output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
   {% endif %}
 
 {% endif %}

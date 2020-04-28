@@ -66,7 +66,7 @@
     {% endif %}
 
   {% if bam_level is sameas true %}
-    {{ stats2json(sample, task, rna_metrics, rna_metrics_json, "picard_rna_metrics") }}
+    {{ stats2json(sample.gltype, sample.name, task, rna_metrics, rna_metrics_json, "picard_rna_metrics") }}
   {% endif %}
 {% endif %}
 {% endmacro %}
@@ -127,9 +127,9 @@
     {% endif %}
 
   {% if libraryCount == 1 %}
-    {{ stats2json(sample, task, sample_lb_output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
   {% elif bam_level is sameas false %}
-    {{ stats2json(sample, task, output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
   {% endif %}
 
 {% endif %}

@@ -38,6 +38,6 @@
       --BAIT_INTERVALS {{ sample.capture_kit.baits_interval_list }}
 
 
-{{ stats2json(sample, task, output_file, output_file_json, "picard_hs_metrics") }}
+{{ stats2json(sample.gltype, sample.name, task, output_file, output_file_json, "picard_hs_metrics") }}
 {% endif %}
 {% endmacro %}

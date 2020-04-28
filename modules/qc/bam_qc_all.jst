@@ -322,8 +322,8 @@
     {% endif %}
 
   {% if bam_level is sameas true %}
-    {{ stats2json(sample, task, alignment_summary_metrics, alignment_summary_metrics_json, "picard_alignment_summary_metrics") }}
-    {{ stats2json(sample, task, insert_size_metrics, insert_size_metrics_json, "picard_insert_size_metrics") }}
+    {{ stats2json(sample.gltype, sample.name, task, alignment_summary_metrics, alignment_summary_metrics_json, "picard_alignment_summary_metrics") }}
+    {{ stats2json(sample.gltype, sample.name, task, insert_size_metrics, insert_size_metrics_json, "picard_insert_size_metrics") }}
   {% endif %}
 
 {% endif %}
@@ -390,7 +390,7 @@
     {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
     {% set input %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
     {% set output_json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
-    {{ stats2json(sample, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample_lb) }}
   {% endfor %}
 {% endif %}
 {% endmacro %}

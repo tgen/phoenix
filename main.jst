@@ -45,6 +45,7 @@
 {% endif %}
 
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
+{% from 'modules/qc/bam_qc_snpsniffer.jst' import snpsniffer_summary with context %}
 {% from 'modules/constitutional/main.jst' import constitutional_variant_calling with context %}
 {% from 'modules/somatic/main.jst' import somatic_variant_calling with context %}
 {% from 'modules/rna/main.jst' import rna_quant with context %}
@@ -140,6 +141,9 @@
     rsync "{{ fastq.fastqPath }}" "temp/fastqs/"
 
 {% endfor %}
+
+{# project level quality control #}
+{{- snpsniffer_summary(samples) }}
 
 {# Move to utility scripts #}
 - name: finalize

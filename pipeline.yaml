@@ -259,6 +259,11 @@ constants:
         melanogaster strain w1118; iso-2; iso-3.", Cingolani P, Platts A, Wang
         le L, Coon M, Nguyen T, Wang L, Land SJ, Lu X, Ruden DM. Fly (Austin).
         2012 Apr-Jun;6(2):80-92. PMID: 22728672
+    snpSniffer:
+      module: snpSniffer/7.0.0-Java-11
+      version: "7.0.0"
+      verbose: snpSniffer v7.0.0
+      website: https://github.com/tgen/snpSniffer
     star:
       module: STAR/2.7.3a-GCC-8.2.0-2.31.1
       version: 2.7.3a
@@ -429,6 +434,9 @@ constants:
     snpeff_data: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/data
     snpeff_db: grch38.98
     snpSniffer_sites: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/snpSniffer/positions_387_hg38_ucsc.txt
+    snpSniffer_database: /home/tgenref/binaries/snpSniffer/snpSniffer.clone/grch38_hg38_ucsc_contigs/databaseV5_hg38_ucsc.ini
+    snpSniffer_jar: /home/tgenref/binaries/snpSniffer/snpSniffer.clone/snpSniffer.jar
+    snpSniffer_graph_r: /home/tgenref/binaries/snpSniffer/snpSniffer.clone/SnpSniffer_Graph.R
     vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
     deepvariant_models:
       exome: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.9.0/DeepVariant-inception_v3-0.9.0+data-wes_standard/model.ckpt
