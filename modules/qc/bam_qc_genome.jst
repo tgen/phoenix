@@ -67,17 +67,19 @@
     {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
   {% endif %}
 
-  {% set dna_metrics %}{{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics{% endset %}
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.wgs_wnzc_metrics{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.wgs_wnzc_metrics.json{% endset %}
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetricsWithNonZeroCoverage, {{ sample.name }}]
   input: {{ bam }}
   output:
-    - {{ dna_metrics }}
-    - {{ dna_metrics }}.pdf
+    - {{ output }}
+    - {{ output }}.pdf
     {% if libraryCount == 1 %}
-    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics
-    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics.pdf
+    - {{ sample_lb_output }}
+    - {{ sample_lb_output }}.pdf
     {% endif %}
   {% if bam_level is sameas false %}
   reset: predecessors
@@ -97,14 +99,20 @@
     gatk CollectWgsMetricsWithNonZeroCoverage \
       --java-options "-Xmx7G" \
       --INPUT {{ bam }} \
-      --OUTPUT {{ dna_metrics }} \
-      --CHART_OUTPUT {{ dna_metrics }}.pdf \
+      --OUTPUT {{ output }} \
+      --CHART_OUTPUT {{ output }}.pdf \
       --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }}
 
     {% if libraryCount == 1 %}
-      cp {{ dna_metrics }} {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics
-      cp {{ dna_metrics }}.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics.pdf
+      cp {{ output }} {{ sample_lb_output }}
+      cp {{ output }}.pdf {{ sample_lb_output }}.pdf
     {% endif %}
+
+  {% if libraryCount == 1 %}
+    {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "picard_wgs_wnzc_metrics", sample_name=sample.name, library_name=sample_lb) }}
+  {% elif bam_level is sameas false %}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "picard_wgs_wnzc_metrics", sample_name=sample.name, library_name=sample_lb) }}
+  {% endif %}
 
 {% endif %}
 {% endmacro %}
