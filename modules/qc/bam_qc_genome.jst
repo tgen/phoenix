@@ -1,5 +1,7 @@
 # These macros are run on genome bams from the dna_alignment module.
 
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+
 {% macro bam_qc_gatk_collectwgsmetrics(sample, libraryCount, sample_lb, aligner='bwa', bam_level=true) %}
 {% if tasks["Genome_quality_control_stats_gatk_CollectWgsMetrics"]|default(true) %}
 
