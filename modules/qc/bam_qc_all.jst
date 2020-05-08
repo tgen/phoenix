@@ -168,15 +168,19 @@
     {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
   {% endif %}
 
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.idxstats.txt{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.txt{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.json{% endset %}
+
 - name: samtools_idxstats_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} idxstats.
   input: {{ bam }}
   output:
-    - {{ results_dir }}/{{ bam|basename }}.idxstats.txt
+    - {{ output }}
     {% if libraryCount == 1 %}
-    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.txt
+    - {{ sample_lb_output }}
     {% endif %}
   {% if bam_level is sameas false %}
   reset: predecessors
@@ -194,11 +198,17 @@
 
     samtools idxstats \
       "{{ bam }}" >\
-      "{{ results_dir }}/{{ bam|basename }}.idxstats.txt"
+      "{{ output }}"
 
     {% if libraryCount == 1 %}
-      cp {{ results_dir }}/{{ bam|basename }}.idxstats.txt {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.txt
+      cp {{ output }} {{ sample_lb_output }}
     {% endif %}
+
+  {% if libraryCount == 1 %}
+    {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "samtools_idxstats", sample_name=sample.name, library_name=sample_lb) }}
+  {% elif bam_level is sameas false %}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "samtools_idxstats", sample_name=sample.name, library_name=sample_lb) }}
+  {% endif %}
 
 {% endif %}
 {% endmacro %}

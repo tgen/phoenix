@@ -70,8 +70,8 @@
   {% endif %}
 
   {% set output %}{{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics{% endset %}
-  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.wgs_wnzc_metrics{% endset %}
-  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.wgs_wnzc_metrics.json{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.wgs_wnzc_metrics.json{% endset %}
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetricsWithNonZeroCoverage, {{ sample.name }}]
