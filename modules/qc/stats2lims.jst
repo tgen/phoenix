@@ -17,6 +17,9 @@
     module load {{ constants.tools.python_3_7_2.module }}
 
     ${JS_PIPELINE_PATH}/required_scripts/uploadStats2Lims.py \
+      {% if file_type == "samtools_idxstats" %}
+      --contigList "{{ constants.phoenix.lims_contigs | replace(" ", "") }}" \
+      {% endif %}
       {{ input_file }} \
       {{ file_type }} \
       {{ isilonPath }} \

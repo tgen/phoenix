@@ -3,17 +3,17 @@
 
 {% macro cellranger_count(files) %}
 
-{% set sample = files[0] %}
-{% set assaycode = sample.assayCode|default('unknown') %}
-{% set chemistry = constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name %}
-{% set outdir %}{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
+  {% set sample = files[0] %}
+  {% set assaycode = sample.assayCode|default('unknown') %}
+  {% set chemistry = constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name %}
+  {% set outdir %}{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
+  {% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}_{{ sample.rglb }}/{% endset %}
 
-{% set samples_list = [] %}
-{% for rgpu, _ in files|groupby('rgpu') %}
-  {% set sample_string %}{{ sample.name }}_{{ sample.rglb }}_{{ rgpu[:-2] }}{% endset %}
-  {% do samples_list.append(sample_string) %}
-{% endfor %}
+  {% set samples_list = [] %}
+  {% for rgpu, _ in files|groupby('rgpu') %}
+    {% set sample_string %}{{ sample.name }}_{{ sample.rglb }}_{{ rgpu[:-2] }}{% endset %}
+    {% do samples_list.append(sample_string) %}
+  {% endfor %}
 
 - name: cellranger_count_{{ sample.name }}_{{ sample.rglb }}
   tags: [{{ sample.gltype }}, single_cell, cellranger_count, {{ sample.name }}]
@@ -74,12 +74,14 @@
     mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.raw_feature_bc_matrix.h5
     mv {{ cellranger_out }}/web_summary.html {{ cellranger_out }}/{{ sample.name }}_{{ sample.rglb }}.web_summary.html
 
-    {# removing the analysis directory as is it no longer needed #}
-    {% set task %}cellranger_count_{{ sample.name }}_{{ sample.rglb }}{% endset %}
-    {% set directory %}{{ cellranger_out }}/analysis{% endset %}
-    {{- remove_files(directory,none,task) }}
+  {# removing the analysis directory as is it no longer needed #}
+  {% set task %}cellranger_count_{{ sample.name }}_{{ sample.rglb }}{% endset %}
+  {% set directory %}{{ cellranger_out }}/analysis{% endset %}
+  {{- remove_files(directory, none, task) }}
 
     {# move everything to the output directory #}
     mv {{ cellranger_out }}/* {{ outdir }}
+
+  {{- bam_qc(sample, aligner='cellranger') }}
 
 {% endmacro %}
