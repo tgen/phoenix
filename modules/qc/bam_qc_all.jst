@@ -82,15 +82,15 @@
       --remove-overlaps \
       --filtering-flag 256 \
       --coverage 1,2500,1 \
-      {% if aligner == 'star' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
       --target-regions {{ constants.phoenix.reference_non_N_bed }} \
       {% elif aligner == 'bwa' %}
-      {% if sample.gltype == 'exome' %}
+        {% if sample.gltype == 'exome' %}
       --target-regions {{ regions }} \
-      {% else %}
+        {% else %}
       --target-regions {{ constants.phoenix.reference_non_N_bed }} \
-      {% endif %}
+        {% endif %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       > "{{ results_dir }}/{{ bam|basename }}.bamstats.txt"
@@ -170,7 +170,12 @@
 
   {% set output %}{{ results_dir }}/{{ bam|basename }}.idxstats.txt{% endset %}
   {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.txt{% endset %}
-  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.json{% endset %}
+
+  {% if sample.gltype == 'singlecellrna' %}
+    {% set json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.idxstats.json{% endset %}
+  {% else %}
+    {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.idxstats.json{% endset %}
+  {% endif %}
 
 - name: samtools_idxstats_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
@@ -206,7 +211,7 @@
 
   {% if libraryCount == 1 %}
     {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "samtools_idxstats", sample_name=sample.name, library_name=sample_lb) }}
-  {% elif bam_level is sameas false %}
+  {% elif bam_level is sameas false or sample.gltype == 'singlecellrna' %}
     {{ stats2json(sample.gltype, sample.name, task, output, json, "samtools_idxstats", sample_name=sample.name, library_name=sample_lb) }}
   {% endif %}
 
@@ -237,10 +242,15 @@
   {% set gc_bias_metrics %}{{ results_dir }}/{{ bam|basename }}.gc_bias.summary_metrics{% endset %}
   {% set gc_bias_metrics_json %}{{ gc_bias_metrics }}.json{% endset %}
 
-  {% set error_metrics %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.error_summary_metrics{% endset %}
-  {% set error_metrics_json %}{{ error_metrics }}.json{% endset %}
+  {% if sample.gltype == 'singlecellrna' %}
+    {% set error_metrics %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.error_summary_metrics{% endset %}
+    {% set quality_yield_metrics %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.quality_yield_metrics{% endset %}
+  {% else %}
+    {% set error_metrics %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.error_summary_metrics{% endset %}
+    {% set quality_yield_metrics %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_yield_metrics{% endset %}
+  {% endif %}
 
-  {% set quality_yield_metrics %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.quality_yield_metrics{% endset %}
+  {% set error_metrics_json %}{{ error_metrics }}.json{% endset %}
   {% set quality_yield_metrics_json %}{{ quality_yield_metrics }}.json{% endset %}
 
 - name: gatk_collectmultiplemetrics_{{ task }}
@@ -300,7 +310,7 @@
       --java-options "-Xmx7G" \
       --INPUT "{{ bam }}" \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
-      {% if aligner == 'star' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
@@ -337,7 +347,7 @@
       {{ stats2json(sample.gltype, sample.name, task, error_metrics, error_metrics_json, "picard_error_summary_metrics", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, quality_yield_metrics, quality_yield_metrics_json, "quality_yield_metrics", sample_name=sample.name, library_name=sample_lb) }}
 
-    {% elif bam_level is sameas false %}
+    {% elif bam_level is sameas false or sample.gltype == 'singlecellrna' %}
       pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias%d.pdf
       mv {{ results_dir }}/{{ bam|basename }}.gc_bias2.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf
 
@@ -378,9 +388,13 @@
   {% endif %}
   output:
     - {{ results_dir }}/{{ bam|basename }}.oxog_metrics
-    {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+    {% if sample.gltype == 'singlecellrna' %}
+    - {{ results_dir }}/{{ bam|basename }}.oxog_metrics_summary.tsv
+    {% else %}
+      {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
     - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv
-    {% endfor %}
+      {% endfor %}
+    {% endif %}
   walltime: "24:00:00"
   cpus: 8
   mem: 32G
@@ -397,7 +411,7 @@
         --java-options "-Xmx7G" \
         --INPUT {{ bam }} \
         --OUTPUT "{{ input_base }}/{{ bam|basename }}" \
-        {% if aligner == 'star' %}
+        {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
         --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}"
         {% elif aligner == 'bwa' %}
         --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
@@ -405,7 +419,7 @@
     {% endif %}
 
     gatk ConvertSequencingArtifactToOxoG \
-      {% if aligner == 'star' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
@@ -432,20 +446,32 @@
         sort -n | \
         awk 'NR == 3')
 
+      {% if sample.gltype == 'singlecellrna' %}
+      echo -e "OXIDATION_Q_MIN\tC_REF_OXO_Q_MIN\tG_REF_OXO_Q_MIN" > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.oxog_metrics_summary.tsv
+      echo -e "${OXIDATION_Q_MIN}\t${C_REF_OXO_Q_MIN}\t${G_REF_OXO_Q_MIN}" >> {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.oxog_metrics_summary.tsv
+      {% else %}
       echo -e "OXIDATION_Q_MIN\tC_REF_OXO_Q_MIN\tG_REF_OXO_Q_MIN" > {{ results_dir }}/{{ sample.name }}_${library}.{{ aligner }}.bam.oxog_metrics_summary.tsv
       echo -e "${OXIDATION_Q_MIN}\t${C_REF_OXO_Q_MIN}\t${G_REF_OXO_Q_MIN}" >> {{ results_dir }}/{{ sample.name }}_${library}.{{ aligner }}.bam.oxog_metrics_summary.tsv
+      {% endif %}
     done
 
     {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
     mv {{ input_base }}/{{ bam|basename }}.oxog_metrics {{ results_dir }}/
     {% endif %}
 
-  {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
-    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
-    {% set input %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
-    {% set output_json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
-    {{ stats2json(sample.gltype, sample.name, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample_lb) }}
-  {% endfor %}
+  {% if sample.gltype == 'singlecellrna' %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set input %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
+    {% set output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
+    {{ stats2json(sample.gltype, sample.name, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample.rglb) }}
+  {% else %}
+    {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+      {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+      {% set input %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
+      {% set output_json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
+      {{ stats2json(sample.gltype, sample.name, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample_lb) }}
+    {% endfor %}
+  {% endif %}
 {% endif %}
 {% endmacro %}
 
@@ -488,7 +514,7 @@
       --max-depth 5000 \
       --min-MQ 0 \
       --min-BQ 13 \
-      {% if aligner == 'star' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
       --fasta-ref "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \

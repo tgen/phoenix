@@ -60,7 +60,7 @@
     {% if libraryCount == 1 %}
       pdfseparate -f 3 "{{ rna_metrics }}.pdf" {{ rna_metrics }}%d.pdf
       mv {{ rna_metrics }}3.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.rna_metrics.pdf
-    {% elif bam_level is sameas false %}
+    {% elif bam_level is sameas false or sample.gltype == 'singlecellrna' %}
       pdfseparate -f 3 "{{ rna_metrics }}.pdf" {{ rna_metrics }}%d.pdf
       mv {{ rna_metrics }}3.pdf {{ rna_metrics }}.pdf
     {% endif %}
@@ -87,7 +87,12 @@
 
   {% set output %}{{ results_dir }}/{{ bam|basename }}.BTcell.loci.counts.txt{% endset %}
   {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.txt{% endset %}
-  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.json{% endset %}
+
+  {% if sample.gltype == 'singlecellrna' %}
+    {% set json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.BTcell.loci.counts.json{% endset %}
+  {% else %}
+    {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.BTcell.loci.counts.json{% endset %}
+  {% endif %}
 
 - name: rna_getBTcellLociCounts_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, BTcellLociCounts, {{ sample.name }}]
@@ -128,7 +133,7 @@
 
   {% if libraryCount == 1 %}
     {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
-  {% elif bam_level is sameas false %}
+  {% elif bam_level is sameas false or sample.gltype == 'singlecellrna' %}
     {{ stats2json(sample.gltype, sample.name, task, output, json, "bt_cell_counts", sample_name=sample.name, library_name=sample_lb) }}
   {% endif %}
 

@@ -30,13 +30,22 @@
 
 {% macro bam_qc(sample, aligner='bwa') %}
 
-    {% set sample_lbs = sample.read_groups.values()|groupby('rglb') %}
-    {% set libraryCount = sample_lbs|length %}
-    {% set sample_lb = sample_lbs[0][0] %}
+    {% if aligner == "cellranger_count" or aligner == "cellranger_vdj" %}
+      {% set libraryCount = 0 %}
+      {% set sample_lb = sample.rglb %}
+    {% else %}
+      {% set sample_lbs = sample.read_groups.values()|groupby('rglb') %}
+      {% set libraryCount = sample_lbs|length %}
+      {% set sample_lb = sample_lbs[0][0] %}
+    {% endif %}
 
     {# General Library type specific tasks #}
     {% if sample.gltype == 'rna' %}
       {% set taskPrefix = 'RNA' %}
+      {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
+      {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner=aligner) }}
+    {% elif sample.gltype == 'singlecellrna' %}
+      {% set taskPrefix = 'SingleCellRNA' %}
       {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
       {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner=aligner) }}
     {% elif sample.gltype == 'exome' %}

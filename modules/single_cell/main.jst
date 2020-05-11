@@ -5,7 +5,19 @@
 {# group dataFiles by their respective library and test if they are single cell or not #}
 {# because each library uses the same set of cell barcodes we cannot collapse by rgsm as it could create in silico cell doublets #}
 {% macro single_cell_rna(dataFiles) %}
-  {% for library, files in dataFiles|groupby('rglb') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellrna' %}
+
+  {% for library, files in dataFiles | groupby('rglb') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellrna' %}
+    {% set name = files[0].sampleName %}
+
+    {% for file in files %}
+      {% do file.update({'name': name}) %}
+      {% set readOrientation=file.readOrientation|default('inward')|lower %}
+      {% set rnaStrandType=file.rnaStrandType|default('unstranded')|lower %}
+      {% set rnaStrandDirection=file.rnaStrandDirection|default('notapplicable')|lower %}
+      {% set strandedness %}{{ readOrientation }}-{{ rnaStrandType }}-{{ rnaStrandDirection }}{% endset %}
+      {% do file.update({'strandedness': strandedness}) %}
+    {% endfor %}
+
     {% if tasks["SingleCellRNA_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
       {{- cellranger_count(files) }}
     {% endif %}
@@ -13,7 +25,19 @@
       {{- starsolo(files) }}
     {% endif %}
   {% endfor %}
-  {% for library, files in dataFiles|groupby('rglb') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellenrichment' %}
+
+  {% for library, files in dataFiles | groupby('rglb') if files[0].gltype == 'singlecellrna' and files[0].glprep == 'singlecellenrichment' %}
+    {% set name = files[0].sampleName %}
+
+    {% for file in files %}
+      {% do file.update({'name': name}) %}
+      {% set readOrientation=file.readOrientation|default('inward')|lower %}
+      {% set rnaStrandType=file.rnaStrandType|default('unstranded')|lower %}
+      {% set rnaStrandDirection=file.rnaStrandDirection|default('notapplicable')|lower %}
+      {% set strandedness %}{{ readOrientation }}-{{ rnaStrandType }}-{{ rnaStrandDirection }}{% endset %}
+      {% do file.update({'strandedness': strandedness}) %}
+    {% endfor %}
+
     {% if tasks["SingleCellRNA_VDJ_Assembly_cellranger_vdj"]|default(true) %}
       {{- cellranger_vdj(files) }}
     {% endif %}
