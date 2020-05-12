@@ -337,33 +337,33 @@ constants:
     genome_build: grch38_hg38
     genome_subversion_name: hg38tgen
     gene_model_name: ensembl_v98
-    capture_kit_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits
-    reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
-    reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
-    reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
-    reference_non_N_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
-    dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
-    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
-    gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
-    gnomad_exome_v2_1_1_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
-    gnomad_genome_v3_0_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
-    gnomad_exome_v2_1_1_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
-    gnomad_genome_v3_0_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
-    cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
-    cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
-    clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
-    bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
-    black_list: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz
-    delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
-    delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
+    capture_kit_path: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits
+    reference_fasta: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
+    reference_fai: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
+    reference_dict: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
+    reference_non_N_bed: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
+    dbsnp_v152: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
+    gnomad_exome_v2_1_1_liftover: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
+    gnomad_genome_v3_0: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
+    gnomad_exome_v2_1_1_mutect_germlinereference: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
+    gnomad_genome_v3_0_mutect_germlinereference: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
+    gnomad_exome_v2_1_1_mutect_contamination: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
+    gnomad_genome_v3_0_mutect_contamination: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
+    cosmic_coding_v90: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
+    cosmic_noncoding_v90: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
+    clinvar_20190715: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
+    bcftools_annotate_contig_update_ucsc2ensembl: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
+    black_list: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz
+    delly_annotation: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
+    delly_exclusions: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
     delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF.py
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel.py
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
     plotCNVplus_Rscript: plotCNVplus_06b34ff.R
     stats2json: samStats2json.py
     stats2lims: uploadStats2Lims.py
-    cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
-    cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
+    cellranger_reference: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
+    cellranger_vdj_reference: /home/dominic/resources/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
     scrna_chemistry_options:
       X3SCR:
         chemistry_name: SC3Pv1
@@ -386,27 +386,27 @@ constants:
         umi_lenth: 10
         cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/737K-august-2016.txt
     gatk_known_sites:
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+      - /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.dbsnp138.vcf
+      - /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
+      - /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     gatk_cnn_resources:
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/hapmap_3.3.hg38.vcf.gz
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
-      - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
-    bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
-    gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
-    ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
-    ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
-    gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
-    gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
-    transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.transcriptome.fasta
-    salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
-    sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
-    sex_check_vcf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.vcf.gz
-    lymphocyteReceptor_loci_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
-    star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
-    star_indices_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/starFusion_gencode_v32/GRCh38_gencode_v32_CTAT_lib_Dec062019.plug-n-play/ctat_genome_lib_build_dir
+      - /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/hapmap_3.3.hg38.vcf.gz
+      - /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
+      - /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
+    bwa_index: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
+    gtf: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
+    ref_flat: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
+    ribo_locations: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
+    gatk_cnv_primary_contigs_female: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
+    gatk_cnv_primary_contigs_male: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
+    transcriptome_fasta: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.transcriptome.fasta
+    salmon_index: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/salmon_0.14.1/salmon_quasi_75merPlus
+    sex_check_targets: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
+    sex_check_vcf: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.vcf.gz
+    lymphocyteReceptor_loci_bed: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
+    star_fasta: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
+    star_indices_path: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a
+    starfusion_index: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/starFusion_gencode_v32/GRCh38_gencode_v32_CTAT_lib_Dec062019.plug-n-play/ctat_genome_lib_build_dir
     strandedness_options:
       inward-unstranded-notapplicable:
         salmon: "IU"
@@ -426,14 +426,14 @@ constants:
         featurecounts: "2"
         tophat: "-fr-firststrand"
         collectrnaseqmetrics: "SECOND_READ_TRANSCRIPTION_STRAND"
-    snpeff_config: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/snpEff.config
-    snpeff_data: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/data
+    snpeff_config: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/snpEff.config
+    snpeff_data: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/data
     snpeff_db: grch38.98
-    snpSniffer_sites: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/snpSniffer/positions_387_hg38_ucsc.txt
-    vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
+    snpSniffer_sites: /home/dominic/resources/homo_sapiens/grch38_hg38/tool_specific_resources/snpSniffer/positions_387_hg38_ucsc.txt
+    vep_data: /home/dominic/resources/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
     deepvariant_models:
-      exome: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.9.0/DeepVariant-inception_v3-0.9.0+data-wes_standard/model.ckpt
-      genome: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.9.0/DeepVariant-inception_v3-0.9.0+data-wgs_standard/model.ckpt
+      exome: /home/dominic/resources/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.9.0/DeepVariant-inception_v3-0.9.0+data-wes_standard/model.ckpt
+      genome: /home/dominic/resources/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.9.0/DeepVariant-inception_v3-0.9.0+data-wgs_standard/model.ckpt
     sequence_groupings:
       # Sequence groupings for BQSR (same groups as found in the GATK WDL example).
       - ['chr1']

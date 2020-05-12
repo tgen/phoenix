@@ -60,7 +60,7 @@
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   reset: predecessors
-  after: 
+  after:
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
     - split_fastq_{{ r2fastq.fastqPath|sha256 }}
   walltime: "48:00:00"
@@ -70,8 +70,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.bwa.module }}
-    module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.bwa.module }}
+    #module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -138,7 +138,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.samtools.module }}
 
     {# No long options available for the following:
       -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
@@ -184,7 +184,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.samtools.module }}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -217,4 +217,3 @@
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam"
 
 {% endmacro %}
-

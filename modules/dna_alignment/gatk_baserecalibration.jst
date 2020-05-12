@@ -137,7 +137,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/"
     mv \
