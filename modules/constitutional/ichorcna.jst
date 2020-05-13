@@ -15,7 +15,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.hmmcopy_utils.module }}
+    #module load {{ constants.tools.hmmcopy_utils.module }}
 
     mkdir -p "{{ results_dir }}/"
 
@@ -45,7 +45,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.ichorcna.module }}
+    #module load {{ constants.tools.ichorcna.module }}
 
     {# Purge any existing results files prior to starting #}
     rm -r "{{ temp_dir }}" || true
