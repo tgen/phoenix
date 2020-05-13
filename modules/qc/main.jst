@@ -63,7 +63,7 @@
 
     {% endif %}
 
-    {# Cnstitutional dna specific tasks #}
+    {# Constitutional dna specific tasks #}
     {% if sample.subGroup|lower == 'constitutional' and ( sample.gltype|lower == 'genome' or sample.gltype|lower == 'exome' )  %}
         {% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
            {{- bam_qc_verifybamid2(sample, aligner=aligner) }}

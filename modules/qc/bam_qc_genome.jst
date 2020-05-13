@@ -14,7 +14,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk.module }}
+    #module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -44,8 +44,8 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk.module }}
-    module load {{ constants.tools.R.module }}
+    #module load {{ constants.tools.gatk.module }}
+    #module load {{ constants.tools.R.module }}
 
     mkdir -p {{ results_dir }}
 
@@ -73,7 +73,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk.module }}
+    #module load {{ constants.tools.gatk.module }}
 
     mkdir -p "{{ results_dir }}"
 

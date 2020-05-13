@@ -5,7 +5,7 @@ __pipeline__:
   version: v0.5.0
 constants:
   install_path:
-    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-v0_5_0
+    path_to_phoenix_repo: /home/dominic/jetstream_pipelines/pw_phoenix
   tools:
     bedtools:
       module: BEDTools/2.29.0-GCC-8.2.0-2.31.1
