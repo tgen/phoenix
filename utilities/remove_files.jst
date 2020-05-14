@@ -14,3 +14,30 @@
     rm -r {{ directory }}
 
 {% endmacro %}
+{# {% macro remove_files_by_input(inputs, inputs_re, name) %} #}
+{% macro remove_files_by_input(inputs, name='') %}
+
+- name: removing_inputs_{{ name }}
+  {% if inputs is not none %}
+  input:
+    {% for input in inputs %}
+    - {{ input }}
+    {% endfor %}
+  {% endif %}
+  {# {% if inputs_re is not none %}
+  input-re:
+    {% for input_re in inputs_re %}
+    - {{ input_re }}
+    {% endfor %}
+  {% endif %} #}
+  walltime: "0:10:00"
+  cpus: 1
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {% for input in inputs %}
+    rm -r {{ input }}
+    {% endfor %}
+
+{% endmacro %}

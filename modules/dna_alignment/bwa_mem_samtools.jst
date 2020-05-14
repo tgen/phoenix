@@ -13,6 +13,7 @@
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
 {% macro bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) %}
+{% set rg_bams = [] %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
@@ -57,12 +58,18 @@
 
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
+{% do rg_bams.append('temp/{}/alignment/bwa/{}/{}/{}.bwa.bam'.format(sample.gltype, sample.name, rgid, chunk_suffix)) %}
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   reset: predecessors
-  after:
+  input:
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}
+  output:
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
+  {# after:
     - split_fastq_{{ r1fastq.fastqPath|sha256 }}
-    - split_fastq_{{ r2fastq.fastqPath|sha256 }}
+    - split_fastq_{{ r2fastq.fastqPath|sha256 }} #}
   walltime: "48:00:00"
   cpus: 10
   mem: 50G

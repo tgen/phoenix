@@ -1,4 +1,4 @@
-{% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'utilities/remove_files.jst' import remove_files, remove_files_by_input with context %}
 # This macro adds tasks for running GATK BaseRecalibrator on the output
 # from markdups.
 {% macro baserecalibration(sample, aligner='bwa') %}
@@ -149,6 +149,7 @@
 {% set task %}no_baserecalibration_{{ sample.name }}_{{ aligner }}{% endset %}
 {% set before %}freebayes_sex_check_{{ sample.name }}_{{ aligner }}{% endset %}
 {% set directory %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{% endset %}
-{{- remove_files(directory,before,task) }}
+{# {{- remove_files(directory,before,task) }} #}
+{# {{- remove_files_by_input(inputs=[], name='no_baserecalibration') }} #}
 
 {% endmacro %}
