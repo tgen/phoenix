@@ -29,6 +29,11 @@
   reset: predecessors
   input:
     - temp/fastqs/{{ fastq.basename }}
+  output:
+    {% for i in range(n_chunks) %}
+    {% set chunk_suffix = '%02d' % i %}
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/{{ chunk_suffix }}
+    {% endfor %}
   cpus: 1
   walltime: "4:00:00"
   cmd: |
@@ -136,7 +141,11 @@
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
-  after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
+  input:
+    {% for rg_bam_path in rg_bams %}
+     - {{ rg_bam_path }}
+    {% endfor %}
+  {# after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.* #}
   output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8

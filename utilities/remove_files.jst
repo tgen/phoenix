@@ -15,7 +15,7 @@
 
 {% endmacro %}
 {# {% macro remove_files_by_input(inputs, inputs_re, name) %} #}
-{% macro remove_files_by_input(inputs, name='') %}
+{# {% macro remove_files_by_input(inputs, name='') %}
 
 - name: removing_inputs_{{ name }}
   {% if inputs is not none %}
@@ -29,7 +29,7 @@
     {% for input_re in inputs_re %}
     - {{ input_re }}
     {% endfor %}
-  {% endif %} #}
+  {% endif %}
   walltime: "0:10:00"
   cpus: 1
   cmd: |
@@ -40,4 +40,4 @@
     rm -r {{ input }}
     {% endfor %}
 
-{% endmacro %}
+{% endmacro %} #}
