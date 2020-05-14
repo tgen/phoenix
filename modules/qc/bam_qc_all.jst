@@ -21,8 +21,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools.module }}
-    module load {{ constants.tools.bedtools.module }}
+    #module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.bedtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -84,8 +84,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools.module }}
-    module load {{ constants.tools.bedtools.module }}
+    #module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.bedtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -156,7 +156,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -184,7 +184,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.samtools.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -234,8 +234,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.gatk.module }}
-    module load {{ constants.tools.R.module }}
+    #module load {{ constants.tools.gatk.module }}
+    #module load {{ constants.tools.R.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -281,7 +281,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.gatk.module }}
+    #module load {{ constants.tools.gatk.module }}
 
     gatk ConvertSequencingArtifactToOxoG \
       {% if aligner == 'star' %}
@@ -306,7 +306,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.bcftools.module }}
+    #module load {{ constants.tools.bcftools.module }}
 
     {# Genotype the 387 test positions across the genome, filter to calls with DP >= 5, sort, remove chr from contig names #}
     bcftools mpileup \

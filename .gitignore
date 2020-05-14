@@ -107,3 +107,6 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# NA12878 project configuration is just here for reference
+NA12878_example.json

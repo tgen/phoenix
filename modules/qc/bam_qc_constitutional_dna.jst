@@ -16,7 +16,7 @@
   cmd: |
     set -eu
     set -o pipefail
-    module load {{ constants.tools.verifybamid2.module }}
+    #module load {{ constants.tools.verifybamid2.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -61,9 +61,10 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.samtools.module }}
-    module load {{ constants.tools.freebayes.module }}
-    module load {{ constants.tools.bcftools.module }}
+    #module load {{ constants.tools.samtools.module }}
+    #module load {{ constants.tools.freebayes.module }}
+    #module load {{ constants.tools.bcftools.module }}
+    echo "Starting freebayes"
 
     mkdir -p "{{ temp_dir }}/temp"
 
@@ -86,6 +87,8 @@
       --min-coverage 5 \
       --vcf "{{ vcf }}" \
       {{ bam }}
+     
+    echo "past freebayes"
 
     {# Capture the RG_SM tag that is in the VCF header #}
     SAMPLE=`grep "#CHROM" {{ vcf }} | cut -f10`
@@ -112,6 +115,7 @@
     {# Positions meeting requirements with heterozygous calls; 0/1, 0/2, 0/3, 1/2, 1/3, or 2/3 (ie. AB.count) #}
     HETEROZYGOUS=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT="het"' {{ vcf }} | wc -l`
 
+    echo "checkpoint 1"
     {# Determine if the sample meets TESTED_GENOTYPES requirement #}
     if [ $TESTED_GENOTYPES -ge $MINIMUM_GENOTYPES_REQUIRED ]
     then
@@ -151,6 +155,7 @@
       BB_ALT_RATE_SEX_PREDICTION="Undetermined"
     fi
 
+    echo "checkpoint 2"
     {#
     ################################################
     ## Check total read count on Y/(X+Y)
@@ -197,6 +202,7 @@
     {# Assign predicted sex based on defined threshold #}
     READ_COUNT_SEX_PREDICTION=$(echo ${Y_SEX_CHR_READ_RATIO_THERSHOLD} ${Y_READS_SEX_CHR_RATIO} | gawk '{if ($1 < $2) print "Male"; else print "Female"}')
 
+    echo "checkpoint 3"
     {# Use READ_COUNT_SEX_PREDICTION, others are used to improve confidence level #}
     if [[ $HOMOZYGOUS_RATE_SEX_PREDICTION == "Male" && $BB_ALT_RATE_SEX_PREDICTION == "Male" && $READ_COUNT_SEX_PREDICTION == "Male" ]]
     then
@@ -244,12 +250,14 @@
       SEX_PREDICTION="Error"
       SEX_PREDICTION_CONFIDENCE="Error"
     fi
+    
+    echo "checkpoint 4"
 
     {# Print header #}
     echo -e BAM"\t"SAMPLE"\t"POSITIONS_GENOTYPED"\t"MISSING_GENOTYPES"\t"TESTED_GENOTYPES"\t"HOMOZYGOUS_TOTAL"\t"HOMOZYGOUS_REFERENCE"\t"HOMOZYGOUS_ALTERNATE"\t"HETEROZYGOUS"\t"HOMOZYGOUS_RATE"\t"HOMOZYGOUS_RATE_SEX_PREDICTION"\t"B_ALLELE_GENOTYPES"\t"BB_ALT_RATE"\t"BB_ALT_RATE_SEX_PREDICTION"\t"READS_ON_X"\t"READS_ON_Y"\t"TOTAL_SEX_CHR_READS"\t"Y_READS_SEX_CHR_RATIO"\t"READ_COUNT_SEX_PREDICTION"\t"SEX_PREDICTION"\t"SEX_PREDICTION_CONFIDENCE > {{ output }}
 
     {# Print results #}
     echo -e {{ bam|basename }}"\t"${SAMPLE}"\t"${POSITIONS_GENOTYPED}"\t"${MISSING_GENOTYPES}"\t"${TESTED_GENOTYPES}"\t"${HOMOZYGOUS_TOTAL}"\t"${HOMOZYGOUS_REFERENCE}"\t"${HOMOZYGOUS_ALTERNATE}"\t"${HETEROZYGOUS}"\t"${HOMOZYGOUS_RATE}"\t"${HOMOZYGOUS_RATE_SEX_PREDICTION}"\t"${B_ALLELE_GENOTYPES}"\t"${BB_ALT_RATE}"\t"${BB_ALT_RATE_SEX_PREDICTION}"\t"${READS_ON_X}"\t"${READS_ON_Y}"\t"${TOTAL_SEX_CHR_READS}"\t"${Y_READS_SEX_CHR_RATIO}"\t"${READ_COUNT_SEX_PREDICTION}"\t"${SEX_PREDICTION}"\t"${SEX_PREDICTION_CONFIDENCE} >> {{ output }}
-
+    echo "finished"
 
 {% endmacro %}
