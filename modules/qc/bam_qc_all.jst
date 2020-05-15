@@ -12,7 +12,13 @@
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} stats.
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  referenceinput:
+    {% if aligner == 'star' %}
+    - {{ constants.phoenix.star_fasta }}
+    {% elif aligner == 'bwa' %}
+    - {{ constants.phoenix.reference_fasta }}
+    {% endif %}
+  input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.bamstats.txt
   walltime: "4:00:00"
   cpus: 4
@@ -75,7 +81,13 @@
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} stats.
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  referenceinput:
+    {% if aligner == 'star' %}
+    - {{ constants.phoenix.star_fasta }}
+    {% elif aligner == 'bwa' %}
+    - {{ constants.phoenix.reference_fasta }}
+    {% endif %}
+  input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt
   walltime: "4:00:00"
   cpus: 4
@@ -148,7 +160,13 @@
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_flagstat, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} flagstat.
-  input: {{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+  referenceinput:
+    {% if aligner == 'star' %}
+    - {{ constants.phoenix.star_fasta }}
+    {% elif aligner == 'bwa' %}
+    - {{ constants.phoenix.reference_fasta }}
+    {% endif %}
+  input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.flagstats.txt
   walltime: "4:00:00"
   cpus: 4
@@ -176,6 +194,12 @@
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} idxstats.
+  referenceinput:
+    {% if aligner == 'star' %}
+    - {{ constants.phoenix.star_fasta }}
+    {% elif aligner == 'bwa' %}
+    - {{ constants.phoenix.reference_fasta }}
+    {% endif %}
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.idxstats.txt
   walltime: "4:00:00"
@@ -207,6 +231,12 @@
     and other metrics for {{ sample.name }} ({{ aligner }}) were
     gathered with {{ constants.tools.gatk.verbose }}
     CollectMultipleMetrics.
+  referenceinput:
+    {% if aligner == 'star' %}
+    - {{ constants.phoenix.star_fasta }}
+    {% elif aligner == 'bwa' %}
+    - {{ constants.phoenix.reference_fasta }}
+    {% endif %}
   input: {{ bam }}
   output:
     - {{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics
@@ -272,8 +302,33 @@
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
-  input: {{ bam }}
-  after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
+  referenceinput:
+    {% if aligner == 'star' %}
+    - {{ constants.phoenix.star_fasta }}
+    {% elif aligner == 'bwa' %}
+    - {{ constants.phoenix.reference_fasta }}
+    {% endif %}
+  input:
+    - {{ bam }}
+    - {{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.bait_bias_detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.bait_bias_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle_metrics
+    - {{ results_dir }}/{{ bam|basename }}.base_distribution_by_cycle.pdf
+    - {{ results_dir }}/{{ bam|basename }}.error_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf
+    - {{ results_dir }}/{{ bam|basename }}.gc_bias.summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.insert_size_metrics
+    - {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
+    - {{ results_dir }}/{{ bam|basename }}.pre_adapter_detail_metrics
+    - {{ results_dir }}/{{ bam|basename }}.pre_adapter_summary_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_by_cycle_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_by_cycle.pdf
+    - {{ results_dir }}/{{ bam|basename }}.quality_distribution_metrics
+    - {{ results_dir }}/{{ bam|basename }}.quality_distribution.pdf
+    - {{ results_dir }}/{{ bam|basename }}.quality_yield_metrics
+  {# after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }} #}
   output: {{ results_dir }}/{{ bam|basename }}.oxog_metrics
   walltime: "24:00:00"
   cpus: 8
@@ -300,7 +355,17 @@
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, genotype_concordance, snpSniffer, {{ sample.name }}]
-  input: {{ bam }}
+  referenceinput:
+    {% if aligner == 'star' %}
+    - {{ constants.phoenix.star_fasta }}
+    {% elif aligner == 'bwa' %}
+    - {{ constants.phoenix.reference_fasta }}
+    {% endif %}
+    - {{ constants.phoenix.snpSniffer_sites }}
+    - {{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}
+  input:
+    - {{ bam }}
+    - {{ bam }}.bai
   output: {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf
   cpus: 4
   cmd: |
