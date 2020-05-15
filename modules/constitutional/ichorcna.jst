@@ -8,7 +8,11 @@
 
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
-  input: {{ bam }}
+  input:
+    - {{ bam }}
+    - {{ bam }}.bai
+  output:
+    - {{ wig }}
   walltime: "24:00:00"
   cpus: 1
   cmd: |
@@ -31,7 +35,10 @@
 
 - name: ichor_cna_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
-  after: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
+  {# after: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }} #}
+  referenceinput: {{ constants.tools.ichorcna.launcher }}
+  input:
+    - {{ wig }}
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt

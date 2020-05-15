@@ -22,12 +22,14 @@
         {% set taskPrefix = 'Genome' %}
 
         {% if tasks.Genome_constitutional_cna_caller_ichor|default(true) %}
+           {# NA12878 #}
            {{- ichorcna(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
     {% endif %}
 
     {%- if sample.subGroup|lower != 'tumor' %}
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_gatk_HaplotypeCaller"]|default(true) %}
+            {# NA12878 #}
             {{- haplotypecallergvcf(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs"]|default(true) %}
@@ -37,6 +39,7 @@
             {{- freebayes(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_structural_caller_manta"]|default(true) %}
+            {# NA12878 #}
             {{- manta_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_structural_caller_gridss"]|default(false) %}
@@ -46,6 +49,7 @@
             {{- strelka2_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_deepvariant"]|default(true) %}
+            {# NA12878 #}
             {{- deepvariant(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_octopus"]|default(false) %}

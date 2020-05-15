@@ -10,7 +10,12 @@
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
     ({{ aligner }}) were called with {{ constants.tools.manta.verbose }}.
-  input: {{ bam }}
+  referenceinput:
+    - {{ constants.phoenix.reference_fasta }}
+    - {{ constants.phoenix.reference_fasta }}.fai
+  input: 
+    - {{ bam }}
+    - {{ bam }}.bai
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
