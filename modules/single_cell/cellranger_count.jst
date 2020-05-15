@@ -1,6 +1,7 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 {% from 'modules/qc/main.jst' import bam_qc with context %}
+{% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
 
 # Run 10X Cell Ranger Count pipeline
 
@@ -11,10 +12,13 @@
   {% set chemistry = constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name %}
 
   {% set alignment_outdir %}{{ sample.gltype }}/alignment/cellranger_count/{{ sample.name }}{% endset %}
-  {% set outdir %}{{ sample.gltype }}/cellranger_count/{{ sample.name }}{% endset %}
-  {% set metrics_output %}{{ alignment_outdir }}/stats/{{ sample.name }}.metrics_summary.csv{% endset %}
-  {% set json %}{{ alignment_outdir }}/stats/{{ sample.name }}.metrics_summary.json{% endset %}
-  {% set temp_dir %}temp/{{ sample.gltype }}/cellranger_count/{{ sample.name }}{% endset %}
+  {% set outdir %}{{ sample.gltype }}/expression_estimates/cellranger_count/{{ sample.name }}{% endset %}
+  {% set metrics_output %}{{ alignment_outdir }}/stats/{{ sample.name }}.cellranger_count.bam.metrics_summary.csv{% endset %}
+  {% set json %}{{ alignment_outdir }}/stats/{{ sample.name }}.cellranger_count.bam.metrics_summary.json{% endset %}
+  {% set temp_dir %}temp/{{ sample.gltype }}/expression_estimates/cellranger_count/{{ sample.name }}{% endset %}
+  {% set cellranger_out %}{{ temp_dir }}/{{ sample.name }}/outs{% endset %}
+  {% set task %}cellranger_count_{{ sample.name }}{% endset %}
+  {% set directory %}{{ cellranger_out }}/analysis{% endset %}
 
   {% set samples_list = [] %}
   {% for rgpu, _ in files|groupby('rgpu') %}
@@ -35,18 +39,19 @@
   output:
     - {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam
     - {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam.bai
-    - {{ alignment_outdir }}/stats/{{ sample.name }}.metrics_summary.csv
-    - {{ outdir }}/{{ sample.name }}.cloupe
-    - {{ outdir }}/{{ sample.name }}.filtered_feature_bc_matrix.h5
-    - {{ outdir }}/{{ sample.name }}.molecule_info.h5
-    - {{ outdir }}/{{ sample.name }}.raw_feature_bc_matrix.h5
-    - {{ outdir }}/{{ sample.name }}.web_summary.html
+    - {{ metrics_output }}
+    - {{ outdir }}/{{ sample.name }}.cellranger_count.cloupe
+    - {{ outdir }}/{{ sample.name }}.cellranger_count.filtered_feature_bc_matrix.h5
+    - {{ outdir }}/{{ sample.name }}.cellranger_count.molecule_info.h5
+    - {{ outdir }}/{{ sample.name }}.cellranger_count.raw_feature_bc_matrix.h5
+    - {{ outdir }}/{{ sample.name }}.cellranger_count.web_summary.html
   cpus: 20
   mem: 160G
   walltime: "48:00:00"
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.cellranger.module }}
 
     rm -r "{{ temp_dir }}" || true
@@ -71,29 +76,26 @@
       --sample "{{ samples_list|join(',') }}" \
       --transcriptome "{{ constants.phoenix.cellranger_reference }}" )
 
-    # Renaming all output files, could be cleaned up a bit using 'rename' commands, might only remove one line or so
-    {% set cellranger_out %}{{ temp_dir }}/{{ sample.name }}/outs{% endset %}
     mv {{ cellranger_out }}/possorted_genome_bam.bam {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam
     mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam.bai
-    mv {{ cellranger_out }}/metrics_summary.csv {{ alignment_outdir }}/stats/{{ sample.name }}.metrics_summary.csv
-    mv {{ cellranger_out }}/cloupe.cloupe {{ outdir }}/{{ sample.name }}.cloupe
-    mv {{ cellranger_out }}/filtered_feature_bc_matrix.h5 {{ outdir }}/{{ sample.name }}.filtered_feature_bc_matrix.h5
-    mv {{ cellranger_out }}/molecule_info.h5 {{ outdir }}/{{ sample.name }}.molecule_info.h5
-    mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ outdir }}/{{ sample.name }}.raw_feature_bc_matrix.h5
-    mv {{ cellranger_out }}/web_summary.html {{ outdir }}/{{ sample.name }}.web_summary.html
+    mv {{ cellranger_out }}/web_summary.html {{ alignment_outdir }}/stats/{{ sample.name }}.cellranger_count.bam.web_summary.html
+    mv {{ cellranger_out }}/metrics_summary.csv {{ metrics_output }}
+    mv {{ cellranger_out }}/cloupe.cloupe {{ outdir }}/{{ sample.name }}.cellranger_count.cloupe
+    mv {{ cellranger_out }}/filtered_feature_bc_matrix.h5 {{ outdir }}/{{ sample.name }}.cellranger_count.filtered_feature_bc_matrix.h5
+    mv {{ cellranger_out }}/molecule_info.h5 {{ outdir }}/{{ sample.name }}.cellranger_count.molecule_info.h5
+    mv {{ cellranger_out }}/raw_feature_bc_matrix.h5 {{ outdir }}/{{ sample.name }}.cellranger_count.raw_feature_bc_matrix.h5
 
   {# removing the analysis directory as is it no longer needed #}
-  {% set task %}cellranger_count_{{ sample.name }}{% endset %}
-  {% set directory %}{{ cellranger_out }}/analysis{% endset %}
   {{- remove_files(directory, none, task) }}
 
     {# move everything to the output directory #}
     mv {{ cellranger_out }}/* {{ outdir }}/
 
 
+  {{- bam_to_cram(sample, aligner='cellranger_count') }}
+
   {{- bam_qc(sample, aligner='cellranger_count') }}
 
   {{- stats2json(sample.gltype, sample.name, task, metrics_output, json, "cellranger_metrics", sample_name=sample.name, library_name=sample.rglb) }}
-
 
 {% endmacro %}

@@ -1,13 +1,20 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+{% from 'modules/qc/main.jst' import bam_qc with context %}
+{% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
+
 # Run Single cell analysis of 10x Genomics 3' and 5' scRNAseq assays using starSOLO
 
 {% macro starsolo(files) %}
 
 {% set sample = files[0] %}
 
-{% set alignment_outdir %}{{ sample.gltype }}/alignment/cellranger/{{ sample.name }}{% endset %}
-{% set results_dir %}{{ sample.gltype }}/starSOLO/{{ sample.name }}{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/starSOLO/{{ sample.name }}{% endset %}
+{% set alignment_outdir %}{{ sample.gltype }}/alignment/starSOLO/{{ sample.name }}{% endset %}
+{% set metrics_output %}{{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Barcodes.stats{% endset %}
+{% set results_dir %}{{ sample.gltype }}/expression_estimates/starSOLO/{{ sample.name }}{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/expression_estimates/starSOLO/{{ sample.name }}{% endset %}
+{% set task %}cellranger_count_{{ sample.name }}{% endset %}
+{% set json %}{{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Barcodes.stats.json{% endset %}
 
 {# Local Temp Variables #}
 {% set cb_umi_list = [] %}
@@ -27,9 +34,14 @@
   reset: predecessors
   input:
   {% for fq in files %}
-      - temp/fastqs/{{ fq.basename }}
+    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
-  output: {{ results_dir }}/{{ sample.name }}_starSOLO.bam
+  output:
+    - {{ alignment_outdir }}/{{ sample.name }}.starSOLO.bam
+    - {{ alignment_outdir }}/{{ sample.name }}.starSOLO.bam.bai
+    - {{ metrics_output }}
+    - {{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Log.final.out
+    - {{ results_dir }}/{{ sample.name }}.starSOLO.transcripts.tsv
   cpus: 20
   mem: 120G
   walltime: "48:00:00"
@@ -43,6 +55,7 @@
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ results_dir }}"
+    mkdir -p "{{ alignment_outdir }}/stats"
 
     {% for fq in files %}
     ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename }}"
@@ -79,7 +92,7 @@
       --soloFeatures Gene SJ GeneFull Transcript3p \
       --soloUMIdedup 1MM_All \
       --soloUMIfiltering MultiGeneUMI \
-      --soloOutFileNames Solo.out/ {{ sample.name }}_genes.tsv {{ sample.name }}_barcodes.tsv {{ sample.name }}_matrixGene.mtx {{ sample.name }}_matrixSJ.mtx {{ sample.name }}_matrixGeneFull.mtx {{ sample.name }}_matrixTranscripts3p.mtx \
+      --soloOutFileNames Solo.out/ {{ sample.name }}.starSOLO.features.tsv {{ sample.name }}.starSOLO.barcodes.tsv {{ sample.name }}.starSOLO.matrix.mtx \
       --soloCellFilter CellRanger2.2 5000 0.99 10 )
 
     # Update permissions so files are readable by all users (first make all folders executable recursively so they can be navigated, then make all files readable)
@@ -87,39 +100,19 @@
     chmod -R +r {{ temp_dir }}/{{ sample.name }}_Solo.out
 
     # Move results to results directory
-    mv {{ temp_dir }}/{{ sample.name }}_Log.final.out {{ results_dir }}/{{ sample.name }}_Log.final.out
-    mv {{ temp_dir }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam {{ results_dir }}/{{ sample.name }}_starSOLO.bam
-    samtools index -@ 10 {{ results_dir }}/{{ sample.name }}_starSOLO.bam
+    mv {{ temp_dir }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam {{ alignment_outdir }}/{{ sample.name }}.starSOLO.bam
+    samtools index -@ 10 {{ alignment_outdir }}/{{ sample.name }}.starSOLO.bam
+
+    mv {{ temp_dir }}/Barcodes.stats {{ metrics_output }}
+    mv {{ temp_dir }}/{{ sample.name }}_Log.final.out {{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Log.final.out
+
+    mv {{ temp_dir }}/transcripts.tsv {{ results_dir }}/{{ sample.name }}.starSOLO.transcripts.tsv
     mv {{ temp_dir }}/{{ sample.name }}_Solo.out/* {{ results_dir }}/
 
-{% if cram|default(true) %}
-{% set bam_path %}{{ results_dir }}/{{ sample.name }}_starSOLO.bam{% endset %}
-{% set cram_path %}{{ results_dir }}/{{ sample.name }}_starSOLO.cram{% endset %}
-{% set aligner = 'starSOLO' %}
+  {{ bam_to_cram(sample, aligner='starSOLO') }}
 
-- name: bam_to_cram_{{ sample.name }}_starSOLO
-  tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
-  input: {{ bam_path }}
-  output: {{ cram_path }}
-  walltime: "8:00:00"
-  cpus: 8
-  mem: 3G
-  cmd: |
-    set -eu
-    set -o pipefail
+  {{- bam_qc(sample, aligner='starSOLO') }}
 
-    module load {{ constants.tools.samtools.module }}
-
-    samtools view \
-      -C \
-      -@ 8 \
-      --reference "{{ constants.phoenix.star_fasta }}" \
-      -o "{{ cram_path }}" \
-      "{{ bam_path }}"
-
-    samtools index "{{ cram_path }}"
-
-{% endif %}
-
+  {{- stats2json(sample.gltype, sample.name, task, metrics_output, json, "starsolo_metrics", sample_name=sample.name, library_name=sample.rglb) }}
 
 {% endmacro %}

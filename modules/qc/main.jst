@@ -30,7 +30,7 @@
 
 {% macro bam_qc(sample, aligner='bwa') %}
 
-    {% if aligner == "cellranger_count" or aligner == "cellranger_vdj" %}
+    {% if aligner == "cellranger_count" or aligner == "starSOLO" %}
       {% set libraryCount = 0 %}
       {% set sample_lb = sample.rglb %}
     {% else %}

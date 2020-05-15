@@ -23,7 +23,7 @@
     samtools view \
       -C \
       -@ 8 \
-      {% if aligner == 'star' %}
+      {% if aligner == 'star' or aligner == 'cellranger_count' or aligner == 'starSOLO' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
