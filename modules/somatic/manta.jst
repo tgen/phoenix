@@ -112,7 +112,7 @@
     module load {{ constants.tools.bedtools.module }}
 
     {# filtering somatic vcf by PASS #}
-    bcftools filter -i PASS -O z -o {{ temp_dir }}/results/variants/somaticSV.vcf.gz
+    bcftools filter -i PASS -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz {{ temp_dir }}/results/variants/somaticSV.vcf.gz
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz
 
     {# Capturing the insert_size and its standard deviation from sumamry samtools stats file #}
