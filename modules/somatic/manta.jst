@@ -127,7 +127,7 @@
     {% set temp_dir_pass_vcf %}{{ temp_dir }}/results/variants/somaticSV.pass.vcf{% endset %}
 
     python3 ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.manta_prepare_sv_vcf }} \
-      -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf \
+      -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
       -t {{ tumor_bam }} \
       -n {{ normal_bam }} \
       --tumor-name {{ pair.tumor.rgsm }} \
