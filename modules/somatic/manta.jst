@@ -217,7 +217,7 @@
     module load {{ constants.tools.bedtools.module }}
 
     bcftools filter \
-      --exclude 'FMT/PR[0:1] > 2 | FMT/PR[1:1] < 5 | FMT/RDISTDISC1[0] < 200 | FMT/RDISTDISC2[0] < 200 | FMT/RUT1[1] < 0.50 | FMT/RUT2[1] < 0.50 '
+      --exclude 'FMT/PR[0:1] > 2 | FMT/PR[1:1] < 5 | FMT/RDISTDISC1[0] < 200 | FMT/RDISTDISC2[0] < 200 | FMT/RUT1[1] < 0.50 | FMT/RUT2[1] < 0.50 ' \
       -O z \
       -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.filt.vcf.gz \
       {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
