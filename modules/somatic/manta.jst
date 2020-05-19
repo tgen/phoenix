@@ -130,7 +130,7 @@
       -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf \
       -t {{ tumor_bam }} \
       -n {{ normal_bam }} \
-      --tumor-name {{ pair.tumor.rgsm }}
+      --tumor-name {{ pair.tumor.rgsm }} \
       --insert-size ${INSERT_SIZE} \
       --sigma ${STD_IS} \
       --minmapq 15 \
