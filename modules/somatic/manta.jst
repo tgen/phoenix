@@ -5,6 +5,7 @@
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
+{% set summary_samtools_stats %}/scratch/clegendre/projects/MMRF_2952/MMRF_2952_1_BM_CD138pos_T1_KHWGS.bwa.bam_samtools_insertSize_summary.tsv{% endset %}
 
 - name: manta_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, structural_caller, manta, {{ pair.name }}]
@@ -114,7 +115,7 @@
 		bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz
 
 		{# Capturing the insert_size and its standard deviation from sumamry samtools stats file #}
-		{% set summary_samtools_stats %}/scratch/clegendre/projects/MMRF_2952/MMRF_2952_1_BM_CD138pos_T1_KHWGS.bwa.bam_samtools_insertSize_summary.tsv{% endset %}
+
 		INSERT_SIZE=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f9 )
 		STD_IS=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f11 )
 		echo -e "----------------"
