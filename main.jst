@@ -125,6 +125,7 @@
 
 {# Move to utility scripts #}
 {% for fastq in dataFiles %}
+
 - name: copy_fastqs_{{ loop.index }}
   output: temp/fastqs/{{ fastq.basename }}
   tags: [rsync,]
