@@ -144,7 +144,6 @@
 - name: manta_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, manta, flag, gene, annotation, {{ pair.name }}]
   after: manta_flag_{{ pair.name }}_{{ aligner }}
-  reset: predecessors
   input:
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
@@ -183,7 +182,6 @@
 - name: manta_filter_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, manta, {{ pair.name }}]
   after: manta_annotate_{{ pair.name }}_{{ aligner }}
-  reset: predecessors
   input:
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi
