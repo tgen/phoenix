@@ -88,7 +88,6 @@
 - name: manta_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, manta, flag, {{ pair.name }}]
   after: manta_{{ pair.name }}_{{ aligner }}
-  reset: predecessors
   input:
     - {{ temp_dir }}/results/variants/somaticSV.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi
