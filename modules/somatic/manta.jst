@@ -149,8 +149,8 @@
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
     - {{ constants.phoenix.delly_annotation }}
   output:
-    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
-    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi
 
   cpus: 8
   mem: 16G
@@ -178,77 +178,13 @@
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
 
 
-
-- name: manta_filter_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, manta, {{ pair.name }}]
-  after: manta_annotate_{{ pair.name }}_{{ aligner }}
-  input:
-    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
-    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi
-  output:
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.filt.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.filt.vcf.gz.tbi
-  cpus: 2
-  mem: 4G
-  walltime: "01:00:00"
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.bcftools.module }}
-    module load {{ constants.tools.python_3_7_2.module }}
-    module load {{ constants.tools.bedtools.module }}
-
-    bcftools filter \
-      --exclude 'FMT/PR[0:1] > 2 | FMT/PR[1:1] < 5 | FMT/RDISTDISC1[0] < 200 | FMT/RDISTDISC2[0] < 200 | FMT/RUT1[1] < 0.50 | FMT/RUT2[1] < 0.50 ' \
-      -O z \
-      -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.filt.vcf.gz \
-      {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
-
-    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.filt.vcf.gz
-
-
-
-    {# Save all the vcs in the sample dir #}
-    mkdir -p "{{ results_dir }}" || true
-
-    cp "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
-    cp "{{ temp_dir }}/results/variants/candidateSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/candidateSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
-    cp "{{ temp_dir }}/results/variants/diploidSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
-    cp "{{ temp_dir }}/results/variants/somaticSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
-    {# new manta somaticSV files #}
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi"
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.vcf.gz.tbi"
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.vcf.gz.tbi"
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.filt.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.filt.vcf.gz"
-    cp "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.filt.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.flag.anno.filt.vcf.gz.tbi"
-
-
+    mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi"
 
     {# Remove the remaining files #}
-    {# {% set task %}manta_{{ pair.name }}_{{ aligner }}{% endset %}  #}
-    {# {% set directory %}{{ temp_dir }}{% endset %}  #}
-    {# {{- remove_files(directory,none,task) }}  #}
+    {# {% set task %}manta_{{ pair.name }}_{{ aligner }}{% endset %}
+    #{% set directory %}{{ temp_dir }}{% endset %}
+    #{{- remove_files(directory,none,task) }}
+    #}
 
 {% endmacro %}
