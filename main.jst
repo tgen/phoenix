@@ -50,6 +50,7 @@
 {% from 'modules/rna/main.jst' import rna_quant with context %}
 {% from 'modules/rna/main.jst' import rna_fusion_detection with context %}
 {% from 'modules/single_cell/main.jst' import single_cell_rna with context %}
+{% from 'modules/CHIP/main.jst' import chip_workflow with context %}
 
 {% set samples = {} %}
 {% for file in dataFiles %}
@@ -262,4 +263,8 @@
 
 {%- if tasks.single_cell_rna|default(true) %}
     {{- single_cell_rna(dataFiles) }}
+{% endif -%}
+
+{%- if tasks.chip_workflow|default(true) %}
+    {{- chip_workflow(samples) }}
 {% endif -%}

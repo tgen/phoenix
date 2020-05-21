@@ -3,6 +3,7 @@
 {% from 'modules/dna_alignment/bwa_mem_samtools.jst' import bwa_mem_samtools_chunked with context %}
 {% from 'modules/dna_alignment/bwa_mem_gatk_picard.jst' import bwa_mem_gatk_picard_chunked with context %}
 {% from 'modules/dna_alignment/bwa_mem_samblaster_sambamba.jst' import bwa_mem_blaster_bamba with context %}
+{% from 'modules/dna_alignment/bowtie2_samtools.jst' import bowtie2_samtools_chunked with context %}
 {% from 'modules/dna_alignment/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
 {% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
 {% from 'utilities/read_group_line.jst' import read_group_line %}
@@ -13,6 +14,18 @@
   {% set alignment_style = dnaAlignmentStyle|default('tgen')|lower %}
   {# Not configurable by LIMS #}
   {% set reads_per_chunk = reads_per_chunk|default(40000000) %}
+
+  {% for sample in samples.values() if sample.gltype in ['chip', 'cutnrun'] %}
+    {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
+    {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
+      {% set opt_dup_distance = 2500 %}
+    {% else %}
+      {% set opt_dup_distance = 100 %}
+    {% endif %}
+
+    {{- bowtie2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
+
+  {% endfor %}
 
   {% for sample in samples.values() if sample.gltype in ['genome', 'exome'] %}
 

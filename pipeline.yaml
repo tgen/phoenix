@@ -2,10 +2,10 @@ __pipeline__:
   name: phoenix
   main: main.jst
   description: Human GRCh38 genomics suite
-  version: manta_filtering
+  version: v0.5.1
 constants:
   install_path:
-    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-v0_5_0
+    path_to_phoenix_repo: /home/tgenjetstream/jetstream_pipelines/phoenix-v0_5_1
   tools:
     bedtools:
       module: BEDTools/2.29.0-GCC-8.2.0-2.31.1
@@ -22,6 +22,13 @@ constants:
       version: "1.10.1"
       verbose: BCFtools v1.10.1
       website: http://www.htslib.org
+      citation: >
+        TODO
+    bowtie2:
+      module: Bowtie2/2.3.5.1-GCC-8.2.0-2.31.1
+      version: "2.3.5.1"
+      verbose: bowtie2 v2.3.5.1
+      website: http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
       citation: >
         TODO
     bwa:
@@ -153,8 +160,8 @@ constants:
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
     multiqc:
       module: Python/3.7.2-foss-2019a
-      version: "1.7"
-      verbose: MultiQC v1.7
+      version: "1.8"
+      verbose: MultiQC v1.8
       website: https://multiqc.info
       citation: >
         MultiQC Summarize analysis results for multiple tools and samples in a single report
@@ -339,9 +346,13 @@ constants:
     gene_model_name: ensembl_v98
     capture_kit_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
+    reference_fasta_2bit: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.2bit
     reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
     reference_non_N_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
+    bowtie2_index_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bowtie2_2.3.5.1
+    bowtie2_index: GRCh38tgen_decoy
+    bowtie2_chip_index: GRCh38tgen_decoy_Ecoli
     dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
     gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
     gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
@@ -378,7 +389,7 @@ constants:
       X3SC3:
         chemistry_name: SC3Pv3
         umi_length: 12
-        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/3M-february-2018.txt.gz
+        cell_barcode_whitelist_file: /packages/cellranger/3.1.0/cellranger-cs/3.1.0/lib/python/cellranger/barcodes/3M-february-2018.txt
       X5SCR:
         chemistry_name: SC5P-R2
         umi_length: 10
@@ -408,7 +419,7 @@ constants:
     lymphocyteReceptor_loci_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_lymphocyteReceptor_counts/lymphocyteReceptor_loci.bed
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
     star_indices_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a
-    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/starFusion_gencode_v32/GRCh38_gencode_v32_CTAT_lib_Dec062019.plug-n-play/ctat_genome_lib_build_dir
+    starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/starFusion_gencode_v32/starFusion_Resources/ctat_genome_lib_build_dir
     strandedness_options:
       inward-unstranded-notapplicable:
         salmon: "IU"

@@ -1,0 +1,21 @@
+
+{% macro plot_fingerprint(sample) %}
+
+- name: plot_fingerprint_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
+  input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
+  output: {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}_fingerprint.png
+  walltime: "48:00:00"
+  cpus: 10
+  mem: 40G
+  cmd: |
+    module load {{ constants.tools.python_3_7_2.module }}
+
+    mkdir -p "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/"
+
+    plotFingerprint \
+     -b temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam \
+     -o {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}_fingerprint.png \
+     -p max
+
+{% endmacro %}
