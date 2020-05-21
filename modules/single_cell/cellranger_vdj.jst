@@ -18,6 +18,7 @@
   methods: >
     T-cell and B-cell VDJ assembly for {{ sample.name }} was performed with
     {{ constants.tools.cellranger.verbose }} using the included reference package.
+  reset: predecessors
   input:
   {% for fq in files %}
    - temp/fastqs/{{ fq.basename }}
