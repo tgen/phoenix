@@ -106,7 +106,7 @@
   reset: predecessors
   {% endif %}
   walltime: "8:00:00"
-  cpus: 6
+  cpus: 4
   cmd: |
     set -eu
     set -o pipefail
@@ -115,11 +115,11 @@
 
     mkdir -p "{{ results_dir }}"
 
-    IGK=$(samtools view -@ 5 -c {{ bam }} chr2:88857160-90367699)
-    TRB=$(samtools view -@ 5 -c {{ bam }} chr7:142299176-142802748)
-    TRA=$(samtools view -@ 5 -c {{ bam }} chr14:21621837-22552156)
-    IGH=$(samtools view -@ 5 -c {{ bam }} chr14:105583730-106879812)
-    IGL=$(samtools view -@ 5 -c {{ bam }} chr22:21991098-22923034)
+    IGK=$(samtools view -@ 3 -c {{ bam }} chr2:88857160-90367699)
+    TRB=$(samtools view -@ 3 -c {{ bam }} chr7:142299176-142802748)
+    TRA=$(samtools view -@ 3 -c {{ bam }} chr14:21621837-22552156)
+    IGH=$(samtools view -@ 3 -c {{ bam }} chr14:105583730-106879812)
+    IGL=$(samtools view -@ 3 -c {{ bam }} chr22:21991098-22923034)
 
     echo -e "chr2\t88857160\t90367699\tIGK\t${IGK}" > {{ output }}
     echo -e "chr7\t142299176\t142802748\tTRB\t${TRB}" >> {{ output }}
