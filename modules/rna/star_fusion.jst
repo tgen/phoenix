@@ -66,7 +66,20 @@
       --genomeLoad NoSharedMemory  \
       --twopassMode Basic  \
       --readFilesCommand 'gunzip -c'  \
-      --quantMode GeneCounts
+      --quantMode GeneCounts \
+      --outFileNamePrefix "{{ temp_dir }}/"
+
+    {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
+    samtools sort \
+      -T {{ temp_dir }}/{{ sample.name }} \
+      -l 2 \
+      -m 3G \
+      --threads 10 \
+      --output-fmt BAM \
+      -o {{ results_dir }}/{{ sample.name }}_starfusion.bam \
+      {{ temp_dir }}/Aligned.out.bam
+    samtools index -@ 10 {{ results_dir }}/{{ sample.name }}_starfusion.bam
+    {% endif %}
 
 - name: star_fusion_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
@@ -80,6 +93,8 @@
 
     module load {{ constants.tools.star_fusion.module }}
     sf_path=$(dirname `which STAR-Fusion`)
+
+    export CTAT_GENOME_LIB={{ constants.phoenix.starfusion_index }}
 
     ${sf_path}/util/STAR-Fusion.map_chimeric_reads_to_genes \
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
@@ -113,33 +128,6 @@
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
-    mkdir -p {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir
-
-    ${sf_path}/util/../FusionFilter/blast_and_promiscuity_filter.pl \
-      --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion \
-      --max_promiscuity 10 \
-      --min_pct_dom_promiscuity 20 \
-      --fusion_preds {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.pre_blast_filter \
-      --genome_lib_dir {{ constants.phoenix.starfusion_index }}
-
-    ${sf_path}/FusionFilter/util/blast_filter.pl \
-      --fusion_preds {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.pre_blast_filter \
-      --genome_lib_dir {{ constants.phoenix.starfusion_index }}
-
-    ${sf_path}/FusionFilter/util/promiscuity_filter.pl \
-      --fusion_preds {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.pre_blast_filter.post_blast_filter \
-      --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
-      --max_promiscuity 10 \
-      --min_pct_dom_promiscuity 20
-
-    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.pre_blast_filter.post_blast_filter.post_promisc_filter {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.post_blast_and_promiscuity_filter
-
-    ${sf_path}/util/column_exclusions.pl \
-      {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.post_blast_and_promiscuity_filter JunctionReads,SpanningFrags \
-      > {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.post_blast_and_promiscuity_filter.abridged
-
-    ln -sf {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.post_blast_and_promiscuity_filter {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered
-
     ${sf_path}/util/incorporate_FFPM_into_final_report.pl \
       {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered 62229704 \
       > {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered.FFPM
@@ -161,26 +149,24 @@
 
     ${sf_path}/util/remove_lesser_candidates_at_breakpoint.pl {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass
 
-    export CTAT_GENOME_LIB={{ constants.phoenix.starfusion_index }}
-
     ${sf_path}/util/filter_by_min_FFPM.pl {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass.brkptselect.pass 0.1
 
-    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass.brkptselect.pass.minFFPM.0.1.pass star-fusion.fusion_predictions.tsv
+    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass.brkptselect.pass.minFFPM.0.1.pass {{ temp_dir }}/star-fusion.fusion_predictions.tsv
 
-    ${sf_path}/util/column_exclusions.pl star-fusion.fusion_predictions.tsv JunctionReads,SpanningFrags > star-fusion.fusion_predictions.abridged.tsv
+    ${sf_path}/util/column_exclusions.pl {{ temp_dir }}/star-fusion.fusion_predictions.tsv JunctionReads,SpanningFrags > {{ temp_dir }}/star-fusion.fusion_predictions.abridged.tsv
 
     ${sf_path}/FusionAnnotator/util/fusion_to_coding_region_effect.pl \
-      --fusions star-fusion.fusion_predictions.abridged.tsv \
+      --fusions {{ temp_dir }}/star-fusion.fusion_predictions.abridged.tsv \
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
-      > star-fusion.fusion_predictions.abridged.coding_effect.tsv
+      > {{ temp_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv
 
     ${sf_path}/util/get_FUSION_EVIDENCE_fastqs.pl \
-      --fusions star-fusion.fusion_predictions.tsv \
-      --output_prefix star-fusion \
+      --fusions {{ temp_dir }}/star-fusion.fusion_predictions.tsv \
+      --output_prefix {{ temp_dir }}/star-fusion \
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %}
 
-    echo "STAR-Fusion complete.  See output: temp/rna/fusions/starfusion/{{ sample.name }}/star-fusion.fusion_predictions.tsv (or .abridged.tsv version)"
+    echo "STAR-Fusion complete.  See output: {{ temp_dir }}/star-fusion.fusion_predictions.tsv (or .abridged.tsv version)"
 
 - name: fusion_inspector_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
@@ -189,6 +175,12 @@
   mem: 60G
   walltime: "24:00:00"
   cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.star_fusion.module }}
+    sf_path=$(dirname `which STAR-Fusion`)
+
     ${sf_path}/FusionInspector/FusionInspector \
       --fusions star-fusion.fusion_predictions.abridged.coding_effect.tsv \
       --out_prefix finspector \
@@ -223,10 +215,7 @@
 
 - name: bam_to_cram_{{ sample.name }}_{{ aligner }}_fusion
   tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
-  input: {{ bam_path }}
-  output:
-    - {{ cram_path }}
-    - {{ cram_path }}.crai
+  after: fusion_inspector_{{ sample.name }}
   walltime: "8:00:00"
   cpus: 8
   mem: 3G
