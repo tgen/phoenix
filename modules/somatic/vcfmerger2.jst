@@ -81,6 +81,7 @@
 
     module load {{ constants.tools.bcftools.module }}
 
+
     bcftools filter \
       --output-type v \
       --exclude 'FMT/DP<10 | FMT/AR[0]>=0.02 | FMT/AR[1]<0.05' \
@@ -117,7 +118,8 @@
     fi
 
     mkdir -p "{{ results_dir }}"
-    
+
+
     vcfMerger2.py \
       --skip-prep-vcfs \
       --do-venn \
