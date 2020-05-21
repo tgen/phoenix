@@ -182,9 +182,9 @@
     mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi"
 
     {# Remove the remaining files #}
-    {# {% set task %}manta_{{ pair.name }}_{{ aligner }}{% endset %}
-    #{% set directory %}{{ temp_dir }}{% endset %}
-    #{{- remove_files(directory,none,task) }}
-    #}
+    {% set task %}manta_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 
 {% endmacro %}
