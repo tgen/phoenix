@@ -154,7 +154,7 @@
 
   cpus: 8
   mem: 16G
-  walltime: "24:00:00"
+  walltime: "12:00:00"
   cmd: |
     set -eu
     set -o pipefail
@@ -177,7 +177,7 @@
     bcftools view --threads 2 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
 
-
+    {# Save all the vcf in the sample's dir results #}
     mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz"
     mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi"
 
