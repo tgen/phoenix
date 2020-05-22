@@ -72,6 +72,7 @@
 
 - name: vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  reset: predecessors
   after: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
   cpus: 2
   walltime: "4:00:00"
@@ -93,6 +94,7 @@
 
 - name: vcfmerger2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  reset: predecessors
   after:
   {% for caller in pair.callers %}
     - vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}

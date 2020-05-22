@@ -45,6 +45,7 @@
 {% endif %}
 
 {% from 'modules/dna_alignment/main.jst' import dna_alignment with context %}
+{% from 'modules/qc/bam_qc_snpsniffer.jst' import snpsniffer_summary with context %}
 {% from 'modules/constitutional/main.jst' import constitutional_variant_calling with context %}
 {% from 'modules/somatic/main.jst' import somatic_variant_calling with context %}
 {% from 'modules/rna/main.jst' import rna_quant with context %}
@@ -142,6 +143,9 @@
 
 {% endfor %}
 
+{# project level quality control #}
+{{- snpsniffer_summary(samples) }}
+
 {# Move to utility scripts #}
 - name: finalize
   after-re: .*
@@ -154,8 +158,8 @@
     mkdir --parents qc
     multiqc --force --outdir qc .
 
-    mkdir --parents igv_symbolic_links
-    cd igv_symbolic_links
+    mkdir --parents symbolic_links
+    cd symbolic_links
 
     {# Create symbolic links to deepvariant pass vcf, ichorCNA seg file, gatk igv seg file, merged vcf, and bams/crams #}
     {% for general_library_type, data_files in dataFiles | groupby('gltype') %}
@@ -219,6 +223,32 @@
       {% elif general_library_type in 'rna' %}
         {% set taskPrefix = 'RNA' %}
 
+      {% elif general_library_type in 'singlecellrna' and data_files[0].glprep in 'singlecellrna' %}
+        {% set taskPrefix = 'SingleCellRNA' %}
+        {% if tasks[taskPrefix+"_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/alignment/cellranger_count -name "*.cellranger_count.bam.web_summary.html"`
+          do
+            ln --symbolic --force ${line}
+          done
+
+          for line in `find ../{{ general_library_type }}/expression_estimates/cellranger_count -name "*.cellranger_count.bam.cloupe"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
+      {% elif general_library_type in 'singlecellrna' and data_files[0].glprep in 'singlecellenrichment' %}
+        {% set taskPrefix = 'SingleCellEnrichment' %}
+        {% if tasks[taskPrefix+"_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
+          for line in `find ../{{ general_library_type }}/vdj_assembly/cellranger_vdj -name "*.web_summary.html"`
+          do
+            ln --symbolic --force ${line}
+          done
+
+          for line in `find ../{{ general_library_type }}/vdj_assembly/cellranger_vdj -name "*.vloupe"`
+          do
+            ln --symbolic --force ${line}
+          done
+        {% endif %}
       {% endif %}
 
 
