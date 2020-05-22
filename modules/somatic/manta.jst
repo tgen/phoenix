@@ -9,7 +9,6 @@
 
 - name: manta_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, structural_caller, manta, {{ pair.name }}]
-  tags: [manta, manta-somatic, {{ pair.gltype }}]
   methods: > 
     Somatic structural variants and indels for {{ pair.name }} ({{ aligner }}) 
     were called with {{ constants.tools.manta.verbose }}.
@@ -83,7 +82,6 @@
     "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
 
-
 - name: manta_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, manta, flag, {{ pair.name }}]
   after: manta_{{ pair.name }}_{{ aligner }}
@@ -113,8 +111,7 @@
     bcftools filter -i 'FILTER == "PASS"' -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz {{ temp_dir }}/results/variants/somaticSV.vcf.gz
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz
 
-    {# Capturing the insert_size and its standard deviation from sumamry samtools stats file #}
-
+    {# Capturing the insert_size and its standard deviation from summary samtools stats file #}
     INSERT_SIZE=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f9 )
     STD_IS=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f11 )
     echo -e "----------------"
@@ -139,7 +136,6 @@
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
 
 
-
 - name: manta_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, manta, flag, gene, annotation, {{ pair.name }}]
   after: manta_flag_{{ pair.name }}_{{ aligner }}
@@ -150,7 +146,6 @@
   output:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi
-
   cpus: 8
   mem: 16G
   walltime: "12:00:00"
@@ -162,7 +157,6 @@
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.bedtools.module }}
 
-
     mkdir -p {{ temp_dir }}/pybedtools/ || true
 
     python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_gene_annotation_parallel }} \
@@ -171,7 +165,6 @@
       -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf \
       --threads 8 \
       --tempdir {{ temp_dir }}/pybedtools/
-
 
     bcftools view --threads 2 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
