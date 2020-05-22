@@ -1,0 +1,30 @@
+
+{% macro multi_big_wig_summary(samples) %}
+
+{% set chip_bws = [] %}
+{% for sample in samples.values() if sample.gltype == 'chip' %}
+  {% set chip_bw %}{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw{% endset %}
+  {% do chip_bws.append(chip_bw) %}
+{% endfor %}
+
+- name: multi_big_wig_summary
+  tags: [ cutnrun, chip ]
+  after-re: bam_coverage_.*
+  input:
+  {% for sample in samples.values() %}
+    {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw
+  {% endfor %}
+  walltime: "48:00:00"
+  cpus: 16
+  cmd: |
+    module load {{ constants.tools.python_3_7_2.module }}
+
+    mkdir -p "chip/summary/"
+
+    multiBigwigSummary bins \
+     --bwfiles {{ chip_bws|join(' ') }} \
+     --outFileName chip/summary/multiBigWigSummary.npz \
+     --smartLabels \
+     --numberOfProcessors max
+
+{% endmacro %}

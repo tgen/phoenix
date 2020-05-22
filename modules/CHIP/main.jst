@@ -1,0 +1,36 @@
+{% from 'modules/CHIP/plot_fingerprint.jst' import plot_fingerprint with context %}
+{% from 'modules/CHIP/bam_coverage.jst' import bam_coverage with context %}
+{% from 'modules/CHIP/gc_bias.jst' import compute_GCBias with context %}
+{% from 'modules/CHIP/plot_coverage.jst' import plot_coverage with context %}
+{% from 'modules/CHIP/macs2_callpeak.jst' import macs2_callpeak with context %}
+{% from 'modules/CHIP/multi_big_wig_summary.jst' import multi_big_wig_summary with context %}
+
+# Constitutional tools generally operate on a single DNA samples and should not run
+# on "tumor" samples with the exception of ichor that cna be run on tumor or constitutional.
+
+{%- macro chip_workflow(samples) %}
+
+{%- for sample in samples.values() if sample.gltype == 'chip' %}
+    {% if tasks.CHIP_plot_fingerprint|default(true) %}
+       {{- plot_fingerprint(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_bam_coverage|default(true) %}
+       {{- bam_coverage(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_compute_GCBias|default(true) %}
+       {{- compute_GCBias(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_plot_coverage|default(true) %}
+       {{- plot_coverage(sample) }}
+    {% endif %}
+    {% if tasks.CHIP_macs2_callpeak|default(true) %}
+       {{- macs2_callpeak(sample) }}
+    {% endif %}
+
+{% endfor %}
+
+{% if tasks.CHIP_multi_big_wig_summary|default(true) %}
+   {{- multi_big_wig_summary(samples) }}
+{% endif %}
+
+{% endmacro %}

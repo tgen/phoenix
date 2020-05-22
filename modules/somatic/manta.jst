@@ -5,10 +5,10 @@
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}{% endset %}
+{% set summary_samtools_stats %}{{ pair.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ pair.tumor.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
 
 - name: manta_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, structural_caller, manta, {{ pair.name }}]
-  tags: [manta, manta-somatic, {{ pair.gltype }}]
   methods: > 
     Somatic structural variants and indels for {{ pair.name }} ({{ aligner }}) 
     were called with {{ constants.tools.manta.verbose }}.
@@ -81,21 +81,102 @@
     {# Execute on the local machine with 19 parallel jobs #}
     "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
-    {# Save all the vcs in the sample dir #}
-    mkdir -p "{{ results_dir }}" || true
 
-    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
-    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
-    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
-    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
-    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
-    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
-    mv "{{ temp_dir }}/results/variants/somaticSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz"
-    mv "{{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
+- name: manta_flag_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, manta, flag, {{ pair.name }}]
+  after: manta_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ temp_dir }}/results/variants/somaticSV.vcf.gz
+    - {{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi
+    - {{ tumor_bam }}
+    - {{ normal_bam }}
+    - {{ summary_samtools_stats }}
+  output:
+    - {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz
+    - {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz.tbi
+    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
+    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
+  cpus: 4
+  mem: 8G
+  walltime: "12:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
+
+    {# filtering somatic vcf by PASS #}
+    bcftools filter -i 'FILTER == "PASS"' -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz {{ temp_dir }}/results/variants/somaticSV.vcf.gz
+    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz
+
+    {# Capturing the insert_size and its standard deviation from summary samtools stats file #}
+    INSERT_SIZE=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f9 )
+    STD_IS=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f11 )
+    echo -e "----------------"
+    echo ${INSERT_SIZE}
+    echo ${STD_IS}
+    echo -e "----------------"
+    {# adding fields and flags to pass.vcf.gz file #}
+    {% set temp_dir_pass_vcf %}{{ temp_dir }}/results/variants/somaticSV.pass.vcf{% endset %}
+
+    python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_prepare_sv_vcf }} \
+      -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
+      -t {{ tumor_bam }} \
+      -n {{ normal_bam }} \
+      --tumor-name {{ pair.tumor.rgsm }} \
+      --insert-size ${INSERT_SIZE} \
+      --sigma ${STD_IS} \
+      --minmapq 15 \
+      --output  {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
+
+    {# compress vcf to vcf.gz #}
+    bcftools view --threads 2 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
+    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
+
+
+- name: manta_annotate_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, manta, flag, gene, annotation, {{ pair.name }}]
+  after: manta_flag_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
+    - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
+    - {{ constants.phoenix.manta_gene_annotation_parallel }}
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi
+  cpus: 8
+  mem: 16G
+  walltime: "12:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
+
+    mkdir -p {{ temp_dir }}/pybedtools/ || true
+
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_gene_annotation_parallel }} \
+      -a {{ constants.phoenix.delly_annotation }} \
+      -i {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz \
+      -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf \
+      --threads 8 \
+      --tempdir {{ temp_dir }}/pybedtools/
+
+    bcftools view --threads 2 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf
+    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz
+
+    {# Save all the vcf in the sample's dir results #}
+    mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi"
 
     {# Remove the remaining files #}
-    {% set task %}manta_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}manta_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
+
 
 {% endmacro %}

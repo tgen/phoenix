@@ -28,12 +28,9 @@
     {% set sample_file %}sample.{{ svtype }}.{{ pair.name }}.tsv{% endset %}
 
     module load {{ constants.tools.delly.module }}
-    module load {{ constants.tools.openmpi.module }}
 
     rm -r "{{ temp_dir }}/{{ svtype }}" || true
     mkdir -p "{{ temp_dir }}/{{ svtype }}"
-
-    export OMP_NUM_THREADS=2
 
     delly call \
       --type {{ svtype }} \
