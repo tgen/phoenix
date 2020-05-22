@@ -159,7 +159,7 @@
 
     cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass.brkptselect.pass.minFFPM.0.1.pass {{ results_dir }}/star-fusion.fusion_predictions.tsv
 
-    ${sf_path}/util/column_exclusions.pl {{ temp_dir }}/star-fusion.fusion_predictions.tsv JunctionReads,SpanningFrags > {{ results_dir }}/star-fusion.fusion_predictions.abridged.tsv
+    ${sf_path}/util/column_exclusions.pl {{ results_dir }}/star-fusion.fusion_predictions.tsv JunctionReads,SpanningFrags > {{ results_dir }}/star-fusion.fusion_predictions.abridged.tsv
 
     ${sf_path}/FusionAnnotator/util/fusion_to_coding_region_effect.pl \
       --fusions {{ results_dir }}/star-fusion.fusion_predictions.abridged.tsv \
@@ -172,7 +172,7 @@
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %}
 
-    echo "STAR-Fusion complete.  See output: {{ temp_dir }}/star-fusion.fusion_predictions.tsv (or .abridged.tsv version)"
+    echo "STAR-Fusion complete.  See output: {{ results_dir }}/star-fusion.fusion_predictions.tsv (or .abridged.tsv version)"
 
 - name: fusion_inspector_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
