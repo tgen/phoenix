@@ -70,6 +70,8 @@
       --quantMode GeneCounts \
       --outFileNamePrefix "{{ temp_dir }}/"
 
+    mv {{ temp_dir }}/Chimeric.out.junction {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction
+
     {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
     samtools sort \
       -T {{ temp_dir }}/{{ sample.name }} \
@@ -102,7 +104,7 @@
 
     ${sf_path}/util/STAR-Fusion.map_chimeric_reads_to_genes \
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
-      -J {{ temp_dir }}/Chimeric.out.junction \
+      -J {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction \
       > {{ temp_dir }}/star-fusion.preliminary/star-fusion.junction_breakpts_to_genes.txt
 
     ${sf_path}/util/STAR-Fusion.handle_multimapping_reads \
@@ -118,7 +120,7 @@
 
     ${sf_path}/util/STAR-Fusion.filter \
       --fusion_preds {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary \
-      -J {{ temp_dir }}/Chimeric.out.junction \
+      -J {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction \
       --tmpdir /tmp \
       --min_junction_reads 1 \
       --min_sum_frags 2 \
