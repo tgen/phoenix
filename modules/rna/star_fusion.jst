@@ -38,6 +38,8 @@
 
     module load {{ constants.tools.star_fusion.module }}
 
+    rm -r {{ temp_dir }} || true
+    mkdir -p {{ temp_dir }}
     mkdir -p {{ results_dir }}
 
     STAR \
