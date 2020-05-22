@@ -1371,13 +1371,13 @@ def main(list_argv):
             elif opt in ("--tumor-name",):
                 tumor_sample_name_in_vcf = str(arg)
             elif opt in ("-s", "--slop"):
-                slop = int(arg)
+                slop = int(float(str(arg)))
             elif opt in ("--insert-size",):
-                insert_size = int(arg)
+                insert_size = int(float(str(arg)))
             elif opt in ("--sigma",):
-                sigma = int(arg)
+                sigma = int(float(str(arg)))
             elif opt in ("-m", "--minmapq"):
-                minmapq = int(arg)
+                minmapq = int(float(str(arg)))
             elif opt in ("-g", "--refgen"):
                 refgen = str(arg)
             elif opt in ("-o", "--output"):
@@ -1422,18 +1422,24 @@ def main(list_argv):
         logger.debug("WARNING: for Manta_1.6, we expect the NORMAL SAMPLE to be in the column 10 and the TUMOR sample in column 11; IF not wrong data will be added to the VCF; WARNING")
 
         # checking inputs
-        for item in [vcf, tbam, nbam, refgen]:
+        for item in [vcf, tbam, nbam]:
             if item is None or item == '':
                 raise Exception("ERROR: Mandatory input values are missing")
             if not os.path.exists(item):
                 raise FileNotFoundError("ERROR: File NOT FOUND for: {}".format(item))
+        if os.path.splitext(tbam)[1] == ".cram" or os.path.splitext(nbam)[1] == ".cram":
+            if refgen is None or refgen == '':
+                raise Exception("ERROR: Reference Genome is needed since at least one of aln file is in CRAM format ; please provide --refgen and its value ")
+            elif not os.path.exists(refgen):
+                raise FileNotFoundError("ERROR: File NOT FOUND for: {}".format(refgen))
         if insert_size is None:
             insert_size = insert_size_default
             sigma = sigma_default
         elif insert_size is not None and isinstance(insert_size, int):
             if sigma is None or not isinstance(sigma, int):
                 raise TypeError("ERROR: sigma value for insert size MUST be provided and MUST be a numeric")
-
+        if tumor_sample_name_in_vcf is None or not isinstance(tumor_sample_name_in_vcf, str):
+            raise TypeError("ERROR: TUMOR sample name present in vcf must be provided")
         if slop is None:
             slop = insert_size + (4 * sigma)
 
