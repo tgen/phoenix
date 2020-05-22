@@ -114,7 +114,7 @@
 
     ${sf_path}/util/STAR-Fusion.filter \
       --fusion_preds {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary \
-      -J Chimeric.out.junction \
+      -J {{ temp_dir }}/Chimeric.out.junction \
       --tmpdir /tmp \
       --min_junction_reads 1 \
       --min_sum_frags 2 \
