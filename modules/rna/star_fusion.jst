@@ -186,7 +186,7 @@
     sf_path=$(dirname `which STAR-Fusion`)
 
     ${sf_path}/FusionInspector/FusionInspector \
-      --fusions star-fusion.fusion_predictions.abridged.coding_effect.tsv \
+      --fusions {{ temp_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv \
       --out_prefix finspector \
       --min_junction_reads 1 \
       --min_novel_junction_support 3 \
