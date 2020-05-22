@@ -10,8 +10,7 @@
 
 {%- macro chip_workflow(samples) %}
 
-{%- for sample in samples.values() if sample.gltype in ['chip', 'cutnrun'] %}
-
+{%- for sample in samples.values() if sample.gltype == 'chip' %}
     {% if tasks.CHIP_plot_fingerprint|default(true) %}
        {{- plot_fingerprint(sample) }}
     {% endif %}

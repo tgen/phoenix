@@ -15,7 +15,7 @@
   {# Not configurable by LIMS #}
   {% set reads_per_chunk = reads_per_chunk|default(40000000) %}
 
-  {% for sample in samples.values() if sample.gltype in ['chip', 'cutnrun'] %}
+  {% for sample in samples.values() if sample.gltype == 'chip' %}
     {% set platform = (sample.read_groups.values()|first).rgpm|default('') %}
     {% if platform|lower in ['hiseq4000', 'novaseq6000'] %}
       {% set opt_dup_distance = 2500 %}

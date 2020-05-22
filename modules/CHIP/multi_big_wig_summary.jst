@@ -2,7 +2,7 @@
 {% macro multi_big_wig_summary(samples) %}
 
 {% set chip_bws = [] %}
-{% for sample in samples.values() if sample.gltype in ['chip', 'cutnrun'] %}
+{% for sample in samples.values() if sample.gltype == 'chip' %}
   {% set chip_bw %}{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw{% endset %}
   {% do chip_bws.append(chip_bw) %}
 {% endfor %}
