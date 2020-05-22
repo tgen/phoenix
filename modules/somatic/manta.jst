@@ -142,7 +142,7 @@
   input:
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
-    - {{ constants.phoenix.delly_annotation }}
+    - {{ constants.phoenix.manta_gene_annotation_parallel }}
   output:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi
