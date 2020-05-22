@@ -168,7 +168,7 @@
 
     ${sf_path}/util/get_FUSION_EVIDENCE_fastqs.pl \
       --fusions {{ results_dir }}/star-fusion.fusion_predictions.tsv \
-      --output_prefix {{ temp_dir }}/star-fusion \
+      --output_prefix {{ results_dir }}/{{ sample.name }}_star_fusion \
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %}
 
@@ -201,8 +201,8 @@
       --CPU 20 \
       --only_fusion_reads \
       --fusion_contigs_only \
-      --left_fq star-fusion.fusion_evidence_reads_1.fq \
-      --right_fq star-fusion.fusion_evidence_reads_2.fq \
+      --left_fq {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_1.fq \
+      --right_fq {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_2.fq \
       --no_FFPM \
       --include_Trinity \
       --annotate \
