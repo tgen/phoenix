@@ -137,7 +137,7 @@
       --GC-depth 100 \
       --filtering-flag 256 \
       --coverage 1,2500,1 \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
       --target-regions {{ constants.phoenix.reference_non_N_bed }} \
       {% elif aligner == 'bwa' %}
@@ -386,7 +386,7 @@
       --java-options "-Xmx7G" \
       --INPUT "{{ bam }}" \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
@@ -487,7 +487,7 @@
         --java-options "-Xmx7G" \
         --INPUT {{ bam }} \
         --OUTPUT "{{ input_base }}/{{ bam|basename }}" \
-        {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
+        {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
         --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}"
         {% elif aligner == 'bwa' %}
         --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
@@ -495,7 +495,7 @@
     {% endif %}
 
     gatk ConvertSequencingArtifactToOxoG \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
@@ -590,7 +590,7 @@
       --max-depth 5000 \
       --min-MQ 0 \
       --min-BQ 13 \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' %}
+      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
       --fasta-ref "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
