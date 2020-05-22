@@ -155,17 +155,17 @@
 
     ${sf_path}/util/filter_by_min_FFPM.pl {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass.brkptselect.pass 0.1
 
-    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass.brkptselect.pass.minFFPM.0.1.pass {{ temp_dir }}/star-fusion.fusion_predictions.tsv
+    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass.RTartifact.pass.brkptselect.pass.minFFPM.0.1.pass {{ results_dir }}/star-fusion.fusion_predictions.tsv
 
-    ${sf_path}/util/column_exclusions.pl {{ temp_dir }}/star-fusion.fusion_predictions.tsv JunctionReads,SpanningFrags > {{ temp_dir }}/star-fusion.fusion_predictions.abridged.tsv
+    ${sf_path}/util/column_exclusions.pl {{ temp_dir }}/star-fusion.fusion_predictions.tsv JunctionReads,SpanningFrags > {{ results_dir }}/star-fusion.fusion_predictions.abridged.tsv
 
     ${sf_path}/FusionAnnotator/util/fusion_to_coding_region_effect.pl \
-      --fusions {{ temp_dir }}/star-fusion.fusion_predictions.abridged.tsv \
+      --fusions {{ results_dir }}/star-fusion.fusion_predictions.abridged.tsv \
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
-      > {{ temp_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv
+      > {{ results_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv
 
     ${sf_path}/util/get_FUSION_EVIDENCE_fastqs.pl \
-      --fusions {{ temp_dir }}/star-fusion.fusion_predictions.tsv \
+      --fusions {{ results_dir }}/star-fusion.fusion_predictions.tsv \
       --output_prefix {{ temp_dir }}/star-fusion \
       --left_fq {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %} \
       --right_fq {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%},{% endif %}{% endfor %}
@@ -186,7 +186,7 @@
     sf_path=$(dirname `which STAR-Fusion`)
 
     ${sf_path}/FusionInspector/FusionInspector \
-      --fusions {{ temp_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv \
+      --fusions {{ results_dir }}/star-fusion.fusion_predictions.abridged.coding_effect.tsv \
       --out_prefix finspector \
       --min_junction_reads 1 \
       --min_novel_junction_support 3 \
