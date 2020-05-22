@@ -1,0 +1,172 @@
+# SnpSniffer summary is performed on all samples within the project
+
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+
+{% macro snpsniffer_summary(samples) %}
+
+- name: snpsniffer_summary
+  after-re: snpsniffer_geno_.*
+  output:
+    - qc/snpSniffer/{{ project }}_SnpSniffer_AllPairs_Summary.tsv
+    - qc/snpSniffer/{{ project }}_SnpSniffer_PossibleMatchErrors_Summary.tsv
+    - qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_Summary.tsv
+    - qc/snpSniffer/{{ project }}_SnpSniffer_PossibleCrossContamination_Summary.tsv
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_All.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_All.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls100plus.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls100plus.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls50plus.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls20plus.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls50plus.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls20plus.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_ByAssayType_All.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_Genotypes_ByAssayType_All.png
+    - qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.tsv
+  cpus: 1
+  walltime: "0:10:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.snpSniffer.module }}
+
+    mkdir --parents temp/snpsniffer
+    mkdir --parents qc/snpSniffer
+
+    {# Create an empty version of the database #}
+    rsync {{ constants.phoenix.snpSniffer_database }} temp/snpsniffer/SnpSniffer_DB.ini
+
+    {# Collect all of the library level snpSniffer vcf results into the temp directory #}
+    {% for sample in samples.values() %}
+      {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+        rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
+      {% endfor %}
+    {% endfor %}
+
+    cd temp/snpsniffer
+
+    {# Add genotypes to the database #}
+    for line in `ls *snpSniffer.vcf`
+    do
+      java -jar $(which snpSniffer.jar) -add ${line} SnpSniffer_DB.ini
+    done
+
+    {#
+      When -expected or -NotExpect is queried a full comparison is produced to a
+      file called snpSniffer_output.txt, that is used for all summaries
+    #}
+    java -jar $(which snpSniffer.jar) -expected _ 2 SnpSniffer_DB.ini > Temp_Expected_Results.txt
+
+    {# Remove the unwanted file #}
+    rm Temp_Expected_Results.txt
+
+    {#
+      Preprocess the generic full comparison output
+      Replace unwanted features with tab-separtor
+      Create sorted list of line by line comparisons and drop duplicates
+    #}
+    sed 's/ & /\'$'\t''/g' snpSniffer_output.txt \
+      | \
+      sed 's/ count=/\'$'\t''/g' \
+      | \
+      sed 's/ match=/\'$'\t''/g' \
+      | \
+      sed 's/ ratio=/\'$'\t''/g' \
+      | \
+      sed 's/.bwa.bam.snpSniffer//g' \
+      | \
+      sed 's/.star.bam.snpSniffer//g' \
+      | \
+      awk '{print ($1 > $2) ? $0"\t"$1"-"$2 : $0"\t"$2"-"$1}' \
+      | \
+      awk '!x[$6]++'> SnpSniffer_AllPairs_Results.txt
+
+    {# Remove preliminary output file #}
+    rm snpSniffer_output.txt
+
+    {# Extract het summary from database using snpSniffer.jar #}
+    java -jar $(which snpSniffer.jar) -het SnpSniffer_DB.ini > Temp1_HetRate_Results.txt
+
+    {# Remove header lines #}
+    awk 'NR>2' Temp1_HetRate_Results.txt \
+      | \
+      sed 's/.bwa.bam.snpSniffer//g' \
+      | \
+      sed 's/.star.bam.snpSniffer//g' > Temp2_HetRate_Results.txt
+
+    {# Summarize and Graph with R (Tidyverse) #}
+    Rscript --vanilla snpSniffer_Summarize.R \
+      --comp_file SnpSniffer_AllPairs_Results.txt \
+      --het_file Temp2_HetRate_Results.txt
+
+    {# Remove unneeded files #}
+    rm SnpSniffer_AllPairs_Results.txt Temp1_HetRate_Results.txt Temp2_HetRate_Results.txt
+    rm *snpSniffer.vcf
+
+    {# Summarize each library for number of mismatches and minimum match ratio #}
+    gawk -F'\t' 'NR > 1 {
+      n1=split($1, a, "_")
+      l1=a[n1]
+      n2=split($2, b, "_")
+      l2=b[n2]
+      if (a[n1] in c == 0) {
+        c[a[n1]]=0
+        d[a[n1]]=$5
+        e[a[n1]]=$1
+      }
+      if (b[n2] in c == 0) {
+        c[b[n2]]=0
+        d[b[n2]]=$5
+        e[b[n2]]=$2
+      }
+      if ($5 < d[a[n1]]) {
+        d[a[n1]]=$5
+      }
+      if ($5 < d[b[n2]]) {
+        d[b[n2]]=$5
+      }
+      if ($5 < 0.8) {
+        c[a[n1]]+=1
+        c[b[n2]]+=1
+      }
+      delete a[n1]
+      delete b[n2]
+      sample=a[1]
+      for (i=2 ; i <= length(a); i++ ) {
+        sample=sample"_"a[i]
+      }
+      e[l1]=sample
+      sample=b[1]
+      for (i=2 ; i <= length(b); i++ ) {
+        sample=sample"_"b[i]
+      }
+      e[l2]=sample
+    } END {
+      OFS = "\t"
+      print "SAMPLE","LIBRARY","Mismatches","Min_Match_Ratio"
+      for (library in c) {
+        print e[library], library, c[library], d[library]
+      }
+    }' SnpSniffer_AllPairs_Summary.tsv > qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.tsv
+
+    mv SnpSniffer_AllPairs_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_AllPairs_Summary.tsv
+    mv SnpSniffer_PossibleMatchErrors_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_PossibleMatchErrors_Summary.tsv
+    mv SnpSniffer_HetRate_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_Summary.tsv
+    mv SnpSniffer_PossibleCrossContamination_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_PossibleCrossContamination_Summary.tsv
+    mv SnpSniffer_MatchRatio_ByPatientPairType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_All.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_All.png
+    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls100plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls100plus.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls100plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls100plus.png
+    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls50plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls50plus.png
+    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls20plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls20plus.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls50plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls50plus.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls20plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls20plus.png
+    mv SnpSniffer_HetRate_ByAssayType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_ByAssayType_All.png
+    mv SnpSniffer_Genotypes_ByAssayType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_Genotypes_ByAssayType_All.png
+
+  {% set output %}qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.tsv{% endset %}
+  {% set json %}qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.json{% endset %}
+
+  {{ stats2json("all libraries", project, project, output, json, "snpsniffer_summary") }}
+
+{% endmacro %}
