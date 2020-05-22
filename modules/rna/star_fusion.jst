@@ -38,8 +38,7 @@
 
     module load {{ constants.tools.star_fusion.module }}
 
-    mkdir -p {{ temp_dir }}/_starF_checkpoints
-    mkdir -p {{ temp_dir }}/star-fusion.preliminary
+    mkdir -p {{ results_dir }}
 
     STAR \
       --genomeDir {{ constants.phoenix.starfusion_index }}/ref_genome.fa.star.idx  \
@@ -90,6 +89,9 @@
   cmd: |
     set -eu
     set -o pipefail
+
+    mkdir -p {{ temp_dir }}/_starF_checkpoints
+    mkdir -p {{ temp_dir }}/star-fusion.preliminary
 
     module load {{ constants.tools.star_fusion.module }}
     sf_path=$(dirname `which STAR-Fusion`)
