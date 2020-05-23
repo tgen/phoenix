@@ -95,7 +95,7 @@
       sed 's/.star.bam.snpSniffer//g' > Temp2_HetRate_Results.txt
 
     {# Summarize and Graph with R (Tidyverse) #}
-    Rscript --vanilla snpSniffer_Summarize.R \
+    Rscript --vanilla $(which snpSniffer_Summarize.R) \
       --comp_file SnpSniffer_AllPairs_Results.txt \
       --het_file Temp2_HetRate_Results.txt
 
