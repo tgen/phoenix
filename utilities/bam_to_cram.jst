@@ -58,11 +58,11 @@
     set -o pipefail
 
     {% if cram|default(true) %}
-    md5sum {{ cram_path }}
-    md5sum {{ cram_path }}.crai
+    md5sum {{ cram_path }} > {{ cram_path }}.md5
+    md5sum {{ cram_path }}.crai > {{ cram_path }}.crai.md5
     {% else %}
-    md5sum {{ bam_path }}
-    md5sum {{ bam_path }}.bai
+    md5sum {{ bam_path }} > {{ bam_path }}.md5
+    md5sum {{ bam_path }}.bai > {{ bam_path }}.bai.md5
     {% endif %}
 
 {% endmacro %}
