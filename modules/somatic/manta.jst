@@ -81,13 +81,25 @@
     {# Execute on the local machine with 19 parallel jobs #}
     "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
+    {# Save all the vcs in the sample dir #}
+    mkdir -p "{{ results_dir }}" || true
+
+    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/somaticSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
+
 
 - name: manta_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, manta, flag, {{ pair.name }}]
   after: manta_{{ pair.name }}_{{ aligner }}
   input:
-    - {{ temp_dir }}/results/variants/somaticSV.vcf.gz
-    - {{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi
     - {{ tumor_bam }}
     - {{ normal_bam }}
     - {{ summary_samtools_stats }}
@@ -122,7 +134,7 @@
     {% set temp_dir_pass_vcf %}{{ temp_dir }}/results/variants/somaticSV.pass.vcf{% endset %}
 
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_prepare_sv_vcf }} \
-      -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
+      -i {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz \
       -t {{ tumor_bam }} \
       -n {{ normal_bam }} \
       --tumor-name {{ pair.tumor.rgsm }} \
