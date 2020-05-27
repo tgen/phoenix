@@ -147,22 +147,22 @@
       for (library in c) {
         print e[library], library, c[library], d[library]
       }
-    }' SnpSniffer_AllPairs_Summary.tsv > qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.tsv
+    }' SnpSniffer_AllPairs_Summary.tsv > ../../qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.tsv
 
-    mv SnpSniffer_AllPairs_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_AllPairs_Summary.tsv
-    mv SnpSniffer_PossibleMatchErrors_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_PossibleMatchErrors_Summary.tsv
-    mv SnpSniffer_HetRate_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_Summary.tsv
-    mv SnpSniffer_PossibleCrossContamination_Summary.tsv qc/snpSniffer/{{ project }}_SnpSniffer_PossibleCrossContamination_Summary.tsv
-    mv SnpSniffer_MatchRatio_ByPatientPairType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_All.png
-    mv SnpSniffer_MatchRatio_ByAssayPairType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_All.png
-    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls100plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls100plus.png
-    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls100plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls100plus.png
-    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls50plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls50plus.png
-    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls20plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls20plus.png
-    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls50plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls50plus.png
-    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls20plus.png qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls20plus.png
-    mv SnpSniffer_HetRate_ByAssayType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_ByAssayType_All.png
-    mv SnpSniffer_Genotypes_ByAssayType_All.png qc/snpSniffer/{{ project }}_SnpSniffer_Genotypes_ByAssayType_All.png
+    mv SnpSniffer_AllPairs_Summary.tsv ../../qc/snpSniffer/{{ project }}_SnpSniffer_AllPairs_Summary.tsv
+    mv SnpSniffer_PossibleMatchErrors_Summary.tsv ../../qc/snpSniffer/{{ project }}_SnpSniffer_PossibleMatchErrors_Summary.tsv
+    mv SnpSniffer_HetRate_Summary.tsv ../../qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_Summary.tsv
+    mv SnpSniffer_PossibleCrossContamination_Summary.tsv ../../qc/snpSniffer/{{ project }}_SnpSniffer_PossibleCrossContamination_Summary.tsv
+    mv SnpSniffer_MatchRatio_ByPatientPairType_All.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_All.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_All.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_All.png
+    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls100plus.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls100plus.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls100plus.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls100plus.png
+    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls50plus.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls50plus.png
+    mv SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls20plus.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByPatientPairType_SharedCalls20plus.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls50plus.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls50plus.png
+    mv SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls20plus.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_MatchRatio_ByAssayPairType_SharedCalls20plus.png
+    mv SnpSniffer_HetRate_ByAssayType_All.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_HetRate_ByAssayType_All.png
+    mv SnpSniffer_Genotypes_ByAssayType_All.png ../../qc/snpSniffer/{{ project }}_SnpSniffer_Genotypes_ByAssayType_All.png
 
   {% set output %}qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.tsv{% endset %}
   {% set json %}qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.json{% endset %}
