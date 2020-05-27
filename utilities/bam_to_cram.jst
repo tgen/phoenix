@@ -1,4 +1,4 @@
-{% from 'utilities/md5sum_bam_cram.jst' import bam_to_cram with context %}
+{% from 'utilities/md5sum_bam_cram.jst' import md5sum_bam_cram with context %}
 
 {% macro bam_to_cram(sample, aligner='bwa') %}
 {% if cram|default(true) %}
