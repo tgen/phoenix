@@ -1,4 +1,5 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'utilities/md5sum_bam_cram.jst' import md5sum_bam_cram with context %}
 
 # Run STAR-Fusion for detecting gene fusions
 
@@ -239,6 +240,8 @@
       "{{ bam_path }}"
 
     samtools index "{{ cram_path }}"
+
+    {{- md5sum_bam_cram(sample, aligner) }}
 {% endif %}
 {% endif %}
 
