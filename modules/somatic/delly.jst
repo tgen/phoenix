@@ -5,8 +5,8 @@
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/somatic_structural_calls/delly/{{ pair.name }}{% endset %}
-{% set all_vcf %}{{ pair.name }}.{{ aligner }}.delly.allCalls.vcf{% endset %}
-{% set pass_vcf %}{{ pair.name }}.{{ aligner }}.delly.passOnly.vcf{% endset %}
+{% set all_vcf %}{{ pair.name }}.{{ aligner }}.delly.all.vcf{% endset %}
+{% set pass_vcf %}{{ pair.name }}.{{ aligner }}.delly.pass.vcf{% endset %}
 {% set variant_types=['DEL','DUP','INS','INV','TRA'] %}
 
 {% for svtype in variant_types %}
@@ -103,8 +103,8 @@
   input:
     - {{ temp_dir }}/{{ pass_vcf }}
   output:
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz.tbi
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf.gz.tbi
     - {{ results_dir }}/{{ pass_vcf }}.gz
     - {{ results_dir }}/{{ pass_vcf }}.gz.tbi
     - {{ results_dir }}/{{ all_vcf }}.gz
@@ -118,7 +118,7 @@
 
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.bedtools.module }}
-    {# Hardcoded bcftools/1.9 because 1.10* is failing to index the delly.passOnly.vcf, most likely due to stricter vcf validation #}
+    {# Hardcoded bcftools/1.9 because 1.10* is failing to index the delly.pass.vcf, most likely due to stricter vcf validation #}
     module load BCFtools/1.9-foss-2019a
 
     if [[ $(grep -m 1 -c "ENDPOSSV" {{ temp_dir }}/{{ pass_vcf }} ) -ne 1 ]]
@@ -132,15 +132,15 @@
     
     bcftools filter --exclude 'FMT/RCALT[0] < 5 | FMT/RCALT[1] > 1 | FMT/RDISTDISC1[0] < 100 | FMT/RDISTDISC2[0] < 100' {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf > {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf
 
-    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.delly_svtop_delly_sv_annotation_parellel_script }} -a {{ constants.phoenix.delly_annotation }} -i {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.delly_svtop_delly_sv_annotation_parellel_script }} -a {{ constants.phoenix.delly_annotation }} -i {{ temp_dir }}/{{ pass_vcf }}.mod_addDist.vcf.flt.vcf -o {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf
 
     {# Compressing all vcfs #}
     bcftools view \
       --output-type z \
-      --output-file {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz \
-      {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf
+      --output-file {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf.gz \
+      {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf
 
-    bcftools index --tbi --force {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz
+    bcftools index --tbi --force {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf.gz
 
     bcftools view \
       --output-type z \
@@ -158,8 +158,8 @@
 
     mkdir -p {{ results_dir }}
 
-    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz {{ results_dir }}
-    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.passOnly.anno.vcf.gz.tbi {{ results_dir }}
+    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf.gz {{ results_dir }}
+    mv {{ temp_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf.gz.tbi {{ results_dir }}
     mv {{ temp_dir }}/{{ pass_vcf }}.gz {{ results_dir }}
     mv {{ temp_dir }}/{{ pass_vcf }}.gz.tbi {{ results_dir }}
     mv {{ temp_dir }}/{{ all_vcf }}.gz {{ results_dir }}
