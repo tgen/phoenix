@@ -119,8 +119,11 @@
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.bedtools.module }}
 
+    {# Ensuring that the output dir exists for bcftools filter #}
+    mkdir -p {{ temp_dir }}/results/variants
+
     {# filtering somatic vcf by PASS #}
-    bcftools filter -i 'FILTER == "PASS"' -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz {{ temp_dir }}/results/variants/somaticSV.vcf.gz
+    bcftools filter -i 'FILTER == "PASS"' -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz
 
     {# Capturing the insert_size and its standard deviation from summary samtools stats file #}
@@ -134,14 +137,14 @@
     {% set temp_dir_pass_vcf %}{{ temp_dir }}/results/variants/somaticSV.pass.vcf{% endset %}
 
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_prepare_sv_vcf }} \
-      -i {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz \
+      -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
       -t {{ tumor_bam }} \
       -n {{ normal_bam }} \
       --tumor-name {{ pair.tumor.rgsm }} \
       --insert-size ${INSERT_SIZE} \
       --sigma ${STD_IS} \
       --minmapq 15 \
-      --output  {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
+      --output {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
 
     {# compress vcf to vcf.gz #}
     bcftools view --threads 2 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
