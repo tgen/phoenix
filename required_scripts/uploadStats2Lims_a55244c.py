@@ -6,6 +6,8 @@ import sys
 import requests
 import base64
 import argparse
+from random import randint
+from time import sleep
 
 # ADD THE PREFIX FOR EACH FILE TYPE BASED ON FIELD NAME WITHIN the TGen LIMS
 fileTypes = {
@@ -348,18 +350,28 @@ try:
             # The record ID used in the patch
             recordID = str([d['recordId'] for d in parsed_postResponse1['response']['data']][0])
 
-            patchResponse = requests.request("PATCH",
-                                             urlPatch + recordID,
-                                             data=json_patchData,
-                                             headers=headers,
-                                             verify=CA)
+            for i in range(20):
+                patchResponse = requests.request("PATCH",
+                                                 urlPatch + recordID,
+                                                 data=json_patchData,
+                                                 headers=headers,
+                                                 verify=CA)
 
-            parsed_patchResponse = json.loads(patchResponse.text)
+                parsed_patchResponse = json.loads(patchResponse.text)
 
-            if patchResponse.status_code != 200:
-                print("ERROR:\n" + "Code: " + str(parsed_patchResponse["messages"][0]["code"]) +
-                      "\n" + "Message: " + str(parsed_patchResponse["messages"][0]['message']))
-                raise ValueError("Something went wrong with the PATCH.")
+                if patchResponse.status_code != 200:
+                    if i == 19:
+                        print("ERROR:\n" + "Code: " + str(parsed_patchResponse["messages"][0]["code"]) +
+                              "\n" + "Message: " + str(parsed_patchResponse["messages"][0]['message']))
+                        raise ValueError("The library record has been in use by another user for 20 consecutive "
+                                         "attempts.")
+                    elif parsed_patchResponse["messages"][0]["code"] == '301':
+                        sleep(randint(4, 10))
+                        continue
+                    else:
+                        print("ERROR:\n" + "Code: " + str(parsed_patchResponse["messages"][0]["code"]) +
+                              "\n" + "Message: " + str(parsed_patchResponse["messages"][0]['message']))
+                        raise ValueError("Something went wrong with the PATCH.")
 
             counter += 1
 
