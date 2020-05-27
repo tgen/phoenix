@@ -28,7 +28,7 @@ fileTypes = {
         "help": "\"bam_name.bam.quality_yield_metrics\" file generated from Picard."
         },
     "picard_gc_bias_summary_metrics": {
-        "prefix": "picardTools_gc_bias",
+        "prefix": "picardTools_gc_bias_",
         "help": "\"bam_name.bam.summary_metrics\" file generated from Picard."
         },
     "picard_rna_metrics": {
@@ -291,7 +291,7 @@ try:
                         if prefix == "idxStatsChrCount_" and x in contig_list:
                             patchData["fieldData"][prefix + x] = \
                                 contents["SAMPLES"][sample_counter]["LIBRARIES"][counter][x]
-                        else:
+                        elif prefix != "idxStatsChrCount_":
                             patchData["fieldData"][prefix + x] = \
                                 contents["SAMPLES"][sample_counter]["LIBRARIES"][counter][x]
 
