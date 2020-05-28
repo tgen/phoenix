@@ -144,7 +144,9 @@
 {% endfor %}
 
 {# project level quality control #}
+{% if samples|length > 1 %}
 {{- snpsniffer_summary(samples) }}
+{% endif %}
 
 {# Move to utility scripts #}
 - name: finalize
