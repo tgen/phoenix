@@ -127,7 +127,7 @@
 
 {# Move to utility scripts #}
 {% for fastq in dataFiles %}
-- name: copy_fastqs_{{ loop.index }}
+- name: copy_fastqs_{{ fastq.basename }}
   output: temp/fastqs/{{ fastq.basename }}
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']
