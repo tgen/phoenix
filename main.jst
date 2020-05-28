@@ -127,7 +127,7 @@
 
 {# Move to utility scripts #}
 {% for fastq in dataFiles %}
-- name: copy_fastqs_{{ fastq.basename }}
+- name: copy_fastqs_{{ fastq.basename | replace(".", "_") }}
   output: temp/fastqs/{{ fastq.basename }}
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']

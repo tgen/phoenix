@@ -23,7 +23,7 @@
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
 
 {% for fastq in [r1fastq, r2fastq] %}
-- name: split_fastq_{{ fastq.basename }}
+- name: split_fastq_{{ fastq.basename | replace(".", "_") }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, split, {{ sample.name }}]
   input:
     - temp/fastqs/{{ fastq.basename }}
@@ -59,8 +59,8 @@
 - name: chunked_bowtie2_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, {{ sample.name }}]
   after:
-    - split_fastq_{{ r1fastq.basename }}
-    - split_fastq_{{ r2fastq.basename }}
+    - split_fastq_{{ r1fastq.basename | replace(".", "_") }}
+    - split_fastq_{{ r2fastq.basename | replace(".", "_") }}
   walltime: "48:00:00"
   cpus: 10
   mem: 50G
