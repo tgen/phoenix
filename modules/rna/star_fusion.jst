@@ -135,8 +135,15 @@
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
+    {# TODO - Add MMRF NREADS logic, we should be manipulating the value, not just reading it in #}
+    {% if MMRF|default(true) %}
+    NREADS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
+    {% else %}
+    NREADS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
+    {% endif %}
+
     ${sf_path}/util/incorporate_FFPM_into_final_report.pl \
-      {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered 62229704 \
+      {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered $NREADS \
       > {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered.FFPM
 
     ${sf_path}/util/append_breakpoint_junction_info.pl \
