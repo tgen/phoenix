@@ -135,8 +135,8 @@
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
-    {# TODO - Add MMRF NREADS logic, we should be manipulating the value, not just reading it in #}
-    {% if MMRF|default(true) %}
+    {# Add MMRF NREADS logic, we should be manipulating the value, not just reading it in #}
+    {% if {{ study }} == "MMRF" %}
     NREADS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
     {% else %}
     NREADS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
