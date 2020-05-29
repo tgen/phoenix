@@ -37,6 +37,8 @@
 
     lancet \
       --num-threads 4 \
+      --max-vaf-normal 0.05 \
+      --max-alt-count-normal 50 \
       --bed "{{ temp_dir }}/{{ loop.index }}.bed" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --normal "{{ normal_bam }}" \
