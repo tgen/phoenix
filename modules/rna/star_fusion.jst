@@ -155,7 +155,7 @@
      > {{ temp_dir }}/{{ sample.name }}_starfusion.BTloci.bam.flagstats.txt
 
     {# Add MMRF NREADS logic, we should be manipulating the value, not just reading it in #}
-    {% if {{ study }} == "MMRF" %}
+    {% if study == "MMRF" %}
     JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
     IG_READS=$(sed -n 7p {{ temp_dir }}/{{ sample.name }}_starfusion.BTloci.bam.flagstats.txt | awk '{ print $1 }')
     NREADS=$((JUNCTION_READS-IG_READS))
