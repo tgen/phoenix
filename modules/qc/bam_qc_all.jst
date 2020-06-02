@@ -421,7 +421,7 @@
       mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.insert_size_histogram.pdf
 
       {{ stats2json(sample.gltype, sample.name, task, error_metrics, error_metrics_json, "picard_error_summary_metrics", sample_name=sample.name, library_name=sample_lb) }}
-      {{ stats2json(sample.gltype, sample.name, task, quality_yield_metrics, quality_yield_metrics_json, "quality_yield_metrics", sample_name=sample.name, library_name=sample_lb) }}
+      {{ stats2json(sample.gltype, sample.name, task, quality_yield_metrics, quality_yield_metrics_json, "picard_quality_yield_metrics", sample_name=sample.name, library_name=sample_lb) }}
 
     {% elif bam_level is sameas false or sample.gltype == 'singlecellrna' %}
       pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias%d.pdf
@@ -431,7 +431,7 @@
       mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
 
       {{ stats2json(sample.gltype, sample.name, task, error_metrics, error_metrics_json, "picard_error_summary_metrics", sample_name=sample.name, library_name=sample_lb) }}
-      {{ stats2json(sample.gltype, sample.name, task, quality_yield_metrics, quality_yield_metrics_json, "quality_yield_metrics", sample_name=sample.name, library_name=sample_lb) }}
+      {{ stats2json(sample.gltype, sample.name, task, quality_yield_metrics, quality_yield_metrics_json, "picard_quality_yield_metrics", sample_name=sample.name, library_name=sample_lb) }}
     {% endif %}
 
   {% if bam_level is sameas true %}

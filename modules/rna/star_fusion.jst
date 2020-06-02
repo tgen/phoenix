@@ -1,4 +1,5 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'utilities/md5sum_bam_cram.jst' import md5sum_bam_cram with context %}
 
 # Run STAR-Fusion for detecting gene fusions
 
@@ -87,6 +88,7 @@
 - name: star_fusion_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
   after: star_first_pass_mapping_{{ sample.name }}
+  reset: predecessors
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -97,6 +99,7 @@
     mkdir -p {{ temp_dir }}/_starF_checkpoints
     mkdir -p {{ temp_dir }}/star-fusion.preliminary
 
+    module load {{ constants.tools.samtools.module }}
     module load {{ constants.tools.star_fusion.module }}
     sf_path=$(dirname `which STAR-Fusion`)
 
@@ -134,8 +137,34 @@
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
+    samtools view -@ 3 -O BAM -o {{ temp_dir }}/{{ sample.name }}_starfusion.BTloci.bam \
+    {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
+     {{ results_dir }}/{{ sample.name }}_starfusion.bam \
+    {% else %}
+     {{ temp_dir }}/Aligned.out.bam \
+    {% endif %}
+     chr2:88857160-90367699 \
+     chr7:142299176-142802748 \
+     chr14:21621837-22552156 \
+     chr14:105583730-106879812 \
+     chr22:21991098-22923034
+
+    samtools flagstat \
+     --threads 3 \
+     {{ temp_dir }}/{{ sample.name }}_starfusion.BTloci.bam \
+     > {{ temp_dir }}/{{ sample.name }}_starfusion.BTloci.bam.flagstats.txt
+
+    {# Add MMRF NREADS logic, we should be manipulating the value, not just reading it in #}
+    {% if study == "MMRF" %}
+    JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
+    IG_READS=$(sed -n 7p {{ temp_dir }}/{{ sample.name }}_starfusion.BTloci.bam.flagstats.txt | awk '{ print $1 }')
+    NREADS=$((JUNCTION_READS-IG_READS))
+    {% else %}
+    NREADS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
+    {% endif %}
+
     ${sf_path}/util/incorporate_FFPM_into_final_report.pl \
-      {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered 62229704 \
+      {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered $NREADS \
       > {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.filtered.FFPM
 
     ${sf_path}/util/append_breakpoint_junction_info.pl \
@@ -239,6 +268,8 @@
       "{{ bam_path }}"
 
     samtools index "{{ cram_path }}"
+
+    {{- md5sum_bam_cram(sample, aligner) }}
 {% endif %}
 {% endif %}
 

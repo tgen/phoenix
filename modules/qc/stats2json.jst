@@ -21,13 +21,13 @@
     ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.stats2json }} \
       --output {{ output_file }} \
       {% if sample_name is not none %}
-      --samplename sample_name \
+      --samplename {{ sample_name }} \
       {% endif %}
       {% if library_name is not none %}
-      --libraryname library_name \
+      --libraryname {{ library_name }} \
       {% endif %}
       {% if read_group_name is not none %}
-      --readgroupname read_group_name \
+      --readgroupname {{ read_group_name }} \
       {% endif %}
       {{ input_file }} \
       {{ file_type }}

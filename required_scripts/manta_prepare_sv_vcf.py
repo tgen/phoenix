@@ -21,22 +21,22 @@ import logging
 
 # LOGGING SETUP
 # create a logger
-__logfile__ = os.path.join(os.getcwd(), "log_prepare_vcf_manta.txt")
+__logfile__ = os.path.join(os.getcwd(), "log_prepare_sv_vcf.txt")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 # create a generic formatter
 formatter = logging.Formatter('%(levelname)s %(asctime)-15s %(module)s %(lineno)d\t %(message)s')
 # create file_handlers with different settings from generic handling
-file_handler = logging.FileHandler(__logfile__)
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(formatter)
+# file_handler = logging.FileHandler(__logfile__)
+# file_handler.setLevel(logging.INFO)
+# file_handler.setFormatter(formatter)
 
 # create stream handler for printing to standard output
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 
 # add the handler to the logger ; Allow to manage differently and customize some logs
-logger.addHandler(file_handler)
+# logger.addHandler(file_handler)
 logger.addHandler(stream_handler)
 
 
@@ -200,8 +200,9 @@ def write_new_vcf(vcf, newheader, LVAR, logfile=__logfile__, output_vcf=None, co
     try:
         with open(output_vcf, "w") as f:
             f.write(str(newheader))
-            for record in LVAR:
-                f.write(str(record))
+            if LVAR is not None:
+                for record in LVAR:
+                    f.write(str(record))
     except IOError as ioe:
         logger.exception(ioe)
         logger.info("logfile is:" + logfile)
@@ -210,25 +211,25 @@ def write_new_vcf(vcf, newheader, LVAR, logfile=__logfile__, output_vcf=None, co
         logger.exception(e)
         logger.info("logfile is: " + logfile)
         exit(2)
+
+    if compress_vcf:
+        output_vcf_gz = output_vcf + ".gz"
+        command_bcftools_view = "bcftools view -Oz -o {} {}".format(output_vcf_gz, output_vcf)
+        logger.info(command_bcftools_view)
+        command_bcftools_index = 'bcftools index --tbi {}'.format(output_vcf_gz)
+        logger.info(command_bcftools_index)
+        try:
+            os.system(command_bcftools_view)
+            os.system(command_bcftools_index)
+        except IOError as ioe:
+            logger.error(ioe)
+        except Exception as e:
+            logger.error(e)
+        logger.info("vcf file written successfully")
+        logger.info("output file is: " + str(output_vcf_gz))
     else:
-        if compress_vcf:
-            output_vcf_gz = output_vcf + ".gz"
-            command_bcftools_view = "bcftools view -Oz -o {} {}".format(output_vcf_gz, output_vcf)
-            logger.info(command_bcftools_view)
-            command_bcftools_index = 'bcftools index --tbi {}'.format(output_vcf_gz)
-            logger.info(command_bcftools_index)
-            try:
-                os.system(command_bcftools_view)
-                os.system(command_bcftools_index)
-            except IOError as ioe:
-                logger.error(ioe)
-            except Exception as e:
-                logger.error(e)
-            logger.info("vcf file written successfully")
-            logger.info("output file is: " + str(output_vcf_gz))
-        else:
-            logger.info("vcf file written successfully")
-            logger.info("output file is: " + str(output_vcf))
+        logger.info("vcf file written successfully")
+        logger.info("output file is: " + str(output_vcf))
 
 
 def update_vcf_header(vcf, slop, insert_size, arg_cmd):
@@ -1289,6 +1290,11 @@ def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, a
     myvcf.reset()
     # update vcf_file header
     myvcf = update_vcf_header(myvcf, slop, insert_size, arg_cmd)
+
+    # Check if there are no variant, therefore we stop right here ; Need to do this here before any call to myvcf's records
+    if tot_variants_count == 0:
+        return myvcf.header, None
+
     # check if tumor_sample_name exist in vcf and if yes returns the index value for future use
     coltumorsample = get_sample_column_index_from_vcf_header(next(myvcf), tumor_sample_name_in_vcf)
     # we consumed one item from myvcf in method get_sample_column_index_from_vcf_header right above; need to reset it here
@@ -1371,13 +1377,13 @@ def main(list_argv):
             elif opt in ("--tumor-name",):
                 tumor_sample_name_in_vcf = str(arg)
             elif opt in ("-s", "--slop"):
-                slop = int(arg)
+                slop = int(float(str(arg)))
             elif opt in ("--insert-size",):
-                insert_size = int(arg)
+                insert_size = int(float(str(arg)))
             elif opt in ("--sigma",):
-                sigma = int(arg)
+                sigma = int(float(str(arg)))
             elif opt in ("-m", "--minmapq"):
-                minmapq = int(arg)
+                minmapq = int(float(str(arg)))
             elif opt in ("-g", "--refgen"):
                 refgen = str(arg)
             elif opt in ("-o", "--output"):
@@ -1422,18 +1428,24 @@ def main(list_argv):
         logger.debug("WARNING: for Manta_1.6, we expect the NORMAL SAMPLE to be in the column 10 and the TUMOR sample in column 11; IF not wrong data will be added to the VCF; WARNING")
 
         # checking inputs
-        for item in [vcf, tbam, nbam, refgen]:
+        for item in [vcf, tbam, nbam]:
             if item is None or item == '':
                 raise Exception("ERROR: Mandatory input values are missing")
             if not os.path.exists(item):
                 raise FileNotFoundError("ERROR: File NOT FOUND for: {}".format(item))
+        if os.path.splitext(tbam)[1] == ".cram" or os.path.splitext(nbam)[1] == ".cram":
+            if refgen is None or refgen == '':
+                raise Exception("ERROR: Reference Genome is needed since at least one of aln file is in CRAM format ; please provide --refgen and its value ")
+            elif not os.path.exists(refgen):
+                raise FileNotFoundError("ERROR: File NOT FOUND for: {}".format(refgen))
         if insert_size is None:
             insert_size = insert_size_default
             sigma = sigma_default
         elif insert_size is not None and isinstance(insert_size, int):
             if sigma is None or not isinstance(sigma, int):
                 raise TypeError("ERROR: sigma value for insert size MUST be provided and MUST be a numeric")
-
+        if tumor_sample_name_in_vcf is None or not isinstance(tumor_sample_name_in_vcf, str):
+            raise TypeError("ERROR: TUMOR sample name present in vcf must be provided")
         if slop is None:
             slop = insert_size + (4 * sigma)
 

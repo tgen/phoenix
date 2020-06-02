@@ -23,7 +23,7 @@
 
 {# Think about moving to utility scripts if tgen/broad split_fastq are the same #}
 {% for fastq in [r1fastq, r2fastq] %}
-- name: split_fastq_{{ fastq.fastqPath|sha256 }}
+- name: split_fastq_{{ fastq.basename | replace(".", "_") }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, split, {{ sample.name }}]
   input:
     - temp/fastqs/{{ fastq.basename }}
@@ -59,8 +59,8 @@
 - name: chunked_bwa_mem_samtools_view_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   after: 
-    - split_fastq_{{ r1fastq.fastqPath|sha256 }}
-    - split_fastq_{{ r2fastq.fastqPath|sha256 }}
+    - split_fastq_{{ r1fastq.basename | replace(".", "_") }}
+    - split_fastq_{{ r2fastq.basename | replace(".", "_") }}
   walltime: "48:00:00"
   cpus: 10
   mem: 40G

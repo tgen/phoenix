@@ -1,4 +1,4 @@
-
+{% from 'utilities/md5sum_bam_cram.jst' import md5sum_bam_cram with context %}
 
 {% macro bam_to_cram(sample, aligner='bwa') %}
 {% if cram|default(true) %}
@@ -32,37 +32,8 @@
       "{{ bam_path }}"
 
     samtools index "{{ cram_path }}"
+
+    {{- md5sum_bam_cram(sample, aligner) }}
 {% endif %}
-
-- name: md5sum_bam_cram_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
-  input:
-    {% if cram|default(true) %}
-    - {{ cram_path }}
-    {% else %}
-    - {{ bam_path }}
-    {% endif %}
-  output:
-    {% if cram|default(true) %}
-    - {{ cram_path }}.md5
-    - {{ cram_path }}.crai.md5
-    {% else %}
-    - {{ bam_path }}.md5
-    - {{ bam_path }}.bai.md5
-    {% endif %}
-  walltime: "1:00:00"
-  cpus: 2
-  mem: 3G
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    {% if cram|default(true) %}
-    md5sum {{ cram_path }}
-    md5sum {{ cram_path }}.crai
-    {% else %}
-    md5sum {{ bam_path }}
-    md5sum {{ bam_path }}.bai
-    {% endif %}
 
 {% endmacro %}

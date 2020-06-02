@@ -7,11 +7,11 @@
   {% do chip_bws.append(chip_bw) %}
 {% endfor %}
 
+{% if chip_bws|length > 0 %}
 - name: multi_big_wig_summary
   tags: [ cutnrun, chip ]
-  after-re: bam_coverage_.*
   input:
-  {% for sample in samples.values() %}
+  {% for sample in samples.values() if sample.gltype == 'chip' %}
     {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw
   {% endfor %}
   walltime: "48:00:00"
@@ -27,4 +27,5 @@
      --smartLabels \
      --numberOfProcessors max
 
+{% endif %}
 {% endmacro %}

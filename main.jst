@@ -54,6 +54,8 @@
 {% from 'modules/CHIP/main.jst' import chip_workflow with context %}
 
 {% set samples = {} %}
+{% set fastq_validation = [] %}
+
 {% for file in dataFiles %}
     {% set bn = file.fastqPath | basename %}
 
@@ -67,6 +69,7 @@
     {% do file.update({'basename': bn}) %}
     {% do file.update({'gltype': file.glType.lower()}) %}
     {% do file.update({'glprep': file.glPrep.lower()}) %}
+    {% do fastq_validation.append(bn) %}
 
     {% if 'subGroup' not in file %}
         {% do file.update({'subGroup': 'constitutional'}) %}
@@ -125,9 +128,14 @@
     {{ log(samples|tojson(indent=4), level='CRITICAL') }}
 {% endif %}
 
+{# Unique fastq name validation #}
+{% if dataFiles | length != fastq_validation | unique | list | length  %}
+  {{ one_or_more_of_the_fastqs_have_the_same_name }}
+{% endif %}
+
 {# Move to utility scripts #}
 {% for fastq in dataFiles %}
-- name: copy_fastqs_{{ loop.index }}
+- name: copy_fastqs_{{ fastq.basename | replace(".", "_") }}
   output: temp/fastqs/{{ fastq.basename }}
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']
@@ -144,7 +152,9 @@
 {% endfor %}
 
 {# project level quality control #}
+{% if samples|length > 1 %}
 {{- snpsniffer_summary(samples) }}
+{% endif %}
 
 {# Move to utility scripts #}
 - name: finalize

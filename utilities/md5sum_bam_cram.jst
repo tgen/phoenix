@@ -1,0 +1,40 @@
+
+{% macro md5sum_bam_cram(sample, aligner='bwa') %}
+{% if cram|default(true) %}
+{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
+
+- name: md5sum_bam_cram_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype }}, {{ sample.name }}, md5sum ]
+  input:
+    {% if cram|default(true) %}
+    - {{ cram_path }}
+    {% else %}
+    - {{ bam_path }}
+    {% endif %}
+  output:
+    {% if cram|default(true) %}
+    - {{ cram_path }}.md5
+    - {{ cram_path }}.crai.md5
+    {% else %}
+    - {{ bam_path }}.md5
+    - {{ bam_path }}.bai.md5
+    {% endif %}
+  walltime: "1:00:00"
+  cpus: 2
+  mem: 2G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {% if cram|default(true) %}
+    md5sum {{ cram_path }} > {{ cram_path }}.md5
+    md5sum {{ cram_path }}.crai > {{ cram_path }}.crai.md5
+    {% else %}
+    md5sum {{ bam_path }} > {{ bam_path }}.md5
+    md5sum {{ bam_path }}.bai > {{ bam_path }}.bai.md5
+    {% endif %}
+
+{% endif %}
+
+{% endmacro %}
