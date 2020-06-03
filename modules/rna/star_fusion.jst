@@ -31,7 +31,7 @@
     - temp/fastqs/{{ fq.basename }}
   {% endfor %}
   output:
-    - {{ temp_dir }}/Aligned.out.bam
+    - {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam
     - {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction
   cpus: 20
   mem: 60G
@@ -74,6 +74,17 @@
       --quantMode GeneCounts \
       --outFileNamePrefix "{{ temp_dir }}/"
 
+    samtools sort \
+      -T "{{ temp_dir }}" \
+      -l 2 \
+      -m 3G \
+      --threads 20 \
+      --output-fmt BAM \
+      -o "{{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam" \
+      "{{ temp_dir }}/Aligned.out.bam"
+
+    samtools index -@ 20 {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam
+
     mv {{ temp_dir }}/Chimeric.out.junction {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction
 
 
@@ -81,13 +92,17 @@
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
   input:
     - {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction
-    - {{ temp_dir }}/Aligned.out.bam
+    - {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam
   output:
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.tsv
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.tsv
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_1.fq
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_2.fq
+    {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
+    - {{ results_dir }}/{{ sample.name }}_starfusion.bam
+    - {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
+    {% endif %}
   reset: predecessors
   cpus: 4
   mem: 16G
@@ -156,7 +171,7 @@
     IG_READS=$(samtools view \
       --threads 3 \
       -c -f 65 -F 2304 \
-      {{ temp_dir }}/Aligned.out.bam \
+      {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam \
       chr2:88857160-90367699 \
       chr7:142299176-142802748 \
       chr14:21621837-22552156 \
@@ -207,12 +222,29 @@
 
     echo "STAR-Fusion complete.  See output: {{ results_dir }}/star-fusion.fusion_predictions.tsv (or .abridged.tsv version)"
 
+    {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
+    mv {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam {{ results_dir }}/{{ sample.name }}_starfusion.bam
+    mv {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam.bai {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
+    {% endif %}
+
 - name: fusion_inspector_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
   input:
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_1.fq
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_2.fq
+  output:
+    - {{ results_dir }}/{{ sample.name }}_finspector.bed
+    - {{ results_dir }}/{{ sample.name }}_finspector.fa
+    - {{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.html
+    - {{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.json
+    - {{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam
+    - {{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam.bai
+    - {{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam
+    - {{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam.bai
+    - {{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz
+    - {{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi
+    - {{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
   cpus: 20
   mem: 60G
   walltime: "24:00:00"
@@ -266,31 +298,6 @@
     {{- remove_files(directory,none,task) }}
 
 {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
-- name: keep_{{ sample.name }}_star_fusion_bam
-  tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
-  reset: predecessors
-  input: {{ temp_dir }}/Aligned.out.bam
-  output:
-    - {{ results_dir }}/{{ sample.name }}_starfusion.bam
-    - {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
-  cpus: 10
-  mem: 20G
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.samtools.module }}
-
-    samtools sort \
-      -T {{ temp_dir }}/{{ sample.name }} \
-      -l 2 \
-      -m 3G \
-      --threads 10 \
-      --output-fmt BAM \
-      -o {{ results_dir }}/{{ sample.name }}_starfusion.bam \
-      {{ temp_dir }}/Aligned.out.bam
-    samtools index -@ 10 {{ results_dir }}/{{ sample.name }}_starfusion.bam
-
 {% if cram|default(true) %}
 {% set bam_path %}{{ results_dir }}/{{ sample.name }}_starfusion.bam{% endset %}
 {% set cram_path %}{{ results_dir }}/{{ sample.name }}_starfusion.cram{% endset %}
