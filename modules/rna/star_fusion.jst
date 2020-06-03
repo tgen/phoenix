@@ -266,7 +266,7 @@
     {{- remove_files(directory,none,task) }}
 
 {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
-- name: keep_{{ sample.name }}_{{ aligner }}_fusion_bam
+- name: keep_{{ sample.name }}_star_fusion_bam
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
   reset: predecessors
   input: {{ temp_dir }}/Aligned.out.bam
