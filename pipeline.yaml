@@ -376,7 +376,7 @@ constants:
     manta_gene_annotation_parallel: manta_sv_annotation_parallel.py
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
     plotCNVplus_Rscript: plotCNVplus_06b34ff.R
-    plotSamStats_Rscript: summarize_samstats_4338448.R
+    plotSamStats_Rscript: summarize_samstats_6d78ea8.R
     stats2json: samStats2json_b7fd4d1.py
     stats2lims: uploadStats2Lims_827212a.py
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
