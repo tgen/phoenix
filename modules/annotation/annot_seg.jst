@@ -1,0 +1,24 @@
+{% macro annot_seg(seg) %}
+
+- name: annot_seg_{{ seg }}
+  input: {{ seg }}
+  output: {{ seg }}.vcf
+  cpus: 4
+  walltime: "1:00:00"
+  cmd: |
+    set -uev
+
+    {#
+    annotSeg.pl
+      $1 - GTF
+      $2 - seg file for conversion
+      $3 - DELTHRESHOLD
+      $4 - DUPTHRESHOLD
+    #}
+    ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.annotSeg_script }} \
+      {{ constants.phoenix.gtf }} \
+      {{ seg }} \
+      0.58 \
+      -0.99
+
+{% endmacro %}
