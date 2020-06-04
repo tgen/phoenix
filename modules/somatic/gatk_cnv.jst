@@ -562,7 +562,8 @@
 
     mv {{ temp_dir }}/results/* {{ results_dir }}/
 
-    {{- annot_seg({{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg) }}
+    {% set final_seg %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg{% endset %}
+    {{- annot_seg(final_seg) }}
 
     {% set task %}gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
