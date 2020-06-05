@@ -152,8 +152,7 @@
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
-    {# Add MMRF NREADS logic, we should be manipulating the value, not just reading it in #}
-    {% if study == "MMRF" %}
+    {% if disease == "Myeloma" | default(false) %}
     JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
     {#
       samtools view
