@@ -144,7 +144,7 @@
       --min_sum_frags 2 \
       --require_LDAS 1 \
       --max_promiscuity 10 \
-      --min_pct_dom_promiscuity 10 \
+      --min_pct_dom_promiscuity 20 \
       --min_novel_junction_support 3 \
       --min_alt_pct_junction 10 \
       --aggregate_novel_junction_dist 5 \
@@ -152,7 +152,7 @@
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
-    {% if disease == "Myeloma" | default(false) %}
+    {% if studyDisease == "Multiple Myeloma" | default(false) %}
     JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
     {#
       samtools view
