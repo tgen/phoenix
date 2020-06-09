@@ -34,32 +34,30 @@ open (GTF, "$ARGV[0]");
 LOOP:  while (<GTF>) {
   my @temp=split(/\t/);
 
-  if($temp[8] ne "" && length($temp[0])!=0  && length($temp[3])!=0 && length($temp[4])!=0 && $temp[1] eq "protein_coding" && $temp[2] eq "CDS" )
-        {
-        my @info = split(/;/, $temp[8]);
-        if(index($info[0],"gene_id")) { $info[0] =~ s/gene_id//g; $info[0] =~ s/\"//g; $info[0] =~ s/ //g;}
+  if($temp[8] ne "" && length($temp[0])!=0  && length($temp[3])!=0 && length($temp[4])!=0 && index($temp[8],"protein_coding")!=1 && $temp[2] eq "CDS" )
+  {
+    my @info = split(/;/, $temp[8]);
+    if(index($info[0],"gene_id")) { $info[0] =~ s/gene_id//g; $info[0] =~ s/\"//g; $info[0] =~ s/ //g;}
 
-        if (exists($geneA{$info[0]})) {
-                if($temp[3] < $loc{$info[0]}) {$loc{$info[0]}=$temp[3];}
-                if($temp[4] >= $loc2{$info[0]}) {$loc2{$info[0]}=$temp[4];}
-        } else {
-        $geneA{$info[0]}=$info[0];
+    if (exists($geneA{$info[0]}))
+    {
+      if($temp[3] < $loc{$info[0]}) {$loc{$info[0]}=$temp[3];}
+      if($temp[4] >= $loc2{$info[0]}) {$loc2{$info[0]}=$temp[4];}
+    }
+    else
+    {
+      $geneA{$info[0]}=$info[0];
 
-        $info[3] =~ s/gene_name//g;
-        $info[3] =~ s/ //g;
-        $info[3] =~ s/\"//g;
-        $name{$info[0]}=$info[3];
+      $info[5] =~ s/gene_name//g;
+      $info[5] =~ s/ //g;
+      $info[5] =~ s/\"//g;
+      $name{$info[0]}=$info[5];
 
-        $loc{$info[0]}=$temp[3];
-        $loc2{$info[0]}=$temp[4];
-        $chr{$info[0]}=$temp[0];
-
-      }
-
-}#else
-#{
-#	print "$temp[0] and $temp[8] \n";
-#}
+      $loc{$info[0]}=$temp[3];
+      $loc2{$info[0]}=$temp[4];
+      $chr{$info[0]}=$temp[0];
+    }
+  }
 }
 
 close(GTF);
