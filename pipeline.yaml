@@ -379,7 +379,7 @@ constants:
     plotSamStats_Rscript: summarize_samstats_6d78ea8.R
     stats2json: samStats2json_b7fd4d1.py
     stats2lims: uploadStats2Lims_827212a.py
-    annotSeg_script: annotSeg_5be1c67.pl
+    annotSeg_script: annotSeg_d8f1c701.pl
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
     scrna_chemistry_options:
