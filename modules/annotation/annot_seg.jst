@@ -1,6 +1,6 @@
-{% macro annot_seg(seg) %}
+{% macro annot_seg(seg, name) %}
 
-- name: annot_seg_{{ seg }}
+- name: annot_seg_{{ name }}
   input: {{ seg }}
   output: {{ seg }}.vcf
   cpus: 4
