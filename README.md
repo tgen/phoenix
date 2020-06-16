@@ -259,7 +259,7 @@ _Click to show details_
 <summary><b>Public Tools Used by the Workflow</b></summary>  
 
 All tools build with public easybuild configuration files, available [here](https://github.com/easybuilders/easybuild).<br/>
-*Last Updated March 4th, 2020*  
+*Last Updated June 16th, 2020*  
 
 | Tool | Version Implemented | Current Version | Dependency and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
@@ -268,41 +268,41 @@ All tools build with public easybuild configuration files, available [here](http
 | [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.1** | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
 | [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | 3.1.0 | | Yes |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.9.0 | 0.9.0 | singularity container | Yes |
-| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.2** | staying with 0.7.6 for compatibility reasons | Yes |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.9.0 | **0.10.0** | singularity container | Yes |
+| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.3** | staying with 0.7.6 for compatibility reasons | Yes |
 | [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.2** | 1.3.2 ensures python3 compatibility | Yes |
-| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4.0 | **4.1.5.0** |  | Yes |
-| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | 2019-09-12 | star-fusion | Yes |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.8.0** |  | |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.4.0 | **4.1.7.0** |  | Yes |
+| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | **2020-06-04** | star-fusion | Yes |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.9.3** |  | |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | Yes |
-| [htseq](https://github.com/simon-anders/htseq/releases) | 0.11.1 | **0.11.3** | | |
+| [htseq](https://github.com/htseq/htseq/releases) | 0.11.1 | **0.12.3** | | |
 | [htslib](https://github.com/samtools/htslib/releases) | 1.10.1 | **1.10.2** | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
 | [lancet](https://github.com/nygenome/lancet/releases) | 1.1.0 | 1.1.0 | | Yes |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | Yes |
-| [multiQC](https://github.com/ewels/MultiQC/releases) | 1.7 | **1.8** | python3 pip | Yes |
+| [multiQC](https://github.com/ewels/MultiQC/releases) | 1.7 | **1.9** | python3 pip | Yes |
 | [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
 | [pairoscope](https://github.com/genome/pairoscope/releases) | 0.4.2 | 0.4.2 | | Yes |
-| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.30.2-RC1** | star-fusion | Yes |
+| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.32.0-RC1** | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
-| [python2](https://www.python.org/downloads/) | 2.7.15 | **2.7.17** | | Yes |
-| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.8.2** | star-fusion, vcfmerger2 | Yes |
-| [R](https://www.r-project.org/) | 3.6.1 | **3.6.3** | gatk cnv, varDict, vcfmerger2 | Yes |
+| [python2](https://www.python.org/downloads/) | 2.7.15 | **2.7.18** | | Yes |
+| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.8.3** | star-fusion, vcfmerger2 | Yes |
+| [R](https://www.r-project.org/) | 3.6.1 | **4.0.1** | gatk cnv, varDict, vcfmerger2 | Yes |
 | [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | **0.7.1** | | |
-| [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | 0.1.24 | | |
-| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | **1.1.0** | self, star-fusion | Yes |
-| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | 1.10 | markdup needs unreleased patch | Yes |
-| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | **3.5.3** | deepvariant | Yes, release-candidate |
-| [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | 4.3t | no updates since Nov 2017| Yes |
-| [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | 2.7.3a | self, star-fusion | Yes |
-| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | 1.8.1 | | Yes |
+| [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | **0.1.26** | | |
+| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 0.14.1 | **1.2.1** | self, star-fusion | Yes |
+| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | 1.10 | | Yes |
+| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | **3.6.0** | deepvariant | Yes, release-candidate |
+| [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | **4.5covid19** | covid related release? | Yes |
+| [star](https://github.com/alexdobin/STAR/releases) | 2.7.3a | **2.7.5a** | self, star-fusion | Yes |
+| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | **1.9.0** | | Yes |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | | Yes |
-| [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | 2.0.0 | part of subread package | Yes |
-| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.9.1** | star-fusion | Yes |
+| [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | **2.0.1** | part of subread package | Yes |
+| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.10.0** | star-fusion | Yes |
 | [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | Yes |
 | [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.7 | 0.8.7 | | Yes |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | **99.2** | | Yes |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | **100.2** | | Yes |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
 
