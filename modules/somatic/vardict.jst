@@ -15,6 +15,9 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz
+    - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz.tbi
   cpus: 8
   mem: 32G
   walltime: "24:00:00"
@@ -188,7 +191,10 @@
 
 - name: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, VarDict, {{ pair.name }}]
-  after-re: vardict_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -224,7 +230,7 @@
 
 - name: vardict_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, VarDict, {{ pair.name }}]
-  after: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
