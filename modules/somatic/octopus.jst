@@ -15,6 +15,10 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.realigned.bam
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    - {{ temp_dir }}/{{ loop.index }}.octopus.vcf
   cpus: 8
   mem: 16G
   walltime: "48:00:00"
@@ -61,7 +65,10 @@
 
 - name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
-  after-re: octopus_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    {% for b in constants.phoenix.primary_contig_calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -118,7 +125,7 @@
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
-  after: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
