@@ -108,7 +108,7 @@
 
 - name: strelka2_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, strelka2, {{ sample.name }}]
-  after: strelka2_{{ sample.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
