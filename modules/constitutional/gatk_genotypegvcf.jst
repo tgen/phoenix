@@ -15,6 +15,7 @@
 - name: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
   input: {{ gvcf }}
+  output: {{ temp_dir }}/{{ loop.index }}.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -39,6 +40,10 @@
 
 - name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
+  input:
+    - {{ bam }}
+    - {{ temp_dir }}/{{ loop.index }}.vcf.gz
+  output: {{ temp_dir }}/{{ loop.index }}.scored.vcf.gz
   after: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   walltime: "24:00:00"
   cpus: 6
@@ -67,7 +72,10 @@
 
 - name: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
-  after-re: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_.*
+  input:
+    {% for batch in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.scored.vcf.gz
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -98,7 +106,7 @@
 
 - name: haplotypecaller_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
-  after: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
