@@ -12,6 +12,7 @@
 - name: haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
   input: {{ bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -38,9 +39,9 @@
 
 - name: haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
-  after: 
+  input:
     {% for batch in constants.phoenix.calling_intervals %}
-    - haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+    - {{ temp_dir }}/{{ loop.index }}.g.vcf.gz
     {% endfor %}
   output:
     - {{ gvcf }}
