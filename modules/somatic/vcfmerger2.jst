@@ -37,6 +37,7 @@
 - name: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input: {{ gzipped_path }}
+  output: {{ prepped_path }}
   cpus: 8
   walltime: "4:00:00"
   cmd: |
@@ -73,7 +74,8 @@
 - name: vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
-  after: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  input: {{ prepped_path }}
+  output: {{ filtered_path }}
   cpus: 2
   walltime: "4:00:00"
   cmd: |
@@ -81,7 +83,6 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-
 
     bcftools filter \
       --output-type v \
@@ -95,10 +96,11 @@
 - name: vcfmerger2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
-  after:
-  {% for caller in pair.callers %}
-    - vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
-  {% endfor %}
+  input:
+    {% for caller in pair.callers %}
+    {% set filtered_path %}{{ temp_dir }}/{{ caller }}.filt.vcf{% endset %}
+    - {{ filtered_path }}
+    {% endfor %}
   output: {{ merged_vcf_gz }}
   cpus: 4
   walltime: "4:00:00"
@@ -120,7 +122,6 @@
     fi
 
     mkdir -p "{{ results_dir }}"
-
 
     vcfMerger2.py \
       --skip-prep-vcfs \
