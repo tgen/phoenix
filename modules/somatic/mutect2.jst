@@ -15,6 +15,10 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats
+    - {{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -64,6 +68,7 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
   cpus: 4
   mem: 16G
   walltime: "24:00:00"
@@ -101,13 +106,17 @@
       --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
       --output {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
 
-
 {% endfor %}
-
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz
+    {% endfor %}
+  output:
+    - {{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz
+    - {{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz.tbi
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
     then merged together with {{ constants.tools.samtools.verbose }} concat.
@@ -135,7 +144,11 @@
 
 - name: mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats
+    {% endfor %}
+  output: {{ temp_dir }}/merged.stats
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
     then stats files were merged together with {{ constants.tools.gatk.verbose }} for filtering.
@@ -159,7 +172,11 @@
 
 - name: mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  after-re: mutect2_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz
+    {% endfor %}
+  output: {{ temp_dir }}/artifact-priors.tar.gz
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
     then read orientation files were merged together with {{ constants.tools.gatk.verbose }} for filtering.
@@ -183,7 +200,12 @@
 
 - name: mutect2_merge_pileup_summaries_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  after-re: mutect2_GetPileupSummaries_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    - {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
+    - {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
+  output:
+    - {{ temp_dir }}/merged.tumor-pileups.table.tsv
+    - {{ temp_dir }}/merged.normal-pileups.table.tsv
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
     then pileups for contamination analysis were merged together with {{ constants.tools.gatk.verbose }} .
@@ -219,7 +241,12 @@
 
 - name: mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  after-re: mutect2_merge_pileup_summaries_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ temp_dir }}/merged.tumor-pileups.table.tsv
+    - {{ temp_dir }}/merged.normal-pileups.table.tsv
+  output:
+    - {{ temp_dir }}/contamination.table
+    - {{ temp_dir }}/segments.table
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
     then pileup files were merged together with {{ constants.tools.gatk.verbose }} for filtering.
@@ -243,11 +270,12 @@
 
 - name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  after:
-    - mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
-    - mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
-    - mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
-    - mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz
+    - {{ temp_dir }}/merged.stats
+    - {{ temp_dir }}/artifact-priors.tar.gz
+    - {{ temp_dir }}/contamination.table
+    - {{ temp_dir }}/segments.table
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -278,7 +306,7 @@
 
 - name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
-  after: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
