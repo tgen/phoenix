@@ -177,7 +177,7 @@
 
 - name: fixmate_sort_star_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
-  after: star_quant_{{ sample.name }}
+  input: {{ star_bam_unsort }}
   output: {{ star_bam_sorted }}
   cpus: 8
   cmd: |
