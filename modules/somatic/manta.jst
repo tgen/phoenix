@@ -143,7 +143,8 @@
       --insert-size ${INSERT_SIZE} \
       --sigma ${STD_IS} \
       --minmapq 15 \
-      --output {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
+      --output {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
+      --logfile {{ temp_dir }}/results/variants/log_prepare_sv_vcf.txt
 
     {# compress vcf to vcf.gz #}
     bcftools view --threads 2 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
