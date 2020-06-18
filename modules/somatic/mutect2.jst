@@ -201,8 +201,10 @@
 - name: mutect2_merge_pileup_summaries_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
+    {% for b in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
     - {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
+    {% endfor %}
   output:
     - {{ temp_dir }}/merged.tumor-pileups.table.tsv
     - {{ temp_dir }}/merged.normal-pileups.table.tsv
