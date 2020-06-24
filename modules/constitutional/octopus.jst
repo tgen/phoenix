@@ -118,6 +118,5 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
 
-{%- set after_task = 'octopus_filter_variants_'+sample.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional', 'snp_indel_caller') }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional', 'snp_indel_caller') }}
 {% endmacro -%}

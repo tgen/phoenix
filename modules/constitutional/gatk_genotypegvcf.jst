@@ -145,7 +145,6 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
 
-{%- set after_task = 'haplotypecaller_filter_variants_'+sample.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'hc', 'constitutional', 'genotype_hc_gvcf') }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, pass_vcf, taskPrefix, aligner, 'hc', 'constitutional', 'genotype_hc_gvcf') }}
 {% endmacro %}
 
