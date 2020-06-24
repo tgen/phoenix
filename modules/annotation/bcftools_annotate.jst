@@ -1,12 +1,16 @@
-{%- macro bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, snpeff_flag, vep_flag, task_type) %}
+{%- macro bcftools_annotate(sample_or_pair, temp_dir, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, snpeff_flag, vep_flag, task_type) %}
 {%- set output_bcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.bcf{% endset %}
 - name: bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  after: {{ after_task }}
   input: {{ input_vcf }}
   output:
+    {% if snpeff_flag or vep_flag %}
+    - {{ temp_vcf }}
+    - {{ temp_vcf }}.tbi
+    {% else %}
     - {{ output_vcf }}
     - {{ output_vcf }}.tbi
+    {% endif %}
   walltime: "8:00:00"
   cpus: 4
   cmd: |
