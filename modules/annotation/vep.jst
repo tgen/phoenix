@@ -1,7 +1,7 @@
-{% macro vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) %}
+{% macro vep(sample_or_pair, results_dir, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) %}
+
 - name: vep_all_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  after: {{ after_task }}
   input: {{ input_vcf }}
   output:
     - {{ final_vcf_prefix }}.vep.full.vcf.gz
@@ -57,11 +57,10 @@
 
 - name: vep_con_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  after: {{ after_task }}
   input: {{ input_vcf }}
   output:
-    - {{ final_vcf_prefix }}.vep.full.vcf.gz
-    - {{ final_vcf_prefix }}.vep.full.vcf.gz.tbi
+    - {{ final_vcf_prefix }}.vep.pick.vcf.gz
+    - {{ final_vcf_prefix }}.vep.pick.vcf.gz.tbi
   walltime: "8:00:00"
   cpus: 4
   cmd: |
