@@ -89,6 +89,8 @@
     {# Execute on the local machine with 19 parallel jobs #}
     "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
+    mkdir -p "{{ results_dir }}/evidence"
+
     {# Move and rename the evidence bams or make crams #}
     {% if cram|default(true) %}
     samtools view \
@@ -132,8 +134,6 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-
-    mkdir -p "{{ results_dir }}/evidence"
 
     {# Merge the snvs and indels into a final vcf #}
     bcftools concat \
