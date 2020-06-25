@@ -241,9 +241,9 @@ constants:
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
     salmon:
-      module: Salmon/0.14.1-GCC-8.2.0-2.31.1
-      version: "0.14.1"
-      verbose: Salmon v0.14.1
+      module: Salmon/1.2.1-gompi-2019a
+      version: "1.2.1"
+      verbose: Salmon v1.2.1
       website: https://combine-lab.github.io/salmon/
       citation: >
         Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
