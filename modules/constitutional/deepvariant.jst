@@ -9,7 +9,7 @@
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
 
 {%- set nshards=40 %}
-{% for i in range(1, nshards + 1) %}
+{% for i in range(nshards) %}
 
 {% set iteration = ('00000' + i|string)|reverse|truncate(5, True, '', 0)|reverse %}
 {% set stop = ('00000' + nshards|string)|reverse|truncate(5, True, '', 0)|reverse %}
@@ -54,7 +54,7 @@
 - name: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
   input:
-    {% for i in range(1, nshards + 1) %}
+    {% for i in range(nshards) %}
     {% set iteration = ('00000' + i|string)|reverse|truncate(5, True, '', 0)|reverse %}
     {% set stop = ('00000' + nshards|string)|reverse|truncate(5, True, '', 0)|reverse %}
     - {{ temp_dir }}/{{ sample.name }}.ex.tfrecord-{{ iteration }}-of-{{ stop }}.gz
