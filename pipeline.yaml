@@ -372,7 +372,7 @@ constants:
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
     delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF_f4d178e.py
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel_8820499.py
-    manta_prepare_sv_vcf: manta_prepare_sv_vcf_8820499.py
+    manta_prepare_sv_vcf: manta_prepare_sv_vcf_0b6cc14.py
     manta_gene_annotation_parallel: manta_sv_annotation_parallel_8820499.py
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
     plotCNVplus_Rscript: plotCNVplus_06b34ff.R

@@ -112,6 +112,7 @@ def get_sample_column_index_from_vcf_header(variant, sample_name):
         raise Exception("ERROR: Number of sample found in VCF is greater than 2; expected somatic Constitutional versus Case")
     for i in range(0, len(variant.header.samples)):
         if str(sample_name) in variant.header.samples[i]:
+            logger.info("TUMOR COLUMN Value is: {}   for {}".format(str(i),sample_name))
             return i
     raise Exception("ERROR: SAMPLE NOT FOUND in VCF")
 
@@ -216,7 +217,7 @@ def write_new_vcf(vcf, newheader, LVAR, logfile=__logfile__, output_vcf=None, co
         output_vcf_gz = output_vcf + ".gz"
         command_bcftools_view = "bcftools view -Oz -o {} {}".format(output_vcf_gz, output_vcf)
         logger.info(command_bcftools_view)
-        command_bcftools_index = 'bcftools index --tbi {}'.format(output_vcf_gz)
+        command_bcftools_index = 'bcftools index --force --tbi {}'.format(output_vcf_gz)
         logger.info(command_bcftools_index)
         try:
             os.system(command_bcftools_view)
@@ -248,12 +249,18 @@ def update_vcf_header(vcf, slop, insert_size, arg_cmd):
     # -----#
     vcf.header.info.add("TRA", ".", "Flag",
                         "Variant is a TRANSLOCATION")
+    vcf.header.info.add("INV", ".", "Flag",
+                        "Variant is a BND Inversion")
+    vcf.header.info.add("INVDUP", ".", "Flag",
+                        "Variant is a BND Inverted Duplication")
+    vcf.header.info.add("DUPTANDEM", ".", "Flag",
+                        "Variant is a BND DUP-TANDEM")
     vcf.header.info.add("CHR2", "1", "String",
                         "Chromosome name of the associated breakend")
     vcf.header.info.add("ENDPOSSV", "1", "Integer",
                         "POSition of the associated breakend in CHR2")
     vcf.header.info.add("UNTESTED", "0", "Flag",
-                        "indicate if we tried to recapture the discordant reads; apply to any INS, to DEL with SVLEN within specific range")
+                        "indicate if we tried to recapture the discordant reads; apply to any INS, or to DEL with SVLEN within specific range")
     # --------#
     # FORMAT  #
     # --------#
@@ -261,9 +268,9 @@ def update_vcf_header(vcf, slop, insert_size, arg_cmd):
     vcf.header.formats.add("RUT2", "1", "Float",
                            "for ENDPOSSV region, Ratio of Unique Start positions over the Total of number of Start Positions (aka total number of reads)")
     vcf.header.formats.add("RDISTDISC1", "1", "Integer",
-                           "Distribution size of Discordant pair at CHR:POS ; value -1 means no discordant reads in [POS+SLOP] interval")
+                           "Distribution size of Discordant pair at CHR:POS ; value 0 means no discordant reads in [POS+SLOP] interval")
     vcf.header.formats.add("RDISTDISC2", "1", "Integer",
-                           "Distribution size of Discordant pair at CHR2:ENDPOSSV ; value -1 means no discordant reads in [POS+SLOP] interval")
+                           "Distribution size of Discordant pair at CHR2:ENDPOSSV ; value 0 means no discordant reads in [POS+SLOP] interval")
     vcf.header.formats.add("RCDIS1", "1", "Integer",
                            "Number of Recaptured Discordant Pairs in Left Region (POS) with which we calculated the range distribution RDISTDISC1")
     vcf.header.formats.add("RCDIS2", "1", "Integer",
@@ -273,6 +280,9 @@ def update_vcf_header(vcf, slop, insert_size, arg_cmd):
                            " idx1=DEL, idx2=DUP, idx3=INS, idx4=INV, idx5=TRA, idx6=TOTAL_READ_COUNTED_AS_NOISE")
     vcf.header.formats.add("DRNOISE2", "6", "Integer",
                            "Same as DRNOISE1 but for ENDPOSSV region")
+    vcf.header.formats.add("EVALRCNOISE", "2", "Float",
+                           "This variable represent a way of evaluating the noise related to the total number of reads counted for the current event. Is is calculated as follow: "
+                           "(PR+SR)/(PR+SR+DRNOISE1) for first value and (RCDIS1/(RCDIS1+DRNOISE1)) for the second value")
     # ADDED LINES for COMMENTS
     vcf.header.add_line("##INSERTSIZE=" + str(insert_size) + ". Insert size value used to define whether we may have discordant reads associated to the variant")
     vcf.header.add_line("##SLOP=" + str(slop) + ". If CIPOS or/and CIEND exist in record, CIPOS is added to slop for POS, CIEND is added to slop for ENDPOSSV")
@@ -358,7 +368,7 @@ def is_read_in_expected_orientation(is_rev, expected_read_orientation):
     :param expected_read_orientation: Expected read orientation for the svtype and position we are dealing with
     :return: Boolean
     """
-    logger.debug("function_name: ; is_rev: {}  and expected_read_orientation: {}".format(str(is_rev), str(expected_read_orientation)))
+    logger.debug("function_name: {} ; is_rev: {}  and expected_read_orientation: {}".format("is_read_in_expected_orientation", str(is_rev), str(expected_read_orientation)))
     if is_rev and expected_read_orientation == "-":
         return True
     elif not is_rev and expected_read_orientation == "+":
@@ -683,8 +693,9 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
     4) the read NOISE "seen" within the region of interest
     """
 
-    logger.debug("##" * 100)
-    logger.debug("--" * 100)
+    logger.debug("##" * 50)
+    logger.debug("SVTYPE is {} ; and tpl_reads_orientation_is: {} ".format(svtype, str(tpl_reads_orientation)))
+    logger.debug("--" * 50)
     bamh = read_aln_file(bam, ref_gen)
     # getting the length of the chromosomes # TODO: move the creation of the dictionary to not be created each time even though it does not take lot of time
     dico_lengths_contigs = make_dico_contig_lengths_from_bam_handler(bamh)  # dict(zip(bamh.references, bamh.lengths))
@@ -731,9 +742,9 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
                     and not x.is_qcfail \
                     and not x.is_duplicate \
                     and not x.is_secondary \
-                    and not x.is_supplementary \
                     and is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0]) \
                     and mq >= minmapq and mq_mate >= minmapq:
+                # and not x.is_supplementary \
                 logger.debug("%%%%%%%%%%" * 10)
                 logger.debug("discordant pair found: " + str(str(x).split("\t")[0:8]))
                 logger.debug("is it reverse read: {} \tExpected_reads_orientation: {}".format(str(x.is_reverse), str(tpl_reads_orientation)))
@@ -765,7 +776,7 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
                     # we know that the mate of the current READ is not in the expected region defined by ENDPOSSV+/-slop
                     # this mean the read belongs to another event; It may be a read belonging to a valid event ...
                     # or just a random read location which we refer as Noise ;
-                    # we this implementation we cannot discriminate whether the read belong to another valid event or not # maybe a TODO
+                    # with this implementation we cannot discriminate whether the read belong to another valid event or not # maybe a TODO
                     # How to implement:
                     # we need to count the number of Discordant Reads that are NOT related to the current event
                     # to do so we use the fact that some type of EVENT (SVTYPE such as BND (TRA or INV), DEL, DUP, INS) have different read orientation
@@ -775,18 +786,18 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
                     # we therefore can add to a list the reads that we consider as noise within current region of interest ; we know that the read already belongs to a discordant pair
 
         elif x.is_proper_pair:
-            # It can be read from any type of event BUT TRA (TRA are always Discordant)
-            # DEL, DUP, INS, and INV can be represented by properly paired reads.
-            # DUP and INV are easy to capture properly paired reads (DUP: (-,+) or R1F2 or R2F1) ; INV: R1R2, R2R1, F1F2 or F2F1)
-            # DEL and INS cannot be captured as noise when properly paired because they look like to normal reads (read orientation [ (+,-) or F1R2 or F2R1 ] ) --> So we skip them
-            # this means we can have here any type of reads (from correctly paired to discordant reads but reads that are secondary alignment, supp aln, MQ of 0, or MateQ of 0, or duplicate)
+        # It can be read from any type of event BUT TRA (TRA are always Discordant)
+        # DEL, DUP, INS, and INV can be represented by properly paired reads.
+        # DUP and INV are easy to capture properly paired reads (DUP: (-,+) or R1F2 or R2F1) ; INV: R1R2, R2R1, F1F2 or F2F1)
+        # DEL and INS cannot be captured as noise when properly paired because they look like to normal reads (read orientation [ (+,-) or F1R2 or F2R1 ] ) --> So we skip them
+        # this means we can have here any type of reads (from correctly paired to discordant reads but reads that are secondary alignment, supp aln, MQ of 0, or MateQ of 0, or duplicate)
             if not x.is_unmapped \
                     and not x.mate_is_unmapped \
                     and not x.is_qcfail \
                     and not x.is_duplicate \
                     and not x.is_secondary \
-                    and not x.is_supplementary \
                     and mq >= minmapq and mq_mate >= minmapq:
+                # and not x.is_supplementary \
                 stranded_noise = True
                 if stranded_noise \
                         and (tpl_reads_orientation == ('+', '+') or tpl_reads_orientation == ('-', '-'))\
@@ -813,8 +824,8 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
         # ------------------------------#
         # RDISTDISC:RCDIS:RUT:DRNOISE
         # ------------------------------#
-        # This mean there was no discordant reads in that region ; we can return 0,0,0,lrnoise or -1,0,0,lrnoise
-        return -1, 0, -1, lrnoise
+        # This mean there was no discordant reads in that region ; we can return 0,0,0,lrnoise or 0,0,0,lrnoise
+        return 0, 0, 1, lrnoise
     else:
         logger.debug("Final length of CROI: {}".format(str(len(CROI))))
         # print number of discordant reads within regions pos-slop and pos+slop
@@ -829,6 +840,10 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
         # if the ratio is close to zero (0; well it can never reach 0 since at least one unique must be), or tend to
         # be closer to zero that 1, this means that most of the reads are piling on ; 0.5 mean fifty-fifty
         # so we also can return other statistics that show if the reads are piling on in order to filter the variants better
+        # split read is a conceptual name for the situation, that your read is broken in 2 parts. And to say it is a split read you have a bit wise flag of 0x800 marking supplementary alignment.
+        # It's a naming thing (another name for this is a chimeric read). It links with the fact, that 0x800 flag was added later than built in ability for aligners to find split-reads,
+        # and some software which didn't have implemented this supplementary read flag give a flag of 0x100, marking that the read wasn't linear, but not saying was it true supplementary
+        # (true split read) or not. So just a naming in this case
         try:
             # ------------------------------#
             # RDISTDISC:RCDIS:RUT:DRNOISE
@@ -954,7 +969,6 @@ def pre_process_variant_to_get_chr2_endpossv_and_read_orientations(vcf_file, var
 
             # This handle will be used to fetch the mate breakend
             vcfhandle_to_get_mate_record = pysam.VariantFile(vcf_file)
-            # vcfhandle_to_get_mate_record = vcf_file
             # need here to get the handle again to get consumed variant in the list, as the mate could have been processed already and not being in myvcf handle
             variant_rec_mate = fetch_mate_variant_record(vcfhandle_to_get_mate_record, chr_mate, pos_mate, mateid)
             logger.debug("variant_rec_mate returned is: --> " + str(variant_rec_mate))
@@ -1072,17 +1086,37 @@ def reevaluate_slop_values(variant, mate_variant_rec, slop, tpl_reads_orientatio
     logger.debug("ci_end value: ".format(str(ci_end)))
 
     if "BND" in variant.info['SVTYPE']:
-        # if variant.alts[0]!="<INV>":
-        if variant.chrom != variant.info['CHR2']:  # this checks that we skip INVersions as we did in Delly
+        if variant.chrom != variant.info['CHR2']:
             logger.debug("This is a ------ TRA ---------")
             variant.info['TRA'] = True
+        else:
+            # NOTE: BND is a catch-all for a generic breakpoint, so you can't assume all to be some trans-locations (according to LUMPY's authors)
+            # NOTE: LUMPY never represents breakpoints with DEL or DUP orientations as BNDs. Only one sided inversions and inter-chromosomal events
+            # NOTE: BND are mostly INV in Manta
+            # The VCF standard describes two types of SV notations. One is by SV types, i.e. insertions, deletions, inversions, translocations, etc.
+            # The other is by breakend notations, often labelled with SVTYPE=BND. To describe a SV with breakend notations, each SV has two positions, each captured by one breakend
+            # (except for inversions, which have 4 separate records). Each breakend includes a genomic locus, as well as a half interval extending out to the partner breakend.
+            # In VCF BND notations, the ALT field encodes directional information of the partner breakend.
+            # 1 200 . N N[5:500[ partner breakend immediately after chr1:200, starting from chr5:500 and extending rightwards
+            # 1 200 . N ]5:500]N partner breakend immediately before chr1:200, extending from the left and ending at chr5:500
+            # 1 200 . N [5:500[N partner breakend immediately before chr1:200, starting from chr5:500 and extending rightwards
+            # 1 200 . N N]5:500] partner breakend immediately after chr1:200, extending from the left and ending at chr5:500
+            logger.debug("BND____tpl_reads_orientation = {}".format(tpl_reads_orientation))
+            if tpl_reads_orientation == ("+", "-"):
+                variant.info['INVDUP'] = True
+            elif tpl_reads_orientation == ("+", "+") or tpl_reads_orientation == ("-", "-"):
+                variant.info['INV'] = True
+            elif tpl_reads_orientation == ("-", "+"):
+                variant.info['DUPTANDEM'] = True
+            else:
+                logger.error("Should Have Never Reached Here; At least one of the four type of read orientation should be present")
         if 'CIPOS' in mate_variant_rec.info.keys() \
                 and mate_variant_rec.info['CIPOS'] != "." \
                 and isinstance(mate_variant_rec.info['CIPOS'], tuple) \
                 and isinstance(mate_variant_rec.info['CIPOS'][1], int):
             ci_pos = int(mate_variant_rec.info['CIPOS'][1])
 
-        ci_end = ci_pos  # actually the ci_end MUST be captured from the twin-vcf_file-record --> TODO
+        # ci_end = ci_pos  # actually the ci_end MUST be captured from the twin-vcf_file-record
         if 'CIEND' in mate_variant_rec.info.keys() \
                 and mate_variant_rec.info['CIEND'] != "." \
                 and isinstance(mate_variant_rec.info['CIEND'], tuple) \
@@ -1168,10 +1202,10 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
                                                        sdr.variant.info['SVLEN'], sdr.minmapq, Reverse(sdr.tpl_reads_orientation), sdr.insert_size, sdr.sigma)
 
     # assign the FLAG with correct values:
-    # check column tumor sample # TODO: assign the index based on the given Tumor sample Name
-    idxN = 0 if sdr.coltumorsample == 11 else 1
-    idxT = 1 if sdr.coltumorsample == 11 else 0
-    logger.debug("sample indexes: Normal_" + str(idxN) + " --- Tumor_" + str(idxT))
+    # check column tumor sample
+    idxN = 0 if sdr.coltumorsample == 1 else 1
+    idxT = 1 if sdr.coltumorsample == 1 else 0
+    logger.debug("captured index column Tumor sample:  " + str(sdr.coltumorsample) + " - sample indexes: Normal_" + str(idxN) + " --- Tumor_" + str(idxT))
 
     # adding 'DRNOISE' or the count of reads consider as noise within and around the current breakend
     sdr.variant.samples[idxT]['DRNOISE1'] = tumdistchr[3]
@@ -1194,7 +1228,51 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
     sdr. variant.samples[idxT]['RUT2'] = tumdistchr2[2]
     sdr.variant.samples[idxN]['RUT1'] = normdistchr[2]
     sdr.variant.samples[idxN]['RUT2'] = normdistchr2[2]
+    try:
+        if (sdr.variant.samples[idxT]['RCDIS1'] + sdr.variant.samples[idxT]['DRNOISE1'][5]) != 0:
+            idxt_evalrcnoise_using_rcdis1 = (sdr.variant.samples[idxT]['RCDIS1'] / (sdr.variant.samples[idxT]['RCDIS1'] + sdr.variant.samples[idxT]['DRNOISE1'][5]))
+        else:
+            idxt_evalrcnoise_using_rcdis1 = 1
+        if (sdr.variant.samples[idxN]['RCDIS1'] + sdr.variant.samples[idxN]['DRNOISE1'][5]) != 0:
+            idxn_evalrcnoise_using_rcdis1 = (sdr.variant.samples[idxN]['RCDIS1'] / (sdr.variant.samples[idxN]['RCDIS1'] + sdr.variant.samples[idxN]['DRNOISE1'][5]))
+        else:
+            idxn_evalrcnoise_using_rcdis1 = 0
 
+        if 'SR' in sdr.variant.info.keys():
+            if (sdr.variant.samples[idxT]['PR'][1] + sdr.variant.samples[idxT]['SR'][1] + sdr.variant.samples[idxT]['DRNOISE1'][5]) !=0:
+                sdr.variant.samples[idxT]['EVALRCNOISE'] = (
+                (sdr.variant.samples[idxT]['PR'][1] + sdr.variant.samples[idxT]['SR'][1]) / (sdr.variant.samples[idxT]['PR'][1] + sdr.variant.samples[idxT]['SR'][1] + sdr.variant.samples[idxT]['DRNOISE1'][5]),
+                idxt_evalrcnoise_using_rcdis1
+                )
+            else:
+                sdr.variant.samples[idxT]['EVALRCNOISE'] = 1, idxt_evalrcnoise_using_rcdis1
+
+            if (sdr.variant.samples[idxN]['PR'][1] + sdr.variant.samples[idxN]['SR'][1] + sdr.variant.samples[idxN]['DRNOISE1'][5]) != 0:
+                sdr.variant.samples[idxN]['EVALRCNOISE'] = (
+                (sdr.variant.samples[idxN]['PR'][1] + sdr.variant.samples[idxN]['SR'][1]) / (sdr.variant.samples[idxN]['PR'][1] + sdr.variant.samples[idxN]['SR'][1] + sdr.variant.samples[idxN]['DRNOISE1'][5]),
+                idxn_evalrcnoise_using_rcdis1
+                )
+            else:
+                sdr.variant.samples[idxN]['EVALRCNOISE'] = 0, idxn_evalrcnoise_using_rcdis1
+        else:
+            if sdr.variant.samples[idxT]['PR'][1] + sdr.variant.samples[idxT]['DRNOISE1'][5] != 0:
+                sdr.variant.samples[idxT]['EVALRCNOISE'] = (
+                    (sdr.variant.samples[idxT]['PR'][1]) / (
+                                sdr.variant.samples[idxT]['PR'][1] + sdr.variant.samples[idxT]['DRNOISE1'][5]), idxt_evalrcnoise_using_rcdis1
+                )
+            else:
+                sdr.variant.samples[idxT]['EVALRCNOISE'] = 1, idxt_evalrcnoise_using_rcdis1
+
+            if sdr.variant.samples[idxN]['PR'][1] + sdr.variant.samples[idxN]['DRNOISE1'][5] != 0:
+                sdr.variant.samples[idxN]['EVALRCNOISE'] = (
+                    (sdr.variant.samples[idxN]['PR'][1]) / (
+                                sdr.variant.samples[idxN]['PR'][1] + sdr.variant.samples[idxN]['DRNOISE1'][5]), idxn_evalrcnoise_using_rcdis1
+                )
+            else:
+                sdr.variant.samples[idxN]['EVALRCNOISE'] = 0, idxn_evalrcnoise_using_rcdis1
+    except ZeroDivisionError as zde:
+        logger.error("DIV ZERO ERROR with variant: {}".format(str(sdr.variant)))
+        logger.error(zde)
     return sdr.variant
 
 
@@ -1239,8 +1317,9 @@ def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, r
     elif "DUP" in variant.info['SVTYPE']:
         variant = process_duplication(sdr)
     elif "BND" in variant.info['SVTYPE']:
-        # BND can be INV or TRA by checking the CHR2
+        # BND can be INV, INVDUP, DUPTANDEM or TRA by checking the CHR2
         if variant.chrom == variant.info['CHR2']:
+
             variant = process_inversion(sdr)
         elif variant.chrom != variant.info['CHR2']:
             variant = process_translocation(sdr)
