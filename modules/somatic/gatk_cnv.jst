@@ -30,12 +30,6 @@
     set -eu
     set -o pipefail
 
-    {# Set constants for coverage and bin length for genomes. #}
-    {% if pair.gltype in 'genome' %}
-    COVERAGE_CONSTANT=30
-    BIN_LENGTH_CONSTANT=2000
-    {% endif %}
-
     {# Load modules #}
     module load {{ constants.tools.gatk.module }}
     module load {{ constants.tools.bcftools.module }}
@@ -77,7 +71,7 @@
 
     {# Set the variable for the --low-count-filter-count-threshold option used in FilterIntervals #}
     {# With the default padding of 250 during PreprocessIntervals set to 500 + min(interval length) #}
-    {# If the cpature kits from above are different this could reulst in a smaller than expected interval length #}
+    {# If the cpature kits from above are different this could result in a smaller than expected interval length #}
     MAX_LENGTH=`gawk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
 
     {# From the interect intervals file extract the smallest. If the smallest is less than 100 set the default as 100 #}
@@ -90,9 +84,12 @@
 
     BIN_LENGTH=$(( 200 + MIN_INTERVAL ))
 
-    {# Divide by two to accomidate autosomes then times by ten to reach an esitmated 10x depth #}
-    {# Tried 10x and the MMRF_2118 exome still looks a little noisy. Going to try 20 #}
+    {# Divide by two to accomidate autosomes then times by 20 to reach an esitmated 20x depth #}
     EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2*20 ))
+
+    MIN_VAF=0.45
+    MAX_VAF=0.55
+    MIN_DP=20
 
     {% elif pair.gltype in 'genome' %}
 
@@ -104,6 +101,9 @@
     fi
 
     {# Set sample specific variables #}
+    COVERAGE_CONSTANT=30
+    BIN_LENGTH_CONSTANT=2000
+    MIN_BIN_LENGTH=2000
     MAX_LENGTH=`gawk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
     NORMAL_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
     TUMOR_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ tumor_bam_stats }}`
@@ -119,13 +119,24 @@
     BIN_LENGTH=`gawk -v BIN_LENGTH_CONSTANT=${BIN_LENGTH_CONSTANT} -v BIN_LENGTH_MODIFYER=${BIN_LENGTH_MODIFYER} 'BEGIN { printf("%d\n",BIN_LENGTH_CONSTANT*BIN_LENGTH_MODIFYER)}'`
 
     {# If the bin length is shorter than the max read length then set the bin length to the read length #}
-    if [[ ${BIN_LENGTH} -lt ${MAX_LENGTH} ]]
+    if [[ ${BIN_LENGTH} -lt ${MIN_BIN_LENGTH} ]]
     then
-      BIN_LENGTH=${MAX_LENGTH}
+      BIN_LENGTH=${MIN_BIN_LENGTH}
     fi
 
     {# Set the variable for the --low-count-filter-count-threshold option used in FilterIntervals #}
     EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2 ))
+
+    if [ ${NORMAL_AVERAGE_DEPTH} -lt 20 ]
+    then
+      MIN_VAF=0.333
+      MAX_VAF=0.666
+      MIN_DP=5
+    else
+      MIN_VAF=0.45
+      MAX_VAF=0.55
+      MIN_DP=20
+    fi
 
     {% endif %}
 
@@ -149,18 +160,14 @@
       --exclude-types indels,mnps,ref,bnd,other \
       --genotype het \
       --targets ^chrX:10001-2781479,chrX:155701383-156030895,chrY:10001-2781479,chrY:56887903-57217415 \
-      {% if pair.gltype in 'exome' %}
-      --exclude 'VAF<0.40 | VAF>0.60 | DP<20' \
-      {% elif pair.gltype in 'genome' %}
-      --exclude "VAF<0.333 | VAF>0.666 | DP<${NORMAL_AVERAGE_DEPTH}" \
-      {% endif %}
+      --exclude "VAF<${MIN_VAF} | VAF>${MAX_VAF} | DP<${MIN_DP}" \
       --output-type v \
       --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf \
       {{ deepvariant_vcf }}
 
-    {# Filter out Blacklist regions. https://doi.org/10.1038/s41598-019-45839-z #}
+    {# Filter out Blacklist regions (https://doi.org/10.1038/s41598-019-45839-z) and centromeres #}
     bcftools view \
-      --targets-file ^{{ constants.phoenix.black_list }} \
+      --targets-file ^{{ constants.phoenix.encode_denylist }} \
       --output-type v \
       --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
@@ -177,9 +184,28 @@
       --read-filter FirstOfPairReadFilter \
       --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
 
+    gatk --java-options "-Xmx12g" AnnotateIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --mappability-track {{ constants.phoenix.mappability_track }} \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --output {{ temp_dir }}/PreFilter_anno_preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --reference {{ constants.phoenix.reference_fasta }}
+
+    gatk --java-options "-Xmx12g" FilterIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --minimum-gc-content 0.1 \
+      --maximum-gc-content 0.9 \
+      --minimum-mappability 0.9 \
+      --maximum-mappability 1.0 \
+      --annotated-intervals {{ temp_dir }}/PreFilter_anno_preprocessed.interval_list \
+      --output {{ temp_dir }}/preprocessed_filt_map.interval_list
+
     {#
     Filter the intervals based on the counts from the normal.
-    EXP_1X_COUNTS is the number of expected reads for 1x depth.
+    EXP_1X_COUNTS is the number of expected reads for 1x depth (20x for exomes).
     We only want to filter based on the counts so we set the following additional options to prevent unwanted filtering.
       --low-count-filter-percentage-of-samples 90.0 \
       --extreme-count-filter-minimum-percentile 1.0 \
@@ -192,7 +218,9 @@
       --maximum-segmental-duplication-content 0.5 \
     #}
     gatk --java-options "-Xmx12g" FilterIntervals \
-      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --intervals {{ temp_dir }}/preprocessed_filt_map.interval_list \
+      --exclude-intervals {{ constants.phoenix.encode_denylist }} \
       --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
       --interval-merging-rule OVERLAPPING_ONLY \
       --low-count-filter-count-threshold ${EXP_1X_COUNTS} \
@@ -200,11 +228,6 @@
       --extreme-count-filter-minimum-percentile 0 \
       --extreme-count-filter-maximum-percentile 100 \
       --extreme-count-filter-percentage-of-samples 100 \
-      --minimum-gc-content 0 \
-      --maximum-gc-content 1 \
-      --minimum-mappability 0 \
-      --maximum-mappability 1 \
-      --maximum-segmental-duplication-content 1 \
       --output {{ temp_dir }}/preprocessed_filt.interval_list
 
     {# Annotate intervals with gc content to be used with CreateReadCountPanelOfNormals #}
@@ -403,6 +426,15 @@
     {# Get the average depth of the normal if it is a genome #}
     {% if pair.gltype in 'genome' %}
       NORMAL_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
+
+      if [ ${NORMAL_AVERAGE_DEPTH} -ge 20 ]
+      then
+        NORMAL_MIN_ALLELE_COUNT=20
+      else
+        NORMAL_MIN_ALLELE_COUNT=5
+      fi
+    {% else %}
+      NORMAL_MIN_ALLELE_COUNT=20
     {% endif %}
 
     {#
@@ -427,7 +459,6 @@
       --kernel-scaling-allele-fraction 0.0 \
       --smoothing-credible-interval-threshold-copy-ratio 3.5 \
       --smoothing-credible-interval-threshold-allele-fraction 3.5 \
-      --window-size 2 \
       --window-size 4 \
       --window-size 8 \
       --window-size 16 \
@@ -435,11 +466,7 @@
       --window-size 64 \
       --window-size 128 \
       --window-size 256 \
-      {% if pair.gltype in 'exome' %}
-      --minimum-total-allele-count-normal 30 \
-      {% elif pair.gltype in 'genome' %}
-      --minimum-total-allele-count-normal ${NORMAL_AVERAGE_DEPTH} \
-      {% endif %}
+      --minimum-total-allele-count-normal ${NORMAL_MIN_ALLELE_COUNT} \
       --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv \
       --allelic-counts {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
       --normal-allelic-counts {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
@@ -491,6 +518,7 @@
 
     {# Load modules #}
     module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
 
     {# Make working and temp directories #}
     mkdir -p "{{ temp_dir }}/temp6"
@@ -509,11 +537,6 @@
       fi
     fi
 
-    {# Get the average depth of the tumor if it is a genome #}
-    {% if pair.gltype in 'genome' %}
-      TUMOR_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ tumor_bam_stats }}`
-    {% endif %}
-
     if [ ${SEX} == "Male" ]
     then
       gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv > \
@@ -531,16 +554,108 @@
       contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895"
     fi
 
+    for CHR in {1..24}
+    do
+      if [[ ${CHR} -eq "23" ]]
+      then
+        CHR="chrX"
+      elif [[ ${CHR} -eq "24" ]]
+      then
+        CHR="chrY"
+      else
+        CHR="chr${CHR}"
+      fi
+
+      declare START_${CHR}=$(awk -F'\t' -v CHROM=${CHR} '$1 == CHROM' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg | sort -k2,2n | head -n1 | cut -f2)
+      export START_${CHR}
+      declare STOP_${CHR}=$(awk -F'\t' -v CHROM=${CHR} '$1 == CHROM' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg | sort -k3,3nr | head -n1 | cut -f3)
+      export STOP_${CHR}
+    done
+
+    for CHR in {1..24}
+    do
+      # Get centromere start and stop
+      if [[ $CHR -eq "23" ]]
+      then
+        CHR="chrX"
+      elif [[ $CHR -eq "24" ]]
+      then
+        CHR="chrY"
+      else
+        CHR="chr${CHR}"
+      fi
+
+      eval "START=\${START_${CHR}}"
+      eval "STOP=\${STOP_${CHR}}"
+
+      START_C=$(awk -v CHR=$CHR '$1==CHR { print $2 }' {{ constants.phoenix.centromere }})
+      STOP_C=$(awk -v CHR=$CHR '$1==CHR { print $3 }' {{ constants.phoenix.centromere }})
+
+      if [[ ${START} -ge ${START_C} ]]
+      then
+        START=${STOP_C}
+      fi
+
+      export CHR
+      export START
+      export START_C
+      export STOP
+      export STOP_C
+
+      echo -e "${CHR}\t${START}\t${STOP}"
+      echo -e "${CHR}\t${START_C}\t${STOP_C}"
+
+      LINES=$(wc -l < "{{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg")
+      HEADER=$(grep "@" "{{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg" | wc -l)
+
+      awk -F'\t' -v HEADER="${HEADER}" -v CHROM="${CHR}" -v START="${START}" -v STOP="${STOP}" -v LINES="${LINES}" -v STARTC="${START_C}" -v STOPC="${STOP_C}" 'BEGIN { INC=1 } ;
+        # Skip GATK header
+        $0 ~ /^@/ { next } ;
+        # Print the header
+        NR == HEADER + 1 { print $0 ; next } ;
+        # Remove segments that fall within the centromere
+        $2 == CHROM && $3 >= STARTC && $4 <= STOPC { next } ;
+        # Store the second line in the seg file and set the INC to 2 if we are working on the chromosome
+        NR == HEADER + 2 && $1 == CHROM { C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=2 ; next } ;
+        NR == HEADER + 2 && $1 != CHROM { C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        ## Last line of seg file
+        NR == LINES && $1 == CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,START,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 == CHROM && INC == 2 { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 == CHROM && INC == 3 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM && INC == 2 { OFS = "\t" ; print C1,START,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM && INC == 3 { OFS = "\t" ; print C1,C2,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        ### Segment is the current chromosome we are working on
+        ## First segment in the CHROM, print previous segment variables
+        NR != LINES && $1 == CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=2 ; next } ;
+        ## Second segment for CHROM, Tests and print is for the First segment
+        # If the previous segments start is >= the centromere stop
+        NR != LINES && $1 == CHROM && INC == 2 && C2 >= STOPC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C2 < STARTC && C3 < STOPC && $2 > STARTC && $3 > STOPC { OFS = "\t" ; print C1,START,STARTC,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=STOPC ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C2 < STARTC && C3 < STOPC && $2 < STARTC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C3 > STOPC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        # Third segment for CHROM
+        NR != LINES && $1 == CHROM && INC == 3 && C2 < STARTC && C3 < STOPC && $2 > STARTC && $3 > STOPC { OFS = "\t" ; print C1,C2,STARTC,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=STOPC ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 3 && C2 < STARTC && C3 < STOPC && $2 < STARTC { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 3 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        ## Segment is on a Chromosome that is NOT our current CHROM
+        NR != LINES && $1 != CHROM && INC == 2 { OFS = "\t" ; print C1,START,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=1 ; next } ;
+        NR != LINES && $1 != CHROM && INC == 3 { OFS = "\t" ; print C1,C2,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=1 ; next } ;
+        NR != LINES && $1 != CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next }' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg > {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg.temp
+
+      mv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg.temp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    done
+
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.cna_seg_extend }} {{ constants.phoenix.centromere }} {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
     Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotCNVplus_Rscript }} \
-      {% if pair.gltype in 'exome' %}
-      --hetDPfilter 20 \
+      --hetDPfilter 1 \
       --hetAFlow 0.45 \
       --hetAFhigh 0.55 \
-      {% elif pair.gltype in 'genome' %}
-      --hetDPfilter ${TUMOR_AVERAGE_DEPTH} \
-      --hetAFlow 0.425 \
-      --hetAFhigh 0.575 \
-      {% endif %}
+      --lowerCNvalidatePeakOffset 0.125 \
+      --UpperCNvalidatePeakOffset 0.125 \
+      --lowerCNcenteringPeakOffset 0.125 \
+      --UpperCNcenteringPeakOffset 0.125 \
       --sample_name={{ pair.tumor.name }} \
       --output_prefix={{ pair.name }}.{{ aligner }} \
       --plots_directory={{ temp_dir }}/results/plots \

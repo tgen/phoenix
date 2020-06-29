@@ -375,10 +375,11 @@ constants:
     manta_prepare_sv_vcf: manta_prepare_sv_vcf_0b6cc14.py
     manta_gene_annotation_parallel: manta_sv_annotation_parallel_8820499.py
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
+    cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_06b34ff.R
     plotSamStats_Rscript: summarize_samstats_6d78ea8.R
     stats2json: samStats2json_b7fd4d1.py
-    stats2lims: uploadStats2Lims_827212a.py
+    stats2lims: uploadStats2Lims_090aaf3.py
     annotSeg_script: annotSeg_8820499.pl
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
@@ -418,6 +419,9 @@ constants:
     ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
     gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
     gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
+    encode_denylist: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/ncbi/Encode_deny_list_with_ncbi_centromere.merged.bed
+    centromere: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/ncbi/Modeled_regions_for_GRCh38_centromere_blacklist_merged.bed
+    mappability_track: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/bismap/k100.umap.no_header.bed
     transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.transcriptome.fasta
     salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/salmon_1.2.1-gompi-2019a/salmon_puff_75merPlus
     sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
