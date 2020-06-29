@@ -307,8 +307,8 @@ which appears to be working now after some code changes, keeping this here in ca
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, HTseq, {{ sample.name }}]
   input: {{ star_bam_unsort }}
   output: {{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
-  cpus: 1
-  mem: 4G
+  cpus: 8
+  mem: 16G
   walltime: "48:00:00"
   cmd: |
     set -eu
@@ -331,6 +331,7 @@ which appears to be working now after some code changes, keeping this here in ca
     # --supplementary-alignments=<score/ignore> ; default=score
     #}
     htseq-count \
+      --nprocesses 8 \
       --quiet \
       --format=bam \
       --order=name \
