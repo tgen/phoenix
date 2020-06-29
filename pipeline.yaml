@@ -78,9 +78,9 @@ constants:
         Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing.
         arXiv preprint arXiv:1207.3907 [q-bio.GN] 2012
     gatk:
-      module: GATK/4.1.4.0-GCCcore-8.2.0-Java-1.8
-      version: "4.1.4.0"
-      verbose: Genome Analysis Toolkit v4.1.4.0
+      module: GATK/4.1.7.0-GCCcore-8.3.0-Java-1.8
+      version: "4.1.7.0"
+      verbose: Genome Analysis Toolkit v4.1.7.0
       website: https://software.broadinstitute.org/gatk/
       citation: >
         The Genome Analysis Toolkit: a MapReduce framework for analyzing
