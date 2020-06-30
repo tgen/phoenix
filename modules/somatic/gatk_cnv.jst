@@ -18,11 +18,14 @@
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
   input:
     - {{ normal_bam }}
-    - {{ tumor_bam }}
     - {{ deepvariant_vcf }}
     - {{ normal_bam_stats }}
     - {{ tumor_bam_stats }}
     - {{ normal_sex_check }}
+  output:
+    - {{ temp_dir }}/preprocessed_filt.interval_list
+    - {{ temp_dir }}/anno_preprocessed.interval_list
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -37,6 +40,7 @@
     {# Make working and temp directories #}
     mkdir -p "{{ temp_dir }}/temp"
     mkdir -p "{{ temp_dir }}/results/plots"
+    mkdir -p "{{ results_dir }}"
 
     {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
     SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
@@ -242,7 +246,12 @@
 {# Step 2a #}
 - name: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  reset: predecessors
+  input:
+    - {{ normal_bam }}
+    - {{ temp_dir }}/preprocessed_filt.interval_list
+  output:
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -269,7 +278,12 @@
 {# Step 2b #}
 - name: gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  reset: predecessors
+  input:
+    - {{ normal_bam }}
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
+  output:
+    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -289,13 +303,18 @@
       --input {{ normal_bam }} \
       --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       --reference {{ constants.phoenix.reference_fasta }} \
-      --output {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+      --output {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
 
 
 {# Step 2c #}
 - name: gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  reset: predecessors
+  input:
+    - {{ tumor_bam }}
+    - {{ temp_dir }}/preprocessed_filt.interval_list
+  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -322,7 +341,12 @@
 {# Step 2d #}
 - name: gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  reset: predecessors
+  input:
+    - {{ tumor_bam }}
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
+  output:
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -342,13 +366,18 @@
       --input {{ tumor_bam }} \
       --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
       --reference {{ constants.phoenix.reference_fasta }} \
-      --output {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+      --output {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
 
 
 {# Step 3 #}
 - name: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/anno_preprocessed.interval_list
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+  output:
+    - {{ temp_dir }}/cnv.pon.hdf5
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -378,9 +407,13 @@
 {# Step 4 #}
 - name: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after:
-    - gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
-    - gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+    - {{ temp_dir }}/cnv.pon.hdf5
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -399,17 +432,33 @@
       --tmp-dir {{ temp_dir }}/temp4/ \
       --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
       --count-panel-of-normals {{ temp_dir }}/cnv.pon.hdf5 \
-      --standardized-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv \
-      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+      --standardized-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv \
+      --denoised-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
 
 
 {# Step 5 #}
 - name: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after:
-    - gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
-    - gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
-    - gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
+  reset: predecessors
+  input:
+    - {{ normal_bam_stats }}
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.normal.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.af.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.igv.seg
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -467,48 +516,61 @@
       --window-size 128 \
       --window-size 256 \
       --minimum-total-allele-count-normal ${NORMAL_MIN_ALLELE_COUNT} \
-      --denoised-copy-ratios {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv \
-      --allelic-counts {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
-      --normal-allelic-counts {{ temp_dir }}/results/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
-      --output {{ temp_dir }}/results \
+      --denoised-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv \
+      --allelic-counts {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
+      --normal-allelic-counts {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
+      --output {{ results_dir }} \
       --output-prefix {{ pair.name }}.{{ aligner }}
 
     gatk --java-options "-Xmx12g" CallCopyRatioSegments \
       --tmp-dir {{ temp_dir }}/temp5/ \
-      --input {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.cr.seg \
-      --output {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.called.seg
+      --input {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg \
+      --output {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
 
 
 {# Step 6 #}
 - name: gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  after: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
-  output:
-    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
-    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.af.igv.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.igv.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.igv.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+  reset: predecessors
+  input:
+    - {{ normal_sex_check }}
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.normal.tsv
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.af.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.cr.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.af.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.cr.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.re_centered.cr.igv.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv
-    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.png
-    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna.png
-    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna_withhets.png
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.dLRs.tsv
     - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.hets.density.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna_withhets.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna.png
     - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_baf.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr1.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr2.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr3.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr4.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr5.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr6.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr7.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr8.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr9.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr10.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr11.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr12.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr13.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr14.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr15.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr16.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr17.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr18.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr19.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr20.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr21.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr22.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chrX.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chrY.png
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -539,17 +601,18 @@
 
     if [ ${SEX} == "Male" ]
     then
-      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv > \
+      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv > \
         {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
 
-      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg > \
+      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg > \
         {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
 
       contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrXCONTIG_DELIMITERchrY"
       contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895CONTIG_DELIMITER57227415"
     else
-      cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
-      cp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+      touch {{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }}_chrY.png
+      cp {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+      cp {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
       contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrX"
       contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895"
     fi
@@ -664,10 +727,8 @@
       --contig_names_string=${contig_names_string} \
       --contig_lengths_string=${contig_lengths_string} \
       --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
-      --allelic_counts_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.hets.tsv \
+      --allelic_counts_file={{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv \
       --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
-
-    mkdir -p "{{ results_dir }}"
 
     {# If the task has already been run then we need to remove the plots directory. #}
     if [ -d {{ results_dir }}/plots ]
