@@ -12,6 +12,7 @@
 import os
 from sys import argv, exit  # Used to bring in the feature argv, variables or arguments
 from multiprocessing import Process, Queue, cpu_count
+from math import log10
 import subprocess
 import platform
 import pysam
@@ -49,7 +50,7 @@ class SearchDiscordantReads:
 
     def __init__(self, svtype, reference_genome, vcf_file, tumor_bam_fn, normal_bam_fn, variant,
                  slops, insert_size, sigma,
-                 minmapq, tpl_reads_orientation=(-1, -1), coltumorsample=11, threads=1):
+                 minmapq, tpl_reads_orientation=(-1, -1), index_column_tumor_sample=1, threads=4):
         self.svtype = svtype
         self.refgen = reference_genome
         self.vcf_file = vcf_file
@@ -67,7 +68,7 @@ class SearchDiscordantReads:
         self.svlen = variant.info['SVLEN']
         self.minmapq = minmapq
         self.tpl_reads_orientation = tpl_reads_orientation
-        self.coltumorsample = coltumorsample
+        self.index_column_tumor_sample = index_column_tumor_sample
         self.threads = threads
 
     def print_coords_event_for_igv(self):
@@ -98,61 +99,6 @@ class SearchDiscordantReads:
                 self.mate_variant_rec = variant_rec_mate
             except Exception as e:
                 logger.error(e)
-
-
-def get_sample_column_index_from_vcf_header(variant, sample_name):
-    """
-    return the index of the column in variant for the given sample name
-    returned column index will be from 0 to N if sample name found otherwise raise error
-    :param variant: variant record from pysam Variant
-    :param sample_name: sample name which is expected to be in the VCF
-    :return: integer index value
-    """
-    if len(variant.header.samples) > 2:
-        raise Exception("ERROR: Number of sample found in VCF is greater than 2; expected somatic Constitutional versus Case")
-    for i in range(0, len(variant.header.samples)):
-        if str(sample_name) in variant.header.samples[i]:
-            logger.info("TUMOR COLUMN Value is: {}   for {}".format(str(i),sample_name))
-            return i
-    raise Exception("ERROR: SAMPLE NOT FOUND in VCF")
-
-
-def make_dico_contig_lengths_from_bam_handler(bamh):
-    """
-    create a dictionary of contig with their length as values
-    :param bamh: bam handle from pysam bam/cram reader
-    :return: dictionary of contigs:lengths
-    """
-    return dict(zip(bamh.references, bamh.lengths))
-
-
-def get_contig_length(dict_contig_length, contig_name):
-    """
-    capture the contig and their length from a dictionary
-    :param dict_contig_length: dictionary of contig with their length
-    :param contig_name: contig name for which we want the length
-    :return: length of the contig
-    """
-    if contig_name in dict_contig_length.keys():
-        return dict_contig_length[contig_name]
-    else:
-        raise KeyError("ERROR: Contig name << {} >> NOT FOUND".format(contig_name))
-
-
-def is_tool_in_path(name):
-    """
-    is_tool check if a tool is in the PATH
-    :param name: tool name or executable
-    :return: Boolean
-    """
-
-    try:
-        devnull = open(os.devnull)
-        subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
-    except OSError as e:
-        if e.errno == os.errno.ENOENT:
-            return False
-    return True
 
 
 def read_aln_file(aln_file, reference_genome_file, threads=2):
@@ -233,63 +179,66 @@ def write_new_vcf(vcf, newheader, LVAR, logfile=__logfile__, output_vcf=None, co
         logger.info("output file is: " + str(output_vcf))
 
 
-def update_vcf_header(vcf, slop, insert_size, arg_cmd):
+def get_sample_column_index_from_vcf_header(variant, sample_name):
     """
-    update the VCF header with new lines, new fields and new flags when needed
-    Add the new flags to the header in INFO and FORMAT fields
-    :param vcf: pysam vcf_file object
-    :param slop: value of the slop used to capture the discordant reads
-    :param insert_size: value of the insert_size used by read aligner to estimate if reads are properly paired or not
-    :param arg_cmd: arguments used in the command
-    :return: updated pysam vcf_file object
+    return the index of the column in variant for the given sample name
+    returned column index will be from 0 to N if sample name found otherwise raise error
+    :param variant: variant record from pysam Variant
+    :param sample_name: sample name which is expected to be in the VCF
+    :return: integer index value
+    """
+    if len(variant.header.samples) > 2:
+        raise Exception("ERROR: Number of sample found in VCF is greater than 2; expected somatic Constitutional versus Case")
+    for i in range(0, len(variant.header.samples)):
+        if str(sample_name) in variant.header.samples[i]:
+            logger.info("TUMOR COLUMN Index Value is: {}   for {}".format(str(i), sample_name))
+            return i
+    raise Exception("ERROR: SAMPLE NOT FOUND in VCF")
+
+
+def make_dico_contig_lengths_from_bam_handler(bamh):
+    """
+    create a dictionary of contig with their length as values
+    :param bamh: bam handle from pysam bam/cram reader
+    :return: dictionary of contigs:lengths
+    """
+    return dict(zip(bamh.references, bamh.lengths))
+
+
+def get_contig_length(dict_contig_length, contig_name):
+    """
+    capture the contig and their length from a dictionary
+    :param dict_contig_length: dictionary of contig with their length
+    :param contig_name: contig name for which we want the length
+    :return: length of the contig
+    """
+    if contig_name in dict_contig_length.keys():
+        return dict_contig_length[contig_name]
+    else:
+        raise KeyError("ERROR: Contig name << {} >> NOT FOUND".format(contig_name))
+
+
+def is_tool_in_path(name):
+    """
+    is_tool check if a tool is in the PATH
+    :param name: tool name or executable
+    :return: Boolean
     """
 
-    # -----#
-    # INFO #
-    # -----#
-    vcf.header.info.add("TRA", ".", "Flag",
-                        "Variant is a TRANSLOCATION")
-    vcf.header.info.add("INV", ".", "Flag",
-                        "Variant is a BND Inversion")
-    vcf.header.info.add("INVDUP", ".", "Flag",
-                        "Variant is a BND Inverted Duplication")
-    vcf.header.info.add("DUPTANDEM", ".", "Flag",
-                        "Variant is a BND DUP-TANDEM")
-    vcf.header.info.add("CHR2", "1", "String",
-                        "Chromosome name of the associated breakend")
-    vcf.header.info.add("ENDPOSSV", "1", "Integer",
-                        "POSition of the associated breakend in CHR2")
-    vcf.header.info.add("UNTESTED", "0", "Flag",
-                        "indicate if we tried to recapture the discordant reads; apply to any INS, or to DEL with SVLEN within specific range")
-    # --------#
-    # FORMAT  #
-    # --------#
-    vcf.header.formats.add("RUT1", "1", "Float", "for POS region, Ratio of Unique Start positions over the Total of number of Start Positions (aka total number of reads)")
-    vcf.header.formats.add("RUT2", "1", "Float",
-                           "for ENDPOSSV region, Ratio of Unique Start positions over the Total of number of Start Positions (aka total number of reads)")
-    vcf.header.formats.add("RDISTDISC1", "1", "Integer",
-                           "Distribution size of Discordant pair at CHR:POS ; value 0 means no discordant reads in [POS+SLOP] interval")
-    vcf.header.formats.add("RDISTDISC2", "1", "Integer",
-                           "Distribution size of Discordant pair at CHR2:ENDPOSSV ; value 0 means no discordant reads in [POS+SLOP] interval")
-    vcf.header.formats.add("RCDIS1", "1", "Integer",
-                           "Number of Recaptured Discordant Pairs in Left Region (POS) with which we calculated the range distribution RDISTDISC1")
-    vcf.header.formats.add("RCDIS2", "1", "Integer",
-                           "Number of Recaptured Discordant Pairs in Right Region (ENDPOSSV) with which we calculated the range distribution RDISTDISC2")
-    vcf.header.formats.add("DRNOISE1", "6", "Integer",
-                           "Number of Recaptured Discordant Pairs not associated with current event; we may consider this as read noise within and around current left breakend; "
-                           " idx1=DEL, idx2=DUP, idx3=INS, idx4=INV, idx5=TRA, idx6=TOTAL_READ_COUNTED_AS_NOISE")
-    vcf.header.formats.add("DRNOISE2", "6", "Integer",
-                           "Same as DRNOISE1 but for ENDPOSSV region")
-    vcf.header.formats.add("EVALRCNOISE", "2", "Float",
-                           "This variable represent a way of evaluating the noise related to the total number of reads counted for the current event. Is is calculated as follow: "
-                           "(PR+SR)/(PR+SR+DRNOISE1) for first value and (RCDIS1/(RCDIS1+DRNOISE1)) for the second value")
-    # ADDED LINES for COMMENTS
-    vcf.header.add_line("##INSERTSIZE=" + str(insert_size) + ". Insert size value used to define whether we may have discordant reads associated to the variant")
-    vcf.header.add_line("##SLOP=" + str(slop) + ". If CIPOS or/and CIEND exist in record, CIPOS is added to slop for POS, CIEND is added to slop for ENDPOSSV")
-    if arg_cmd is not None:
-        str_arg_cmd = ' '.join([str(x) for x in arg_cmd])
-        vcf.header.add_line("##CommandPrepareSVvcf='{}'".format(str(str_arg_cmd)))
-    return vcf
+    try:
+        devnull = open(os.devnull)
+        subprocess.Popen([name], stdout=devnull, stderr=devnull).communicate()
+    except OSError as e:
+        if e.errno == os.errno.ENOENT:
+            return False
+    return True
+
+
+def Reverse(tuples):
+    new_tup = ()
+    for k in reversed(tuples):
+        new_tup = new_tup + (k,)
+    return new_tup
 
 
 def capture_noise_around_pos(res, lrnoise, aln_rec, svlen, insert_size, sigma, factor_of_sigma=1):
@@ -507,7 +456,7 @@ def build_res_code(is_rev, is_first, is_mate_rev, is_mate_first, isize):
     """
 
     res = ""
-    if isize < 0:  # Damn I do not remember why exactly I had to check if isize<0 and reassigned the values as the opposite; I have an idea :-)
+    if isize < 0:  # I do not remember why exactly I had to check if isize<0 and reassigned the values as the opposite; I have an idea :-)
         temp_is_rev = is_mate_rev
         temp_is_first = is_mate_first
         is_mate_rev = is_rev
@@ -564,7 +513,11 @@ def parse_cigartuple_to_sum_matches(cigartuple):
     :param cigartuple: tuple of tuples from pysam methods (cigartuples)
     :return: sum of bases matching the reference genome template
     """
-
+    # examples: a = next(bamh) ; a.cigartuples
+    # [(0, 6), (1, 3), (0, 58), (1, 1), (0, 7), (1, 1), (0, 6), (1, 1), (0, 67)]
+    # a = next(bamh) ; a.cigartuples
+    # [(4, 109), (0, 41)]
+    # [(4, 54), (0, 71), (2, 1), (0, 18), (4, 7)]
     summ = 0
     for t in cigartuple:
         if t[0] == 0:
@@ -572,10 +525,17 @@ def parse_cigartuple_to_sum_matches(cigartuple):
     return summ
 
 
-def is_read_noise(svtype, lrnoise, aln_rec, vcf_svlen, insert_size, sigma, factor_sigma=3):
+def on_expected_chr(chr1, chr2, read_chr1, read_chr2):
+    logger.debug("{} == {} ;;; {} == {}".format(chr1, read_chr1, chr2, read_chr2))
+    if chr1 == read_chr1 and chr2 == read_chr2:
+        return True
+    return False
+
+
+def is_read_noise(svtype, lrnoise, aln_rec, vcf_svlen, insert_size, sigma, factor_sigma=5):
     """
     check if the read that does not fit the current event, i.e. that is still a discordant read
-    but not involved in current event is considered as noise within the current region of either POS or END breakend
+    but it is not involved in current event and therefore is considered as noise within the current region of either POS or END breakend
     Important Note: We assume here that the read is NOT properly paired
     :param factor_sigma: in case a factor has to be apply to sigma I added the variable; if value is 1, no impact on results
     :param svtype: not used yet but later
@@ -590,15 +550,15 @@ def is_read_noise(svtype, lrnoise, aln_rec, vcf_svlen, insert_size, sigma, facto
     # LRNOISE = [0, 0, 0, 0, 0, 0]
     # each index represent a SVTYPE assuming we always have the same number of SVTYPE; otherwise will need update
     # let's consider the SVTYPE alphabetically here. idx1=DEL, idx2=DUP, idx3=INS, idx4=INV, idx5=TRA, idx6=TOTAL_READ_COUNTED_AS_NOISE)
-    # default_indexes = {'1100':4, '1001':4, '1110':1, '1011':1, '0100':4, '0001':4, '011':1, '001':1 } for list LRNOISE
-    # indexes 3 and 5 will depend respectively upon the svlen for INS and upon the fact that the reads are on to two different chromosomes for TRA
+    # default_indexes = {'1100':2 or 5, '1001':2 or 5, '1110':4, '1011':4, '0100':4, '0001':4, '0110':1 or 3, '0011':1 or 3 } for list LRNOISE
+    # indexes 1 and 3 will depend respectively upon the svlen for INS and upon the fact that the reads are on to two different chromosomes for TRA
     a = aln_rec
     svlen = vcf_svlen[0]
     logger.debug("current event in process is {} ; ".format(str(svtype)))
     # init variables
     is_rev = 0  # is current read reverse read? 0 false, 1 true
     is_mrev = 0  # is mate read of current read reverse? 0 false, 1 true
-    is_first_in_pair = check_if_first_in_pair(a.flag)  # 1 if first in pair, 0 if not
+    is_first_in_pair = check_if_first_in_pair(a.flag)  # 1 if first in pair, 0 if not ; could have used a.is_read1
     logger.debug("FIRST in PAIR: " + str(is_first_in_pair))
     try:
         if a.is_reverse:
@@ -608,35 +568,44 @@ def is_read_noise(svtype, lrnoise, aln_rec, vcf_svlen, insert_size, sigma, facto
         # let's create a code here to assign indexes
         res = build_res_code(is_rev, is_first_in_pair, is_mrev, int(not is_first_in_pair), a.isize)
 
+        logger.debug(str(aln_rec))
         logger.debug("RES_CODE: " + res + "  ; flag = " + str(a.flag) + " --> readname : " + str(a.query_name))
         logger.debug("svlen = " + str(svlen) + " and i-size = " + str(a.isize))
         if (res == '1100' or res == '1001') and (a.reference_name != a.next_reference_name):
-            logger.debug("TRANSLOCATION READ: " + str(str(aln_rec).split("\t")[0:8]))
+            logger.debug("TRANSLOCATION READ1: " + str(str(aln_rec).split("\t")[0:8]))
+            #logger.info("TRANSLOCATION READ1: " + str(str(aln_rec).split("\t")[0:8]))
             lrnoise[4] += 1  # TRA
             lrnoise[5] += 1  # TOT
         elif (res == '1100' or res == '1001') and (a.reference_name == a.next_reference_name):
             logger.debug("DUPLICATION READ: " + str(str(aln_rec).split("\t")[0:8]))
+            #logger.info("DUPLICATION READ: " + str(str(aln_rec).split("\t")[0:8]))
             lrnoise[1] += 1  # DUP
             lrnoise[5] += 1  # TOT
         elif res == '1110' or res == '1011' or res == '0100' or res == '0001':
             if a.reference_name != a.next_reference_name:
-                logger.debug("TRANSLOCATION READ: " + str(str(aln_rec).split("\t")[0:8]))
+                logger.debug("TRANSLOCATION READ2: " + str(str(aln_rec).split("\t")[0:8]))
+                #logger.info("TRANSLOCATION READ2: " + str(str(aln_rec).split("\t")[0:8]))
                 lrnoise[4] += 1  # TRA
             else:
                 logger.debug("INVERSION READ " + str(str(aln_rec).split("\t")[0:8]))
+                #logger.info("INVERSION READ " + str(str(aln_rec).split("\t")[0:8]))
                 lrnoise[3] += 1  # INV
             lrnoise[5] += 1  # TOT
         elif res == '0110' or res == '0011':
             logger.debug("svlen = " + str(svlen) + " and in-del a.isize = " + str(a.isize))
             if a.reference_name != a.next_reference_name:
-                logger.debug("TRANSLOCATION READ: " + str(str(aln_rec).split("\t")[0:8]))
+                logger.debug("TRANSLOCATION READ3: " + str(str(aln_rec).split("\t")[0:8]))
+                #logger.info("TRANSLOCATION READ3: " + str(str(aln_rec).split("\t")[0:8]))
                 lrnoise[4] += 1  # TRA
                 lrnoise[5] += 1  # TOT
             elif abs(a.isize) < (insert_size - (factor_sigma * sigma)) or abs(a.isize) > insert_size + (factor_sigma * sigma):
                 logger.debug("ISIZE = {} ; insert_size={}|sigma={} ; res code is:  {} ; and aln_rec is {} ".format(str(a.isize), str(insert_size), str(sigma), str(res), str(a)))
                 lrnoise[0] += 1  # DEL
                 logger.debug("INDEL DELETION/INSERTION READ: " + str(str(aln_rec).split("\t")[0:8]))
+                #logger.info("INDEL DELETION/INSERTION READ: " + str(str(aln_rec).split("\t")[0:8]))
                 lrnoise[5] += 1  # TOT
+            else:
+                logger.debug("read is not noise")
         else:
             logger.error("No code assigned to the res object: Should Not have happened; Check with Authors")
 
@@ -703,7 +672,8 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
     chr2len = dico_lengths_contigs[chr2]
     # min(pos + slops[0][1], chr1len)) allows to check if the slop does not give a value beyond the length of the chromosomes
     items = bamh.fetch(contig=chrom, start=max(pos - slops[0][0], 1), end=min(pos + slops[0][1], chr1len))
-    logger.debug("Total number of reads FETCH within region: " + str(sum(1 for x in items)))
+    count_read_fetched = sum(1 for _ in items)
+    logger.debug("Total number of reads FETCH within region: " + str(count_read_fetched))
     items = bamh.fetch(contig=chrom, start=max(pos - slops[0][0], 1), end=min(pos + slops[0][1], chr1len))
 
     # why do we need the pos2 here? well because we want to keep the pairs that are within both expected regions Left and Right of the current variant type
@@ -726,6 +696,9 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
     # idx0=DEL, idx1=DUP, idx2=INS, idx3=INV, idx4=TRA, idx5=TOTAL_READ_COUNTED_AS_NOISE)
     count_properly_paired = 0
     count_all_discordant_reads_found_in_pos_region = 0
+    count_mq_lt_minmapq = 0
+    count_mq_zero = 0
+    stranded_noise = True  #TODO: Future work is to transform that hardcoded variable into dynamic variable for user
     # ------------------------------#
     # Loop over the captured reads
     # ------------------------------#
@@ -741,83 +714,134 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
                     and not x.mate_is_unmapped \
                     and not x.is_qcfail \
                     and not x.is_duplicate \
-                    and not x.is_secondary \
-                    and is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0]) \
-                    and mq >= minmapq and mq_mate >= minmapq:
-                # and not x.is_supplementary \
-                logger.debug("%%%%%%%%%%" * 10)
-                logger.debug("discordant pair found: " + str(str(x).split("\t")[0:8]))
-                logger.debug("is it reverse read: {} \tExpected_reads_orientation: {}".format(str(x.is_reverse), str(tpl_reads_orientation)))
-                logger.debug("bamh.fetch(contig=chrom, start=max(pos - slop, 1), end=pos + slop) [slops {} ]-->   {}:{}-{} ".format(slops, chrom, max(pos - slops[0][0], 1), pos + slops[0][1]))
-                logger.debug("mate_location: chr2:pos2lowend-pos2highend  -->  {}:{}-{}".format(chr2, pos2lowend, pos2highend))
-                logger.debug("%%%%%%%%%%" * 10)
-                logger.debug(str(pos2lowend) + " <= " + str(x.next_reference_start) + " <= " + str(pos2highend))
-                logger.debug(pos2lowend <= x.next_reference_start <= pos2highend)
-                count_all_discordant_reads_found_in_pos_region += 1
+                    and not x.is_supplementary \
+                    and not x.is_secondary:
+                if mq >= minmapq and mq_mate >= minmapq:
+                    if is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0]):
+                        # and not x.is_supplementary \
+                        logger.debug("%%%%%%%%%%" * 10)
+                        logger.debug("discordant pair found: " + str(str(x).split("\t")[0:8]))
+                        logger.debug("is it reverse read: {} \tExpected_reads_orientation: {}".format(str(x.is_reverse), str(tpl_reads_orientation)))
+                        logger.debug("bamh.fetch(contig=chrom, start=max(pos - slop, 1), end=pos + slop) [slops {} ]-->   {}:{}-{} ".format(slops, chrom, max(pos - slops[0][0], 1), pos + slops[0][1]))
+                        logger.debug("mate_location: chr2:pos2lowend-pos2highend  -->  {}:{}-{}".format(chr2, pos2lowend, pos2highend))
+                        logger.debug("%%%%%%%%%%" * 10)
+                        logger.debug(str(pos2lowend) + " <= " + str(x.next_reference_start) + " <= " + str(pos2highend))
+                        logger.debug(pos2lowend <= x.next_reference_start <= pos2highend)
+                        count_all_discordant_reads_found_in_pos_region += 1
 
-                # another important section: check if the mate is also in the expected range for linked-break (CHR2:ENDPOSSV side)
-                # and the read is in the expected orientation
-                if pos2lowend <= x.next_reference_start <= pos2highend and is_mate_read_in_expected_orientation(x.mate_is_reverse, tpl_reads_orientation[1]):
+                        # another important section: check if the mate is also in the expected range for linked-break (CHR2:ENDPOSSV side)
+                        # and the read is in the expected orientation
+                        if pos2lowend <= x.next_reference_start <= pos2highend \
+                                and on_expected_chr(chrom, chr2, x.reference_name, x.next_reference_name) \
+                                and is_mate_read_in_expected_orientation(x.mate_is_reverse, tpl_reads_orientation[1]):
 
-                    logger.debug("MATE_DISCORDANT_READ PAIR matching OUR CURRENT CHR2:ENDPOSSV +/- slop region")
-                    logger.debug("VALIDATED as discordant read from current EVENT : " + str(str(x).split("\t")[0:8]))
-                    if "S" in x.cigarstring:
-                        CROI.append(x.reference_start + parse_cigartuple_to_sum_matches(x.cigartuples))  # added x.tlen (template length) to take care of split read [ + x.tlen]
-                        logger.debug("CROI content after appending: {} ; Added value:{} from read {} ; |||||  x.reference_start  {} <--> x.next_reference_start = {}".format(
-                            str(len(CROI)), str(x.reference_start+x.tlen), str(x), str(x.reference_start), str(x.next_reference_start)))
+                            logger.debug("MATE_DISCORDANT_READ PAIR matching OUR CURRENT CHR2:ENDPOSSV +/- slop region")
+                            logger.debug("VALIDATED as discordant read from current EVENT : " + str(str(x).split("\t")[0:8]))
+                            # stars represent soft clipping and dashes represent Matches and "<" or ">" represent read orientation
+                            # 4 cases:
+                            # 1) ***------>  ; 2) -----***>  ; 3) <****------ and 4) <------****
+                            if "S" in x.cigarstring:
+                                if x.is_reverse:
+                                    CROI.append(x.reference_start + x.query_alignment_start)
+                                else:
+                                    CROI.append(x.reference_start - x.query_alignment_start)
+                                logger.debug("CROI content after appending: {} ; Added value:{} from read {} ; |||||  x.reference_start  {} <--> x.next_reference_start = {}".format(
+                                    str(len(CROI)), str(x.reference_start+x.tlen), str(x), str(x.reference_start), str(x.next_reference_start)))
+                            else:
+                                CROI.append(x.reference_start)
+                                logger.debug("CROI content after appending: {} ; Added value:{} from read {} ; |||||  x.reference_start {} <--> x.next_reference_start = {}".format(
+                                    str(len(CROI)), str(x.reference_start), str(x), str(x.reference_start), str(x.next_reference_start)))
+                        else:
+                            lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                            logger.debug("NOISE: The Mate is NOT in any of expected regions [ POS +/- slop __ or__  ENDPOSSV +/- slop ] ...")
+                            logger.debug("DISCORDANT BUT MATE NOT in EXPECTED REGION so NOISE" + str(str(x).split("\t")[0:8]))
+                            # But the Current read is still in the expected orientation; So the noise captured here is only with read which is of the same orientation as the read
+                            # involved in the current event
+                            # we know that the mate of the current READ is not in the expected region defined by ENDPOSSV+/-slop
+                            # this mean the read belongs to another event; It may be a read belonging to a valid event ...
+                            # or just a random read location which we refer as Noise ;
+                            # Implementing Read Orientation discrimination:
+                            # we need to count the number of Discordant Reads that are NOT related to the current event
+                            # to do so we use the fact that some type of EVENT (SVTYPE such as BND (TRA or INV), DEL, DUP, INS) have different read orientation
+                            # intra-chromosomal evente (aka transposon) or DUP: RL (igv) or R1F2 or R2F1
+                            # INV: LL/RR (igv) or F1F2/F2F1/R1R2/R2R1
+                            # DEL or INS: LR(igv) or F1R2/F2R1
+                            # we therefore can add to a list the reads that we consider as noise within current region of interest ; we know that the read already belongs to a discordant pair
+                    elif not stranded_noise:  # the current read is not in the expected orientation so belong to another event or maybe the mate of the current event if within REGION of interest
+                        logger.debug("Read is discordant but not in same orientation as the read orientation we expect for the current event")
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                elif mq >= minmapq and not pos2lowend <= x.next_reference_start <= pos2highend:
+                    if stranded_noise and is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0]):
+                        logger.debug("noise: Read is discordant with correct read orientation for the current event 111111 - STRANDED_NOISE")
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                    elif not stranded_noise:
+                        logger.debug("noise: Read is discordant and not in correct read orientation for the current event 2222222 - UNSTRANDED NOISE")
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
                     else:
-                        CROI.append(x.reference_start)
-                        logger.debug("CROI content after appending: {} ; Added value:{} from read {} ; |||||  x.reference_start {} <--> x.next_reference_start = {}".format(
-                            str(len(CROI)), str(x.reference_start), str(x), str(x.reference_start), str(x.next_reference_start)))
-                else:
-                    lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
-                    logger.debug("NOISE: The Mate is NOT in any of expected regions [ POS +/- slop __ or__  ENDPOSSV +/- slop ] ...")
-                    logger.debug("DISCORDANT BUT MATE NOT in EXPECTED REGION so NOISE" + str(str(x).split("\t")[0:8]))
-                    # we know that the mate of the current READ is not in the expected region defined by ENDPOSSV+/-slop
-                    # this mean the read belongs to another event; It may be a read belonging to a valid event ...
-                    # or just a random read location which we refer as Noise ;
-                    # with this implementation we cannot discriminate whether the read belong to another valid event or not # maybe a TODO
-                    # How to implement:
-                    # we need to count the number of Discordant Reads that are NOT related to the current event
-                    # to do so we use the fact that some type of EVENT (SVTYPE such as BND (TRA or INV), DEL, DUP, INS) have different read orientation
-                    # intraTRA (aka transposon) or DUP: RL (igv) or R1F2 or R2F1
-                    # INV: LL/RR (igv) or F1F2/F2F1/R1R2/R2R1
-                    # DEL or INS: LR(igv) or F1R2/F2R1
-                    # we therefore can add to a list the reads that we consider as noise within current region of interest ; we know that the read already belongs to a discordant pair
+                        logger.debug("noise: Read not considered as noise (b/c not same orientation as read from the current event) ")
+                elif not x.is_unmapped \
+                        and not x.is_qcfail \
+                        and not x.is_duplicate \
+                        and not x.is_supplementary \
+                        and not x.is_secondary \
+                        and mq < minmapq:
+                    if 0 < mq < minmapq:
+                        count_mq_lt_minmapq += 1
+                    else:
+                        count_mq_zero += 1
 
         elif x.is_proper_pair:
-        # It can be read from any type of event BUT TRA (TRA are always Discordant)
-        # DEL, DUP, INS, and INV can be represented by properly paired reads.
-        # DUP and INV are easy to capture properly paired reads (DUP: (-,+) or R1F2 or R2F1) ; INV: R1R2, R2R1, F1F2 or F2F1)
-        # DEL and INS cannot be captured as noise when properly paired because they look like to normal reads (read orientation [ (+,-) or F1R2 or F2R1 ] ) --> So we skip them
-        # this means we can have here any type of reads (from correctly paired to discordant reads but reads that are secondary alignment, supp aln, MQ of 0, or MateQ of 0, or duplicate)
+            # It can be read from any type of event BUT TRA (TRA are always Discordant)
+            # DEL, DUP, INS, and INV can be represented by properly paired reads.
+            # DUP and INV are easy to capture properly paired reads (DUP: (-,+) or R1F2 or R2F1) ; INV: R1R2, R2R1, F1F2 or F2F1)
+            # DEL and INS cannot be captured as noise when properly paired because they look like to normal reads (read orientation [ (+,-) or F1R2 or F2R1 ] ) --> So we skip them
+            # this means we can have here any type of reads (from correctly paired to discordant reads but reads that are secondary alignment, supp aln, MQ of 0, or MateQ of 0, or duplicate)
             if not x.is_unmapped \
                     and not x.mate_is_unmapped \
                     and not x.is_qcfail \
                     and not x.is_duplicate \
-                    and not x.is_secondary \
-                    and mq >= minmapq and mq_mate >= minmapq:
+                    and not x.is_secondary:
                 # and not x.is_supplementary \
-                stranded_noise = True
-                if stranded_noise \
-                        and (tpl_reads_orientation == ('+', '+') or tpl_reads_orientation == ('-', '-'))\
-                        and is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0])\
-                        and is_mate_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[1]):
-                    logger.debug("WWWWWWW"*20)
-                    logger.debug("%%%%%%%%%%" * 10)
-                    logger.debug("discordant pair found: " + str(str(x).split("\t")[0:8]))
-                    logger.debug("is it reverse read: {} \tExpected_reads_orientation: {}".format(str(x.is_reverse), str(tpl_reads_orientation)))
-                    logger.debug("bamh.fetch(contig=chrom, start=max(pos - slop, 1), end=pos + slop) [slops {} ]-->   {}:{}-{} ".format(slops, chrom, max(pos - slops[0][0], 1), pos + slops[0][1]))
-                    logger.debug("mate_location: chr2:pos2lowend-pos2highend  -->  {}:{}-{}".format(chr2, pos2lowend, pos2highend))
-                    logger.debug("%%%%%%%%%%" * 10)
-                    lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
-                # elif not stranded_noise \
-                #         and not is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0])\
-                #         and tpl_reads_orientation != ('+', '-')\
-                #         and (x.reference_name != x.next_reference_name or x.tlen > insert_size+sigma):
-                #     # Check we have the pair INSERT SIZE > than Expected
-                #     lrnoise = is_read_noise(svtype, lrnoise, x, svlen)
+                # We are very stringent on the NOISE as well since we only keep the noise from the pair of read in the same exact pair orientation as the current event.
+                # need to refine this; # TODO
+                if mq >= minmapq and mq_mate >= minmapq:
+                    if stranded_noise \
+                            and is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0]) \
+                            and is_mate_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[1]):
+                        logger.debug("properly paired but we restrict the noise to read orientation for BOTH reads (current and mate) ... ")
+                        logger.debug("WWWWWWW"*20)
+                        logger.debug("%%%%%%%%%%" * 10)
+                        logger.debug("discordant pair found: " + str(str(x).split("\t")[0:8]))
+                        logger.debug("is it reverse read: {} \tExpected_reads_orientation: {}".format(str(x.is_reverse), str(tpl_reads_orientation)))
+                        logger.debug("bamh.fetch(contig=chrom, start=max(pos - slop, 1), end=pos + slop) [slops {} ]-->   {}:{}-{} ".format(slops, chrom, max(pos - slops[0][0], 1), pos + slops[0][1]))
+                        logger.debug("mate_location: chr2:pos2lowend-pos2highend  -->  {}:{}-{}".format(chr2, pos2lowend, pos2highend))
+                        logger.debug("%%%%%%%%%%" * 10)
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                    elif stranded_noise and is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0]):
+                        logger.debug("noise: properly paired but we restrict the noise to read orientation for current read (not the mate) ... ")
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                    elif not stranded_noise:
+                        logger.debug("noise: properly paired but we do not restrict the noise to stranded read orientation ... ")
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                elif mq >= minmapq:
+                    if stranded_noise and is_read_in_expected_orientation(x.is_reverse, tpl_reads_orientation[0]):
+                        logger.debug("noise: properly paired, correct read orientation for current read and mapping quality >=minmapq ; ignoring Mate here ... ")
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                    elif not stranded_noise:
+                        logger.debug("noise: properly paired, ignoring read orientation in current event region ... ")
+                        lrnoise = is_read_noise(svtype, lrnoise, x, svlen, insert_size, sigma)
+                elif not x.is_unmapped \
+                        and not x.is_qcfail \
+                        and not x.is_duplicate \
+                        and not x.is_secondary \
+                        and mq < minmapq:
+                    # we just count the number of reads less than minmapq in order to get an idea of the read quality within the region of interest
+                    if 0 < mq < minmapq:
+                        count_mq_lt_minmapq += 1
+                    else:
+                            count_mq_zero += 1
                 count_properly_paired += 1
+    # loop for ends here
 
     if not CROI:  # i.e no discordant pairs found
         logger.debug("No Discordant Pairs")
@@ -825,9 +849,11 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
         # RDISTDISC:RCDIS:RUT:DRNOISE
         # ------------------------------#
         # This mean there was no discordant reads in that region ; we can return 0,0,0,lrnoise or 0,0,0,lrnoise
-        return 0, 0, 1, lrnoise
+        return 0, 0, 1, lrnoise, (count_mq_zero, count_mq_lt_minmapq, count_read_fetched)
     else:
+        logger.debug("event -->  {}:{}__{}:{}".format(chrom, str(pos), chr2, str(pos2)))
         logger.debug("Final length of CROI: {}".format(str(len(CROI))))
+        logger.debug("Final length of set(CROI): {}".format(str(len(set(CROI)))))
         # print number of discordant reads within regions pos-slop and pos+slop
         # max(CR) - min(CR) # this is the difference between the left-most-hand and the right-most-hand starting positions
         # if less than 100 for Delly we use to exclude the variant; this information is capture for both ends of thebreakPoints
@@ -848,9 +874,10 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
             # ------------------------------#
             # RDISTDISC:RCDIS:RUT:DRNOISE
             # ------------------------------#
-            return max(CROI) - min(CROI), len(CROI), len(set(CROI)) / len(CROI), lrnoise
-        except ZeroDivisionError as zde:
-            logger.exception(zde)
+            return max(CROI) - min(CROI), len(CROI),  log10(len(set(CROI))) / log10(len(CROI)), lrnoise, (count_mq_zero, count_mq_lt_minmapq, count_read_fetched)
+        except ZeroDivisionError:
+            return max(CROI) - min(CROI), len(CROI), 1, lrnoise, (count_mq_zero, count_mq_lt_minmapq, count_read_fetched)
+            # logger.exception(zde)
         except Exception as e:
             logger.exception(e)
 
@@ -1071,6 +1098,7 @@ def reevaluate_slop_values(variant, mate_variant_rec, slop, tpl_reads_orientatio
 
     ci_pos, ci_end = 0, 0  # assume as if the variant is PRECISE when CIPOS or CIEND do not exist
     logger.debug("tpl_reads_orientation = {}".format(tpl_reads_orientation))
+    variant.info['RO'] = "".join([str(x) for x in tpl_reads_orientation])
     if 'CIPOS' in variant.info.keys() \
             and variant.info['CIPOS'] != "." \
             and isinstance(variant.info['CIPOS'], tuple) \
@@ -1101,6 +1129,18 @@ def reevaluate_slop_values(variant, mate_variant_rec, slop, tpl_reads_orientatio
             # 1 200 . N ]5:500]N partner breakend immediately before chr1:200, extending from the left and ending at chr5:500
             # 1 200 . N [5:500[N partner breakend immediately before chr1:200, starting from chr5:500 and extending rightwards
             # 1 200 . N N]5:500] partner breakend immediately after chr1:200, extending from the left and ending at chr5:500
+            # https://github.com/walaj/svaba/issues/4
+            # Each ALT field of the BND format gives both orientations (this breakpoint, and it's rearrangement partner breakpoint).
+            # There are two bits of orientation information in the ALT field:
+            # 1) The nucleotide sequence before or after the first bracket (gives this breakpoint orientation) and
+            # 2) the orientation of the first bracket (gives partner breakpoint orientation).
+            # If the nucleotide comes first, then it is a "+" facing break at that site (see element "W" of the VCF4.2 specs, pg 13),
+            # otherwise it is "-" at that site. Then, if the bracket is ], then the partner breakpoint is "+", otherwise it is left facing.
+            # Pg 13 of the VCF4.2 specs gives examples of this.
+            # s[p[ mean "+-" ; confirmed with a TRA
+            # s]p] mean "++" ; confirmed
+            # [p[s mean "--" ; confirmed
+            # ]p]s mean "-+" ; confirmed it is "-+" with TRA
             logger.debug("BND____tpl_reads_orientation = {}".format(tpl_reads_orientation))
             if tpl_reads_orientation == ("+", "-"):
                 variant.info['INVDUP'] = True
@@ -1127,13 +1167,6 @@ def reevaluate_slop_values(variant, mate_variant_rec, slop, tpl_reads_orientatio
     return set_slops_from_read_orientation(slop, tpl_reads_orientation, ci_pos, ci_end)
 
 
-def Reverse(tuples):
-    new_tup = ()
-    for k in reversed(tuples):
-        new_tup = new_tup + (k,)
-    return new_tup
-
-
 def get_discordant_info_for_each_sample_and_breaks(sdr):
     """
     capture the discordant reads for the current processed variant and update the variant record
@@ -1146,7 +1179,7 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
     # -------------------------------------#
     # check if Parallel is possibly here
     # -------------------------------------#
-    if cpu_count() > 3 >= sdr.threads and platform.mac_ver()[0] == "":
+    if cpu_count() >= 4 and sdr.threads >= 4 and platform.mac_ver()[0] == "":
         my_queue1 = Queue()
         my_queue2 = Queue()
         my_queue3 = Queue()
@@ -1187,7 +1220,7 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
         for q in list_queues:
             q.close()
     else:
-        # serial version
+        # serial version if threads less than 4 or cpu_count less than 4
         tumdistchr = getDiscordantReadsDistribution2(sdr, sdr.svtype, sdr.refgen, sdr.tumor_bam_fn, sdr.variant.chrom, sdr.variant.pos, sdr.slops,
                                                      sdr.variant.info['CHR2'], sdr.variant.info['ENDPOSSV'],
                                                      sdr.variant.info['SVLEN'], sdr.minmapq, sdr.tpl_reads_orientation, sdr.insert_size, sdr.sigma)
@@ -1203,15 +1236,9 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
 
     # assign the FLAG with correct values:
     # check column tumor sample
-    idxN = 0 if sdr.coltumorsample == 1 else 1
-    idxT = 1 if sdr.coltumorsample == 1 else 0
-    logger.debug("captured index column Tumor sample:  " + str(sdr.coltumorsample) + " - sample indexes: Normal_" + str(idxN) + " --- Tumor_" + str(idxT))
-
-    # adding 'DRNOISE' or the count of reads consider as noise within and around the current breakend
-    sdr.variant.samples[idxT]['DRNOISE1'] = tumdistchr[3]
-    sdr.variant.samples[idxT]['DRNOISE2'] = tumdistchr2[3]
-    sdr.variant.samples[idxN]['DRNOISE1'] = normdistchr[3]
-    sdr.variant.samples[idxN]['DRNOISE2'] = normdistchr2[3]
+    idxN = 0 if sdr.index_column_tumor_sample == 1 else 1
+    idxT = 1 if sdr.index_column_tumor_sample == 1 else 0
+    logger.debug("captured index column Tumor sample:  " + str(sdr.index_column_tumor_sample) + " - sample indexes: Normal_" + str(idxN) + " --- Tumor_" + str(idxT))
 
     # adding distance btw leftmost start and rightmost start
     sdr.variant.samples[idxT]['RDISTDISC1'] = tumdistchr[0]
@@ -1228,6 +1255,17 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
     sdr. variant.samples[idxT]['RUT2'] = tumdistchr2[2]
     sdr.variant.samples[idxN]['RUT1'] = normdistchr[2]
     sdr.variant.samples[idxN]['RUT2'] = normdistchr2[2]
+    # adding 'DRNOISE' or the count of reads consider as noise within and around the current breakend
+    sdr.variant.samples[idxT]['DRNOISE1'] = tumdistchr[3]
+    sdr.variant.samples[idxT]['DRNOISE2'] = tumdistchr2[3]
+    sdr.variant.samples[idxN]['DRNOISE1'] = normdistchr[3]
+    sdr.variant.samples[idxN]['DRNOISE2'] = normdistchr2[3]
+    # adding CLMQ (Count Low Mapping Quality Reads in Region)
+    sdr.variant.samples[idxT]['CLMQ1'] = tumdistchr[4]
+    sdr. variant.samples[idxT]['CLMQ2'] = tumdistchr2[4]
+    sdr.variant.samples[idxN]['CLMQ1'] = normdistchr[4]
+    sdr.variant.samples[idxN]['CLMQ2'] = normdistchr2[4]
+
     try:
         if (sdr.variant.samples[idxT]['RCDIS1'] + sdr.variant.samples[idxT]['DRNOISE1'][5]) != 0:
             idxt_evalrcnoise_using_rcdis1 = (sdr.variant.samples[idxT]['RCDIS1'] / (sdr.variant.samples[idxT]['RCDIS1'] + sdr.variant.samples[idxT]['DRNOISE1'][5]))
@@ -1276,7 +1314,7 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
     return sdr.variant
 
 
-def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, coltumorsample, minmapq, insert_size, sigma):
+def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma):
     """
     Process a variant record ; Capture necessary information and update the variant record with new flags and fields
     :param variant: pysam variant record
@@ -1285,7 +1323,7 @@ def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, r
     :param normal_bam_file: normal bam name
     :param ref_gen: reference genome used to call variant
     :param slop: slop value integer to be added to positions of current variant in order to capture erads of interest
-    :param coltumorsample: information about the column of the tumor sample in the somatic vcf
+    :param index_column_tumor_sample: information about the column of the tumor sample in the somatic vcf
     :param minmapq: integer value of the minimum mapping quality the reas must have to consider the pair
     :param insert_size: mean insert size captured by samtools stats or any other tool that can estimate the sequenced fragment insert size; must be an integer
     :param sigma: stander deviation of the insert size (integer)
@@ -1305,7 +1343,7 @@ def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, r
     # creation of an object to gather lots of variables and information across functions
     slops = None
     sdr = SearchDiscordantReads(variant.info['SVTYPE'], ref_gen, vcf_file, tumor_bam_file, normal_bam_file, variant,
-                                slops, insert_size, sigma, minmapq, tpl_reads_orientation, coltumorsample)
+                                slops, insert_size, sigma, minmapq, tpl_reads_orientation, index_column_tumor_sample)
     sdr.capture_mate_record_to_current_variant()
     sdr.slops = reevaluate_slop_values(variant, sdr.mate_variant_rec, slop, tpl_reads_orientation)
 
@@ -1317,9 +1355,8 @@ def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, r
     elif "DUP" in variant.info['SVTYPE']:
         variant = process_duplication(sdr)
     elif "BND" in variant.info['SVTYPE']:
-        # BND can be INV, INVDUP, DUPTANDEM or TRA by checking the CHR2
+        # BND can be INV, INVDUP, DUPTANDEM or TRA by checking the CHR2 but Mostly Found so far INV and TRA
         if variant.chrom == variant.info['CHR2']:
-
             variant = process_inversion(sdr)
         elif variant.chrom != variant.info['CHR2']:
             variant = process_translocation(sdr)
@@ -1375,7 +1412,7 @@ def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, a
         return myvcf.header, None
 
     # check if tumor_sample_name exist in vcf and if yes returns the index value for future use
-    coltumorsample = get_sample_column_index_from_vcf_header(next(myvcf), tumor_sample_name_in_vcf)
+    index_column_tumor_sample = get_sample_column_index_from_vcf_header(next(myvcf), tumor_sample_name_in_vcf)
     # we consumed one item from myvcf in method get_sample_column_index_from_vcf_header right above; need to reset it here
     myvcf.reset()
 
@@ -1384,15 +1421,83 @@ def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, a
     step_count = max(int(round(tot_variants_count / 10, -(len(str(round(tot_variants_count / 10))) - 1))), 1)
 
     # According to cyvcf2's authors, pysam does not provide an iterable of variant records; b/c of this, using multiprocessing on myvcf is not possible
-    # tuple_args = (vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, coltumorsample, minmapq, insert_size, sigma)
+    # tuple_args = (vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma)
     list_updated_variants = []  # init list for future updated variants
     for variant in myvcf:
-        list_updated_variants.append(process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, coltumorsample, minmapq, insert_size, sigma))
+        list_updated_variants.append(process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma))
         counter += 1
         if counter % step_count == 0:
             logger.info("processed variants ... {}".format(counter))
         logger.debug("PROCESSING VARIANT --> " + str(variant.chrom) + ":" + str(variant.pos))
     return myvcf.header, list_updated_variants
+
+
+def update_vcf_header(vcf, slop, insert_size, arg_cmd):
+    """
+    update the VCF header with new lines, new fields and new flags when needed
+    Add the new flags to the header in INFO and FORMAT fields
+    :param vcf: pysam vcf_file object
+    :param slop: value of the slop used to capture the discordant reads
+    :param insert_size: value of the insert_size used by read aligner to estimate if reads are properly paired or not
+    :param arg_cmd: arguments used in the command
+    :return: updated pysam vcf_file object
+    """
+
+    # -----#
+    # INFO #
+    # -----#
+    vcf.header.info.add("TRA", ".", "Flag",
+                        "Variant is a TRANSLOCATION")
+    vcf.header.info.add("INV", ".", "Flag",
+                        "Variant is a BND Inversion")
+    vcf.header.info.add("INVDUP", ".", "Flag",
+                        "Variant is a BND Inverted Duplication")
+    vcf.header.info.add("DUPTANDEM", ".", "Flag",
+                        "Variant is a BND DUP-TANDEM")
+    vcf.header.info.add("CHR2", "1", "String",
+                        "Chromosome name of the associated breakend")
+    vcf.header.info.add("ENDPOSSV", "1", "Integer",
+                        "POSition of the associated breakend in CHR2")
+    vcf.header.info.add("RO", "1", "String",
+                        "read orientation for break ends")
+    vcf.header.info.add("UNTESTED", "0", "Flag",
+                        "indicate if we tried to recapture the discordant reads; apply to any INS, or to DEL with SVLEN within specific range")
+    # --------#
+    # FORMAT  #
+    # --------#
+    vcf.header.formats.add("RUT1", "1", "Float", "for POS region, Ratio of Unique Start positions over the Total of number of Start Positions (aka total number of reads)")
+    vcf.header.formats.add("RUT2", "1", "Float",
+                           "for ENDPOSSV region, Ratio of Unique Start positions over the Total of number of Start Positions (aka total number of reads)")
+    vcf.header.formats.add("RDISTDISC1", "1", "Integer",
+                           "Distribution size of Discordant pair at CHR:POS ; value 0 means no discordant reads in [POS+SLOP] interval")
+    vcf.header.formats.add("RDISTDISC2", "1", "Integer",
+                           "Distribution size of Discordant pair at CHR2:ENDPOSSV ; value 0 means no discordant reads in [POS+SLOP] interval")
+    vcf.header.formats.add("RCDIS1", "1", "Integer",
+                           "Number of Recaptured Discordant Pairs in Left Region (POS) with which we calculated the range distribution RDISTDISC1")
+    vcf.header.formats.add("RCDIS2", "1", "Integer",
+                           "Number of Recaptured Discordant Pairs in Right Region (ENDPOSSV) with which we calculated the range distribution RDISTDISC2")
+    vcf.header.formats.add("DRNOISE1", "6", "Integer",
+                           "Number of Recaptured Discordant Pairs not associated with current event; we may consider this as read noise within and around current left breakend; "
+                           " idx1=DEL, idx2=DUP, idx3=INS, idx4=INV, idx5=TRA, idx6=TOTAL_READ_COUNTED_AS_NOISE")
+    vcf.header.formats.add("DRNOISE2", "6", "Integer",
+                           "Same as DRNOISE1 but for ENDPOSSV region")
+    vcf.header.formats.add("EVALRCNOISE", "2", "Float",
+                           "This variable represent a way of evaluating the noise related to the total number of reads counted for the current event. Is is calculated as follow: "
+                           "(PR+SR)/(PR+SR+DRNOISE1) for first value and (RCDIS1/(RCDIS1+DRNOISE1)) for the second value")
+    vcf.header.formats.add("CLMQ1", "3", "Integer",
+                           "Count of the reads with Low Mapping Quality in region of interest;"
+                           "1) first value is count of reads with MAPQ of Zero, "
+                           "2) second value is count of reads with MAPQ value between 1 and the minmapq (default 15), "
+                           "3) the total number of reads recaptured by fetch")
+    vcf.header.formats.add("CLMQ2", "3", "Integer",
+                           "same as CLMQ1 but for partner breakend")
+    # ADDED LINES for COMMENTS
+    vcf.header.add_line("##INSERTSIZE=" + str(insert_size) + ". Insert size value used to define whether we may have discordant reads associated to the variant")
+    vcf.header.add_line("##SLOP=" + str(slop) + ". If CIPOS or/and CIEND exist in record, CIPOS is added to slop for POS, CIEND is added to slop for ENDPOSSV")
+    if arg_cmd is not None:
+        str_arg_cmd = ' '.join([str(x) for x in arg_cmd])
+        vcf.header.add_line("##CommandPrepareSVvcf='{}'".format(str(str_arg_cmd)))
+    return vcf
 
 
 def usage():
@@ -1407,7 +1512,8 @@ def usage():
                                                          '\n--insert-size\t[M] <mean insert size  captured from samtools stats or picard stats>'
                                                          '\n--sigma\t[M] <standard deviation for mean insert size captured from samtools stats or picard stats>'
                                                          '\n--tumor-name\t[M] name of the tumor sample found in the vcf header line starting with ##CHROM'
-                                                         '\n-s|--slop\t[O] <slop, default = 1000> '
+                                                         '\n-s|--slop\t[O] <slop, default = None; if provided, will override insert-size +/- sigma ; '
+                                                         'so you can provide either insert-size and sigma OR slop only; user choice> '
                                                          '\n-m|--minmapq\t[O] <minimum mapping quality, default = 1> '
                                                          '\n-o|--output\t[O] output_filename(relative or full path), default will add extension "_addFlags.vcf_file" to input vcf_file or '
                                                          '"_addFlags.vcf_file.gz" if "-z" enabled'
@@ -1415,8 +1521,7 @@ def usage():
                                                          'recommendation: DO NOT use if you later gene-annotate the vcf_file; '
                                                          '\n-l|--logfile\t[O] logfile, default is: "log_prepare_vcf_manta.txt"'
                                                          '\n-g|--refgen\t[O] reference_genome but [M] if CRAM file'
-                                                         '\n-d|--debug\t[O] enable debug information'
-                                                         '\n-c|--coltumorsample\t[O] (default = 11, column for the tumor sample ; DEPRECATED])')
+                                                         '\n-d|--debug\t[O] enable debug information')
     )
 
 
@@ -1435,13 +1540,14 @@ def main(list_argv):
     refgen = ""
     logfile = __logfile__
     debug = False
-    coltumorsample = 11
+    # coltumorsample = None
     compress_vcf = False
     try:
         opts, args = getopt.getopt(list_argv, "c:di:g:hl:m:n:o:s:t:z", ["help", "debug", "vcf_file=", "tumor_bam_file=", "normal_bam_file=",
                                                                         "tumor-name=", "slop=",
                                                                         "minmapq=", "refgen=", "output=", "insert-size=",
-                                                                        "sigma=", "logfile=", "coltumorsample", "gz-out"])
+                                                                        "sigma=", "logfile=", "gz-out"])
+        # , "index_column_tumor_sample"
         logger.debug(opts)
         for opt, arg in opts:
             if opt in ('-h',):
@@ -1474,10 +1580,10 @@ def main(list_argv):
             elif opt in ("-z", "--gz-out"):
                 compress_vcf = True
                 is_tool_in_path('bcftools')
-            elif opt in ("-c", "--coltumorsample"):
-                coltumorsample = int(arg)
-                if coltumorsample != 10 and coltumorsample != 11:
-                    raise Exception("coltumorsample MUST be either 10 or 11 in values as it represents the column number of the Tumor sample in the somatic VCF")
+            # elif opt in ("-c", "--index_column_tumor_sample"):
+            #     coltumorsample = int(arg)
+            #     if coltumorsample != 10 and coltumorsample != 11:
+            #         raise Exception("index_column_tumor_sample MUST be either 10 or 11 in values as it represents the column number of the Tumor sample in the somatic VCF")
     except getopt.GetoptError:
         usage()
         exit(2)
@@ -1497,7 +1603,7 @@ def main(list_argv):
         logger.info('TBAM is: \t' + tbam)
         logger.info('NBAM is: \t' + nbam)
         logger.info('SLOP is: \t' + str(slop))
-        logger.info('INSERT_SIZE is {} ... and SIGMA (aka std) is {}'.format(str(insert_size), str(sigma)))
+        logger.debug('INSERT_SIZE is {} ... and SIGMA (aka std) is {}'.format(str(insert_size), str(sigma)))
         logger.info('MINMAPQ is: \t' + str(minmapq))
         logger.info('REFGEN is: \t' + refgen)
         logger.info('OUTFILE is: \t' + output_vcf)
@@ -1521,12 +1627,12 @@ def main(list_argv):
             insert_size = insert_size_default
             sigma = sigma_default
         elif insert_size is not None and isinstance(insert_size, int):
-            if sigma is None or not isinstance(sigma, int):
+            if (sigma is None or not isinstance(sigma, int)) and slop is None:
                 raise TypeError("ERROR: sigma value for insert size MUST be provided and MUST be a numeric")
         if tumor_sample_name_in_vcf is None or not isinstance(tumor_sample_name_in_vcf, str):
-            raise TypeError("ERROR: TUMOR sample name present in vcf must be provided")
+            raise ValueError("ERROR: TUMOR sample name present in vcf must be provided")
         if slop is None:
-            slop = insert_size + (4 * sigma)
+            slop = insert_size + (4 * sigma)  # default is 500+(4*100)=900 for the slop on each side of the breakend position
 
         logger.info("INSERT_SIZE = {}, SIGMA = {}, SLOP = {}".format(insert_size, sigma, slop))
         logger.info("")
