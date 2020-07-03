@@ -16,9 +16,9 @@ constants:
         10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
         Central PMCID: PMC2832824.
     bcftools:
-      module: BCFtools/1.10.1-foss-2019a
-      version: "1.10.1"
-      verbose: BCFtools v1.10.1
+      module: BCFtools/1.10.2-GCC-8.3.0
+      version: "1.10.2"
+      verbose: BCFtools v1.10.2
       website: http://www.htslib.org
       citation: >
         TODO
@@ -50,9 +50,9 @@ constants:
       verbose: NVIDIA CUDA 10.0
       website: https://developer.nvidia.com/cuda-toolkit
     deepvariant:
-      module: deepvariant/0.9.0-gpu-phoenix
-      version: "0.9.0-gpu"
-      verbose: DeepVariant 0.9.0-gpu
+      module: deepvariant/0.10.0-gpu-phoenix
+      version: "0.10.0-gpu"
+      verbose: DeepVariant 0.10.0-gpu
       website: https://github.com/google/deepvariant
       citation: >
         Poplin R, Chang PC, Alexander D, Schwartz S, Colthurst T, Ku A, Newburger D,
@@ -78,8 +78,8 @@ constants:
         Garrison E, Marth G. Haplotype-based variant detection from short-read sequencing.
         arXiv preprint arXiv:1207.3907 [q-bio.GN] 2012
     gatk:
-      module: GATK/4.1.7.0-GCCcore-8.3.0-Java-1.8
-      version: "4.1.7.0"
+      module: GATK/4.1.8.0-GCCcore-8.3.0-Java-1.8
+      version: "4.1.8.0"
       verbose: Genome Analysis Toolkit v4.1.7.0
       website: https://software.broadinstitute.org/gatk/
       citation: >
@@ -113,9 +113,9 @@ constants:
         Daniel Lai dalai@bccrc.ca Department of Molecular Oncology, BC Cancer
         Research Agency Date: August 02, 2011
     htslib:
-      module: HTSlib/1.10.1-foss-2019a
-      version: "1.10.1"
-      verbose: HTSlib v1.10.1
+      module: HTSlib/1.10.2-GCC-8.3.0
+      version: "1.10.2"
+      verbose: HTSlib v1.10.2
       website: http://www.htslib.org
       citation: >
         TODO
@@ -158,8 +158,8 @@ constants:
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
     multiqc:
       module: Python/3.7.2-foss-2019a
-      version: "1.8"
-      verbose: MultiQC v1.8
+      version: "1.9"
+      verbose: MultiQC v1.9
       website: https://multiqc.info
       citation: >
         MultiQC Summarize analysis results for multiple tools and samples in a single report
@@ -270,9 +270,9 @@ constants:
       verbose: snpSniffer v7.0.0
       website: https://github.com/tgen/snpSniffer
     star:
-      module: STAR/2.7.3a-GCC-8.2.0-2.31.1
-      version: 2.7.3a
-      verbose: STAR v2.7.3a
+      module: STAR/2.7.5a
+      version: 2.7.5a
+      verbose: STAR v2.7.5a
       website: https://github.com/alexdobin/STAR
       citation: >
         Dobin A, Davis CA, Schlesinger F, Drenkow J, Zaleski C, Jha S, Batut P,
@@ -427,7 +427,7 @@ constants:
     sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
     sex_check_vcf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.vcf.gz
     star_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy.fa
-    star_indices_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.3a
+    star_indices_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/star_2.7.5a
     starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/starFusion_gencode_v32/starFusion_Resources/ctat_genome_lib_build_dir
     strandedness_options:
       inward-unstranded-notapplicable:
@@ -455,8 +455,8 @@ constants:
     snpSniffer_database: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpSniffer/databaseV5_hg38_ucsc.ini
     vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
     deepvariant_models:
-      exome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.9.0/DeepVariant-inception_v3-0.9.0+data-wes_standard/model.ckpt
-      genome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.9.0/DeepVariant-inception_v3-0.9.0+data-wgs_standard/model.ckpt
+      exome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.10.0/DeepVariant-inception_v3-0.10.0+data-wes_standard/model.ckpt
+      genome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.10.0/DeepVariant-inception_v3-0.10.0+data-wgs_standard/model.ckpt
     sequence_groupings:
       # Sequence groupings for BQSR (same groups as found in the GATK WDL example).
       - ['chr1']
