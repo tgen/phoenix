@@ -16,7 +16,7 @@ constants:
         10.1093/bioinformatics/btq033. Epub 2010 Jan 28. PubMed PMID: 20110278; PubMed
         Central PMCID: PMC2832824.
     bcftools:
-      module: BCFtools/1.10.2-GCC-8.3.0
+      module: BCFtools/1.10.2-GCC-8.2.0-2.31.1
       version: "1.10.2"
       verbose: BCFtools v1.10.2
       website: http://www.htslib.org
@@ -113,7 +113,7 @@ constants:
         Daniel Lai dalai@bccrc.ca Department of Molecular Oncology, BC Cancer
         Research Agency Date: August 02, 2011
     htslib:
-      module: HTSlib/1.10.2-GCC-8.3.0
+      module: HTSlib/1.10.2-GCC-8.2.0-2.31.1
       version: "1.10.2"
       verbose: HTSlib v1.10.2
       website: http://www.htslib.org

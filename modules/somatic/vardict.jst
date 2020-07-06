@@ -25,10 +25,10 @@
     set -eu
     set -o pipefail
 
+    module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.R.module }}
     module load {{ constants.tools.vardict.module }}
     module load {{ constants.tools.bedtools.module }}
-    module load {{ constants.tools.bcftools.module }}
     
     mkdir -p "{{ temp_dir }}"
 
@@ -198,8 +198,8 @@
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "12:00:00"
   cmd: |
     set -eu
@@ -234,8 +234,8 @@
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
-  cpus: 2
-  mem: 8G
+  cpus: 1
+  mem: 4G
   walltime: "12:00:00"
   cmd: |
     set -eu
