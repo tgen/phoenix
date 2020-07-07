@@ -246,7 +246,7 @@
 {# Step 2a #}
 - name: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
     - {{ normal_bam }}
     - {{ temp_dir }}/preprocessed_filt.interval_list
@@ -278,7 +278,7 @@
 {# Step 2b #}
 - name: gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
     - {{ normal_bam }}
     - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
@@ -309,7 +309,7 @@
 {# Step 2c #}
 - name: gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
     - {{ tumor_bam }}
     - {{ temp_dir }}/preprocessed_filt.interval_list
@@ -341,7 +341,7 @@
 {# Step 2d #}
 - name: gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
     - {{ tumor_bam }}
     - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
@@ -372,12 +372,36 @@
 {# Step 3 #}
 - name: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
+  reset:
+    - gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
   input:
     - {{ temp_dir }}/anno_preprocessed.interval_list
     - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
-  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
     - {{ temp_dir }}/cnv.pon.hdf5
+    - {{ normal_bam_stats }}
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.normal.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.af.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.igv.seg
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -403,27 +427,6 @@
       --annotated-intervals {{ temp_dir }}/anno_preprocessed.interval_list \
       --output {{ temp_dir }}/cnv.pon.hdf5
 
-
-{# Step 4 #}
-- name: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
-  input:
-    - {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
-    - {{ temp_dir }}/cnv.pon.hdf5
-  output:
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
-  cpus: 1
-  mem: 16G
-  walltime: "24:00:00"
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    {# Load modules #}
-    module load {{ constants.tools.gatk.module }}
-
     {# Make working and temp directories #}
     mkdir -p "{{ temp_dir }}/temp4"
 
@@ -434,40 +437,6 @@
       --count-panel-of-normals {{ temp_dir }}/cnv.pon.hdf5 \
       --standardized-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv \
       --denoised-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
-
-
-{# Step 5 #}
-- name: gatk_call_cnv_step5_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
-  input:
-    - {{ normal_bam_stats }}
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
-    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
-    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
-  output:
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.normal.tsv
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.cr.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.af.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.cr.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.af.param
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.igv.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.af.igv.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.igv.seg
-  cpus: 1
-  mem: 16G
-  walltime: "24:00:00"
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    {# Load modules #}
-    module load {{ constants.tools.gatk.module }}
 
     {# Make working and temp directories #}
     mkdir -p "{{ temp_dir }}/temp5"
@@ -528,10 +497,10 @@
       --output {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
 
 
-{# Step 6 #}
-- name: gatk_call_cnv_step6_{{ pair.name }}_{{ aligner }}
+{# Step 4 #}
+- name: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, cna_caller, gatk, {{ pair.name }}]
-  reset: predecessors
+  reset: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
   input:
     - {{ normal_sex_check }}
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
@@ -583,7 +552,7 @@
     module load {{ constants.tools.python_3_7_2.module }}
 
     {# Make working and temp directories #}
-    mkdir -p "{{ temp_dir }}/temp6"
+    mkdir -p "{{ temp_dir }}"
 
     {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
     SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
@@ -669,7 +638,7 @@
       echo -e "${CHR}\t${START_C}\t${STOP_C}"
 
       LINES=$(wc -l < "{{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg")
-      HEADER=$(grep "@" "{{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg" | wc -l)
+      HEADER=$(grep -c "@" "{{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg" || :)
 
       awk -F'\t' -v HEADER="${HEADER}" -v CHROM="${CHR}" -v START="${START}" -v STOP="${STOP}" -v LINES="${LINES}" -v STARTC="${START_C}" -v STOPC="${STOP_C}" 'BEGIN { INC=1 } ;
         # Skip GATK header
