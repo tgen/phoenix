@@ -67,8 +67,8 @@
     set -euv
     set -o pipefail
 
-    module load {{ constants.tools.vep.module }}
     module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.vep.module }}
 
     {# Use VEP to create full annotation file with all transcripts #}
     vep --fork 4 \
