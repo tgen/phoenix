@@ -80,7 +80,7 @@ constants:
     gatk:
       module: GATK/4.1.8.0-GCCcore-8.3.0-Java-1.8
       version: "4.1.8.0"
-      verbose: Genome Analysis Toolkit v4.1.7.0
+      verbose: Genome Analysis Toolkit v4.1.8.0
       website: https://software.broadinstitute.org/gatk/
       citation: >
         The Genome Analysis Toolkit: a MapReduce framework for analyzing
@@ -89,7 +89,7 @@ constants:
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
     gcc:
       module: GCC/8.3.0
-      version: "5.1.0"
+      version: "8.3.0"
       verbose: gcc
       website: gcc.com
       citation: >
