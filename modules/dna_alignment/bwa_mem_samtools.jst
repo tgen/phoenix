@@ -65,7 +65,7 @@
     - split_fastq_{{ r2fastq.basename | replace(".", "_") }}
   walltime: "48:00:00"
   cpus: 10
-  mem: 50G
+  mem: 40G
   cmd: |
     set -eu
     set -o pipefail
@@ -134,7 +134,7 @@
   output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
-  mem: 16G
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail
@@ -180,7 +180,7 @@
     - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 10
-  mem: 40G
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail

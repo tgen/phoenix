@@ -34,6 +34,7 @@
     - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai
     {% endif %}
   cpus: 20
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
     set -eu

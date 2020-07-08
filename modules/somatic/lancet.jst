@@ -17,7 +17,7 @@
     - {{ tumor_bam }}
   output: {{ temp_dir }}/{{ loop.index }}.lancet.vcf
   cpus: 4
-  mem: 16G
+  mem: 8G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -79,8 +79,8 @@
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -121,6 +121,8 @@
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail

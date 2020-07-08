@@ -34,7 +34,7 @@
     - {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam
     - {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction
   cpus: 20
-  mem: 60G
+  mem: 80G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -104,8 +104,8 @@
     - {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
     {% endif %}
   reset: predecessors
-  cpus: 4
-  mem: 16G
+  cpus: 2
+  mem: 8G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -242,8 +242,8 @@
     - {{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz
     - {{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi
     - {{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
-  cpus: 20
-  mem: 60G
+  cpus: 2
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
     set -eu

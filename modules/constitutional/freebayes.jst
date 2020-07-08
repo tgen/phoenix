@@ -16,8 +16,8 @@
   input: {{ bam }}
   output: {{ temp_dir }}/{{ loop.index }}.vcf
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail

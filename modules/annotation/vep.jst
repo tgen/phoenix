@@ -8,6 +8,7 @@
     - {{ final_vcf_prefix }}.vep.full.vcf.gz.tbi
   walltime: "8:00:00"
   cpus: 4
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail
@@ -63,6 +64,7 @@
     - {{ final_vcf_prefix }}.vep.pick.vcf.gz.tbi
   walltime: "8:00:00"
   cpus: 4
+  mem: 8G
   cmd: |
     set -euv
     set -o pipefail

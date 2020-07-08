@@ -38,7 +38,8 @@
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input: {{ gzipped_path }}
   output: {{ prepped_path }}
-  cpus: 8
+  cpus: 4
+  mem: 8G
   walltime: "4:00:00"
   cmd: |
     set -eu

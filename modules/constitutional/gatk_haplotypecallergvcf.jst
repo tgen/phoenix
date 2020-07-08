@@ -14,7 +14,7 @@
   input: {{ bam }}
   output: {{ temp_dir }}/{{ loop.index }}.g.vcf.gz
   walltime: "24:00:00"
-  cpus: 4
+  cpus: 2
   mem: 16G
   cmd: |
     set -eu
@@ -47,8 +47,8 @@
     - {{ gvcf }}
     - {{ gvcf }}.tbi
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail
@@ -58,7 +58,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk MergeVcfs \
-      --java-options "-Xmx14G" \
+      --java-options "-Xmx8G" \
       {% for batch in constants.phoenix.calling_intervals %}
       --INPUT "{{ temp_dir }}/{{ loop.index }}.g.vcf.gz" \
       {% endfor %}

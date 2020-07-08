@@ -25,7 +25,7 @@
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi
   cpus: 20
-  mem: 80G
+  mem: 20G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -107,8 +107,8 @@
     - {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz.tbi
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
-  cpus: 4
-  mem: 8G
+  cpus: 2
+  mem: 4G
   walltime: "12:00:00"
   cmd: |
     set -eu
@@ -159,7 +159,7 @@
   output:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi
-  cpus: 8
+  cpus: 2
   mem: 16G
   walltime: "12:00:00"
   cmd: |

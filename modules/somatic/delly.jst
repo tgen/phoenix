@@ -24,7 +24,7 @@
   output:
     - {{ temp_dir }}/{{ svtype }}/{{ filt_bcf }}
   cpus: 2
-  mem: 16G
+  mem: 4G
   walltime: "72:00:00"
   cmd: |
     set -eu
@@ -73,8 +73,8 @@
   output:
     - {{ temp_dir }}/{{ all_vcf }}
     - {{ temp_dir }}/{{ pass_vcf }}
-  cpus: 2
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -113,7 +113,7 @@
     - {{ results_dir }}/{{ pass_vcf }}.gz.tbi
     - {{ results_dir }}/{{ all_vcf }}.gz
     - {{ results_dir }}/{{ all_vcf }}.gz.tbi
-  cpus: 8
+  cpus: 4
   mem: 16G
   walltime: "24:00:00"
   cmd: |

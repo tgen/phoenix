@@ -29,6 +29,7 @@
     - {{ results_dir }}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai
     {% endif %}
   cpus: 20
+  mem: 20G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -112,6 +113,8 @@
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail

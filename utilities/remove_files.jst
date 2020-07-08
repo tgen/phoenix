@@ -2,11 +2,18 @@
 
 - name: removing_files_{{ after }}
   {% if before is not none %}
-  before-re: {{ before }}
+  before-re:
+      {% for task in before %}
+      - {{ before }}
+      {% endfor %}
   {% endif %}
-  after-re: {{ after }}
+  after-re:
+    {% for task in after %}
+    - {{ task }}
+    {% endfor %}
   walltime: "0:10:00"
   cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail

@@ -93,8 +93,8 @@
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.g.vcf.gz
-  cpus: 8
-  mem: 64G
+  cpus: 1
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -126,7 +126,7 @@
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
-  cpus: 2
+  cpus: 1
   mem: 4G
   walltime: "24:00:00"
   cmd: |

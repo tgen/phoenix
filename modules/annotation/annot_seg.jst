@@ -3,7 +3,8 @@
 - name: annot_seg_{{ name }}
   input: {{ seg }}
   output: {{ seg }}.vcf
-  cpus: 4
+  cpus: 1
+  mem: 4G
   walltime: "1:00:00"
   cmd: |
     set -uev

@@ -472,7 +472,7 @@
       {% endfor %}
     {% endif %}
   walltime: "24:00:00"
-  cpus: 8
+  cpus: 4
   mem: 32G
   cmd: |
     set -eu
@@ -577,7 +577,8 @@
   {% if bam_level is sameas false %}
   reset: predecessors
   {% endif %}
-  cpus: 4
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail

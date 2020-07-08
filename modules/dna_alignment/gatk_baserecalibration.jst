@@ -9,6 +9,7 @@
   input: temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam
   walltime: "4:00:00"
   cpus: 4
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail
@@ -39,6 +40,7 @@
   after-re: baserecalibration_table_{{ sample.name }}_{{ aligner }}_.*
   walltime: "4:00:00"
   cpus: 4
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail
@@ -63,6 +65,7 @@
   after: gather_bqsr_reports_{{ sample.name }}_{{ aligner }}
   walltime: "4:00:00"
   cpus: 8
+  mem: 32G
   cmd: |
     set -eu
     set -o pipefail
@@ -98,6 +101,7 @@
     - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
   walltime: "4:00:00"
   cpus: 4
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail
@@ -127,12 +131,14 @@
 {% macro nobaserecalibration(sample, aligner='bwa') %}
 - name: no_baserecalibration_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
+  reset: predecessors
   input: temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam
   output:
     - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
     - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
   walltime: "1:00:00"
   cpus: 10
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail

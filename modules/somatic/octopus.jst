@@ -63,7 +63,7 @@
 {% endfor %}
 
 
-- name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
+- name: octopus_merge_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   input:
     {% for b in constants.phoenix.primary_contig_calling_intervals %}
@@ -72,8 +72,8 @@
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
-  mem: 16G
+  cpus: 2
+  mem: 8G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -129,6 +129,9 @@
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  walltime: "24:00:00"
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail

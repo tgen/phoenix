@@ -46,8 +46,8 @@
   output: {{ temp_dir }}/{{ loop.index }}.scored.vcf.gz
   after: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   walltime: "24:00:00"
-  cpus: 6
-  mem: 24G
+  cpus: 8
+  mem: 32G
   cmd: |
     set -eu
     set -o pipefail
@@ -57,7 +57,7 @@
     source activate gatk
 
     gatk CNNScoreVariants \
-      --java-options "-Xmx20G" \
+      --java-options "-Xmx28G" \
       --tensor-type read_tensor \
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
@@ -80,8 +80,8 @@
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail
