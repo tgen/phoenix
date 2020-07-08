@@ -58,7 +58,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk MergeVcfs \
-      --java-options "-Xmx8G" \
+      --java-options "-Xmx7G" \
       {% for batch in constants.phoenix.calling_intervals %}
       --INPUT "{{ temp_dir }}/{{ loop.index }}.g.vcf.gz" \
       {% endfor %}

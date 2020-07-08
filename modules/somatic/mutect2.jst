@@ -83,7 +83,7 @@
 
     {# GetPileupSummaries this can happen at the same time as the variant calling, no need to wait #}
     {# Tumor pileups #}
-    gatk --java-options "-Xmx8G" GetPileupSummaries \
+    gatk --java-options "-Xmx7G" GetPileupSummaries \
       --tmp-dir {{ temp_dir }}/temp_GetPileupSummaries_tumor_{{ loop.index }}/ \
       --reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ tumor_bam }}" \
@@ -163,7 +163,7 @@
 
     mkdir -p {{ temp_dir }}/temp_stats
 
-    gatk --java-options "-Xmx6G" MergeMutectStats \
+    gatk --java-options "-Xmx7G" MergeMutectStats \
       --tmp-dir {{ temp_dir }}/temp_stats/ \
       {% for b in constants.phoenix.calling_intervals %}
       -stats "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats" \
@@ -191,7 +191,7 @@
 
     mkdir -p {{ temp_dir }}/temp_readorientationmodel
 
-    gatk --java-options "-Xmx6G" LearnReadOrientationModel \
+    gatk --java-options "-Xmx7G" LearnReadOrientationModel \
       --tmp-dir {{ temp_dir }}/temp_readorientationmodel/ \
       {% for b in constants.phoenix.calling_intervals %}
       -I "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz" \
@@ -224,7 +224,7 @@
     mkdir -p {{ temp_dir }}/temp_merge_normal
 
     {# Merge tumor pileup #}
-    gatk --java-options "-Xmx6G" GatherPileupSummaries \
+    gatk --java-options "-Xmx7G" GatherPileupSummaries \
       --tmp-dir {{ temp_dir }}/temp_merge_tumor/ \
       --sequence-dictionary {{ constants.phoenix.reference_dict }} \
       {% for b in constants.phoenix.calling_intervals %}
@@ -233,7 +233,7 @@
       -O {{ temp_dir }}/merged.tumor-pileups.table.tsv
 
     {# Merge normal pileup #}
-    gatk --java-options "-Xmx6G" GatherPileupSummaries \
+    gatk --java-options "-Xmx7G" GatherPileupSummaries \
       --tmp-dir {{ temp_dir }}/temp_merge_normal/ \
       --sequence-dictionary {{ constants.phoenix.reference_dict }} \
       {% for b in constants.phoenix.calling_intervals %}
@@ -263,7 +263,7 @@
 
     mkdir -p {{ temp_dir }}/temp_calculate_contamination
 
-    gatk --java-options "-Xmx6G" CalculateContamination \
+    gatk --java-options "-Xmx3G" CalculateContamination \
       --tmp-dir {{ temp_dir }}/temp_calculate_contamination/ \
       -I "{{ temp_dir }}/merged.tumor-pileups.table.tsv" \
       -matched "{{ temp_dir }}/merged.normal-pileups.table.tsv" \

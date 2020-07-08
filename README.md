@@ -259,7 +259,7 @@ _Click to show details_
 <summary><b>Public Tools Used by the Workflow</b></summary>  
 
 All tools build with public easybuild configuration files, available [here](https://github.com/easybuilders/easybuild).<br/>
-*Last Updated June 16th, 2020*  
+*Last Updated July 8th, 2020*  
 
 | Tool | Version Implemented | Current Version | Dependency and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
