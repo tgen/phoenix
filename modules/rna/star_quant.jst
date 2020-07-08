@@ -312,7 +312,7 @@ which appears to be working now after some code changes, keeping this here in ca
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- remove_files(directory,none,task) }}
     {% else %}
-      {% set task %}htseq_{{ sample.name }},featurecounts_{{ sample.name }}{% endset %}
+      {% set task %}htseq_{{ sample.name }}{% endset %}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- remove_files(directory,none,task) }}
     {% endif %}
