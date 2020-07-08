@@ -14,9 +14,10 @@
 - name: freebayes_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
   input: {{ bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.vcf
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail
@@ -45,7 +46,10 @@
 
 - name: freebayes_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
-  after-re: freebayes_{{ sample.name }}_{{ aligner }}_.*
+  input:
+    {% for batch in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.vcf
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -69,14 +73,14 @@
       {% else %}
       "{{ temp_dir }}/{{ loop.index }}.vcf"
       {% endif %}
-      {% endfor %}  
+      {% endfor %}
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
 
 - name: freebayes_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
-  after: freebayes_merge_{{ sample.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
@@ -89,7 +93,6 @@
 
     module load {{ constants.tools.bcftools.module }}
 
-    {# Then filter out the passing variants to a separate file #}
     bcftools filter \
       --output-type z \
       --include 'QUAL > 20' \
@@ -102,6 +105,5 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
 
-{%- set after_task = 'freebayes_filter_variants_'+sample.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'freebayes', 'constitutional', 'snp_indel_caller') }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, pass_vcf, taskPrefix, aligner, 'freebayes', 'constitutional', 'snp_indel_caller') }}
 {% endmacro %}

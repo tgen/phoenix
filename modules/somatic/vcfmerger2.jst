@@ -37,7 +37,9 @@
 - name: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input: {{ gzipped_path }}
-  cpus: 8
+  output: {{ prepped_path }}
+  cpus: 4
+  mem: 8G
   walltime: "4:00:00"
   cmd: |
     set -eu
@@ -73,7 +75,8 @@
 - name: vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
-  after: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  input: {{ prepped_path }}
+  output: {{ filtered_path }}
   cpus: 2
   walltime: "4:00:00"
   cmd: |
@@ -81,7 +84,6 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-
 
     bcftools filter \
       --output-type v \
@@ -95,10 +97,11 @@
 - name: vcfmerger2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
-  after:
-  {% for caller in pair.callers %}
-    - vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
-  {% endfor %}
+  input:
+    {% for caller in pair.callers %}
+    {% set filtered_path %}{{ temp_dir }}/{{ caller }}.filt.vcf{% endset %}
+    - {{ filtered_path }}
+    {% endfor %}
   output: {{ merged_vcf_gz }}
   cpus: 4
   walltime: "4:00:00"
@@ -120,7 +123,6 @@
     fi
 
     mkdir -p "{{ results_dir }}"
-
 
     vcfMerger2.py \
       --skip-prep-vcfs \
@@ -145,17 +147,9 @@
 
 
 {% if 'rna_samples' in pair.tumor %}
-
   {{- add_matched_rna(merged_vcf_gz, output_vcf, pair, aligner, temp_dir) }}
-  {% set after_task = 'add_matched_rna_'+pair.name+'_'+aligner %}
-
 {% else %}
-
   {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
-  {% set after_task = 'add_rna_header_to_vcf_'+pair.name+'_'+aligner %}
-
 {% endif %}
-
-{{- annotate_vcfs(pair, temp_dir, results_dir, after_task, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
-
+  {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
 {% endmacro %}

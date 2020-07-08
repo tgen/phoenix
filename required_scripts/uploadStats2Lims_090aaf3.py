@@ -372,6 +372,8 @@ try:
                         print("ERROR:\n" + "Code: " + str(parsed_patchResponse["messages"][0]["code"]) +
                               "\n" + "Message: " + str(parsed_patchResponse["messages"][0]['message']))
                         raise ValueError("Something went wrong with the PATCH.")
+                else:
+                    break
 
             counter += 1
 

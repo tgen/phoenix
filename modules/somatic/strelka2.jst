@@ -19,7 +19,22 @@
     - {{ normal_bam }}
     - {{ tumor_bam }}
     - {{ indel_candidates }}
+  output:
+    - {{ temp_dir }}/results/variants/somatic.indels.vcf.gz
+    - {{ temp_dir }}/results/variants/somatic.snvs.vcf.gz
+    {% if cram|default(true) %}
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram.crai
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram.crai
+    {% else %}
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai
+    {% endif %}
   cpus: 20
+  mem: 16G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -28,6 +43,7 @@
     module load {{ constants.tools.strelka.module }}
     module load {{ constants.tools.htslib.module }}
     module load {{ constants.tools.python_2_7_15.module }}
+    module load {{ constants.tools.samtools.module }}
 
     {# Purge any existing run files prior to starting #}
     rm -r "{{ temp_dir }}" || true
@@ -74,36 +90,8 @@
     {# Execute on the local machine with 19 parallel jobs #}
     "{{ temp_dir }}/runWorkflow.py" -m local -j 19
 
-
-- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
-  after: strelka2_{{ pair.name }}_{{ aligner }}
-  output:
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz.tbi
-    {% if cram|default(true) %}
-    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
-    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram.crai
-    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
-    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram.crai
-    {% else %}
-    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam
-    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai
-    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam
-    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai
-    {% endif %}
-  cpus: 8
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.bcftools.module }}
-    module load {{ constants.tools.samtools.module }}
-
     mkdir -p "{{ results_dir }}/evidence"
-  
+
     {# Move and rename the evidence bams or make crams #}
     {% if cram|default(true) %}
     samtools view \
@@ -129,6 +117,24 @@
     mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
     mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam.bai" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
     {% endif %}
+
+
+- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/results/variants/somatic.indels.vcf.gz
+    - {{ temp_dir }}/results/variants/somatic.snvs.vcf.gz
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  cpus: 2
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
 
     {# Merge the snvs and indels into a final vcf #}
     bcftools concat \

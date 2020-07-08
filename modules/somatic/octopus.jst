@@ -15,6 +15,10 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.realigned.bam
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    - {{ temp_dir }}/{{ loop.index }}.octopus.vcf
   cpus: 8
   mem: 16G
   walltime: "48:00:00"
@@ -59,14 +63,17 @@
 {% endfor %}
 
 
-- name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
+- name: octopus_merge_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
-  after-re: octopus_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    {% for b in constants.phoenix.primary_contig_calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
-  mem: 16G
+  cpus: 2
+  mem: 8G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -118,10 +125,13 @@
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
-  after: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  walltime: "24:00:00"
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail

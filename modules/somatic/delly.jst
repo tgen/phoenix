@@ -10,22 +10,25 @@
 {% set variant_types=['DEL','DUP','INS','INV','TRA'] %}
 
 {% for svtype in variant_types %}
+
+{% set sv_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.bcf{% endset %}
+{% set filt_sv = {"DEL": "--minsize 2000 --maxsize 500000000", "DUP": "--minsize 100 --maxsize 500000000", "INS": "--minsize 5 --maxsize 87", "INV": "--minsize 100 --maxsize 500000000", "TRA": "--minsize 500 --maxsize 500000000"}[svtype] | default("--minsize 500 --maxsize 500000000") -%}
+{% set filt_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
+{% set sample_file %}sample.{{ svtype }}.{{ pair.name }}.tsv{% endset %}
+
 - name: delly_{{ pair.name }}_{{ aligner }}_{{ svtype }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ svtype }}/{{ filt_bcf }}
   cpus: 2
-  mem: 16G
+  mem: 4G
   walltime: "72:00:00"
   cmd: |
     set -eu
     set -o pipefail
-
-    {% set sv_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.bcf{% endset %}
-    {% set filt_sv = {"DEL": "--minsize 2000 --maxsize 500000000", "DUP": "--minsize 100 --maxsize 500000000", "INS": "--minsize 5 --maxsize 87", "INV": "--minsize 100 --maxsize 500000000", "TRA": "--minsize 500 --maxsize 500000000"}[svtype] | default("--minsize 500 --maxsize 500000000") -%}
-    {% set filt_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
-    {% set sample_file %}sample.{{ svtype }}.{{ pair.name }}.tsv{% endset %}
 
     module load {{ constants.tools.delly.module }}
 
@@ -62,15 +65,16 @@
 
 - name: delly_merge_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
-  after:
+  input:
     {% for svtype in variant_types %}
-    - delly_{{ pair.name }}_{{ aligner }}_{{ svtype }}
+    {% set filt_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
+    - {{ temp_dir }}/{{ svtype }}/{{ filt_bcf }}
     {% endfor %}
   output:
     - {{ temp_dir }}/{{ all_vcf }}
     - {{ temp_dir }}/{{ pass_vcf }}
-  cpus: 2
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -99,8 +103,8 @@
 
 - name: delly_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
-  after: delly_merge_{{ pair.name }}_{{ aligner }}
   input:
+    - {{ temp_dir }}/{{ all_vcf }}
     - {{ temp_dir }}/{{ pass_vcf }}
   output:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.delly.pass.anno.vcf.gz
@@ -109,7 +113,7 @@
     - {{ results_dir }}/{{ pass_vcf }}.gz.tbi
     - {{ results_dir }}/{{ all_vcf }}.gz
     - {{ results_dir }}/{{ all_vcf }}.gz.tbi
-  cpus: 8
+  cpus: 4
   mem: 16G
   walltime: "24:00:00"
   cmd: |

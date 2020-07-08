@@ -29,6 +29,7 @@
     - {{ results_dir }}/evidence/{{ sample.name }}.{{ aligner }}.strelka2.realigned.bam.bai
     {% endif %}
   cpus: 20
+  mem: 20G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -108,10 +109,12 @@
 
 - name: strelka2_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, strelka2, {{ sample.name }}]
-  after: strelka2_{{ sample.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail
@@ -131,6 +134,5 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
 
-{%- set after_task = 'strelka2_filter_variants_'+sample.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'strelka2', 'constitutional', 'snp_indel_caller' ) }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, pass_vcf, taskPrefix, aligner, 'strelka2', 'constitutional', 'snp_indel_caller' ) }}
 {% endmacro %}

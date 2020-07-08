@@ -15,8 +15,9 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.lancet.vcf
   cpus: 4
-  mem: 16G
+  mem: 8G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -71,12 +72,15 @@
 
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
-  after-re: lancet_{{ pair.name }}_{{ aligner }}_.*
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.lancet.vcf
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -113,10 +117,12 @@
 
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
-  after: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail

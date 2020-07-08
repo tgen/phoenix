@@ -118,7 +118,7 @@ def getGenesOverlappinRegion(rec, genes):
     :return: tuple of strings (gene_name(s))
     """
     NOGENE=str(set([".___."]))
-    if rec.info['SVTYPE']=="TRA" or rec.info['TRA']:
+    if rec.info['SVTYPE']=="TRA":
         return NOGENE
     chr1 = rec.chrom
     POS1 = rec.pos
@@ -142,7 +142,7 @@ def getLenghtRegion(rec):
     :param rec:  vcf record pysam-formatted
     :return: lenght of the region of interest; pos2-pos1;
     """
-    if rec.info['SVTYPE']=="TRA" or rec.info['TRA']:
+    if rec.info['SVTYPE']=="TRA":
         return (-1);
     return abs(rec.info['ENDPOSSV']-rec.pos)
 
