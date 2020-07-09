@@ -633,16 +633,15 @@ def getDiscordantReadsDistribution(sdr):
     :return: tuple of values of interest (see getDiscordantReadsDistribution2)
     """
     return getDiscordantReadsDistribution2(sdr, sdr.svtype, sdr.refgen, sdr.bam,
-                                          sdr.chromosome, sdr.pos, sdr.slops,
-                                          sdr.chr2, sdr.pos2, sdr.svlen,
-                                          sdr.minmapq, sdr.tpl_reads_orientation,
-                                          sdr.insert_size, sdr.sigma)
+                                           sdr.chromosome, sdr.pos, sdr.slops,
+                                           sdr.chr2, sdr.pos2, sdr.svlen,
+                                           sdr.minmapq, sdr.tpl_reads_orientation,
+                                           sdr.insert_size, sdr.sigma)
 
 
 def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops, chr2, pos2, svlen, minmapq, tpl_reads_orientation, insert_size, sigma):
     """
     Capture the Discordant Pairs within given region of pos+/-slop and return some stats
-    :param sdr: class object sdr [future use]
     :param insert_size: insert size
     :param sigma: standard deviation for insert size
     :param ref_gen: reference genome used to align reads
@@ -699,10 +698,18 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
     count_mq_lt_minmapq = 0
     count_mq_zero = 0
     stranded_noise = True  #TODO: Future work is to transform that hardcoded variable into dynamic variable for user
+    lreadnames = []
     # ------------------------------#
     # Loop over the captured reads
     # ------------------------------#
     for x in items:  # x is a read line or aka an alignment record
+        # This next statement is to avoid duplicate values in CROI object such as the two reads of a pair counted twice
+        # this happens for INV svtype but this should be investigated further using --debug #TODO re-check the checkpoint that avoid counting read twice from the same pair
+        if x.query_name not in lreadnames:
+            lreadnames.append(x.query_name)
+        else:
+            continue
+
         logger.debug("Processing aln_rec: {} ::::: chrom:pos == {}:{}".format(str(str(x).split("\t")[0:8]), chrom, pos))
         mq_mate = get_mate_mq_value(x)
         mq = x.mapping_quality
@@ -740,12 +747,14 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
                             # stars represent soft clipping and dashes represent Matches and "<" or ">" represent read orientation
                             # 4 cases:
                             # 1) ***------>  ; 2) -----***>  ; 3) <****------ and 4) <------****
+                            # let's say: reference_start=1000 and the query_alignment_start=50 or =0
+                            # 1) start=1000-50  ; 2) start=1000-0  ; 3) 1000+50    ; 4) start=1000+0
                             if "S" in x.cigarstring:
                                 if x.is_reverse:
                                     CROI.append(x.reference_start + x.query_alignment_start)
                                 else:
                                     CROI.append(x.reference_start - x.query_alignment_start)
-                                logger.debug("CROI content after appending: {} ; Added value:{} from read {} ; |||||  x.reference_start  {} <--> x.next_reference_start = {}".format(
+                                logger.debug("CROI content after appending: {} ; Added value:{} from read {} ; |||||  x.reference_start  {} <--> x.next_reference_start = {} -- read With SOFT CLIPPING".format(
                                     str(len(CROI)), str(x.reference_start+x.tlen), str(x), str(x.reference_start), str(x.next_reference_start)))
                             else:
                                 CROI.append(x.reference_start)
@@ -871,13 +880,12 @@ def getDiscordantReadsDistribution2(sdr, svtype, ref_gen, bam, chrom, pos, slops
         # and some software which didn't have implemented this supplementary read flag give a flag of 0x100, marking that the read wasn't linear, but not saying was it true supplementary
         # (true split read) or not. So just a naming in this case
         try:
-            # ------------------------------#
-            # RDISTDISC:RCDIS:RUT:DRNOISE
-            # ------------------------------#
+            # ---------------------------------#
+            # RDISTDISC:RCDIS:RUT:DRNOISE:CLMQ
+            # ---------------------------------#
             return max(CROI) - min(CROI), len(CROI),  log10(len(set(CROI))) / log10(len(CROI)), lrnoise, (count_mq_zero, count_mq_lt_minmapq, count_read_fetched)
         except ZeroDivisionError:
-            return max(CROI) - min(CROI), len(CROI), 1, lrnoise, (count_mq_zero, count_mq_lt_minmapq, count_read_fetched)
-            # logger.exception(zde)
+            return max(CROI) - min(CROI), len(CROI), 0, lrnoise, (count_mq_zero, count_mq_lt_minmapq, count_read_fetched)
         except Exception as e:
             logger.exception(e)
 
@@ -1045,7 +1053,7 @@ def pre_process_variant_to_get_chr2_endpossv_and_read_orientations(vcf_file, var
     return CHR2, ENDPOSSV, tpl_reads_orientation, variant_rec_mate
 
 
-def set_slops_from_read_orientation(slop, tpl_reads_orientation, cipos, ciend, buffer=100):
+def set_slops_from_read_orientation(slop, tpl_reads_orientation, cipos, ciend, buffer=0):  # TODO: from Hardcoded to Dynamic Variable for buffer if requested
     """
     set the slop boundaries according to the svtype and the reads orientation fro that svtype
     :param slop: minimum slop value
@@ -1274,7 +1282,7 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
         if (sdr.variant.samples[idxN]['RCDIS1'] + sdr.variant.samples[idxN]['DRNOISE1'][5]) != 0:
             idxn_evalrcnoise_using_rcdis1 = (sdr.variant.samples[idxN]['RCDIS1'] / (sdr.variant.samples[idxN]['RCDIS1'] + sdr.variant.samples[idxN]['DRNOISE1'][5]))
         else:
-            idxn_evalrcnoise_using_rcdis1 = 0
+            idxn_evalrcnoise_using_rcdis1 = 1
 
         if 'SR' in sdr.variant.info.keys():
             if (sdr.variant.samples[idxT]['PR'][1] + sdr.variant.samples[idxT]['SR'][1] + sdr.variant.samples[idxT]['DRNOISE1'][5]) !=0:
@@ -1291,7 +1299,7 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
                 idxn_evalrcnoise_using_rcdis1
                 )
             else:
-                sdr.variant.samples[idxN]['EVALRCNOISE'] = 0, idxn_evalrcnoise_using_rcdis1
+                sdr.variant.samples[idxN]['EVALRCNOISE'] = 1, idxn_evalrcnoise_using_rcdis1
         else:
             if sdr.variant.samples[idxT]['PR'][1] + sdr.variant.samples[idxT]['DRNOISE1'][5] != 0:
                 sdr.variant.samples[idxT]['EVALRCNOISE'] = (
@@ -1307,14 +1315,14 @@ def get_discordant_info_for_each_sample_and_breaks(sdr):
                                 sdr.variant.samples[idxN]['PR'][1] + sdr.variant.samples[idxN]['DRNOISE1'][5]), idxn_evalrcnoise_using_rcdis1
                 )
             else:
-                sdr.variant.samples[idxN]['EVALRCNOISE'] = 0, idxn_evalrcnoise_using_rcdis1
+                sdr.variant.samples[idxN]['EVALRCNOISE'] = 1, idxn_evalrcnoise_using_rcdis1
     except ZeroDivisionError as zde:
         logger.error("DIV ZERO ERROR with variant: {}".format(str(sdr.variant)))
         logger.error(zde)
     return sdr.variant
 
 
-def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma):
+def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma, threads):
     """
     Process a variant record ; Capture necessary information and update the variant record with new flags and fields
     :param variant: pysam variant record
@@ -1327,6 +1335,7 @@ def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, r
     :param minmapq: integer value of the minimum mapping quality the reas must have to consider the pair
     :param insert_size: mean insert size captured by samtools stats or any other tool that can estimate the sequenced fragment insert size; must be an integer
     :param sigma: stander deviation of the insert size (integer)
+    :param threads: threads used for running getDiscordantReads method
     :return: update variant record
     """
 
@@ -1343,7 +1352,7 @@ def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, r
     # creation of an object to gather lots of variables and information across functions
     slops = None
     sdr = SearchDiscordantReads(variant.info['SVTYPE'], ref_gen, vcf_file, tumor_bam_file, normal_bam_file, variant,
-                                slops, insert_size, sigma, minmapq, tpl_reads_orientation, index_column_tumor_sample)
+                                slops, insert_size, sigma, minmapq, tpl_reads_orientation=tpl_reads_orientation, index_column_tumor_sample=index_column_tumor_sample, threads=threads)
     sdr.capture_mate_record_to_current_variant()
     sdr.slops = reevaluate_slop_values(variant, sdr.mate_variant_rec, slop, tpl_reads_orientation)
 
@@ -1367,7 +1376,7 @@ def process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, r
     return variant
 
 
-def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, arg_cmd, minmapq, insert_size, sigma, tumor_sample_name_in_vcf):
+def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, arg_cmd, minmapq, insert_size, sigma, tumor_sample_name_in_vcf, threads):
     """
     looping over the variants and processing the captiure of discordant reads for each breakend listed in the vcf
     a breakend is represented by one record i.e. one line when dealing with well 4.3-spec formatted vcf
@@ -1381,6 +1390,7 @@ def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, a
     :param insert_size: insert_size used by the read aligner if possible in order to capture discordant reads correctly
     :param sigma: standard deviation of the mean insert size
     :param tumor_sample_name_in_vcf: tumor sample name found in VCF header in either column 10 or 11 as we must only deal with somatic call here
+    :param threads: threads used for running getDiscordantReads method
     :return: newHeader, LVAR which is the list of updated variant records with new Fields and Flags
     """
 
@@ -1404,8 +1414,12 @@ def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, a
     logger.info("total number of variants in VCF: " + str(tot_variants_count))
     # regenerate the collection object myvcf after consumption
     myvcf.reset()
-    # update vcf_file header
-    myvcf = update_vcf_header(myvcf, slop, insert_size, arg_cmd)
+    try:
+        # update vcf_file header
+        myvcf = update_vcf_header(myvcf, slop, insert_size, arg_cmd)
+    except ValueError as ve:
+        logger.error(ve)
+        logger.error("The Input VCF has probably already been flagged and annotated with the current script; Please use the appropriate unflagged Manta's VCF, possibly a vcf with only the PASS variant.")
 
     # Check if there are no variant, therefore we stop right here ; Need to do this here before any call to myvcf's records
     if tot_variants_count == 0:
@@ -1424,7 +1438,7 @@ def start_processing(vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, a
     # tuple_args = (vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma)
     list_updated_variants = []  # init list for future updated variants
     for variant in myvcf:
-        list_updated_variants.append(process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma))
+        list_updated_variants.append(process_variant_record(variant, vcf_file, tumor_bam_file, normal_bam_file, ref_gen, slop, index_column_tumor_sample, minmapq, insert_size, sigma, threads))
         counter += 1
         if counter % step_count == 0:
             logger.info("processed variants ... {}".format(counter))
@@ -1488,7 +1502,7 @@ def update_vcf_header(vcf, slop, insert_size, arg_cmd):
                            "Count of the reads with Low Mapping Quality in region of interest;"
                            "1) first value is count of reads with MAPQ of Zero, "
                            "2) second value is count of reads with MAPQ value between 1 and the minmapq (default 15), "
-                           "3) the total number of reads recaptured by fetch")
+                           "3) the total number of reads recaptured by fetch within POS+/-SLOP interval")
     vcf.header.formats.add("CLMQ2", "3", "Integer",
                            "same as CLMQ1 but for partner breakend")
     # ADDED LINES for COMMENTS
@@ -1521,6 +1535,7 @@ def usage():
                                                          'recommendation: DO NOT use if you later gene-annotate the vcf_file; '
                                                          '\n-l|--logfile\t[O] logfile, default is: "log_prepare_vcf_manta.txt"'
                                                          '\n-g|--refgen\t[O] reference_genome but [M] if CRAM file'
+                                                         '\n-g|--threads\t[O] Threads (recommended values: 1 or 4)'
                                                          '\n-d|--debug\t[O] enable debug information')
     )
 
@@ -1538,15 +1553,16 @@ def main(list_argv):
     minmapq = 1
     output_vcf = ""
     refgen = ""
-    logfile = __logfile__
+    logfile = None
     debug = False
     # coltumorsample = None
     compress_vcf = False
+    threads = 4
     try:
-        opts, args = getopt.getopt(list_argv, "c:di:g:hl:m:n:o:s:t:z", ["help", "debug", "vcf_file=", "tumor_bam_file=", "normal_bam_file=",
-                                                                        "tumor-name=", "slop=",
-                                                                        "minmapq=", "refgen=", "output=", "insert-size=",
-                                                                        "sigma=", "logfile=", "gz-out"])
+        opts, args = getopt.getopt(list_argv, "c:di:g:hl:m:n:o:p:s:t:z", ["help", "debug", "vcf_file=", "tumor_bam_file=", "normal_bam_file=",
+                                                                          "tumor-name=", "slop=",
+                                                                          "minmapq=", "refgen=", "output=", "insert-size=",
+                                                                          "sigma=", "logfile=", "--threads", "gz-out"])
         # , "index_column_tumor_sample"
         logger.debug(opts)
         for opt, arg in opts:
@@ -1577,6 +1593,8 @@ def main(list_argv):
                 logfile = str(arg)
             elif opt in ("-d", "--debug"):
                 debug = True
+            elif opt in ("-p", "--threads"):
+                threads = int(str(arg))
             elif opt in ("-z", "--gz-out"):
                 compress_vcf = True
                 is_tool_in_path('bcftools')
@@ -1609,6 +1627,7 @@ def main(list_argv):
         logger.info('OUTFILE is: \t' + output_vcf)
         logger.info('LOGFILE is: \t' + str(logfile))
         logger.info('TUMOR_NAME is: \t' + str(tumor_sample_name_in_vcf))
+        logger.info('THREADS = ' + str(threads))
         logger.info('Output a gz compressed vcf_file is: \t' + str(compress_vcf))
         logger.debug("WARNING: for Manta_1.6, we expect the NORMAL SAMPLE to be in the column 10 and the TUMOR sample in column 11; IF not wrong data will be added to the VCF; WARNING")
 
@@ -1637,7 +1656,7 @@ def main(list_argv):
         logger.info("INSERT_SIZE = {}, SIGMA = {}, SLOP = {}".format(insert_size, sigma, slop))
         logger.info("")
         logger.info("processing ...")
-        new_header, list_var_add_fields = start_processing(vcf, tbam, nbam, refgen, slop, list_argv, minmapq, insert_size, sigma, tumor_sample_name_in_vcf)
+        new_header, list_var_add_fields = start_processing(vcf, tbam, nbam, refgen, slop, list_argv, minmapq, insert_size, sigma, tumor_sample_name_in_vcf, threads)
         write_new_vcf(vcf, new_header, list_var_add_fields, output_vcf=output_vcf, logfile=logfile, compress_vcf=compress_vcf)
     except FileNotFoundError as fnf:
         logger.info("check if you assign all the correct inputs and PATH to your files")
