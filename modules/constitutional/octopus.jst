@@ -18,7 +18,7 @@
     - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
     - {{ temp_dir }}/{{ loop.index }}.octopus.vcf
   walltime: "24:00:00"
-  cpus: 8
+  cpus: 4
   mem: 16G
   cmd: |
     set -eu
@@ -38,7 +38,7 @@
 
     octopus \
       --caller individual \
-      --threads 8 \
+      --threads 4 \
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
       --ignore-unmapped-contigs \
@@ -66,7 +66,7 @@
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
   walltime: "24:00:00"
-  cpus: 2
+  cpus: 1
   mem: 4G
   cmd: |
     set -eu
@@ -98,7 +98,7 @@
     - {{ pass_vcf }}.tbi
   walltime: "24:00:00"
   cpus: 1
-  mem: 2G
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail

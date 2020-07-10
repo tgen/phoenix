@@ -34,7 +34,7 @@
     - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai
     {% endif %}
   cpus: 20
-  mem: 16G
+  mem: 20G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -96,7 +96,7 @@
     {% if cram|default(true) %}
     samtools view \
       -C \
-      -@ 8 \
+      -@ 16 \
       --reference {{ constants.phoenix.reference_fasta }} \
       -o {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram \
       {{ temp_dir }}/results/realigned/realigned.normal.bam
@@ -105,7 +105,7 @@
 
     samtools view \
       -C \
-      -@ 8 \
+      -@ 16 \
       --reference {{ constants.phoenix.reference_fasta }} \
       -o {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram \
       {{ temp_dir }}/results/realigned/realigned.tumor.bam
@@ -129,7 +129,8 @@
     - {{ all_vcf }}.tbi
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
-  cpus: 2
+  cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail
@@ -139,7 +140,7 @@
     {# Merge the snvs and indels into a final vcf #}
     bcftools concat \
       --allow-overlaps \
-      --threads 2 \
+      --threads 1 \
       --output-type z \
       --output "{{ all_vcf }}" \
       "{{ temp_dir }}/results/variants/somatic.indels.vcf.gz" \

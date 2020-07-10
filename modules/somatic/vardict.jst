@@ -18,7 +18,7 @@
   output:
     - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz
     - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz.tbi
-  cpus: 8
+  cpus: 4
   mem: 32G
   walltime: "24:00:00"
   cmd: |

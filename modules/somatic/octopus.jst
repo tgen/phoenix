@@ -19,7 +19,7 @@
     - {{ temp_dir }}/{{ loop.index }}.realigned.bam
     - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
     - {{ temp_dir }}/{{ loop.index }}.octopus.vcf
-  cpus: 8
+  cpus: 4
   mem: 16G
   walltime: "48:00:00"
   cmd: |
@@ -41,7 +41,7 @@
     {# Somatic calling with octopus #}
     octopus \
       --caller cancer \
-      --threads 8 \
+      --threads 4 \
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
       --ignore-unmapped-contigs \
@@ -63,7 +63,7 @@
 {% endfor %}
 
 
-- name: octopus_merge_{{ pair.name }}_{{ aligner }}
+- name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
   input:
     {% for b in constants.phoenix.primary_contig_calling_intervals %}
@@ -72,8 +72,8 @@
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 2
-  mem: 8G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu

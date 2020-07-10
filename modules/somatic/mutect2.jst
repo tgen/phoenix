@@ -95,7 +95,7 @@
       --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
 
     {# Normal pileups #}
-    gatk --java-options "-Xmx14g" GetPileupSummaries \
+    gatk --java-options "-Xmx7g" GetPileupSummaries \
       --tmp-dir {{ temp_dir }}/temp_GetPileupSummaries_normal_{{ loop.index }}/ \
       -reference {{ constants.phoenix.reference_fasta }} \
       --input "{{ normal_bam }}" \
@@ -120,8 +120,8 @@
   methods: Somatic variant calls for {{ pair.name }} were called with
     {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
     then merged together with {{ constants.tools.samtools.verbose }} concat.
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -281,7 +281,7 @@
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
+  cpus: 2
   mem: 8G
   walltime: "24:00:00"
   cmd: |
@@ -295,7 +295,7 @@
 
     gatk FilterMutectCalls \
       --tmp-dir {{ temp_dir }}/temp_filter/ \
-      --java-options "-Xmx28G" \
+      --java-options "-Xmx7G" \
       --reference {{ constants.phoenix.reference_fasta }} \
       --max-alt-allele-count 2 \
       --variant "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
