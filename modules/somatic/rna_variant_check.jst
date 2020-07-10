@@ -10,8 +10,8 @@
     - {{ output_vcf }}.csi
     - {{ output_vcf }}.tbi
   walltime: "8:00:00"
-  cpus: 4
-  mem: 3G
+  cpus: 2
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail
@@ -28,20 +28,20 @@
     #.final.vcf files have the same header lines regardless of matching RNA files
     #}
     bcftools annotate \
-        --threads 4 \
+        --threads 2 \
         --header-lines {{ temp_dir }}/temp_header \
         --output-type z \
         --output {{ output_vcf }} \
         {{ input_vcf }}
 
     bcftools index \
-        --threads 4 \
+        --threads 2 \
         --tbi \
         --force \
         {{ output_vcf }}
 
     bcftools index \
-      --threads 4 \
+      --threads 2 \
       --force \
       {{ output_vcf }}
 
@@ -240,7 +240,7 @@
     # Since the annotation VCF only has the 3 INFO keys of interest, the field definition is all INFO keys
     #}
     bcftools annotate \
-      --threads 4 \
+      --threads 2 \
       --annotations {{ temp_dir }}/temp_RNA.vcf.gz \
       --columns "INFO" \
       --output-type z \
@@ -248,13 +248,13 @@
       {{ input_vcf }}
 
     bcftools index \
-      --threads 4 \
+      --threads 2 \
       --tbi \
       --force \
       {{ output_vcf }}
 
     bcftools index \
-      --threads 4 \
+      --threads 2 \
       --force \
       {{ output_vcf }}
 

@@ -168,7 +168,7 @@
       0x800	SUPPLEMENTARY	supplementary alignment
     #}
     IG_READS=$(samtools view \
-      --threads 3 \
+      --threads 2 \
       -c -f 65 -F 2304 \
       {{ temp_dir }}/{{ sample.name }}.Aligned.sorted.bam \
       chr2:88857160-90367699 \
@@ -266,7 +266,7 @@
           --max_promiscuity 10 \
           --output_dir {{ temp_dir }}/FusionInspector-inspect \
           --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
-          --CPU 20 \
+          --CPU 2 \
           --only_fusion_reads \
           --fusion_contigs_only \
           --left_fq {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_1.fq \
@@ -312,7 +312,7 @@
     - {{ results_dir }}/{{ sample.name }}_starfusion.cram.crai
   walltime: "8:00:00"
   cpus: 8
-  mem: 3G
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail
