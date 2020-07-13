@@ -110,6 +110,7 @@
 
 - name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
   input:
     {% for b in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz
@@ -144,6 +145,7 @@
 
 - name: mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
   input:
     {% for b in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats
@@ -172,6 +174,7 @@
 
 - name: mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
   input:
     {% for b in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz
@@ -200,6 +203,7 @@
 
 - name: mutect2_merge_pileup_summaries_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
   input:
     {% for b in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
@@ -243,6 +247,7 @@
 
 - name: mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
   input:
     - {{ temp_dir }}/merged.tumor-pileups.table.tsv
     - {{ temp_dir }}/merged.normal-pileups.table.tsv
@@ -272,6 +277,7 @@
 
 - name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
   input:
     - {{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz
     - {{ temp_dir }}/merged.stats

@@ -40,6 +40,7 @@
 
 - name: cnnscorevariants2d_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
+  reset: genotypegvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   input:
     - {{ bam }}
     - {{ temp_dir }}/{{ loop.index }}.vcf.gz
@@ -72,6 +73,7 @@
 
 - name: haplotypecaller_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, genotype_hc_gvcf, gatk_GenotypeGVCFs, {{ sample.name }}]
+  reset: predecessors
   input:
     {% for batch in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.scored.vcf.gz

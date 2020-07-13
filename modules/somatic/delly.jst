@@ -65,6 +65,7 @@
 
 - name: delly_merge_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
+  reset: predecessors
   input:
     {% for svtype in variant_types %}
     {% set filt_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
@@ -103,6 +104,7 @@
 
 - name: delly_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, delly, {{ pair.name }}]
+  reset: predecessors
   input:
     - {{ temp_dir }}/{{ all_vcf }}
     - {{ temp_dir }}/{{ pass_vcf }}

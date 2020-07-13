@@ -53,6 +53,7 @@
 
 - name: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
+  reset: predecessors
   input:
     {% for i in range(nshards) %}
     {% set iteration = ('00000' + i|string)|reverse|truncate(5, True, '', 0)|reverse %}
@@ -88,6 +89,7 @@
 
 - name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
+  reset: predecessors
   input: {{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz
   output:
     - {{ all_vcf }}

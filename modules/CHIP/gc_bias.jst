@@ -3,6 +3,7 @@
 
 - name: compute_GCBias_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
+  reset: predecessors
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
   output:
     - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam_GCbias.txt

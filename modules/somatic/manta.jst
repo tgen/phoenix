@@ -154,6 +154,7 @@
 
 - name: manta_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, manta, flag, gene, annotation, {{ pair.name }}]
+  reset: predecessors
   input:
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi

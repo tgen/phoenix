@@ -58,6 +58,7 @@
 
 - name: octopus_merge_chunks_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
+  reset: predecessors
   input:
     {% for b in constants.phoenix.primary_contig_calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
