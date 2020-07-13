@@ -9,7 +9,7 @@ suppressPackageStartupMessages(library(data.table))
 #### Preset Options For Readability ####
 
 # Homo_sapiens_assembly38 primary contigs and lengths
-contig_names = c("chr1",
+contig_names <- c("chr1",
                  "chr2",
                  "chr3",
                  "chr4",
@@ -33,7 +33,7 @@ contig_names = c("chr1",
                  "chr22",
                  "chrX",
                  "chrY")
-contig_lengths = c(248956422, 
+contig_lengths <- c(248956422,
                    242193529, 
                    198295559, 
                    190214555, 
@@ -59,7 +59,7 @@ contig_lengths = c(248956422,
                    57227415)
 
 #### Argument parsing ####
-option_list = list(
+option_list <- list(
   # Required
   make_option(c("--sample_name", "-s"), dest="sample_name", action="store", default = NA, type = 'character',
               help = "[Required] The title used for each plot"),
@@ -115,44 +115,44 @@ option_list = list(
               help = "[Optional] The upper real copy number offset used for the selection of hets around a mode in the copy number density plot of hets used for centering of all segments. [default %default]")
 )
 
-opt = parse_args(OptionParser(option_list=option_list))
+opt <- parse_args(OptionParser(option_list=option_list))
 
 # Required
-sample_name = opt[["sample_name"]]
-output_prefix = opt[["output_prefix"]]
-plots_directory = opt[["plots_directory"]]
+sample_name <- opt[["sample_name"]]
+output_prefix <- opt[["output_prefix"]]
+plots_directory <- opt[["plots_directory"]]
 
-denoised_copy_ratios_file = opt[["denoised_copy_ratios_file"]]
-allelic_counts_file = opt[["allelic_counts_file"]]
-modeled_segments_file = opt[["modeled_segments_file"]]
+denoised_copy_ratios_file <- opt[["denoised_copy_ratios_file"]]
+allelic_counts_file <- opt[["allelic_counts_file"]]
+modeled_segments_file <- opt[["modeled_segments_file"]]
 
 # Optional With Defaults
 
 if (!is.na(opt[["contig_names_string"]])) {
-  contig_names_string = opt[["contig_names_string"]]
-  contig_names = as.list(strsplit(contig_names_string, "CONTIG_DELIMITER")[[1]])
+  contig_names_string <- opt[["contig_names_string"]]
+  contig_names <- as.list(strsplit(contig_names_string, "CONTIG_DELIMITER")[[1]])
 }
 if (!is.na(opt[["contig_lengths_string"]])) {
-  contig_lengths_string = opt[["contig_lengths_string"]]
-  contig_lengths = as.numeric(as.list(strsplit(contig_lengths_string, "CONTIG_DELIMITER")[[1]]))
+  contig_lengths_string <- opt[["contig_lengths_string"]]
+  contig_lengths <- as.numeric(as.list(strsplit(contig_lengths_string, "CONTIG_DELIMITER")[[1]]))
 }
-re_center_CNA = opt[["re_center_CNA"]]
-re_centered_seg_directory = opt[["re_centered_seg_directory"]]
-CNgainColor = opt[["CNgainColor"]]
-CNlossColor = opt[["CNlossColor"]]
-CNhetColor = opt[["CNhetColor"]]
-BAFcolor = opt[["BAFcolor"]]
-SEGcolor = opt[["SEGcolor"]]
-CNgainLim = opt[["CNgainLim"]]
-CNlossLim = opt[["CNlossLim"]]
-hetDPfilter = opt[["hetDPfilter"]]
-hetAFlow = opt[["hetAFlow"]]
-hetAFhigh = opt[["hetAFhigh"]]
-point_size = opt[["point_size"]]
-lowerCNvalidatePeakOffset = opt[["lowerCNvalidatePeakOffset"]]
-UpperCNvalidatePeakOffset = opt[["UpperCNvalidatePeakOffset"]]
-lowerCNcenteringPeakOffset = opt[["lowerCNcenteringPeakOffset"]]
-UpperCNcenteringPeakOffset = opt[["UpperCNcenteringPeakOffset"]]
+re_center_CNA <- opt[["re_center_CNA"]]
+re_centered_seg_directory <- opt[["re_centered_seg_directory"]]
+CNgainColor <- opt[["CNgainColor"]]
+CNlossColor <- opt[["CNlossColor"]]
+CNhetColor <- opt[["CNhetColor"]]
+BAFcolor <- opt[["BAFcolor"]]
+SEGcolor <- opt[["SEGcolor"]]
+CNgainLim <- opt[["CNgainLim"]]
+CNlossLim <- opt[["CNlossLim"]]
+hetDPfilter <- opt[["hetDPfilter"]]
+hetAFlow <- opt[["hetAFlow"]]
+hetAFhigh <- opt[["hetAFhigh"]]
+point_size <- opt[["point_size"]]
+lowerCNvalidatePeakOffset <- opt[["lowerCNvalidatePeakOffset"]]
+UpperCNvalidatePeakOffset <- opt[["UpperCNvalidatePeakOffset"]]
+lowerCNcenteringPeakOffset <- opt[["lowerCNcenteringPeakOffset"]]
+UpperCNcenteringPeakOffset <- opt[["UpperCNcenteringPeakOffset"]]
 
 #### Validation ####
 
@@ -189,10 +189,15 @@ if (!file.exists(modeled_segments_file)) {
 
 #### Read TSV Function ####
 
-ReadTSV = function(tsv_file) {
-  temp_file = tempfile()
+ReadTSV <- function(tsv_file) {
+  temp_file <- tempfile()
   system(sprintf('grep -v ^@ "%s" > %s', tsv_file, temp_file))
   return(suppressWarnings(fread(temp_file, sep="\t", stringsAsFactors=FALSE, header=TRUE, check.names=FALSE, data.table=FALSE, showProgress=FALSE, verbose=FALSE)))
+}
+
+#### dLRs Function ####
+dLRs <- function(x) {
+  return(IQR(diff(na.omit(x))) / (4 * qnorm((1 + 0.5) / 2) / sqrt(2)))
 }
 
 #### Read In Files ####
@@ -202,8 +207,8 @@ modeled_segments <- ReadTSV(modeled_segments_file)
 
 #### Process Files, lists, and perform recentering if specified  ####
 
-contig_ends = cumsum(contig_lengths)
-contig_starts = c(0, head(contig_ends, -1))
+contig_ends <- cumsum(contig_lengths)
+contig_starts <- c(0, head(contig_ends, -1))
 
 denoised_copy_ratios$MB <- denoised_copy_ratios$START/1000000
 
@@ -214,7 +219,7 @@ allelic_counts$MB <- allelic_counts$POSITION/1000000
 hets <- allelic_counts[allelic_counts$DP >= hetDPfilter & allelic_counts$AF >= hetAFlow & allelic_counts$AF <= hetAFhigh,]
 
 # Annotate each het with it's coresponding copy number ratio
-for (row in 1:nrow(hets)) {
+for (row in seq_len(nrow(hets))) {
   line <- hets[row,]
   contig <- line$CONTIG
   pos <- line$POSITION
@@ -240,7 +245,7 @@ if (re_center_CNA == TRUE) {
       }
     }
     if (length(mode) == 0) {
-      mode = 'Fail'
+      mode <- 'Fail'
     }
     return(mode)
   }
@@ -284,7 +289,7 @@ if (re_center_CNA == TRUE) {
       
     } else {
       
-      INCVAR=1
+      INCVAR <- 1
       
       for (peak in density(hets$LOG2_COPY_RATIO, adjust = 1.4)$y[modes_values]) {
         
@@ -311,18 +316,18 @@ if (re_center_CNA == TRUE) {
         } else if (percent > 0.025 & INCVAR == length(density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x[modes_values])) {
           break
         } else {
-          INCVAR=INCVAR + 1
+          INCVAR <- INCVAR + 1
         }
       }
     }
   }
   
   if (length(density(hets$LOG2_COPY_RATIO, adjust = 1.4)$x[modes_values]) == 1) {
-    png(filename = paste(plots_directory, "/", output_prefix, ".hets.density.png", sep=""), width = 648, height = 368, units = "mm", res = 300)
+    png(filename = paste0(plots_directory, "/", output_prefix, ".hets.density.png"), width = 648, height = 368, units = "mm", res = 300)
     plot(density(hets$LOG2_COPY_RATIO, adjust = 1.4)) + abline(v=CUTOFF) + abline(v=CUTOFF2) + abline(v=MAINPEAK)
     dev.off()
   } else {
-    png(filename = paste(plots_directory, "/", output_prefix, ".hets.density.png", sep=""), width = 648, height = 368, units = "mm", res = 300)
+    png(filename = paste0(plots_directory, "/", output_prefix, ".hets.density.png"), width = 648, height = 368, units = "mm", res = 300)
     plot(density(hets$LOG2_COPY_RATIO, adjust = 1.4)) + abline(v=CUTOFF) + abline(v=CUTOFF2) + abline(v=CUTOFF3, lty=2) + abline(v=CUTOFF4, lty=2) + abline(v=MAINPEAK)
     dev.off()
   }
@@ -330,9 +335,9 @@ if (re_center_CNA == TRUE) {
   # Adjust all of the input tables with COPY RATIO based on the AVE_CR
   hets$LOG2_COPY_RATIO <- hets$LOG2_COPY_RATIO - AVE_CR
   denoised_copy_ratios$LOG2_COPY_RATIO <- denoised_copy_ratios$LOG2_COPY_RATIO - AVE_CR
-  modeled_segments$LOG2_COPY_RATIO_POSTERIOR_10 <-modeled_segments$LOG2_COPY_RATIO_POSTERIOR_10 - AVE_CR
-  modeled_segments$LOG2_COPY_RATIO_POSTERIOR_50 <-modeled_segments$LOG2_COPY_RATIO_POSTERIOR_50 - AVE_CR
-  modeled_segments$LOG2_COPY_RATIO_POSTERIOR_90 <-modeled_segments$LOG2_COPY_RATIO_POSTERIOR_90 - AVE_CR
+  modeled_segments$LOG2_COPY_RATIO_POSTERIOR_10 <- modeled_segments$LOG2_COPY_RATIO_POSTERIOR_10 - AVE_CR
+  modeled_segments$LOG2_COPY_RATIO_POSTERIOR_50 <- modeled_segments$LOG2_COPY_RATIO_POSTERIOR_50 - AVE_CR
+  modeled_segments$LOG2_COPY_RATIO_POSTERIOR_90 <- modeled_segments$LOG2_COPY_RATIO_POSTERIOR_90 - AVE_CR
   
   # Write out the seg file
   SEG <- data.frame("Sample" = rep(sample_name, length(modeled_segments$CONTIG)),
@@ -343,7 +348,7 @@ if (re_center_CNA == TRUE) {
                     "Segment_Mean" = modeled_segments$LOG2_COPY_RATIO_POSTERIOR_50, 
                     stringsAsFactors = TRUE)
   
-  write.table(SEG, file = paste(re_centered_seg_directory, "/", output_prefix, ".re_centered.cr.igv.seg" , sep = "" ), quote = FALSE, row.names = FALSE, sep = "\t")
+  write.table(SEG, file = paste0(re_centered_seg_directory, "/", output_prefix, ".re_centered.cr.igv.seg"), quote = FALSE, row.names = FALSE, sep = "\t")
   
 }
 
@@ -352,20 +357,28 @@ amp <- denoised_copy_ratios[denoised_copy_ratios$LOG2_COPY_RATIO > CNgainLim,]
 del <- denoised_copy_ratios[denoised_copy_ratios$LOG2_COPY_RATIO < CNlossLim,]
 
 # transform to linear copy ratio
-denoised_copy_ratios[["COPY_RATIO"]] = (2^denoised_copy_ratios[["LOG2_COPY_RATIO"]])*2
+denoised_copy_ratios[["COPY_RATIO"]] <- (2^denoised_copy_ratios[["LOG2_COPY_RATIO"]])*2
 
 # determine copy-ratio midpoints
-denoised_copy_ratios[["MIDDLE"]] = round((denoised_copy_ratios[["START"]] + denoised_copy_ratios[["END"]]) / 2)
+denoised_copy_ratios[["MIDDLE"]] <- round((denoised_copy_ratios[["START"]] + denoised_copy_ratios[["END"]]) / 2)
+
+# Calculate dLRs and write to stats file
+dLRs_value <- dLRs(denoised_copy_ratios[["LOG2_COPY_RATIO"]])
+dLRs_value <- data.frame("Sample" = sample_name,
+                         "dLRs" = dLRs_value,
+                         stringsAsFactors = TRUE)
+write.table(dLRs_value, file = paste0(re_centered_seg_directory, "/", output_prefix, ".dLRs.tsv"), quote = FALSE, row.names = FALSE, sep = "\t")
+
 
 #### CNV Multi CHR Plot Function ####
 
-plotCNVgraph = function(plots_directory, output_prefix, denoised_copy_ratios, amp, del, hets, CNgainColor=CNgainColor, CNlossColor=CNlossColor, CNhetColor=CNhetColor, plotHets=TRUE ) {
+plotCNVgraph <- function(plots_directory, output_prefix, denoised_copy_ratios, amp, del, hets, CNgainColor=CNgainColor, CNlossColor=CNlossColor, CNhetColor=CNhetColor, plotHets=TRUE ) {
   
   #create PNG file
   if (plotHets) {
-    fname=paste(plots_directory, "/", output_prefix, '_cna_withhets.png', sep="")
+    fname <- paste0(plots_directory, "/", output_prefix, '_cna_withhets.png')
   } else {
-    fname=paste(plots_directory, "/", output_prefix, '_cna.png', sep="")
+    fname <- paste0(plots_directory, "/", output_prefix, '_cna.png')
   }
   
   png(file=fname,width=500*6*3,height=500*4*3,res=300)
@@ -407,7 +420,7 @@ plotCNVgraph = function(plots_directory, output_prefix, denoised_copy_ratios, am
              cex=1.5)
     }
 
-    x=seq(0,250,25)
+    x <- seq(0,250,25)
     axis(1,at=x)
   }
   
@@ -416,10 +429,10 @@ plotCNVgraph = function(plots_directory, output_prefix, denoised_copy_ratios, am
 
 #### BAF Multi CHR Plot Function ####
 
-plotBAFgraph = function(plots_directory, output_prefix, allelic_counts, BAFcolor=BAFcolor) {
+plotBAFgraph <- function(plots_directory, output_prefix, allelic_counts, BAFcolor=BAFcolor) {
   
   #create PNG file
-  png(file=paste(plots_directory, "/", output_prefix,'_baf.png',sep=''),width=500*6*3,height=500*4*3, res=300)
+  png(file=paste0(plots_directory, "/", output_prefix,'_baf.png'),width=500*6*3,height=500*4*3, res=300)
   par(mfrow=c(6,4))
   
   for (i in contig_names){
@@ -448,9 +461,9 @@ plotBAFgraph = function(plots_directory, output_prefix, allelic_counts, BAFcolor
     )
     abline(h=0.5,lty=2)
     
-    y=seq(0,1,0.5)
+    y <- seq(0,1,0.5)
     axis(2,at=y)
-    x=seq(0,250,25)
+    x <- seq(0,250,25)
     axis(1,at=x)
   }
   invisible(dev.off())
@@ -459,10 +472,10 @@ plotBAFgraph = function(plots_directory, output_prefix, allelic_counts, BAFcolor
 
 #### CNV/BAF Combined Plot Functions ####
 
-SetUpPlot = function(sample_name, y.lab, y.min, y.max, contig_names, contig_starts, contig_ends, do_label_contigs) {
-  num_contigs = length(contig_names)
-  contig_centers = (contig_starts + contig_ends) / 2
-  genome_length = contig_ends[num_contigs]
+SetUpPlot <- function(sample_name, y.lab, y.min, y.max, contig_names, contig_starts, contig_ends, do_label_contigs) {
+  num_contigs <- length(contig_names)
+  contig_centers <- (contig_starts + contig_ends) / 2
+  genome_length <- contig_ends[num_contigs]
   
   if (do_label_contigs) {
     # Bottom plot. Do not plot Main title.
@@ -471,7 +484,7 @@ SetUpPlot = function(sample_name, y.lab, y.min, y.max, contig_names, contig_star
     plot(0, type="n", bty="n", xlim=c(0, genome_length), ylim=c(0, y.max), xlab="", ylab="", main=NULL, xaxt="n")
     
     mtext(side=2.2, line=1.5, y.lab, cex=0.75, las=FALSE, outer=FALSE)
-    mtext(text=contig_names[1:num_contigs], side=1, line=ifelse(c(1:num_contigs) %% 2 == 1, -0.45, 0.0),
+    mtext(text=contig_names[1:num_contigs], side=1, line=ifelse(1:num_contigs %% 2 == 1, -0.45, 0.0),
           at = contig_centers[1:num_contigs], las=1, cex=par("cex.axis") * par("cex") * 0.7)
   } else {
     # Top plot. Do not plot x.lab or contig lables
@@ -485,40 +498,40 @@ SetUpPlot = function(sample_name, y.lab, y.min, y.max, contig_names, contig_star
   
   for (i in 1:num_contigs) {
     if (num_contigs > 1) {
-      use.col = ifelse(i %% 2 == 1, "grey90", "white")
+      use.col <- ifelse(i %% 2 == 1, "grey90", "white")
     } else {
       #use.col = "white"
-      use.col = "grey90"
+      use.col <- "grey90"
     }
     rect(xleft=contig_starts[i], ybottom=y.min, xright=contig_ends[i], ytop=y.max, col=use.col, border=NA)
   }
 }
 
-PlotCopyRatiosWithModeledSegments = function(denoised_copy_ratios, modeled_segments, contig_names, contig_starts, point_size=0.2, CNgainColor=CNgainColor, CNlossColor=CNlossColor, CNgainLim=CNgainLim, CNlossLim=CNlossLim, chr_plots=TRUE, SEGlwd=2, totLength=sum(contig_lengths) ) {
-  points_start_index = 1
-  for (s in 1:nrow(modeled_segments)) {
+PlotCopyRatiosWithModeledSegments <- function(denoised_copy_ratios, modeled_segments, contig_names, contig_starts, point_size=0.2, CNgainColor=CNgainColor, CNlossColor=CNlossColor, CNgainLim=CNgainLim, CNlossLim=CNlossLim, chr_plots=TRUE, SEGlwd=2, totLength=sum(contig_lengths) ) {
+  points_start_index <- 1
+  for (s in seq_len(nrow(modeled_segments))) {
     #skip segments with no points
-    num_points = modeled_segments[s, "NUM_POINTS_COPY_RATIO"]
+    num_points <- modeled_segments[s, "NUM_POINTS_COPY_RATIO"]
     if (num_points == 0) {
       next
     }
-    points_end_index = points_start_index + num_points
     
-    contig = modeled_segments[s, "CONTIG"]
-    offset = contig_starts[match(contig, contig_names)]
+    contig <- modeled_segments[s, "CONTIG"]
+    seg_start <- modeled_segments[s, "START"]
+    seg_stop <- modeled_segments[s, "END"]
+    offset <- contig_starts[match(contig, contig_names)]
+
+    denoised_copy_ratios_range <- denoised_copy_ratios[denoised_copy_ratios$CONTIG == contig & denoised_copy_ratios$START >= seg_start & denoised_copy_ratios$END <= seg_stop, ]
     
-    denoised_copy_ratios_range = denoised_copy_ratios[points_start_index:points_end_index, ]
-    genomic_coordinates = offset + denoised_copy_ratios_range[, "MIDDLE"]
+    genomic_coordinates_max <- offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= 1.584963, "MIDDLE"]
+    genomic_coordinates_gain <- offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO < 1.584963, "MIDDLE"]
+    genomic_coordinates_neutral <- offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNlossLim, "MIDDLE"]
+    genomic_coordinates_loss <- offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNlossLim , "MIDDLE"]
     
-    genomic_coordinates_max = offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= 1.584963, "MIDDLE"]
-    genomic_coordinates_gain = offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO < 1.584963, "MIDDLE"]
-    genomic_coordinates_neutral = offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNlossLim, "MIDDLE"]
-    genomic_coordinates_loss = offset + denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNlossLim , "MIDDLE"]
-    
-    denoised_copy_ratios_max = denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= 1.584963, "COPY_RATIO"]
-    denoised_copy_ratios_gain = denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO < 1.584963, "COPY_RATIO"]
-    denoised_copy_ratios_neutral = denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNlossLim, "COPY_RATIO"]
-    denoised_copy_ratios_loss = denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNlossLim , "COPY_RATIO"]
+    denoised_copy_ratios_max <- denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= 1.584963, "COPY_RATIO"]
+    denoised_copy_ratios_gain <- denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO < 1.584963, "COPY_RATIO"]
+    denoised_copy_ratios_neutral <- denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNgainLim & denoised_copy_ratios_range$LOG2_COPY_RATIO >= CNlossLim, "COPY_RATIO"]
+    denoised_copy_ratios_loss <- denoised_copy_ratios_range[denoised_copy_ratios_range$LOG2_COPY_RATIO < CNlossLim , "COPY_RATIO"]
 
     if (length(genomic_coordinates_max) > 0 ) {
       if( !chr_plots ) {
@@ -538,26 +551,25 @@ PlotCopyRatiosWithModeledSegments = function(denoised_copy_ratios, modeled_segme
       points(x=genomic_coordinates_loss, y=denoised_copy_ratios_loss, col=CNlossColor, pch=".", cex=point_size)
     }
     
-    points_start_index = points_start_index + num_points
+    points_start_index <- points_start_index + num_points
   }
 
-  points_start_index = 1
-  for (s in 1:nrow(modeled_segments)) {
+  points_start_index <- 1
+  for (s in seq_len(nrow(modeled_segments))) {
     #skip segments with no points
-    num_points = modeled_segments[s, "NUM_POINTS_COPY_RATIO"]
+    num_points <- modeled_segments[s, "NUM_POINTS_COPY_RATIO"]
     if (num_points == 0) {
       next
     }
-    points_end_index = points_start_index + num_points
 
-    contig = modeled_segments[s, "CONTIG"]
-    offset = contig_starts[match(contig, contig_names)]
-    segment_start = offset + modeled_segments[s, "START"]
-    segment_end = offset + modeled_segments[s, "END"]
+    contig <- modeled_segments[s, "CONTIG"]
+    offset <- contig_starts[match(contig, contig_names)]
+    segment_start <- offset + modeled_segments[s, "START"]
+    segment_end <- offset + modeled_segments[s, "END"]
 
-    copy_ratio_posterior_10 = (2^modeled_segments[s, "LOG2_COPY_RATIO_POSTERIOR_10"])*2
-    copy_ratio_posterior_50 = (2^modeled_segments[s, "LOG2_COPY_RATIO_POSTERIOR_50"])*2
-    copy_ratio_posterior_90 = (2^modeled_segments[s, "LOG2_COPY_RATIO_POSTERIOR_90"])*2
+    copy_ratio_posterior_10 <- (2^modeled_segments[s, "LOG2_COPY_RATIO_POSTERIOR_10"])*2
+    copy_ratio_posterior_50 <- (2^modeled_segments[s, "LOG2_COPY_RATIO_POSTERIOR_50"])*2
+    copy_ratio_posterior_90 <- (2^modeled_segments[s, "LOG2_COPY_RATIO_POSTERIOR_90"])*2
 
     if( !chr_plots ) {
       if (copy_ratio_posterior_10 > 6 ) {
@@ -574,58 +586,60 @@ PlotCopyRatiosWithModeledSegments = function(denoised_copy_ratios, modeled_segme
     segments(x0=segment_start, y0=copy_ratio_posterior_50, x1=segment_end, y1=copy_ratio_posterior_50, col=SEGcolor, lwd=SEGlwd, lty=1)
     rect(xleft=segment_start, ybottom=copy_ratio_posterior_10, xright=segment_end, ytop=copy_ratio_posterior_90, col=SEGcolor, border=SEGcolor, lwd=1, lty=1)
 
-    points_start_index = points_start_index + num_points
+    points_start_index <- points_start_index + num_points
   }
 
   segments(x0 = 0, y0=2, x1=totLength, y1=2, col="gray70")
 }
 
-PlotAlternateAlleleFractionsWithModeledSegments = function(allelic_counts, modeled_segments, contig_names, contig_starts, point_size=0.4, BAFcolor=BAFcolor) {
-  points_start_index = 1
-  for (s in 1:nrow(modeled_segments)) {
+PlotAlternateAlleleFractionsWithModeledSegments <- function(allelic_counts, modeled_segments, contig_names, contig_starts, point_size=0.4, BAFcolor=BAFcolor) {
+  points_start_index <- 1
+  for (s in seq_len(nrow(modeled_segments))) {
     #skip segments with no points
-    num_points = modeled_segments[s, "NUM_POINTS_ALLELE_FRACTION"]
+    num_points <- modeled_segments[s, "NUM_POINTS_ALLELE_FRACTION"]
     if (num_points == 0) {
       next
     }
-    points_end_index = points_start_index + num_points
     
-    contig = modeled_segments[s, "CONTIG"]
-    offset = contig_starts[match(contig, contig_names)]
-    segment_start = offset + modeled_segments[s, "START"]
-    segment_end = offset + modeled_segments[s, "END"]
-    genomic_coordinates = offset + allelic_counts[points_start_index:points_end_index, "POSITION"]
-    
-    ref_counts = allelic_counts[points_start_index:points_end_index, "REF_COUNT"]
-    alt_counts = allelic_counts[points_start_index:points_end_index, "ALT_COUNT"]
-    alternate_allele_fractions = alt_counts / (alt_counts + ref_counts)
+    contig <- modeled_segments[s, "CONTIG"]
+    offset <- contig_starts[match(contig, contig_names)]
+    seg_start <- modeled_segments[s, "START"]
+    seg_stop <- modeled_segments[s, "END"]
+    segment_start <- offset + modeled_segments[s, "START"]
+    segment_end <- offset + modeled_segments[s, "END"]
+
+    genomic_coordinates <- offset + allelic_counts[allelic_counts$CONTIG == contig & allelic_counts$POSITION >= seg_start & allelic_counts$POSITION <= seg_stop, "POSITION"]
+
+    ref_counts <- allelic_counts[allelic_counts$CONTIG == contig & allelic_counts$POSITION >= seg_start & allelic_counts$POSITION <= seg_stop, "REF_COUNT"]
+    alt_counts <- allelic_counts[allelic_counts$CONTIG == contig & allelic_counts$POSITION >= seg_start & allelic_counts$POSITION <= seg_stop, "ALT_COUNT"]
+    alternate_allele_fractions <- alt_counts / (alt_counts + ref_counts)
     
     points(x=genomic_coordinates, y=alternate_allele_fractions, col=BAFcolor, pch=".", cex=point_size)
     
-    minor_allele_fraction_posterior_10 = modeled_segments[s, "MINOR_ALLELE_FRACTION_POSTERIOR_10"]
-    minor_allele_fraction_posterior_50 = modeled_segments[s, "MINOR_ALLELE_FRACTION_POSTERIOR_50"]
-    minor_allele_fraction_posterior_90 = modeled_segments[s, "MINOR_ALLELE_FRACTION_POSTERIOR_90"]
+    minor_allele_fraction_posterior_10 <- modeled_segments[s, "MINOR_ALLELE_FRACTION_POSTERIOR_10"]
+    minor_allele_fraction_posterior_50 <- modeled_segments[s, "MINOR_ALLELE_FRACTION_POSTERIOR_50"]
+    minor_allele_fraction_posterior_90 <- modeled_segments[s, "MINOR_ALLELE_FRACTION_POSTERIOR_90"]
     
     segments(x0=segment_start, y0=minor_allele_fraction_posterior_50, x1=segment_end, y1=minor_allele_fraction_posterior_50, col="black", lwd=2, lty=1)
     rect(xleft=segment_start, ybottom=minor_allele_fraction_posterior_10, xright=segment_end, ytop=minor_allele_fraction_posterior_90, lwd=1, lty=1)
     
-    major_allele_fraction_posterior_10 = 1 - minor_allele_fraction_posterior_10
-    major_allele_fraction_posterior_50 = 1 - minor_allele_fraction_posterior_50
-    major_allele_fraction_posterior_90 = 1 - minor_allele_fraction_posterior_90
+    major_allele_fraction_posterior_10 <- 1 - minor_allele_fraction_posterior_10
+    major_allele_fraction_posterior_50 <- 1 - minor_allele_fraction_posterior_50
+    major_allele_fraction_posterior_90 <- 1 - minor_allele_fraction_posterior_90
     
     segments(x0=segment_start, y0=major_allele_fraction_posterior_50, x1=segment_end, y1=major_allele_fraction_posterior_50, col="black", lwd=2, lty=1)
     rect(xleft=segment_start, ybottom=major_allele_fraction_posterior_90, xright=segment_end, ytop=major_allele_fraction_posterior_10, lwd=1, lty=1)
     
-    points_start_index = points_start_index + num_points
+    points_start_index <- points_start_index + num_points
   }
 }
 
 #### Build Segmented Plot Function ####
 
-WriteModeledSegmentsPlot = function(sample_name, allelic_counts, denoised_copy_ratios, modeled_segments, contig_names, contig_lengths, output_prefix, plots_directory) {
+WriteModeledSegmentsPlot <- function(sample_name, allelic_counts, denoised_copy_ratios, modeled_segments, contig_names, contig_lengths, output_prefix, plots_directory) {
   
-  output_file = paste(plots_directory, "/", output_prefix, '.png', sep='')
-  num_plots = 2
+  output_file <- paste0(plots_directory, "/", output_prefix, '.png')
+  num_plots <- 2
   
   png(output_file, 12, 3.5 * num_plots, units="in", type="cairo", res=300, bg="white")
   par(mfrow=c(num_plots, 1), cex=0.75, las=1)
@@ -670,25 +684,25 @@ WriteModeledSegmentsPlot = function(sample_name, allelic_counts, denoised_copy_r
   dev.off()
   
   # Make individual contig plots
-  for(i in 1:length(contig_names)) {
+  for(i in seq_along(contig_names)) {
 
-    contig_name = contig_names[i]
-    contig_length = contig_lengths[i]
+    contig_name <- contig_names[i]
+    contig_length <- contig_lengths[i]
     
-    output_file = paste(plots_directory, "/", output_prefix, '_', contig_name, '.png', sep='')
+    output_file <- paste0(plots_directory, "/", output_prefix, '_', contig_name, '.png')
     
-    modeled_segments_filt = modeled_segments[modeled_segments$CONTIG == contig_name, ]
-    denoised_copy_ratios_filt = denoised_copy_ratios[denoised_copy_ratios$CONTIG == contig_name, ]
-    allelic_counts_filt = allelic_counts[allelic_counts$CONTIG == contig_name, ]
+    modeled_segments_filt <- modeled_segments[modeled_segments$CONTIG == contig_name, ]
+    denoised_copy_ratios_filt <- denoised_copy_ratios[denoised_copy_ratios$CONTIG == contig_name, ]
+    allelic_counts_filt <- allelic_counts[allelic_counts$CONTIG == contig_name, ]
     
     if (length(denoised_copy_ratios_filt$COPY_RATIO) == 0) {
       next()
     }
     
-    ymax = ceiling(max(denoised_copy_ratios_filt$COPY_RATIO))
+    ymax <- ceiling(max(denoised_copy_ratios_filt$COPY_RATIO))
     
     if (ymax < 4) {
-      ymax = 4
+      ymax <- 4
     }
     
     png(output_file, 12, 3.5 * num_plots, units="in", type="cairo", res=300, bg="white")
