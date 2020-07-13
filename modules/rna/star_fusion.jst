@@ -291,7 +291,7 @@
     mv {{ temp_dir }}/FusionInspector-inspect/fi_workdir/trinity_GG/Trinity-GG.fasta {{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
 
     {# FusionInspector writes out its own log file to the run dir, so we remove it here #}
-    rm FusionInspector.log
+    rm -f FusionInspector.log
 
     {# Remove the remaining files #}
     {% set task %}fusion_inspector_{{ sample.name }}{% endset %}
