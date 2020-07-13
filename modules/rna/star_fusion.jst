@@ -258,7 +258,7 @@
 
     cd "{{ temp_dir }}"
 
-    NUM_FUSIONS=$(grep -w "#FusionName" -c -v {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv)
+    NUM_FUSIONS=$(grep -w "#FusionName" -c -v ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv)
     if (( NUM_FUSIONS == 0 )); then
         echo "Zero fusions found, skipping FusionInspector"
     else
