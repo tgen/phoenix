@@ -3,7 +3,7 @@
 import os
 import json
 import sys
-import requests
+import requests as requests
 import base64
 import argparse
 from random import randint
@@ -184,6 +184,36 @@ def description(ftype):
     return string
 
 
+def server_request(request_type, url, data, header):
+    """Request server response and try up to 20 time with a delay if unsuccessful"""
+
+    for attempt in range(20):
+        response = requests.request(request_type,
+                                    url,
+                                    data=data,
+                                    headers=header,
+                                    verify=CA)
+
+        print("This is request attempt: " + str(attempt + 1))
+        print(response)
+        print(response.content)
+        print(response.text)
+
+        if response.status_code == 404:
+            if attempt == 19:
+                print("ERROR:\n")
+                raise ValueError("The LIMS server has returned a https 404 error 20 consecutive times.")
+            else:
+                sleep(randint(4, 10))
+                continue
+        else:
+            break
+
+    parsed_response = json.loads(response.text)
+
+    return response, parsed_response
+
+
 # Command line arguments.
 parser = argparse.ArgumentParser(description="Module used to push sample QC stats into the LIMS. Used in conjunction"
                                              " with samStats2json output files", epilog=description(fileTypes),
@@ -243,8 +273,7 @@ headers = {
     }
 
 # Get the token from the response.
-responseToken = requests.request("POST", urlStart, data=payload, headers=headers, verify=CA)
-parsed_responseToken = json.loads(responseToken.text)
+responseToken, parsed_responseToken = server_request("POST", urlStart, payload, headers)
 
 # This step will produce a KeyError if a token was not provided in the response.
 # Possible reasons:
@@ -304,8 +333,7 @@ try:
             json_studyData = json.dumps(studyData)
             json_libraryData = json.dumps(libraryData)
 
-            postResponse1 = requests.request("POST", urlFind, data=json_libraryData, headers=headers, verify=CA)
-            parsed_postResponse1 = json.loads(postResponse1.text)
+            postResponse1, parsed_postResponse1 = server_request("POST", urlFind, json_libraryData, headers)
 
             if postResponse1.status_code != 200:
                 print("ERROR:\n" + "Code: " + str(parsed_postResponse1["messages"][0]["code"]) +
@@ -327,8 +355,7 @@ try:
                 print("Value from KBase: " + db_project)
                 raise Exception('The provided Project does not match the DCL Patient ID in the LIMS.')
 
-            postResponse2 = requests.request("POST", urlFind2, data=json_studyData, headers=headers, verify=CA)
-            parsed_postResponse2 = json.loads(postResponse2.text)
+            postResponse2, parsed_postResponse2 = server_request("POST", urlFind2, json_studyData, headers)
 
             if postResponse2.status_code != 200:
                 print("ERROR:\n" + "Code: " + str(parsed_postResponse2["messages"][0]["code"]) +
@@ -351,13 +378,10 @@ try:
             recordID = str([d['recordId'] for d in parsed_postResponse1['response']['data']][0])
 
             for i in range(20):
-                patchResponse = requests.request("PATCH",
-                                                 urlPatch + recordID,
-                                                 data=json_patchData,
-                                                 headers=headers,
-                                                 verify=CA)
-
-                parsed_patchResponse = json.loads(patchResponse.text)
+                patchResponse, parsed_patchResponse = server_request("PATCH",
+                                                                     urlPatch + recordID,
+                                                                     json_patchData,
+                                                                     headers)
 
                 if patchResponse.status_code != 200:
                     if i == 19:
@@ -387,10 +411,12 @@ finally:
     }
 
     close_payload = ""
+    print("Closing connection...")
 
-    close_response = requests.request("DELETE",
-                                      urlStart + "/" + token,
-                                      data=close_payload,
-                                      headers=close_headers,
-                                      verify=CA)
-    print(close_response)
+    close_response, parsed_close_response = server_request("DELETE",
+                                                           urlStart + "/" + token,
+                                                           close_payload,
+                                                           close_headers)
+
+    if close_response.status_code == 200:
+        print("Connection Closed: " + str(close_response))

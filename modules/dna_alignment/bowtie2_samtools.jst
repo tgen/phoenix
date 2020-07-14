@@ -25,6 +25,7 @@
 {% for fastq in [r1fastq, r2fastq] %}
 - name: split_fastq_{{ fastq.basename | replace(".", "_") }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, split, {{ sample.name }}]
+  reset: predecessors
   input:
     - temp/fastqs/{{ fastq.basename }}
   cpus: 1
@@ -59,6 +60,7 @@
 {% set chunk_suffix = '%02d' % i %}
 - name: chunked_bowtie2_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, {{ sample.name }}]
+  reset: predecessors
   after:
     - split_fastq_{{ r1fastq.basename | replace(".", "_") }}
     - split_fastq_{{ r2fastq.basename | replace(".", "_") }}
@@ -144,6 +146,7 @@
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bowtie2, {{ sample.name }}]
+  reset: predecessors
   after-re: chunked_bowtie2_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
   walltime: "24:00:00"
@@ -186,6 +189,7 @@
 
 - name: samtools_markdup_{{ sample.name }}_bowtie2
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
+  reset: predecessors
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools.verbose }} markdup.
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
@@ -234,6 +238,7 @@
 {% if sample.glprep == 'cutnrun' %}
 - name: spike_in_calibration_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, cutnrun, {{ sample.name }}]
+  reset: predecessors
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
   output: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli_norm.bedgraph
   walltime: "48:00:00"

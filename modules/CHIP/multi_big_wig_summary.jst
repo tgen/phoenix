@@ -12,8 +12,9 @@
   tags: [ cutnrun, chip ]
   input:
   {% for sample in samples.values() if sample.gltype == 'chip' %}
-    {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw
+    - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw
   {% endfor %}
+  output: chip/summary/multiBigWigSummary.npz
   walltime: "48:00:00"
   cpus: 16
   cmd: |

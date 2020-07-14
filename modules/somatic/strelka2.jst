@@ -121,6 +121,7 @@
 
 - name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
+  reset: predecessors
   input:
     - {{ temp_dir }}/results/variants/somatic.indels.vcf.gz
     - {{ temp_dir }}/results/variants/somatic.snvs.vcf.gz

@@ -3,6 +3,7 @@
 
 - name: macs2_callpeak_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
+  reset: predecessors
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
   walltime: "48:00:00"
   cpus: 16
@@ -23,7 +24,7 @@
     bedtools intersect \
       -v \
       -a temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}_peaks.narrowPeak \
-      -b /home/jlang/refgenomeindex/hs38dh/ChIP_blacklist/hg38_blacklist.bed \
+      -b {{ constants.phoenix.chip_black_list }} \
       > temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}_peaksfilter.narrowPeak
 
 {% endmacro %}

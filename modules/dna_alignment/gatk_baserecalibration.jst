@@ -6,6 +6,7 @@
 {% for batch in constants.phoenix.sequence_groupings %}
 - name: baserecalibration_table_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
+  reset: predecessors
   input: temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam
   walltime: "4:00:00"
   cpus: 4
@@ -37,6 +38,7 @@
 
 - name: gather_bqsr_reports_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
+  reset: predecessors
   after-re: baserecalibration_table_{{ sample.name }}_{{ aligner }}_.*
   walltime: "4:00:00"
   cpus: 4
@@ -59,6 +61,7 @@
 {% for batch in constants.phoenix.sequence_groupings %}
 - name: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
+  reset: predecessors
   methods: Reads for {{ sample.name }} were processed with
     {{ constants.tools.gatk.verbose }} BaseRecalibrator to correct
     systematic errors in base quality scores.
@@ -95,6 +98,7 @@
 
 - name: merge_bqsr_bam_chunks_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, alignment, base_recalibration, gatk, {{ sample.name }}]
+  reset: predecessors
   after-re: apply_base_recalibration_{{ sample.name }}_{{ aligner }}_.*
   output:
     - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam

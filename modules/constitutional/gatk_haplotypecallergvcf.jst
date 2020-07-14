@@ -39,6 +39,7 @@
 
 - name: haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
+  reset: predecessors
   input:
     {% for batch in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.g.vcf.gz

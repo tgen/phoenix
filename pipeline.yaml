@@ -368,6 +368,7 @@ constants:
     clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
     bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
     black_list: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz
+    chip_black_list: /home/tgenref/homo_sapiens/grch38_hg38/hs38dh/tool_specific_resources/ChIP_blacklist/hg38_blacklist.bed
     delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
     delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF_f4d178e.py
@@ -376,10 +377,10 @@ constants:
     manta_gene_annotation_parallel: manta_sv_annotation_parallel_8820499.py
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
     cna_seg_extend: seg_extend_229b8c7.py
-    plotCNVplus_Rscript: plotCNVplus_06b34ff.R
+    plotCNVplus_Rscript: plotCNVplus_c0949e.R
     plotSamStats_Rscript: summarize_samstats_6d78ea8.R
     stats2json: samStats2json_b7fd4d1.py
-    stats2lims: uploadStats2Lims_090aaf3.py
+    stats2lims: uploadStats2Lims_2c972f.py
     annotSeg_script: annotSeg_8820499.pl
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0

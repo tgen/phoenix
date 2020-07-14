@@ -46,6 +46,7 @@
 
 - name: freebayes_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
+  reset: predecessors
   input:
     {% for batch in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.vcf

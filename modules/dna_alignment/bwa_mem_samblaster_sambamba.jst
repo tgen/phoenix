@@ -37,6 +37,7 @@
 
 - name: cat_fastqs_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
+  reset: predecessors
   input:
   {% for fastq in fastqs_to_depend %}
     - {{ fastq }}
@@ -59,6 +60,7 @@
 
 - name: bwa_mem_samblaster_sambamba_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, mark_duplicates, bwa, samblaster, sambamba, {{ sample.name }}]
+  reset: predecessors
   input:
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/{{ sample.rglb }}_R1_merged.fastq.gz
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.rglb }}/{{ sample.rglb }}_R2_merged.fastq.gz

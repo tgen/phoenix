@@ -177,6 +177,7 @@
 
 - name: fixmate_sort_star_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
+  reset: predecessors
   input: {{ star_bam_unsort }}
   output: {{ star_bam_sorted }}
   cpus: 8
@@ -258,6 +259,7 @@ which appears to be working now after some code changes, keeping this here in ca
 #}
 - name: markduplicates_star_gatk_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
+  reset: predecessors
   input: {{ star_bam_sorted }}
   output:
     - {{ star_bam_final }}
@@ -320,6 +322,7 @@ which appears to be working now after some code changes, keeping this here in ca
 {% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
 - name: htseq_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, HTseq, {{ sample.name }}]
+  reset: predecessors
   input: {{ star_bam_unsort }}
   output: {{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
   cpus: 2
@@ -366,6 +369,7 @@ which appears to be working now after some code changes, keeping this here in ca
 {% if tasks.RNA_transcriptome_quantify_expression_subread_featureCounts|default(true) %}
 - name: featurecounts_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, subread_featureCounts, {{ sample.name }}]
+  reset: predecessors
   input: {{ star_bam_unsort }}
   output: 
     - {{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv

@@ -72,6 +72,7 @@
 
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
+  reset: predecessors
   input:
     {% for b in constants.phoenix.calling_intervals %}
     - {{ temp_dir }}/{{ loop.index }}.lancet.vcf
