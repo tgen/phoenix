@@ -103,6 +103,8 @@ option_list <- list(
               help = "[Optional] Min allele frequency to keep hets [default %default]"),
   make_option(c("--hetAFhigh", "-F"), dest="hetAFhigh", action="store", default=0.6,
               help = "[Optional] Max allele frequency to keep hets [default %default]"),
+  make_option(c("--hetMAFposteriorOffset", "-z"), dest="hetMAFposteriorOffset", action="store", default=0.01,
+              help = "[Optional] Value to be added/subtracted to MINOR_ALLELE_FRACTION_POSTERIOR_10 and MINOR_ALLELE_FRACTION_POSTERIOR_90 from modeled_segments_file for filter hets. [default %default]"),
   make_option(c("--point_size", "-p"), dest="point_size", action="store", default=2,
               help = "[Optional] Size of points to be ploted [default %default]"),
   make_option(c("--lowerCNvalidatePeakOffset", "-j"), dest="lowerCNvalidatePeakOffset", action="store", default=0.125,
@@ -148,6 +150,7 @@ CNlossLim <- opt[["CNlossLim"]]
 hetDPfilter <- opt[["hetDPfilter"]]
 hetAFlow <- opt[["hetAFlow"]]
 hetAFhigh <- opt[["hetAFhigh"]]
+hetMAFposteriorOffset <- opt[["hetMAFposteriorOffset"]]
 point_size <- opt[["point_size"]]
 lowerCNvalidatePeakOffset <- opt[["lowerCNvalidatePeakOffset"]]
 UpperCNvalidatePeakOffset <- opt[["UpperCNvalidatePeakOffset"]]
@@ -205,6 +208,10 @@ denoised_copy_ratios <- ReadTSV(denoised_copy_ratios_file)
 allelic_counts <- ReadTSV(allelic_counts_file)
 modeled_segments <- ReadTSV(modeled_segments_file)
 
+setDT(denoised_copy_ratios)
+setDT(allelic_counts)
+setDT(modeled_segments)
+
 #### Process Files, lists, and perform recentering if specified  ####
 
 contig_ends <- cumsum(contig_lengths)
@@ -216,22 +223,25 @@ allelic_counts$DP <- allelic_counts$REF_COUNT + allelic_counts$ALT_COUNT
 allelic_counts$AF <- allelic_counts$ALT_COUNT/allelic_counts$DP
 allelic_counts$MB <- allelic_counts$POSITION/1000000
 
+# Filter the hets in the allelic counts file by depth, and min and max allele frequency
 hets <- allelic_counts[allelic_counts$DP >= hetDPfilter & allelic_counts$AF >= hetAFlow & allelic_counts$AF <= hetAFhigh,]
 
-# Annotate each het with it's coresponding copy number ratio
-for (row in seq_len(nrow(hets))) {
-  line <- hets[row,]
-  contig <- line$CONTIG
-  pos <- line$POSITION
-  
-  CNR <- denoised_copy_ratios[denoised_copy_ratios$CONTIG == contig & denoised_copy_ratios$START <= pos & denoised_copy_ratios$END >= pos,]$LOG2_COPY_RATIO
-  
-  if ( length(CNR) > 0) {
-    hets$LOG2_COPY_RATIO[hets$CONTIG == contig & hets$POSITION == pos] <- CNR
-  }
-}
+# Filter out hets that are not MINOR_ALLELE_FRACTION_POSTERIOR_10 < AF < MINOR_ALLELE_FRACTION_POSTERIOR_90
+hets$MAF <- ifelse(hets$AF >= 0.5, 1-hets$AF, hets$AF)
 
+hets <- hets[modeled_segments, on = .(CONTIG, POSITION >= START, POSITION <= END), MINOR_ALLELE_FRACTION_POSTERIOR_10 := i.MINOR_ALLELE_FRACTION_POSTERIOR_10 ][]
+hets <- hets[modeled_segments, on = .(CONTIG, POSITION >= START, POSITION <= END), MINOR_ALLELE_FRACTION_POSTERIOR_90 := i.MINOR_ALLELE_FRACTION_POSTERIOR_90 ][]
+
+hets <- hets[hets$MAF >= hets$MINOR_ALLELE_FRACTION_POSTERIOR_10 - hetMAFposteriorOffset & hets$MAF <= hets$MINOR_ALLELE_FRACTION_POSTERIOR_90 + hetMAFposteriorOffset,]
+
+# Annotate each het with it's coresponding copy number ratio
+hets <- hets[denoised_copy_ratios, on = .(CONTIG, POSITION >= START, POSITION <= END), LOG2_COPY_RATIO := i.LOG2_COPY_RATIO ][]
 hets <- na.omit(hets)
+
+setDF(hets)
+setDF(denoised_copy_ratios)
+setDF(allelic_counts)
+setDF(modeled_segments)
 
 # Re-Center copy number values
 if (re_center_CNA == TRUE) {
