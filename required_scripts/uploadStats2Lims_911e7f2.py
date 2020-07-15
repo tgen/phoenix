@@ -202,7 +202,7 @@ def server_request(request_type, url, data, header):
         if response.status_code == 502:
             if attempt == 19:
                 print("ERROR:\n")
-                raise ValueError("The LIMS server has returned a https 404 error 20 consecutive times.")
+                raise ValueError("The LIMS server has returned a https 502 error 20 consecutive times.")
             else:
                 sleep(randint(4, 10))
                 continue
