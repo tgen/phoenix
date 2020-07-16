@@ -103,7 +103,7 @@
     mv {{ temp_dir }}/{{ sample.name }}_Aligned.sortedByCoord.out.bam {{ alignment_outdir }}/{{ sample.name }}.starSOLO.bam
     samtools index -@ 10 {{ alignment_outdir }}/{{ sample.name }}.starSOLO.bam
 
-    mv {{ temp_dir }}/Barcodes.stats {{ metrics_output }}
+    mv {{ temp_dir }}/{{ sample.name }}_Solo.out/Barcodes.stats {{ metrics_output }}
     mv {{ temp_dir }}/{{ sample.name }}_Log.final.out {{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Log.final.out
 
     mv {{ temp_dir }}/transcripts.tsv {{ results_dir }}/{{ sample.name }}.starSOLO.transcripts.tsv
