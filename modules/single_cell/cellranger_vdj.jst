@@ -116,9 +116,6 @@
     mv {{ cellranger_out }}/vloupe.vloupe {{ outdir }}/{{ sample.name }}.cellranger_vdj.vloupe
     mv {{ cellranger_out }}/web_summary.html {{ outdir }}/stats/{{ sample.name }}.cellranger_vdj.bam.web_summary.html
 
-    {# move everything to the output directory #}
-    mv {{ cellranger_out }}/* {{ outdir }}/
-
   {{- stats2json(sample.gltype, sample.name, task, metrics_output, json, "cellranger_vdj_metrics", sample_name=sample.name, library_name=sample.rglb) }}
 
 {% endmacro %}
