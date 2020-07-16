@@ -41,7 +41,6 @@
     - {{ alignment_outdir }}/{{ sample.name }}.starSOLO.bam.bai
     - {{ metrics_output }}
     - {{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Log.final.out
-    - {{ results_dir }}/{{ sample.name }}.starSOLO.transcripts.tsv
   cpus: 20
   mem: 120G
   walltime: "48:00:00"
@@ -89,7 +88,7 @@
       --soloBarcodeReadLength 0 \
       --soloCBmatchWLtype 1MM_multi_pseudocounts \
       --soloStrand {{ sample.rnaStrandDirection }} \
-      --soloFeatures Gene SJ GeneFull Transcript3p \
+      --soloFeatures Gene SJ GeneFull \
       --soloUMIdedup 1MM_All \
       --soloUMIfiltering MultiGeneUMI \
       --soloOutFileNames Solo.out/ {{ sample.name }}.starSOLO.features.tsv {{ sample.name }}.starSOLO.barcodes.tsv {{ sample.name }}.starSOLO.matrix.mtx \
@@ -106,7 +105,6 @@
     mv {{ temp_dir }}/{{ sample.name }}_Solo.out/Barcodes.stats {{ metrics_output }}
     mv {{ temp_dir }}/{{ sample.name }}_Log.final.out {{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Log.final.out
 
-    mv {{ temp_dir }}/transcripts.tsv {{ results_dir }}/{{ sample.name }}.starSOLO.transcripts.tsv
     mv {{ temp_dir }}/{{ sample.name }}_Solo.out/* {{ results_dir }}/
 
   {{ bam_to_cram(sample, aligner='starSOLO') }}
