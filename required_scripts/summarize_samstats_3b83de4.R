@@ -35,7 +35,12 @@ option_list = list(
               type="character",
               default=NA,
               help="Unique Read Group Identifier(ie. Bam spec: RG_ID) [NA]",
-              metavar="RG_ID")
+              metavar="RG_ID"),
+  make_option(c("-f", "--readformat"),
+              type="character",
+              default="PairedEnd",
+              help="Sequencing Read Format (PairedEnd or SingleEnd) [PairedEnd]",
+              metavar="Format PE or SE")
 );
 
 opt_parser = OptionParser(option_list=option_list);
@@ -842,22 +847,24 @@ stats_file <- read_lines(opt$samtoolsStatsFile)
 
 # Execute summaries of samtools stats output
 if (!is.null(opt$samtoolsStatsFile)) {
-  
+
   # Extract summary stats
   print("Summarizing Samtools stats Summary Numbers Statistics:")
   # Call Coverage Summary
   summaryNumbers_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
-  
+
   # Calculate coverage
   print("Summarizing Samtools stats Coverage Statistics:")
   # Call Coverage Summary
   median_cov <- coverage_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
-  
-  # Calculate insert size and fraction of reads crossing over
-  print("Summarizing Samtools stats Insert Size Statistics:")
-  # Call the insertSize function
-  insertSize_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
-  
+
+  if ( opt$readformat == "PairedEnd") {
+    # Calculate insert size and fraction of reads crossing over
+    print("Summarizing Samtools stats Insert Size Statistics:")
+    # Call the insertSize function
+    insertSize_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
+  }
+
   # Calcualte per cycle and overal base quality distributions
   print("Summarizing Samtools stats Base Quality Statistics:")
   # Call the base quality function
