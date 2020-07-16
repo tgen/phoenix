@@ -105,7 +105,7 @@ baseDistribution_summary <- function(input, bam, rgsm, rglb, rgid) {
 
 }
 
-baseQuality_summary <- function(input, bam, rgsm, rglb, rgid) {
+baseQuality_summary <- function(input, bam, rgsm, rglb, rgid, format) {
   ## Import first fragment base qualities and distirbution
   ffbq <- grep("^FFQ",input, value=TRUE)
   ffbq <- separate(tibble(ffbq),
@@ -123,29 +123,29 @@ baseQuality_summary <- function(input, bam, rgsm, rglb, rgid) {
     select(Read, Cycle, BaseQuality, Bases) %>%
     mutate(Total_BaseQuality = BaseQuality * Bases)
 
-  ## Import second fragment base qualities and distirbution
-  sfbq <- grep("^LFQ",input, value=TRUE)
-  sfbq <- separate(tibble(sfbq),
-                   col=1,
-                   into = c("ID","Cycle", seq(from = 0, to = 40, by = 1)),
-                   sep="\t") %>%
-    type_convert() %>%
-    select(-ID)
-  # Convert to longformat to make graphing easier and add column to indicate read of origin
-  sfbq_long <- sfbq %>%
-    pivot_longer(-Cycle, names_to = "BaseQuality", values_to = "Bases") %>%
-    add_column(Read = "Second") %>% type_convert()
-  # Create new column with the total quality value
-  sfbq_long <- sfbq_long %>%
-    select(Read, Cycle, BaseQuality, Bases) %>%
-    mutate(Total_BaseQuality = BaseQuality * Bases)
+  if (format == "PairedEnd") {
+    ## Import second fragment base qualities and distirbution
+    sfbq <- grep("^LFQ",input, value=TRUE)
+    sfbq <- separate(tibble(sfbq),
+                     col=1,
+                     into = c("ID","Cycle", seq(from = 0, to = 40, by = 1)),
+                     sep="\t") %>%
+      type_convert() %>%
+      select(-ID)
+    # Convert to longformat to make graphing easier and add column to indicate read of origin
+    sfbq_long <- sfbq %>%
+      pivot_longer(-Cycle, names_to = "BaseQuality", values_to = "Bases") %>%
+      add_column(Read = "Second") %>% type_convert()
+    # Create new column with the total quality value
+    sfbq_long <- sfbq_long %>%
+      select(Read, Cycle, BaseQuality, Bases) %>%
+      mutate(Total_BaseQuality = BaseQuality * Bases)
 
-  # Join the two tables together, remove lines with Bases = NA
-  bq_table <- bind_rows(ffbq_long, sfbq_long) %>% filter(!is.na(Bases))
-
-  # Write out temp file that will be overwriten
-  #write_tsv(bq_table,paste(bam, "samtools_baseQualityYield_summary.tsv", sep = "_"))
-  #bq_table <- read_tsv(paste(bam, "samtools_baseQualityYield_summary.tsv", sep = "_"))
+    # Join the two tables together, remove lines with Bases = NA
+    bq_table <- bind_rows(ffbq_long, sfbq_long) %>% filter(!is.na(Bases))
+  } else {
+    bq_table <- ffbq_long
+  }
 
   # Summarize the overall yield
   bq_summary <- bq_table %>%
@@ -168,17 +168,29 @@ baseQuality_summary <- function(input, bam, rgsm, rglb, rgid) {
   plot1_data <- bq_table %>%
     group_by(Read, BaseQuality) %>%
     summarise(TotalBases = sum(Bases))
+
   # Get sum of total bases for each read
-  r1_base_sum <- plot1_data %>% filter(Read == "First") %>% summarise(Bases_Sum = sum(TotalBases)) %>% pull(var = Bases_Sum)
-  r2_base_sum <- plot1_data %>% filter(Read == "Second") %>% summarise(Bases_Sum = sum(TotalBases)) %>% pull(var = Bases_Sum)
-  # Calculate the percentage of each base quality by cycle
-  plot1_data <- plot1_data %>%
-    mutate(Percent_Bases = case_when(Read == "First" ~ TotalBases / r1_base_sum,
-                                     Read == "Second" ~ TotalBases / r2_base_sum)) %>%
-    add_column(Sample = rgsm) %>%
-    add_column(Library = rglb) %>%
-    add_column(Read_Group = rgid) %>%
-    add_column(BAM_File = bam)
+  if (format == "PairedEnd") {
+    r1_base_sum <- plot1_data %>% filter(Read == "First") %>% summarise(Bases_Sum = sum(TotalBases)) %>% pull(var = Bases_Sum)
+    r2_base_sum <- plot1_data %>% filter(Read == "Second") %>% summarise(Bases_Sum = sum(TotalBases)) %>% pull(var = Bases_Sum)
+    # Calculate the percentage of each base quality by cycle
+    plot1_data <- plot1_data %>%
+      mutate(Percent_Bases = case_when(Read == "First" ~ TotalBases / r1_base_sum,
+                                       Read == "Second" ~ TotalBases / r2_base_sum)) %>%
+      add_column(Sample = rgsm) %>%
+      add_column(Library = rglb) %>%
+      add_column(Read_Group = rgid) %>%
+      add_column(BAM_File = bam)
+  } else {
+    r1_base_sum <- plot1_data %>% filter(Read == "First") %>% summarise(Bases_Sum = sum(TotalBases)) %>% pull(var = Bases_Sum)
+    # Calculate the percentage of each base quality by cycle
+    plot1_data <- plot1_data %>%
+      mutate(Percent_Bases = case_when(Read == "First" ~ TotalBases / r1_base_sum)) %>%
+      add_column(Sample = rgsm) %>%
+      add_column(Library = rglb) %>%
+      add_column(Read_Group = rgid) %>%
+      add_column(BAM_File = bam)
+  }
 
   # Save the data
   write_tsv(plot1_data,paste(bam, "samtools_baseQualityDistribution_histogram.tsv", sep = "_"))
@@ -868,7 +880,7 @@ if (!is.null(opt$samtoolsStatsFile)) {
   # Calcualte per cycle and overal base quality distributions
   print("Summarizing Samtools stats Base Quality Statistics:")
   # Call the base quality function
-  baseQuality_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
+  baseQuality_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup, opt$readformat)
   
   # Plot Base distribution by Cycle
   print("Summarizing Samtools stats Base Distribution per Cycle:")
