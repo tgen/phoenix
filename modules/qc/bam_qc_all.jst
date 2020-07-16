@@ -156,7 +156,12 @@
         --samtoolsStatsFile={{ bam|basename }}.bamstats.txt \
         --bam={{ bam|basename }} \
         --sample={{ sample.name }} \
-        --library={{ sample_lb }}
+        --library={{ sample_lb }} \
+        {% if sample.gltype == 'singlecellrna' %}
+        --readformat=SingleEnd
+        {% else %}
+        --readformat=PairedEnd
+        {% endif %}
 
     {% if libraryCount == 1 %}
       cp {{ bam|basename }}.bamstats.txt {{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.bamstats.txt
@@ -168,10 +173,14 @@
         --library={{ sample_lb }}
     {% endif %}
 
-    {% if libraryCount == 1 or sample.gltype == 'singlecellrna' or bam_level is sameas false %}
+    {% if libraryCount == 1 or bam_level is sameas false %}
       {{ stats2json(sample.gltype, sample.name, task, baseQuality_output, baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, coverage_output, coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, insertSize_output, insertSize_output_json, "samtools_insertSize_summary", sample_name=sample.name, library_name=sample_lb) }}
+      {{ stats2json(sample.gltype, sample.name, task, summaryNumbers_output, summaryNumbers_output_json, "samtools_summaryNumbers_summary", sample_name=sample.name, library_name=sample_lb) }}
+    {% elif sample.gltype == 'singlecellrna' %}
+      {{ stats2json(sample.gltype, sample.name, task, baseQuality_output, baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, library_name=sample_lb) }}
+      {{ stats2json(sample.gltype, sample.name, task, coverage_output, coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, summaryNumbers_output, summaryNumbers_output_json, "samtools_summaryNumbers_summary", sample_name=sample.name, library_name=sample_lb) }}
     {% endif %}
 
@@ -427,8 +436,10 @@
       pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias%d.pdf
       mv {{ results_dir }}/{{ bam|basename }}.gc_bias2.pdf {{ results_dir }}/{{ bam|basename }}.gc_bias.pdf
 
-      pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram%d.pdf
-      mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
+      if [ -f "{{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf" ]; then
+        pdfseparate -f 2 {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram%d.pdf
+        mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
+      fi
 
       {{ stats2json(sample.gltype, sample.name, task, error_metrics, error_metrics_json, "picard_error_summary_metrics", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, quality_yield_metrics, quality_yield_metrics_json, "picard_quality_yield_metrics", sample_name=sample.name, library_name=sample_lb) }}
@@ -436,7 +447,9 @@
 
   {% if bam_level is sameas true %}
     {{ stats2json(sample.gltype, sample.name, task, alignment_summary_metrics, alignment_summary_metrics_json, "picard_alignment_summary_metrics") }}
+    {% if not sample.gltype == 'singlecellrna' %}
     {{ stats2json(sample.gltype, sample.name, task, insert_size_metrics, insert_size_metrics_json, "picard_insert_size_metrics") }}
+    {% endif %}
     {{ stats2json(sample.gltype, sample.name, task, gc_bias_metrics, gc_bias_metrics_json, "picard_gc_bias_summary_metrics") }}
   {% endif %}
 
