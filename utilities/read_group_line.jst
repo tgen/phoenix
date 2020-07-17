@@ -1,13 +1,21 @@
 {% macro read_group_line(rg, format='bwa') -%}
+{% if format == 'singleCellRNA' %}
 {% set tags = [
   'ID:{}'.format(rg.rgid),
   'LB:{}'.format(rg.rglb),
   'PU:{}'.format(rg.rgpu),
-  {% if format == 'singleCellRNA' %}
   'SM:{}'.format(rg.sampleName),
-  {% else %}
+  'PL:{}'.format(rg.rgpl),
+  'CN:{}'.format(rg.rgcn|default('tgen')),
+  'PM:{}'.format(rg.rgpm),
+  'BC:{}'.format(rg.rgbc|default('unknown'))
+] %}
+{% else %}
+{% set tags = [
+  'ID:{}'.format(rg.rgid),
+  'LB:{}'.format(rg.rglb),
+  'PU:{}'.format(rg.rgpu),
   'SM:{}'.format(rg.rgsm|default(rg.sampleName)),
-  {% endif %}
   'PL:{}'.format(rg.rgpl),
   'CN:{}'.format(rg.rgcn|default('tgen')),
   'PM:{}'.format(rg.rgpm),
