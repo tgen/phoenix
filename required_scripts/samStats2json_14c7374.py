@@ -198,6 +198,11 @@ fileTypes = {
         "help": "\"bam_name.metrics_summary.csv\" file generated from the cellranger task in the "
                 "phoenix pipeline. "
     },
+    "cellranger_vdj_metrics": {
+        "cellrangerVDJMetrics": True,
+        "help": "\"bam_name.metrics_summary.csv\" file generated from the cellranger task in the "
+                "phoenix pipeline. "
+    },
     "starsolo_metrics": {
         "starsoloMetrics": True,
         "help": "\"bam_name.Barcodes.stats\" file generated from the starsolo_count task in the "
@@ -1010,7 +1015,7 @@ def snpsniffer_summary_data_extract(file_col_list):
 
 
 def cellranger_metrics_data_extract(dict_list_stats, sample_index, library_index, read_group_index):
-    """Extract data from a bt cell counts file."""
+    """Extract data from a cellranger metrics_summary.csv file."""
 
     output_dict = {}
 
@@ -1197,6 +1202,14 @@ if __name__ == '__main__':
         )
 
     if "cellrangerMetrics" in fileTypes[args.filetype]:
+        final_json = cellranger_metrics_data_extract(
+            dict_list[0],
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
+
+    if "cellrangerVDJMetrics" in fileTypes[args.filetype]:
         final_json = cellranger_metrics_data_extract(
             dict_list[0],
             args.samplename,
