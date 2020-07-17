@@ -797,7 +797,7 @@ markdup_summary <- function(file, bam, rgsm, rglb, rgid) {
 }
 
 # Function to summarize samtools stats summary numbers
-summaryNumbers_summary <- function(input, bam, rgsm, rglb, rgid) {
+summaryNumbers_summary <- function(input, bam, rgsm, rglb, rgid, format) {
   # Import data table
   sn <- grep("^SN",input, value=TRUE)
   sn <- separate(tibble(sn),
@@ -819,9 +819,15 @@ summaryNumbers_summary <- function(input, bam, rgsm, rglb, rgid) {
   # Transpose and ensure order matches original vertical table order and update types from character
   flipped_sn <- sn %>% spread(Name, Value) %>% select(sn$Name) %>% type_convert()
 
-  # Add column for chimeric reads
-  flipped_sn <- flipped_sn %>%
-    mutate(PERCENT_CHIMERA = pairs_on_different_chromosomes / reads_mapped_and_paired)
+  # Add column for chimeric reads (if single-end, chimeras cannot be determined so force to 0)
+  if (format == "PairedEnd") {
+    flipped_sn <- flipped_sn %>%
+      mutate(PERCENT_CHIMERA = pairs_on_different_chromosomes / reads_mapped_and_paired)
+  } else {
+    flipped_sn <- flipped_sn %>%
+      mutate(PERCENT_CHIMERA = 0)
+  }
+
 
   # Add columns with sample meta data
   flipped_sn <- flipped_sn %>%
@@ -863,7 +869,7 @@ if (!is.null(opt$samtoolsStatsFile)) {
   # Extract summary stats
   print("Summarizing Samtools stats Summary Numbers Statistics:")
   # Call Coverage Summary
-  summaryNumbers_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
+  summaryNumbers_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup, opt$readformat)
 
   # Calculate coverage
   print("Summarizing Samtools stats Coverage Statistics:")
