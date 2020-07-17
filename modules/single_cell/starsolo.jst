@@ -23,12 +23,10 @@
 {% set rglinelist = [] %}
 {% for fq in files|selectattr('fastqCode', 'eq', 'R1') %}
   {% do cb_umi_list.append(fq.basename) %}
+  {% do rglinelist.append(read_group_line(fq, format='singleCellRNA')) %}
 {% endfor %}
 {% for fq in files|selectattr('fastqCode', 'eq', 'R2') %}
   {% do cdna_list.append(fq.basename) %}
-{% endfor %}
-{% for fq in files %}
-  {% do rglinelist.append(read_group_line(fq, format='singleCellRNA')) %}
 {% endfor %}
 
 - name: starsolo_count_{{ sample.name }}
