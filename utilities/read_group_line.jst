@@ -3,7 +3,11 @@
   'ID:{}'.format(rg.rgid),
   'LB:{}'.format(rg.rglb),
   'PU:{}'.format(rg.rgpu),
+  {% if format == 'singleCellRNA' %}
+  'SM:{}'.format(rg.sampleName),
+  {% else %}
   'SM:{}'.format(rg.rgsm|default(rg.sampleName)),
+  {% endif %}
   'PL:{}'.format(rg.rgpl),
   'CN:{}'.format(rg.rgcn|default('tgen')),
   'PM:{}'.format(rg.rgpm),
@@ -12,7 +16,7 @@
 {% if format == 'bwa' %}
   {# BWA requires one argument with fields separated by \t #}
   {% set rg_line = '\\t'.join(['@RG'] + tags) %}
-{% elif format == 'star' %}
+{% elif format == 'star' or format == 'singleCellRNA' %}
   {# STAR requires one argument per field #}
   {% set wrapped_tags = [] %}
   {% for tag in tags %}
