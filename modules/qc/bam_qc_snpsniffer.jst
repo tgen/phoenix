@@ -39,9 +39,15 @@
 
     {# Collect all of the library level snpSniffer vcf results into the temp directory #}
     {% for sample in samples.values() %}
-      {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
-        rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
-      {% endfor %}
+      {% if not sample.glprep == 'singlecellenrichment' %}
+        {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+          {% if sample.gltype == 'singlecellrna' %}
+            rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}_{{ sample_lb }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
+          {% else %}
+            rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
+          {% endif %}
+        {% endfor %}
+      {% endif %}
     {% endfor %}
 
     cd temp/snpsniffer
