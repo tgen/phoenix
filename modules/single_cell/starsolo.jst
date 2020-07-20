@@ -14,7 +14,7 @@
 {% set metrics_output %}{{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Barcodes.stats{% endset %}
 {% set results_dir %}{{ sample.gltype }}/expression_estimates/starSOLO/{{ sample.name }}{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/expression_estimates/starSOLO/{{ sample.name }}{% endset %}
-{% set task %}cellranger_count_{{ sample.name }}{% endset %}
+{% set task %}starsolo_count_{{ sample.name }}{% endset %}
 {% set json %}{{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Barcodes.stats.json{% endset %}
 
 {# Local Temp Variables #}
