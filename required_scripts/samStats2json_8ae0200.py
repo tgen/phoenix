@@ -684,7 +684,7 @@ def picard_add_metrics_to_dict(data_list, data_list_stats, data_head_all,
 
     # Loops through each row within the input file excluding the SAMPLE, LIBRARY, and READ_GROUP columns
     for row_index, data_line in enumerate(data_list_stats):
-        if rows_per_level != 1:
+        if rows_per_level != 1 or data_head_stats[0] == "CATEGORY":
             # Loops through each stat column modifying the key name by concatenating
             # the column name with the CATEGORY columns
             for key_name in data_head_stats[cols_to_concat:]:
