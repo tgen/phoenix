@@ -441,7 +441,9 @@
         mv {{ results_dir }}/{{ bam|basename }}.insert_size_histogram2.pdf {{ results_dir }}/{{ bam|basename }}.insert_size_histogram.pdf
       fi
 
-      {{ stats2json(sample.gltype, sample.name, task, error_metrics, error_metrics_json, "picard_error_summary_metrics", sample_name=sample.name, library_name=sample_lb) }}
+      {% if sample.gltype != 'singlecellrna' %}
+        {{ stats2json(sample.gltype, sample.name, task, error_metrics, error_metrics_json, "picard_error_summary_metrics", sample_name=sample.name, library_name=sample_lb) }}
+      {% endif %}
       {{ stats2json(sample.gltype, sample.name, task, quality_yield_metrics, quality_yield_metrics_json, "picard_quality_yield_metrics", sample_name=sample.name, library_name=sample_lb) }}
     {% endif %}
 
@@ -548,19 +550,12 @@
     mv {{ input_base }}/{{ bam|basename }}.oxog_metrics {{ results_dir }}/
     {% endif %}
 
-  {% if sample.gltype == 'singlecellrna' %}
-    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
-    {% set input %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
-    {% set output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.oxog_metrics_summary.json{% endset %}
-    {{ stats2json(sample.gltype, sample.name, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample.rglb) }}
-  {% else %}
     {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
       {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
       {% set input %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.tsv{% endset %}
       {% set output_json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.oxog_metrics_summary.json{% endset %}
       {{ stats2json(sample.gltype, sample.name, task, input, output_json, "oxog_metrics_summary", sample_name=sample.name, library_name=sample_lb) }}
     {% endfor %}
-  {% endif %}
 {% endif %}
 {% endmacro %}
 
