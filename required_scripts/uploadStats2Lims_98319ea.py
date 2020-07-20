@@ -80,7 +80,12 @@ fileTypes = {
     },
     "cellranger_metrics": {
         "prefix": "cellranger_metrics_",
-        "help": "\"project_name.SnpSniffer_Mismatch_Summary.tsv\" file generated from the cellranger "
+        "help": "\".cellranger_count.bam.metrics_summary.csv\" file generated from the cellranger "
+                "task in the phoenix pipeline. "
+    },
+    "cellranger_vdj_metrics": {
+        "prefix": "cellranger_metrics_",
+        "help": "\".cellranger_vdj.bam.metrics_summary.csv\" file generated from the cellranger_vdj_ "
                 "task in the phoenix pipeline. "
     },
     "starsolo_metrics": {

@@ -378,9 +378,9 @@ constants:
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
-    plotSamStats_Rscript: summarize_samstats_831ac0a.R
-    stats2json: samStats2json_b7fd4d1.py
-    stats2lims: uploadStats2Lims_911e7f2.py
+    plotSamStats_Rscript: summarize_samstats_69627ba.R
+    stats2json: samStats2json_0182515.py
+    stats2lims: uploadStats2Lims_98319ea.py
     annotSeg_script: annotSeg_8820499.pl
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/GRCh38_hg38tgen.98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0

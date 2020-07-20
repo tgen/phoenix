@@ -2,6 +2,7 @@
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 {% from 'modules/qc/main.jst' import bam_qc with context %}
 {% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
+{% from 'utilities/read_group_line.jst' import read_group_line %}
 
 # Run Single cell analysis of 10x Genomics 3' and 5' scRNAseq assays using starSOLO
 
@@ -19,8 +20,10 @@
 {# Local Temp Variables #}
 {% set cb_umi_list = [] %}
 {% set cdna_list = [] %}
+{% set rglinelist = [] %}
 {% for fq in files|selectattr('fastqCode', 'eq', 'R1') %}
   {% do cb_umi_list.append(fq.basename) %}
+  {% do rglinelist.append(read_group_line(fq, format='singleCellRNA')) %}
 {% endfor %}
 {% for fq in files|selectattr('fastqCode', 'eq', 'R2') %}
   {% do cdna_list.append(fq.basename) %}
@@ -79,6 +82,7 @@
       --outSAMunmapped Within KeepPairs \
       --outSAMmapqUnique 255 \
       --outSAMattributes NH HI AS nM CR CY UR UY CB UB sM \
+      --outSAMattrRGline {{ rglinelist|join(' , ') }} \
       --soloType CB_UMI_Simple \
       --soloCBwhitelist "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].cell_barcode_whitelist_file }}" \
       --soloCBstart 1 \

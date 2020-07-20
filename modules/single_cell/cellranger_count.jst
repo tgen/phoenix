@@ -53,6 +53,7 @@
     set -o pipefail
 
     module load {{ constants.tools.cellranger.module }}
+    module load {{ constants.tools.samtools.module }}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
@@ -76,8 +77,13 @@
       --sample "{{ samples_list|join(',') }}" \
       --transcriptome "{{ constants.phoenix.cellranger_reference }}" )
 
-    mv {{ cellranger_out }}/possorted_genome_bam.bam {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam
-    mv {{ cellranger_out }}/possorted_genome_bam.bam.bai {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam.bai
+    {# cellranger defaults to an LB of 0.1, we fix that here since we know the LB #}
+    samtools view -H {{ cellranger_out }}/possorted_genome_bam.bam |\
+    sed -e 's/\bLB:[^ ]*/LB:{{ sample.rglb }}/g' |\
+    samtools reheader - {{ cellranger_out }}/possorted_genome_bam.bam > {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam
+
+    samtools index -@ 10 {{ alignment_outdir }}/{{ sample.name }}.cellranger_count.bam
+
     mv {{ cellranger_out }}/web_summary.html {{ alignment_outdir }}/stats/{{ sample.name }}.cellranger_count.bam.web_summary.html
     mv {{ cellranger_out }}/metrics_summary.csv {{ metrics_output }}
     mv {{ cellranger_out }}/cloupe.cloupe {{ outdir }}/{{ sample.name }}.cellranger_count.cloupe

@@ -198,6 +198,11 @@ fileTypes = {
         "help": "\"bam_name.metrics_summary.csv\" file generated from the cellranger task in the "
                 "phoenix pipeline. "
     },
+    "cellranger_vdj_metrics": {
+        "cellrangerVDJMetrics": True,
+        "help": "\"bam_name.metrics_summary.csv\" file generated from the cellranger task in the "
+                "phoenix pipeline. "
+    },
     "starsolo_metrics": {
         "starsoloMetrics": True,
         "help": "\"bam_name.Barcodes.stats\" file generated from the starsolo_count task in the "
@@ -1010,7 +1015,7 @@ def snpsniffer_summary_data_extract(file_col_list):
 
 
 def cellranger_metrics_data_extract(dict_list_stats, sample_index, library_index, read_group_index):
-    """Extract data from a bt cell counts file."""
+    """Extract data from a cellranger metrics_summary.csv file."""
 
     output_dict = {}
 
@@ -1103,6 +1108,12 @@ if __name__ == '__main__':
         # parse out the command and date started from the picard stats_file_col_list into a list
         bamHead = picard_header(stats_file_col_list)
 
+        if args.filetype == 'picard_alignment_summary_metrics':
+            if stats_file_col_list[6][0] == 'UNPAIRED':
+                metrics_rows_per_level = 1
+        else:
+            metrics_rows_per_level = fileTypes[args.filetype]["metrics_rows_per_level"]
+
         if fileTypes[args.filetype]["picard_metrics"]:
             if "metrics_cols_to_skip" in fileTypes[args.filetype]:
                 col_to_skip = fileTypes[args.filetype]["metrics_cols_to_skip"]
@@ -1117,7 +1128,7 @@ if __name__ == '__main__':
                 data_stats_only,
                 data_head,
                 data_head_stats_only,
-                fileTypes[args.filetype]["metrics_rows_per_level"],
+                metrics_rows_per_level,
                 fileTypes[args.filetype]["metrics_cols_to_concat"]
             )
 
@@ -1127,7 +1138,7 @@ if __name__ == '__main__':
 
             histogram_data, histogram_data_head = picard_histogram(stats_file_string)
 
-            index_end = int(len(data)/fileTypes[args.filetype]["metrics_rows_per_level"])
+            index_end = int(len(data)/metrics_rows_per_level)
 
             for level_index in range(0, index_end):
                 hist_sample, hist_library, hist_readgroup = get_level_name(data, level_index, data_head)
@@ -1197,6 +1208,14 @@ if __name__ == '__main__':
         )
 
     if "cellrangerMetrics" in fileTypes[args.filetype]:
+        final_json = cellranger_metrics_data_extract(
+            dict_list[0],
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
+
+    if "cellrangerVDJMetrics" in fileTypes[args.filetype]:
         final_json = cellranger_metrics_data_extract(
             dict_list[0],
             args.samplename,
