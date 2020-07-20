@@ -1111,6 +1111,8 @@ if __name__ == '__main__':
         if args.filetype == 'picard_alignment_summary_metrics':
             if stats_file_col_list[6][0] == 'UNPAIRED':
                 metrics_rows_per_level = 1
+            else:
+                metrics_rows_per_level = fileTypes[args.filetype]["metrics_rows_per_level"]
         else:
             metrics_rows_per_level = fileTypes[args.filetype]["metrics_rows_per_level"]
 
