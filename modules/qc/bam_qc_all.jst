@@ -517,25 +517,25 @@
       {% endif %}
       --INPUT_BASE "{{ input_base }}/{{ bam|basename }}"
 
-    for library in `tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | cut -f2 | sort | uniq | awk 'NR > 1'`
+    for library in `tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | cut -f2 | sort | uniq | gawk 'NR > 1'`
     do
       OXIDATION_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f12 | \
         sort -n | \
-        awk 'NR == 3')
+        gawk 'NR == 3')
 
       C_REF_OXO_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f18 | \
         sort -n | \
-        awk 'NR == 3')
+        gawk 'NR == 3')
 
       G_REF_OXO_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f20 | \
         sort -n | \
-        awk 'NR == 3')
+        gawk 'NR == 3')
 
       {% if sample.gltype == 'singlecellrna' %}
       echo -e "OXIDATION_Q_MIN\tC_REF_OXO_Q_MIN\tG_REF_OXO_Q_MIN" > {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.oxog_metrics_summary.tsv

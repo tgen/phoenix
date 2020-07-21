@@ -18,6 +18,9 @@
   walltime: "48:00:00"
   cpus: 16
   cmd: |
+    set -eu
+    set -o pipefail
+
     module load {{ constants.tools.python_3_7_2.module }}
 
     mkdir -p "chip/summary/"
