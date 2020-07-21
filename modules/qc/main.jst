@@ -42,12 +42,12 @@
     {# General Library type specific tasks #}
     {% if sample.gltype == 'rna' %}
       {% set taskPrefix = 'RNA' %}
-      {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
-      {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner=aligner) }}
+      {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+      {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {% elif sample.gltype == 'singlecellrna' %}
       {% set taskPrefix = 'SingleCellRNA' %}
-      {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
-      {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner=aligner) }}
+      {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+      {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb,taskPrefix=taskPrefix, aligner=aligner) }}
     {% elif sample.gltype == 'exome' %}
       {% set taskPrefix = 'Exome' %}
       {{- bam_qc_gatk_collecthsmetrics(sample, aligner=aligner) }}
@@ -83,8 +83,8 @@
 
         {# General Library type specific tasks #}
         {% if sample.gltype == 'rna' %}
-          {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
-          {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
+          {{- bam_qc_gatk_collectrnaseqmetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
+          {{- bam_qc_rna_BTcell_loci(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=false) }}
         {% elif sample.gltype == 'genome' %}
           {{- bam_qc_gatk_collectwgsmetrics(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
           {{- bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, libraryCount, sample_lb, aligner=aligner, bam_level=false) }}
