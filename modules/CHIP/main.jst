@@ -8,25 +8,25 @@
 {%- macro chip_workflow(samples) %}
 
 {%- for sample in samples.values() if sample.gltype == 'chip' %}
-    {% if tasks[taskPrefix+"_"+analysis_type+"_stats_plot_fingerprint"]|default(true) %}
+    {% if tasks.CHIP_quality_control_stats_plot_fingerprint|default(true) %}
        {{- plot_fingerprint(sample) }}
     {% endif %}
-    {% if tasks[taskPrefix+"_"+analysis_type+"_stats_bam_coverage"]|default(true) %}
+    {% if tasks.CHIP_quality_control_stats_bam_coverage|default(true) %}
        {{- bam_coverage(sample) }}
     {% endif %}
-    {% if tasks[taskPrefix+"_"+analysis_type+"_stats_compute_GCBias"]|default(true) %}
+    {% if tasks.CHIP_quality_control_stats_compute_GCBias|default(true) %}
        {{- compute_GCBias(sample) }}
     {% endif %}
-    {% if tasks[taskPrefix+"_"+analysis_type+"_stats_plot_coverage"]|default(true) %}
+    {% if tasks.CHIP_quality_control_stats_plot_coverage|default(true) %}
        {{- plot_coverage(sample) }}
     {% endif %}
-    {% if tasks[taskPrefix+"_"+analysis_type+"_stats_macs2_callpeak"]|default(true) %}
+    {% if tasks.CHIP_quality_control_stats_macs2_callpeak|default(true) %}
        {{- macs2_callpeak(sample) }}
     {% endif %}
 
 {% endfor %}
 
-{% if tasks[taskPrefix+"_"+analysis_type+"_stats_multi_big_wig_summary"]|default(true) %}
+{% if tasks.CHIP_quality_control_stats_multi_big_wig_summary|default(true) %}
    {{- multi_big_wig_summary(samples) }}
 {% endif %}
 
