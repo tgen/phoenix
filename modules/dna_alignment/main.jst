@@ -25,6 +25,10 @@
 
     {{- bowtie2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
 
+    {{- bam_to_cram(sample, aligner='bowtie2') }}
+
+    {{- bam_qc(sample, aligner='bowtie2') }}
+
   {% endfor %}
 
   {% for sample in samples.values() if sample.gltype in ['genome', 'exome'] %}
