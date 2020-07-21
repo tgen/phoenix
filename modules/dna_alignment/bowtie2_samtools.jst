@@ -194,7 +194,7 @@
     {{ constants.tools.samtools.verbose }} markdup.
   input: temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
   output:
-    - temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.md.bam
+    - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
     - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 10
