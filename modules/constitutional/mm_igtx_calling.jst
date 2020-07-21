@@ -49,7 +49,7 @@
     numLines=$(grep -v "Non-matching mate orientation." {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt | wc -l)
     if [[ $numLines -gt 0 ]]; then
       grep -v "Non-matching mate orientation." {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt |\
-      awk -v var1="{{ sample.rgsm }}" 'BEGIN{OFS="\t" ; print "Specimen", "ChrA", "PositionA", "ChrB", "PositionB"}{print var1, $1, $2, $3, $4}' > \
+      gawk -v var1="{{ sample.rgsm }}" 'BEGIN{OFS="\t" ; print "Specimen", "ChrA", "PositionA", "ChrB", "PositionB"}{print var1, $1, $2, $3, $4}' > \
       {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt
     else
       echo $'Specimen\tChrA\tPositionA\tChrB\tPositionB' > {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt

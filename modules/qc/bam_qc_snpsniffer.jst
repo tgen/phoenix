@@ -80,13 +80,11 @@
       | \
       sed 's/ ratio=/\'$'\t''/g' \
       | \
-      sed 's/.bwa.bam.snpSniffer//g' \
+      gawk -F'\t' '{ split($1, a, ".") ; split($2, b, ".") ; OFS = "\t" ; print a[1], b[1], $3, $4, $5 }' \
       | \
-      sed 's/.star.bam.snpSniffer//g' \
+      gawk '$1 != $2 {print ($1 > $2) ? $0"\t"$1"-"$2 : $0"\t"$2"-"$1}' \
       | \
-      awk '{print ($1 > $2) ? $0"\t"$1"-"$2 : $0"\t"$2"-"$1}' \
-      | \
-      awk '!x[$6]++'> SnpSniffer_AllPairs_Results.txt
+      gawk '!x[$6]++'> SnpSniffer_AllPairs_Results.txt
 
     {# Remove preliminary output file #}
     rm snpSniffer_output.txt
@@ -95,11 +93,11 @@
     java -jar $(which snpSniffer.jar) -het SnpSniffer_DB.ini > Temp1_HetRate_Results.txt
 
     {# Remove header lines #}
-    awk 'NR>2' Temp1_HetRate_Results.txt \
-      | \
-      sed 's/.bwa.bam.snpSniffer//g' \
-      | \
-      sed 's/.star.bam.snpSniffer//g' > Temp2_HetRate_Results.txt
+    gawk -F'\t' 'NR > 1 {
+      split($1, a, ".")
+      OFS = "\t"
+      print a[1], $2, $3, $4, $5
+      }' Temp1_HetRate_Results.txt > Temp2_HetRate_Results.txt
 
     {# Summarize and Graph with R (Tidyverse) #}
     Rscript --vanilla $(which snpSniffer_Summarize.R) \

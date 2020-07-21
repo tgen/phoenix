@@ -153,7 +153,7 @@
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
     {% if studyDisease == "Multiple Myeloma" | default(false) %}
-    JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
+    JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | gawk '{ print $3 }')
     {#
       samtools view
         -c        print only the count of matching records
@@ -176,7 +176,7 @@
       chr22:21991098-22923034)
     NREADS=$((JUNCTION_READS-IG_READS))
     {% else %}
-    NREADS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | awk '{ print $3 }')
+    NREADS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | gawk '{ print $3 }')
     {% endif %}
 
     ${sf_path}/util/incorporate_FFPM_into_final_report.pl \

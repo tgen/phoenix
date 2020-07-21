@@ -59,22 +59,22 @@
       --output "{{ temp_dir }}"
 
     {# Remove unwanted ENST #}
-    awk -F'\t' 'FNR == NR {a[$1]=$1;next} !($1 in a) { OFS = "\t" ; print $0 }' {{ constants.phoenix.ig_ENST_filter }} {{ temp_dir }}/quant.sf > {{ temp_dir }}/filtered_quant.sf
+    gawk -F'\t' 'FNR == NR {a[$1]=$1;next} !($1 in a) { OFS = "\t" ; print $0 }' {{ constants.phoenix.ig_ENST_filter }} {{ temp_dir }}/quant.sf > {{ temp_dir }}/filtered_quant.sf
 
     {# Calculate SUM of number of reads divided by Effective length fot TPM calculation #}
-    TPMSUM=$(awk -F'\t' 'BEGIN { SUM = 0 } NR > 1 { SUM = SUM + ($5/$3)} END { print SUM }' {{ temp_dir }}/filtered_quant.sf)
+    TPMSUM=$(gawk -F'\t' 'BEGIN { SUM = 0 } NR > 1 { SUM = SUM + ($5/$3)} END { print SUM }' {{ temp_dir }}/filtered_quant.sf)
 
     {# Recalulate TPM for each ENST #}
-    awk -F'\t' -v TPMSUM=${TPMSUM} 'NR == 1 { OFS = "\t" ; print $0 } ;
+    gawk -F'\t' -v TPMSUM=${TPMSUM} 'NR == 1 { OFS = "\t" ; print $0 } ;
             NR > 1 { OFS = "\t" ; $4 = 1000000 * ( $5 / $3 ) / TPMSUM ; print $0 } ' {{ temp_dir }}/filtered_quant.sf > {{ temp_dir }}/{{ sample.name }}_filtered.transcripts.sf
 
     {# Map each ENST to it's ENSG #}
-    awk -F'\t' 'BEGIN{ OFS = "\t" ; print "Name","Gene","TPM"  }
+    gawk -F'\t' 'BEGIN{ OFS = "\t" ; print "Name","Gene","TPM"  }
             FNR==NR{a[$2]=$1; next}
             ($1 in a) { OFS = "\t" ; print $1,a[$1],$4 }' {{ constants.phoenix.ref_flat }} {{ temp_dir }}/{{ sample.name }}_filtered.transcripts.sf > {{ temp_dir }}/filtered_recalculated_quant_with_ENSG.sf
 
     {# Sum the transcript TPM's for each gene to create final filtered Gene level TPM file #}
-    awk -F'\t' 'BEGIN{OFS = "\t" ; print "Name","TPM"}
+    gawk -F'\t' 'BEGIN{OFS = "\t" ; print "Name","TPM"}
             NR> 1 { a[$2]+=$3 }
             END { for (x in a) { OFS = "\t" ; print x,a[x] }}' {{ temp_dir }}/filtered_recalculated_quant_with_ENSG.sf > {{ temp_dir }}/{{ sample.name }}_filtered.genes.sf
 
