@@ -139,15 +139,15 @@
       --coverage 1,2500,1 \
       {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
       {% elif sample.gltype == 'chip' %}
-      --reference "{{ constants.phoenix.chip_fasta }}"
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      --reference "{{ constants.phoenix.chip_fasta }}" \
+      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
       {% else %}
         {% if sample.gltype == 'exome' %}
-      --target-regions {{ regions }} \
+      --target-regions "{{ regions }}" \
         {% else %}
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
         {% endif %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
