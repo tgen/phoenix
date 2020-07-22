@@ -230,10 +230,11 @@
       -S \
       -f "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam.samtools.markdup.txt" \
       --threads 10 \
-      --write-index \
       -T "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/markdup_temp/{{ sample.name }}" \
       "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam" \
       "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam"
+
+    samtools index -@ 10 "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam"
 
 {% if sample.glprep == 'cutnrun' %}
 - name: spike_in_calibration_{{ sample.name }}
