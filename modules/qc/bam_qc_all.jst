@@ -137,10 +137,13 @@
       --GC-depth 100 \
       --filtering-flag 256 \
       --coverage 1,2500,1 \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
+      {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
       --target-regions {{ constants.phoenix.reference_non_N_bed }} \
-      {% elif aligner == 'bwa' %}
+      {% elif sample.gltype == 'chip' %}
+      --reference "{{ constants.phoenix.chip_fasta }}"
+      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      {% else %}
         {% if sample.gltype == 'exome' %}
       --target-regions {{ regions }} \
         {% else %}
@@ -395,9 +398,11 @@
       --java-options "-Xmx7G" \
       --INPUT "{{ bam }}" \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
+      {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
+      {% elif sample.gltype == 'chip' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.chip_fasta }}" \
+      {% else %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       --METRIC_ACCUMULATION_LEVEL null \
@@ -502,17 +507,21 @@
         --java-options "-Xmx7G" \
         --INPUT {{ bam }} \
         --OUTPUT "{{ input_base }}/{{ bam|basename }}" \
-        {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
-        --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}"
-        {% elif aligner == 'bwa' %}
-        --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}"
+        {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
+        --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
+        {% elif sample.gltype == 'chip' %}
+        --REFERENCE_SEQUENCE "{{ constants.phoenix.chip_fasta }}" \
+        {% else %}
+        --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
         {% endif %}
     {% endif %}
 
     gatk ConvertSequencingArtifactToOxoG \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
+      {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
+      {% elif sample.gltype == 'chip' %}
+      --REFERENCE_SEQUENCE "{{ constants.phoenix.chip_fasta }}" \
+      {% else %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       --INPUT_BASE "{{ input_base }}/{{ bam|basename }}"
@@ -599,9 +608,11 @@
       --max-depth 5000 \
       --min-MQ 0 \
       --min-BQ 13 \
-      {% if aligner == 'star' or sample.gltype == 'singlecellrna' or aligner == 'bowtie2' %}
+      {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --fasta-ref "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
+      {% elif sample.gltype == 'chip' %}
+      --fasta-ref "{{ constants.phoenix.chip_fasta }}" \
+      {% else %}
       --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       --regions-file "{{ constants.phoenix.snpSniffer_sites }}" \

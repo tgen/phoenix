@@ -4,6 +4,11 @@
 
 {% macro snpsniffer_summary(samples) %}
 
+{% set taskPrefix %}Exome,Genome,RNA,SingleCellRNA,CHIP{% endset %}
+
+{% for prefix in taskPrefix %}
+{% if tasks[prefix+"_quality_control_genotype_concordance_snpSniffer"] %}
+
 - name: snpsniffer_summary
   after-re: snpsniffer_geno_.*
   output:

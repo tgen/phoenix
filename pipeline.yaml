@@ -353,6 +353,7 @@ constants:
     reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
     reference_non_N_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
+    chip_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bowtie2_2.3.5.1/GRCh38tgen_decoy_Ecoli.fa
     bowtie2_index_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bowtie2_2.3.5.1
     bowtie2_index: GRCh38tgen_decoy
     bowtie2_chip_index: GRCh38tgen_decoy_Ecoli
