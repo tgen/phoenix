@@ -20,7 +20,7 @@
   {% do r2fqlist.append(r2fastq) %}
 {% endfor -%}
 
-- name: star_first_pass_mapping_{{ sample.name }}
+- name: star_fusion_alignment_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, fusion_caller, STAR_Fusion, {{ sample.name }}]
   reset: predecessors
   input:
