@@ -4,6 +4,15 @@
 
 {% macro snpsniffer_summary(samples) %}
 
+{% set taskPrefix %}Exome,Genome,RNA,SingleCellRNA,CHIP{% endset %}
+
+{% for prefix in taskPrefix %}
+    {% if prefix+"_quality_control_genotype_concordance_snpSniffer" in tasks %}
+        {% set snifferFound %}true{% endset %}
+    {% endif %}
+{% endfor %}
+
+{% if snifferFound is defined %}
 - name: snpsniffer_summary
   after-re: snpsniffer_geno_.*
   output:
@@ -174,4 +183,5 @@
 
   {{ stats2json("all libraries", project, project, output, json, "snpsniffer_summary") }}
 
+{% endif %}
 {% endmacro %}

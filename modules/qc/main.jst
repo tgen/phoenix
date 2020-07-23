@@ -56,6 +56,8 @@
       {{- bam_qc_gatk_collectwgsmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
       {{- bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, libraryCount, sample_lb, aligner=aligner) }}
       {{- bam_qc_gatk_collectrawwgsmetrics(sample, libraryCount, sample_lb, aligner=aligner) }}
+    {% elif sample.gltype == 'chip' %}
+      {% set taskPrefix = 'CHIP' %}
     {% endif %}
 
     {# Constitutional dna specific tasks #}

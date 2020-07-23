@@ -3,7 +3,7 @@
 
 {% set chip_bws = [] %}
 {% for sample in samples.values() if sample.gltype == 'chip' %}
-  {% set chip_bw %}{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw{% endset %}
+  {% set chip_bw %}{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam.bw{% endset %}
   {% do chip_bws.append(chip_bw) %}
 {% endfor %}
 
@@ -12,7 +12,7 @@
   tags: [ cutnrun, chip ]
   input:
   {% for sample in samples.values() if sample.gltype == 'chip' %}
-    - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.md.bam.bw
+    - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam.bw
   {% endfor %}
   output: chip/summary/multiBigWigSummary.npz
   walltime: "48:00:00"

@@ -23,9 +23,11 @@
     samtools view \
       -C \
       -@ 8 \
-      {% if aligner == 'star' or aligner == 'cellranger_count' or aligner == 'starSOLO' or aligner == 'bowtie2' %}
+      {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
+      {% elif sample.gltype == 'chip' %}
+      --reference "{{ constants.phoenix.chip_fasta }}" \
+      {% else %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       -o "{{ cram_path }}" \
