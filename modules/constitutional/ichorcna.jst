@@ -9,8 +9,10 @@
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
   input: {{ bam }}
+  output: {{ wig }}
   walltime: "24:00:00"
   cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail
@@ -31,16 +33,23 @@
 
 - name: ichor_cna_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
-  after: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
+  input: {{ wig }}
   output:
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.params.txt
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.RData
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.cna.seg
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.correctedDepth.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.RData
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_bias.pdf
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_correct.pdf
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_CNA_all_chrs.pdf
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide_all_sols.pdf
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide.pdf
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_tpdf.pdf
   walltime: "24:00:00"
   cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail
@@ -61,7 +70,7 @@
     # The ichorCNA launcher script does not currently get installed with
     # the rest of the package, so this path is hard coded in constants.yaml
     #}
-    Rscript ${PATH_TO_PHOENIX_REPO}/{{ constants.tools.ichorcna.launcher }} \
+    Rscript ${JS_PIPELINE_PATH}/{{ constants.tools.ichorcna.launcher }} \
       --id "{{ sample.name}}.{{ aligner }}.ichorCNA" \
       --WIG "{{ wig }}" \
       --outDir "{{ temp_dir }}" \
@@ -88,6 +97,15 @@
       --centromere ${EXTDATA}/GRCh38.GCA_000001405.2_centromere_acen.txt \
       --normalPanel ${EXTDATA}/HD_ULP_PoN_hg38_1Mb_median_normAutosome_median.rds
 
+    {# Merging pdfs #}
+    pdfunite \
+      {% for contig in constants.phoenix.calling_contigs %}
+      {# Stopping at chrX #}
+      {% if loop.index < 24 %}
+      {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_CNA_chr{{ contig.contig }}.pdf \
+      {% endif %}
+      {% endfor %}
+      {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_CNA_all_chrs.pdf
     {#
     # Move the output files to the final location
     #}
@@ -97,7 +115,12 @@
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.RData" "{{ results_dir }}/"
     mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg.txt" "{{ results_dir }}/"
-    mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/*.pdf "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_bias.pdf" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_correct.pdf" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_CNA_all_chrs.pdf" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide_all_sols.pdf" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide.pdf" "{{ results_dir }}/"
+    mv "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_tpdf.pdf" "{{ results_dir }}/"
 
     {# Remove the remaining files #}
     {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}
