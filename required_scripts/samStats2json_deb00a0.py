@@ -5,6 +5,8 @@ import json
 import argparse
 import os
 import sys
+import csv
+from copy import deepcopy
 
 currentDirectory = os.getcwd()
 
@@ -13,65 +15,218 @@ currentDirectory = os.getcwd()
 fileTypes = {
     "picard_alignment_summary_metrics": {
         "picard": True,
-        "samtool": False,
         "picard_metrics": True,
         "picard_histogram": False,
         "metrics_rows_per_level": 3,
+        "metrics_cols_to_concat": 1,
         "help": "\"bam_name.bam.alignment_summary_metrics\" file generated from Picard."
     },
     "picard_hs_metrics": {
         "picard": True,
-        "samtool": False,
         "picard_metrics": True,
         "picard_histogram": True,
         "hist_col_per_level": 2,
         "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
         "help": "\"bam_name.bam.hs_metrics\" file generated from Picard."
     },
     "picard_insert_size_metrics": {
         "picard": True,
-        "samtool": False,
         "picard_metrics": True,
         "picard_histogram": True,
         "hist_col_per_level": 1,
         "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "help": "\"bam_name.bam.insert_size_metrics\" file generated from Picard."
+    },
+    "picard_mark_duplicates_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": True,
+        "hist_col_per_level": 4,
+        "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "help": "\"bam_name.bam.insert_size_metrics\" file generated from Picard."
+    },
+    "picard_oxog_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 16,
+        "metrics_cols_to_concat": 1,
         "help": "\"bam_name.bam.insert_size_metrics\" file generated from Picard."
     },
     "picard_quality_yield_metrics": {
         "picard": True,
-        "samtool": False,
         "picard_metrics": True,
         "picard_histogram": False,
         "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
         "help": "\"bam_name.bam.quality_yield_metrics\" file generated from Picard."
     },
     "picard_rna_metrics": {
         "picard": True,
-        "samtool": False,
         "picard_metrics": True,
         "picard_histogram": True,
         "hist_col_per_level": 1,
         "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
         "help": "\"bam_name.bam.rna_metrics\" file generated from GATK CollectRnaSeqMetrics."
     },
-    "picard_wgs_metrics": {
+    "picard_wgs_wnzc_metrics": {
         "picard": True,
-        "samtool": False,
         "picard_metrics": True,
         "picard_histogram": True,
-        "hist_col_per_level": 1,
-        "metrics_rows_per_level": 1,
+        "hist_col_per_level": 2,
+        "metrics_rows_per_level": 2,
+        "metrics_cols_to_concat": 1,
+        "help": "\"bam_name.bam.wgs_wnzc_metrics\" file generated from GATK CollectWgsMetricsWithNonZeroCoverage."
+    },
+    "picard_bait_bias_detail_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 192,
+        "metrics_cols_to_concat": 3,
+        "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
+    },
+    "picard_bait_bias_summary_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 12,
+        "metrics_cols_to_concat": 2,
+        "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
+    },
+    "picard_base_distribution_by_cycle_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": "All",
+        "metrics_cols_to_concat": 2,
+        "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
+    },
+    "picard_error_summary_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 6,
+        "metrics_cols_to_concat": 2,
+        "metrics_cols_to_skip": 2,
         "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectWgsMetrics."
     },
+    "picard_gc_bias_summary_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "metrics_cols_to_skip": 0,
+        "help": "\"bam_name.bam.summary_metrics\" file generated from Picard."
+        },
+    "picard_pre_adapter_detail_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 192,
+        "metrics_cols_to_concat": 3,
+        "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
+    },
+    "picard_quality_by_cycle_metrics": {
+        "picard": True,
+        "picard_metrics": False,
+        "picard_histogram": True,
+        "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "hist_col_per_level": 1,
+        "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
+    },
+    "picard_quality_distribution_metrics": {
+        "picard": True,
+        "picard_metrics": False,
+        "picard_histogram": True,
+        "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "hist_col_per_level": 1,
+        "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
+    },
+    "quality_yield_metrics": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "help": "\"bam_name.bam.quality_yield_metrics\" file generated from Picard."
+    },
+    "samtools_idxstats": {
+        "samtool": True,
+        "help": "\"bam_name.bam.flagstats.txt\" file generated from Samtools."
+    },
     "samtools_markdup": {
-        "picard": False,
         "samtool": True,
         "help": "\"bam_name.bam.markdup.txt\" file generated from Samtools."
     },
     "samtools_flagstats": {
-        "picard": False,
         "samtool": True,
         "help": "\"bam_name.bam.flagstats.txt\" file generated from Samtools."
+    },
+    "verifybamid": {
+        "verifybamid": True,
+        "help": "\"bam_name.bam.verifybamid2.selfSM\" file generated from verifyBamID"
+    },
+    "bt_cell_counts": {
+        "btCellCounts": True,
+        "help": "\"bam_name.bam.BTcell.loci.counts.txt\" file generated from rna_getBTcellLociCounts task in the "
+                "phoenix pipeline "
+    },
+    "sex_check": {
+        "sexCheck": True,
+        "help": "\"bam_name.bam.sexCheck.txt\" file generated from freebayes_sex_check task in the phoenix pipeline."
+    },
+    "oxog_metrics_summary": {
+        "oxogMetricsSummary": True,
+        "help": "\"bam_name.bam.oxog_metrics_summary.tsv\" file generated from gatk_convertsequencingarrtifacttooxog "
+                "task in the phoenix pipeline. "
+    },
+    "snpsniffer_summary": {
+        "snpSnifferSummary": True,
+        "help": "\"project_name.SnpSniffer_Mismatch_Summary.tsv\" file generated from snpsniffer_summary task in the "
+                "phoenix pipeline. "
+    },
+    "cellranger_metrics": {
+        "cellrangerMetrics": True,
+        "help": "\"bam_name.metrics_summary.csv\" file generated from the cellranger task in the "
+                "phoenix pipeline. "
+    },
+    "cellranger_vdj_metrics": {
+        "cellrangerVDJMetrics": True,
+        "help": "\"bam_name.metrics_summary.csv\" file generated from the cellranger task in the "
+                "phoenix pipeline. "
+    },
+    "starsolo_metrics": {
+        "starsoloMetrics": True,
+        "help": "\"bam_name.Barcodes.stats\" file generated from the starsolo_count task in the "
+                "phoenix pipeline. "
+    },
+    "samtools_baseQualityYield_summary": {
+        "samtool": True,
+        "help": "\"bam_name.samtools_baseQualityYield_summary.tsv\" file generated from the samtools_stats task in "
+                "the phoenix pipeline. "
+    },
+    "samtools_coverage_summary": {
+        "samtool": True,
+        "help": "\"bam_name.samtools_coverage_summary.tsv\" file generated from the samtools_stats task in the "
+                "phoenix pipeline. "
+    },
+    "samtools_insertSize_summary": {
+        "samtool": True,
+        "help": "\"bam_name.samtools_insertSize_summary.tsv\" file generated from the samtools_stats task in the "
+                "phoenix pipeline. "
+    },
+    "samtools_summaryNumbers_summary": {
+        "samtool": True,
+        "help": "\"bam_name.samtools_summaryNumbers_summary.tsv\" file generated from the samtools_stats task in the "
+                "phoenix pipeline. "
     }
 }
 
@@ -89,17 +244,9 @@ fileTypes = {
         "picard_metrics": True,
         "help": "\"bam_name.bam.base_distribution_by_cycle_metrics\" file generated from Picard."
         },
-    "error_summary_metrics": {
-        "picard_metrics": True,
-        "help": "\"bam_name.bam.error_summary_metrics\" file generated from Picard."
-        },
     "gc_bias.detail_metrics": {
         "picard_metrics": True,
         "help": "\"bam_name.bam.detail_metrics\" file generated from Picard."
-        },
-    "gc_bias.summary_metrics": {
-        "picard_metrics": True,
-        "help": "\"bam_name.bam.summary_metrics\" file generated from Picard."
         },
     "pre_adapter_detail_metrics": {
         "picard_metrics": True,
@@ -118,11 +265,7 @@ fileTypes = {
         "picard_metrics": True,
         "picard_histogram": True,
         "help": "\"bam_name.bam.quality_distribution_metrics\" file generated from Picard."
-        },
-    "quality_yield_metrics": {
-        "picard_metrics": True,
-        "help": "\"bam_name.bam.quality_yield_metrics\" file generated from Picard."
-    }
+        }
 """
 
 
@@ -139,9 +282,10 @@ def description(ftype):
 def parse_arguments_and_validate():
     """Parse arguments, validate and return the args"""
 
-    parser = argparse.ArgumentParser(description="Convert stats files generated by gatk or samtools into json format.",
-                                     epilog=description(fileTypes),
-                                     formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description='Convert stats files generated by gatk or samtools into json format.',
+        epilog=description(fileTypes),
+        formatter_class=argparse.RawTextHelpFormatter)
 
     parser.add_argument('statfile', metavar="statfile", help='the file that will be converted to json format')
 
@@ -189,10 +333,6 @@ def parse_arguments_and_validate():
     return parser_args
 
 
-# Parse and validate aguments
-args = parse_arguments_and_validate()
-
-
 # Used within output_file_location to determine if user has permissions to the keyed directory.
 def permissions(y):
     """Exit if the user does not have permissions to write to the output directory."""
@@ -235,9 +375,18 @@ def output_file_location(i, output):
 
 # Get sample, library, and read_group name for picard files that have the columns
 def get_level_name(data_list, row_index, data_head_all):
-
     # Set the sample, library, and read_group values if not none.
-    samplename = data_list[row_index][data_head_all.index("SAMPLE")] if "SAMPLE" in data_head_all else None
+    if "SAMPLE" in data_head_all:
+        samplename = data_list[row_index][data_head_all.index("SAMPLE")]
+
+        if samplename == "" and row_index > 0:
+            samplename = data_list[row_index - 1][data_head_all.index("SAMPLE")]
+
+    elif "SAMPLE_ALIAS" in data_head_all:
+        samplename = data_list[row_index][data_head_all.index("SAMPLE_ALIAS")]
+    else:
+        samplename = None
+
     libraryname = data_list[row_index][data_head_all.index("LIBRARY")] if "LIBRARY" in data_head_all else None
     readgroupname = data_list[row_index][data_head_all.index("READ_GROUP")] if "READ_GROUP" in data_head_all else None
 
@@ -406,6 +555,20 @@ def add_to_json(input_json, json_object_name, sample_name=None, library_name=Non
         return json_location, input_json
 
 
+def flat_file_add_to_output_dict(output_dict, location_in_json, data_dict):
+    """Add key value pairs to the output_dict"""
+
+    for key, value in data_dict.items():
+        add_command = location_in_json + "[\"" + key + "\"] = " + value
+        try:
+            exec(add_command)
+        except (NameError, SyntaxError):
+            add_command = location_in_json + "[\"" + key + "\"] = \"" + value + "\""
+            exec(add_command)
+
+    return output_dict
+
+
 # Extracts the command and date from the file header
 def picard_header(file_col_list):
     """Extracts the command and date rows from a picard file that has been converted into a list of the columns."""
@@ -422,7 +585,7 @@ def picard_header(file_col_list):
 
 
 # Extracts the Metrics Class data and the BAM headers
-def picard_metrics(file_string):
+def picard_metrics(file_string, skip_col=None):
     """
     Extract the picard specific stats and header row from the
     file_string and return the stats and header as lists.
@@ -447,23 +610,31 @@ def picard_metrics(file_string):
         else:
             stat_data.append(file_line)
 
-    # Remove the SAMPLE, LIBRARY, and READ_GROUP columns at the end of the stat_data and data_head_list if they exists.
-    # So far if they exists they are the last three columns
+    # Remove the SAMPLE, LIBRARY, and READ_GROUP columns from stat_data and data_head_list if they exists.
+    stat_data_only = deepcopy(stat_data)
+    data_head_list_stats_only = data_head_list[:]
+
     if "SAMPLE" in data_head_list:
-        # sample_index = data_head_list.index("SAMPLE")
-        # library_index = data_head_list.index("LIBRARY")
-        # read_group_index = data_head_list.index("READ_GROUP")
-        stat_data_only = stat_data[0:data_head_list.index("SAMPLE")]
-        data_head_list_stats_only = data_head_list[0:data_head_list.index("SAMPLE")]
-    else:
-        # sample_index = None
-        # library_index = None
-        # read_group_index = None
-        stat_data_only = stat_data
-        data_head_list_stats_only = data_head_list
+        [stat_line.pop(data_head_list_stats_only.index("SAMPLE")) for stat_line in stat_data_only]
+        data_head_list_stats_only.pop(data_head_list_stats_only.index("SAMPLE"))
+
+    if "SAMPLE_ALIAS" in data_head_list:
+        [stat_line.pop(data_head_list_stats_only.index("SAMPLE_ALIAS")) for stat_line in stat_data_only]
+        data_head_list_stats_only.pop(data_head_list_stats_only.index("SAMPLE_ALIAS"))
+
+    if "LIBRARY" in data_head_list:
+        [stat_line.pop(data_head_list_stats_only.index("LIBRARY")) for stat_line in stat_data_only]
+        data_head_list_stats_only.pop(data_head_list_stats_only.index("LIBRARY"))
+
+    if "READ_GROUP" in data_head_list:
+        [stat_line.pop(data_head_list_stats_only.index("READ_GROUP")) for stat_line in stat_data_only]
+        data_head_list_stats_only.pop(data_head_list_stats_only.index("READ_GROUP"))
+
+    if skip_col is not None:
+        [stat_line.pop(skip_col) for stat_line in stat_data_only]
+        data_head_list_stats_only.pop(skip_col)
 
     return stat_data, data_head_list, stat_data_only, data_head_list_stats_only
-    # sample_index, library_index, read_group_index
 
 
 # Extracts the Histogram data from a picard file
@@ -499,7 +670,8 @@ def picard_histogram(file_string):
     return hist_data, hist_head
 
 
-def picard_add_metrics_to_dict(data_list, data_list_stats, data_head_all, data_head_stats, rows_per_level):
+def picard_add_metrics_to_dict(data_list, data_list_stats, data_head_all,
+                               data_head_stats, rows_per_level, cols_to_concat):
     """Function used when filetype argument is picards alignment summary metric (asm)."""
 
     # Initilize the output_dict, data_dict_temp, and row_accumulation_counter
@@ -507,14 +679,21 @@ def picard_add_metrics_to_dict(data_list, data_list_stats, data_head_all, data_h
     data_dict_temp = {}
     row_accumulation_counter = 1
 
+    if rows_per_level == "All":
+        rows_per_level = len(data_list_stats)
+
     # Loops through each row within the input file excluding the SAMPLE, LIBRARY, and READ_GROUP columns
     for row_index, data_line in enumerate(data_list_stats):
-        if rows_per_level != 1:
-            # Loops through each stat column modifying the key name by concatenating the column name with the CATEGORY
-            # column value adding each to the asm_temp dictionary
-            # So far the picards alignment summary metric is the only one that has this.
-            for key_name in data_head_stats[1:]:
-                data_dict_temp[key_name + "_" + data_line[0]] = data_line[data_head_stats.index(key_name)]
+        if rows_per_level != 1 or data_head_stats[0] == "CATEGORY":
+            # Loops through each stat column modifying the key name by concatenating
+            # the column name with the CATEGORY columns
+            for key_name in data_head_stats[cols_to_concat:]:
+                category = data_line[0]
+                if cols_to_concat > 1:
+                    for category_col in data_line[1:cols_to_concat]:
+                        category = category + "_" + category_col
+
+                data_dict_temp[key_name + "_" + category] = data_line[data_head_stats.index(key_name)]
         else:
             for key_name in data_head_stats[0:]:
                 data_dict_temp[key_name] = data_line[data_head_stats.index(key_name)]
@@ -635,8 +814,6 @@ def samtool_data_extract(file_row_list, samtools_file_type, sample_index, librar
 
             exec(add_command)
 
-        return output_dict
-
     elif samtools_file_type == "samtools_flagstats":
         # Samtools is not structured to make parsing easy. We check number of rows for 13 lines. Key names are hardcoded
         # since the file isn't easily parsable for key. Users may change key names in the data_list section.
@@ -675,85 +852,388 @@ def samtool_data_extract(file_row_list, samtools_file_type, sample_index, librar
 
             exec(add_command)
 
-        return output_dict
+    elif samtools_file_type == "samtools_idxstats":
+
+        for file_row_list_row in file_row_list[:-1]:
+            split_list = file_row_list_row.split("\t")
+
+            key = split_list[0]
+            value = split_list[2]
+
+            add_command = location_in_json + "[\"" + key + "\"] = " + value
+
+            exec(add_command)
+
+    elif samtools_file_type in ["samtools_baseQualityYield_summary",
+                                "samtools_coverage_summary",
+                                "samtools_insertSize_summary",
+                                "samtools_summaryNumbers_summary"]:
+
+        keys = file_row_list[0].split("\t")
+        values = file_row_list[1].split("\t")
+
+        data_dict = dict(zip(keys, values))
+        data_dict.pop("Sample")
+        data_dict.pop("Library")
+        data_dict.pop("Read_Group")
+        data_dict.pop("BAM_File")
+
+        for key, value in data_dict.items():
+            add_command = location_in_json + "[\"" + key + "\"] = " + value
+
+            exec(add_command)
+
+    return output_dict
 
 
-# Store the input stats file as a string
-with open(args.statfile, mode="rt") as file:
-    stats_file_string = file.read()
+def verifybamid_data_extract(file_col_list, sample_index, library_index, read_group_index):
+    """Extract data from a verifybamid stats file."""
 
-stats_file_row_list, stats_file_col_list = stats_string_to_list(stats_file_string)
+    output_dict = {}
 
-# Initialize the final_json
-final_json = {}
-
-if fileTypes[args.filetype]["samtool"]:
-
-    final_json = samtool_data_extract(
-        stats_file_row_list,
-        args.filetype,
-        args.samplename,
-        args.libraryname,
-        args.readgroupname
+    location_in_json, output_dict = add_to_json(
+        output_dict,
+        "output_dict",
+        sample_index,
+        library_index,
+        read_group_index
     )
 
-if fileTypes[args.filetype]["picard"]:
-    # parse out the command and date started from the picard stats_file_col_list into a list
-    bamHead = picard_header(stats_file_col_list)
+    data_list = [
+        "BAM",
+        "PC1",
+        "PC2",
+        "alpha"
+    ]
 
-    if fileTypes[args.filetype]["picard_metrics"]:
-        # parse out the METRICS stat lines and columns headers from the stats_file_string
-        data, data_head, data_stats_only, data_head_stats_only = picard_metrics(stats_file_string)
+    data_dict = dict(zip(data_list, file_col_list[0]))
+    del data_dict["BAM"]
 
-        # #fileTypes[args.filetype]["metrics_rows_per_level"]
-        final_json = picard_add_metrics_to_dict(
-            data,
-            data_stats_only,
-            data_head,
-            data_head_stats_only,
-            fileTypes[args.filetype]["metrics_rows_per_level"]
+    for key, value in data_dict.items():
+        add_command = location_in_json + "[\"" + key + "\"] = " + value
+
+        exec(add_command)
+
+    return output_dict
+
+
+def bt_cell_counts_data_extract(file_row_list, sample_index, library_index, read_group_index):
+    """Extract data from a bt cell counts file."""
+
+    output_dict = {}
+
+    location_in_json, output_dict = add_to_json(
+        output_dict,
+        "output_dict",
+        sample_index,
+        library_index,
+        read_group_index
+    )
+
+    loci = [x.split("\t")[3] for x in file_row_list[:-1]]
+    counts = [x.split("\t")[4] for x in file_row_list[:-1]]
+
+    data_dict = dict(zip(loci, counts))
+
+    for key, value in data_dict.items():
+        add_command = location_in_json + "[\"" + key + "\"] = " + value
+
+        exec(add_command)
+
+    return output_dict
+
+
+def sex_check_data_extract(file_col_list, sample_index, library_index, read_group_index):
+    """Extract data from a bt cell counts file."""
+
+    output_dict = {}
+
+    location_in_json, output_dict = add_to_json(
+        output_dict,
+        "output_dict",
+        sample_index,
+        library_index,
+        read_group_index
+    )
+
+    data_dict = dict(zip(file_col_list[0], file_col_list[1]))
+    del data_dict["BAM"]
+    del data_dict["SAMPLE"]
+
+    output_dict = flat_file_add_to_output_dict(output_dict, location_in_json, data_dict)
+
+    return output_dict
+
+
+def oxog_metrics_summary_data_extract(file_col_list, sample_index, library_index, read_group_index):
+    """Extract data from a bt cell counts file."""
+
+    output_dict = {}
+
+    location_in_json, output_dict = add_to_json(
+        output_dict,
+        "output_dict",
+        sample_index,
+        library_index,
+        read_group_index
+    )
+
+    data_dict = dict(zip(file_col_list[0], file_col_list[1]))
+
+    output_dict = flat_file_add_to_output_dict(output_dict, location_in_json, data_dict)
+
+    return output_dict
+
+
+def snpsniffer_summary_data_extract(file_col_list):
+    """Extract data from a bt cell counts file."""
+
+    output_dict = {}
+
+    header = file_col_list.pop(0)
+
+    for row in file_col_list:
+        sample_index = row[0]
+        library_index = row[1]
+        read_group_index = None
+
+        location_in_json, output_dict = add_to_json(
+            output_dict,
+            "output_dict",
+            sample_index,
+            library_index,
+            read_group_index
         )
 
-    if fileTypes[args.filetype]["picard_histogram"] and fileTypes[args.filetype]["picard_metrics"]:
-        # So far all of the picard files that have a METRICS and HISTOGRAM section also have the
-        # SAMPLE, LIBRARY, and READ_GROUP columns in the metrics section.
+        data_dict = dict(zip(header, row))
+        del data_dict["SAMPLE"]
+        del data_dict["LIBRARY"]
 
-        # parse out the METRICS stat lines and columns headers from the stats_file_string
-        data, data_head, data_stats_only, data_head_stats_only = picard_metrics(stats_file_string)
+        output_dict = flat_file_add_to_output_dict(output_dict, location_in_json, data_dict)
 
-        histogram_data, histogram_data_head = picard_histogram(stats_file_string)
+    return output_dict
 
-        for level_index, line in enumerate(data):
-            hist_sample, hist_library, hist_readgroup = get_level_name(data, level_index, data_head)
+
+def cellranger_metrics_data_extract(dict_list_stats, sample_index, library_index, read_group_index):
+    """Extract data from a cellranger metrics_summary.csv file."""
+
+    output_dict = {}
+
+    location_in_json, output_dict = add_to_json(
+        output_dict,
+        "output_dict",
+        sample_index,
+        library_index,
+        read_group_index
+    )
+
+    data_dict = {}
+
+    for key in dict_list_stats:
+        if "%" in dict_list_stats[key]:
+            value = float(dict_list_stats[key].replace("%", ""))
+            value = value / 100
+            value = float("%.3f" % round(value, 3))
+        else:
+            value = dict_list_stats[key].replace(",", "")
+
+        field = key.replace(' ', '_').replace(',', '').replace('(', '').replace(')', '').replace('-', '_')
+        data_dict[field] = value
+
+    for key, value in data_dict.items():
+        add_command = location_in_json + "[\"" + key + "\"] = " + str(value)
+
+        exec(add_command)
+
+    return output_dict
+
+
+def starsolo_metrics_data_extract(file_row_list, sample_index, library_index, read_group_index):
+    """Extract data from a bt cell counts file."""
+
+    output_dict = {}
+
+    location_in_json, output_dict = add_to_json(
+        output_dict,
+        "output_dict",
+        sample_index,
+        library_index,
+        read_group_index
+    )
+
+    keys = [x.split()[0] for x in file_row_list[:-1]]
+    values = [x.split()[1] for x in file_row_list[:-1]]
+
+    data_dict = dict(zip(keys, values))
+
+    for key, value in data_dict.items():
+        add_command = location_in_json + "[\"" + key + "\"] = " + value
+
+        exec(add_command)
+
+    return output_dict
+
+
+if __name__ == '__main__':
+
+    # Parse and validate arguments
+    args = parse_arguments_and_validate()
+
+    # Store the input stats file as a string
+    dict_list = []
+
+    csv_file = csv.DictReader(open(args.statfile, 'rt'))
+
+    for line in csv_file:
+        dict_list.append(line)
+
+    with open(args.statfile, mode="rt") as file:
+        stats_file_string = file.read()
+
+    stats_file_row_list, stats_file_col_list = stats_string_to_list(stats_file_string)
+
+    # Initialize the final_json
+    final_json = {}
+
+    if "samtool" in fileTypes[args.filetype]:
+        final_json = samtool_data_extract(
+            stats_file_row_list,
+            args.filetype,
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
+
+    if "picard" in fileTypes[args.filetype]:
+        # parse out the command and date started from the picard stats_file_col_list into a list
+        bamHead = picard_header(stats_file_col_list)
+
+        if args.filetype == 'picard_alignment_summary_metrics':
+            if stats_file_col_list[6][0] == 'UNPAIRED':
+                metrics_rows_per_level = 1
+            else:
+                metrics_rows_per_level = fileTypes[args.filetype]["metrics_rows_per_level"]
+        else:
+            metrics_rows_per_level = fileTypes[args.filetype]["metrics_rows_per_level"]
+
+        if fileTypes[args.filetype]["picard_metrics"]:
+            if "metrics_cols_to_skip" in fileTypes[args.filetype]:
+                col_to_skip = fileTypes[args.filetype]["metrics_cols_to_skip"]
+            else:
+                col_to_skip = None
+            # parse out the METRICS stat lines and columns headers from the stats_file_string
+            data, data_head, data_stats_only, data_head_stats_only = picard_metrics(stats_file_string,
+                                                                                    skip_col=col_to_skip)
+
+            final_json = picard_add_metrics_to_dict(
+                data,
+                data_stats_only,
+                data_head,
+                data_head_stats_only,
+                metrics_rows_per_level,
+                fileTypes[args.filetype]["metrics_cols_to_concat"]
+            )
+
+        if fileTypes[args.filetype]["picard_histogram"] and fileTypes[args.filetype]["picard_metrics"]:
+            # parse out the METRICS stat lines and columns headers from the stats_file_string
+            data, data_head, data_stats_only, data_head_stats_only = picard_metrics(stats_file_string)
+
+            histogram_data, histogram_data_head = picard_histogram(stats_file_string)
+
+            index_end = int(len(data)/metrics_rows_per_level)
+
+            for level_index in range(0, index_end):
+                hist_sample, hist_library, hist_readgroup = get_level_name(data, level_index, data_head)
+
+                final_json = picard_add_histogram_to_dict(
+                    final_json,
+                    histogram_data,
+                    histogram_data_head,
+                    fileTypes[args.filetype]["hist_col_per_level"],
+                    args.samplename or hist_sample,
+                    args.libraryname or hist_library,
+                    args.readgroupname or hist_readgroup,
+                    level_index
+                )
+        elif fileTypes[args.filetype]["picard_histogram"]:
+            histogram_data, histogram_data_head = picard_histogram(stats_file_string)
 
             final_json = picard_add_histogram_to_dict(
                 final_json,
                 histogram_data,
                 histogram_data_head,
                 fileTypes[args.filetype]["hist_col_per_level"],
-                args.samplename or hist_sample,
-                args.libraryname or hist_library,
-                args.readgroupname or hist_readgroup,
-                level_index
+                args.samplename,
+                args.libraryname,
+                args.readgroupname,
+                0
             )
-    elif fileTypes[args.filetype]["picard_histogram"]:
-        histogram_data, histogram_data_head = picard_histogram(stats_file_string)
 
-        final_json = picard_add_histogram_to_dict(
-            final_json,
-            histogram_data,
-            histogram_data_head,
-            fileTypes[args.filetype]["hist_col_per_level"],
+        final_json["COMMAND"] = bamHead[0]
+        final_json["DATE"] = bamHead[1]
+
+    if "verifybamid" in fileTypes[args.filetype]:
+        final_json = verifybamid_data_extract(
+            stats_file_col_list,
             args.samplename,
             args.libraryname,
-            args.readgroupname,
-            0
+            args.readgroupname
         )
 
-    final_json["COMMAND"] = bamHead[0]
-    final_json["DATE"] = bamHead[1]
+    if "btCellCounts" in fileTypes[args.filetype]:
+        final_json = bt_cell_counts_data_extract(
+            stats_file_row_list,
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
 
-outputFile = output_file_location(args.statfile, args.output)
+    if "sexCheck" in fileTypes[args.filetype]:
+        final_json = sex_check_data_extract(
+            stats_file_col_list,
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
 
-writeOutput = open(outputFile, "w+")
-writeOutput.write(json.dumps(final_json))
+    if "oxogMetricsSummary" in fileTypes[args.filetype]:
+        final_json = oxog_metrics_summary_data_extract(
+            stats_file_col_list,
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
+
+    if "snpSnifferSummary" in fileTypes[args.filetype]:
+        final_json = snpsniffer_summary_data_extract(
+            stats_file_col_list
+        )
+
+    if "cellrangerMetrics" in fileTypes[args.filetype]:
+        final_json = cellranger_metrics_data_extract(
+            dict_list[0],
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
+
+    if "cellrangerVDJMetrics" in fileTypes[args.filetype]:
+        final_json = cellranger_metrics_data_extract(
+            dict_list[0],
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
+
+    if "starsoloMetrics" in fileTypes[args.filetype]:
+        final_json = starsolo_metrics_data_extract(
+            stats_file_row_list,
+            args.samplename,
+            args.libraryname,
+            args.readgroupname
+        )
+
+    outputFile = output_file_location(args.statfile, args.output)
+
+    writeOutput = open(outputFile, "w+")
+    writeOutput.write(json.dumps(final_json))

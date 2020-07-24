@@ -1,22 +1,52 @@
 # These macros are run on constitutional dna bams from the dna_alignment modules.
 
-{% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
-- name: verifybamid2_{{ sample.name }}_{{ aligner }}
+{% macro bam_qc_verifybamid2(sample, libraryCount, sample_lb, taskPrefix='Genome', aligner='bwa', bam_level=true) %}
+{% if tasks[taskPrefix+"_quality_control_constitutional_contamination_check_VerifyBamID"]|default(true) %}
+
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set metrics %}{{ results_dir }}/{{ bam|basename }}.verifybamid2{% endset %}
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.verifybamid2.plot.txt{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.txt{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.json{% endset %}
+
+- name: verifybamid2_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
   input: {{ bam }}
   output:
-    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.out
-    - {{ results_dir }}/{{ bam|basename }}.verifybamid2.selfSM
+    - {{ metrics }}.out
+    - {{ metrics }}.selfSM
+    - {{ metrics }}.plot.txt
+    - {{ metrics }}.plot.pdf
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.out
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.selfSM
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.txt
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.pdf
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   cpus: 1
   mem: 4G
   walltime: "8:00:00"
   cmd: |
     set -eu
     set -o pipefail
+
     module load {{ constants.tools.verifybamid2.module }}
+    module load {{ constants.tools.R.module }}
 
     mkdir -p "{{ results_dir }}"
 
@@ -28,33 +58,77 @@
     {# we can either choose not to run ultra-low pass samples, revert back to 1.0.5, or disable #}
     {# the sanity check. The sanity check ensures that more than 10,000 markers were found. #}
     VerifyBamID \
-      --NumThread 4 \
+      --NumThread 1 \
       --DisableSanityCheck \
       --UDPath "${VERIFY_BAM_ID_HOME}/resource/1000g.phase3.100k.b38.vcf.gz.dat.UD" \
       --MeanPath "${VERIFY_BAM_ID_HOME}/resource/1000g.phase3.100k.b38.vcf.gz.dat.mu" \
       --BedPath "${VERIFY_BAM_ID_HOME}/resource/1000g.phase3.100k.b38.vcf.gz.dat.bed" \
-      {% if aligner == 'star' %}
-      --Reference "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
       --Reference "{{ constants.phoenix.reference_fasta }}" \
-      {% endif %}
       --BamFile "{{ bam }}" \
-      --Output "{{ results_dir }}/{{ bam|basename }}.verifybamid2"
+      --Output "{{ metrics }}"
 
+    {# Process Output to produce needed graph #}
+    SAMPLE_PC1=`head -n3 "{{ metrics }}.out" | tail -n1 | cut -f1 | sed 's/Intended Sample PC1://g'`
+    SAMPLE_PC2=`head -n3 "{{ metrics }}.out" | tail -n1 | cut -f2 | sed 's/PC2://g'`
+    SAMPLE_ALPHA=`head -n4 "{{ metrics }}.out" | tail -n1 | cut -d: -f2`
+    echo -e "{{ bam|basename }}""\t"${SAMPLE_PC1}"\t"${SAMPLE_PC2} > "{{ metrics }}.plot.txt"
+
+    sh $VERIFY_BAM_ID_HOME/bin/run.plot.sh \
+      -r 1000g \
+      -g FALSE \
+      -i "$(pwd)/{{ metrics }}.plot.txt" \
+      -o "{{ metrics }}.plot"
+
+    echo -e "{{ bam|basename }}""\t"${SAMPLE_PC1}"\t"${SAMPLE_PC2}"\t"${SAMPLE_ALPHA} > "{{ metrics }}.plot.txt"
+
+    {% if libraryCount == 1 %}
+      cp {{ metrics }}.out {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.out
+      cp {{ metrics }}.selfSM {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.selfSM
+      cp {{ metrics }}.plot.txt {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.txt
+      cp {{ metrics }}.plot.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.verifybamid2.plot.pdf
+    {% endif %}
+
+  {% if libraryCount == 1 %}
+    {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
+  {% elif bam_level is sameas false %}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "verifybamid", sample_name=sample.name, library_name=sample_lb) }}
+  {% endif %}
+
+{% endif %}
 {% endmacro %}
 
 
-{% macro sex_check(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-{% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
-{% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
+{% macro sex_check(sample, libraryCount, sample_lb, taskPrefix='Genome', aligner='bwa', bam_level=true) %}
+{% if tasks[taskPrefix+"_quality_control_constitutional_sex_check_freebayes"]|default(true) %}
 
-- name: freebayes_sex_check_{{ sample.name }}_{{ aligner }}
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+
+  {% if bam_level is sameas false %}
+    {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}{% endset %}
+    {% set bam %}{{ temp_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam{% endset %}
+  {% else %}
+    {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+    {% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
+    {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+
+  {% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
+  {% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
+  {% set sample_lb_output %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.txt{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.json{% endset %}
+
+- name: freebayes_sex_check_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_sex_check, freebayes, {{ sample.name }}]
   input: {{ bam }}
-  output: {{ output }}
+  output:
+    - {{ output }}
+    {% if libraryCount == 1 %}
+    - {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.sexCheck.txt
+    {% endif %}
+  {% if bam_level is sameas false %}
+  reset: predecessors
+  {% endif %}
   cpus: 1
   mem: 2G
   cmd: |
@@ -65,7 +139,7 @@
     module load {{ constants.tools.freebayes.module }}
     module load {{ constants.tools.bcftools.module }}
 
-    mkdir -p "{{ temp_dir }}/temp"
+    mkdir -p "{{ temp_dir }}"
 
     {# Define Sex Prediction Thresholds #}
     MINIMUM_GENOTYPES_REQUIRED=500
@@ -251,5 +325,15 @@
     {# Print results #}
     echo -e {{ bam|basename }}"\t"${SAMPLE}"\t"${POSITIONS_GENOTYPED}"\t"${MISSING_GENOTYPES}"\t"${TESTED_GENOTYPES}"\t"${HOMOZYGOUS_TOTAL}"\t"${HOMOZYGOUS_REFERENCE}"\t"${HOMOZYGOUS_ALTERNATE}"\t"${HETEROZYGOUS}"\t"${HOMOZYGOUS_RATE}"\t"${HOMOZYGOUS_RATE_SEX_PREDICTION}"\t"${B_ALLELE_GENOTYPES}"\t"${BB_ALT_RATE}"\t"${BB_ALT_RATE_SEX_PREDICTION}"\t"${READS_ON_X}"\t"${READS_ON_Y}"\t"${TOTAL_SEX_CHR_READS}"\t"${Y_READS_SEX_CHR_RATIO}"\t"${READ_COUNT_SEX_PREDICTION}"\t"${SEX_PREDICTION}"\t"${SEX_PREDICTION_CONFIDENCE} >> {{ output }}
 
+    {% if libraryCount == 1 %}
+      cp {{ output }} {{ sample_lb_output }}
+    {% endif %}
 
+  {% if libraryCount == 1 %}
+    {{ stats2json(sample.gltype, sample.name, task, sample_lb_output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
+  {% elif bam_level is sameas false %}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "sex_check", sample_name=sample.name, library_name=sample_lb) }}
+  {% endif %}
+
+{% endif %}
 {% endmacro %}

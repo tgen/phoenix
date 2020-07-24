@@ -12,8 +12,9 @@
 - name: haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
   input: {{ bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.g.vcf.gz
   walltime: "24:00:00"
-  cpus: 4
+  cpus: 2
   mem: 16G
   cmd: |
     set -eu
@@ -38,16 +39,17 @@
 
 - name: haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
-  after: 
+  reset: predecessors
+  input:
     {% for batch in constants.phoenix.calling_intervals %}
-    - haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+    - {{ temp_dir }}/{{ loop.index }}.g.vcf.gz
     {% endfor %}
   output:
     - {{ gvcf }}
     - {{ gvcf }}.tbi
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail
@@ -57,7 +59,7 @@
     mkdir -p "{{ results_dir }}"
 
     gatk MergeVcfs \
-      --java-options "-Xmx14G" \
+      --java-options "-Xmx7G" \
       {% for batch in constants.phoenix.calling_intervals %}
       --INPUT "{{ temp_dir }}/{{ loop.index }}.g.vcf.gz" \
       {% endfor %}

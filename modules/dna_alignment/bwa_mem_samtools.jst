@@ -23,7 +23,7 @@
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
 
 {% for fastq in [r1fastq, r2fastq] %}
-- name: split_fastq_{{ fastq.fastqPath|sha256 }}
+- name: split_fastq_{{ fastq.basename | replace(".", "_") }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, split, {{ sample.name }}]
   reset: predecessors
   input:
@@ -61,8 +61,8 @@
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   reset: predecessors
   after: 
-    - split_fastq_{{ r1fastq.fastqPath|sha256 }}
-    - split_fastq_{{ r2fastq.fastqPath|sha256 }}
+    - split_fastq_{{ r1fastq.basename | replace(".", "_") }}
+    - split_fastq_{{ r2fastq.basename | replace(".", "_") }}
   walltime: "48:00:00"
   cpus: 10
   mem: 50G
@@ -129,11 +129,12 @@
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
+  reset: predecessors
   after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
   output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
-  mem: 16G
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail
@@ -171,6 +172,7 @@
 
 - name: samtools_markdup_{{ sample.name }}_bwa
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
+  reset: predecessors
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools.verbose }} markdup.
   input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
@@ -178,8 +180,8 @@
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
     - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
-  cpus: 10
-  mem: 40G
+  cpus: 4
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail
@@ -210,7 +212,7 @@
       -d {{ opt_dup_distance }} \
       -S \
       -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt" \
-      --threads 10 \
+      --threads 4 \
       --write-index \
       -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}" \
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \

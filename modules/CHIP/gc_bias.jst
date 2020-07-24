@@ -1,0 +1,30 @@
+
+{% macro compute_GCBias(sample) %}
+
+- name: compute_GCBias_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
+  input: {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
+  output:
+    - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam_GCbias.txt
+    - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam_GCbias.pdf
+  walltime: "48:00:00"
+  cpus: 16
+  mem: 40G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.python_3_7_2.module }}
+
+    mkdir -p "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/"
+
+    computeGCBias \
+     --bamfile {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam \
+     --genome {{ constants.phoenix.reference_fasta_2bit }} \
+     --GCbiasFrequenciesFile {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam_GCbias.txt \
+     --biasPlot {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam_GCbias.pdf \
+     --fragmentLength 50 \
+     --numberOfProcessors max \
+     --effectiveGenomeSize 2913022398
+
+{% endmacro %}

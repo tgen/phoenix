@@ -1,4 +1,4 @@
-
+{% from 'utilities/md5sum_bam_cram.jst' import md5sum_bam_cram with context %}
 
 {% macro bam_to_cram(sample, aligner='bwa') %}
 {% if cram|default(true) %}
@@ -13,7 +13,7 @@
     - {{ cram_path }}.crai
   walltime: "8:00:00"
   cpus: 8
-  mem: 3G
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail
@@ -23,14 +23,19 @@
     samtools view \
       -C \
       -@ 8 \
-      {% if aligner == 'star' %}
+      {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
-      {% elif aligner == 'bwa' %}
+      {% elif sample.gltype == 'chip' %}
+      --reference "{{ constants.phoenix.chip_fasta }}" \
+      {% else %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
       -o "{{ cram_path }}" \
       "{{ bam_path }}"
 
     samtools index "{{ cram_path }}"
+
+    {{- md5sum_bam_cram(sample, aligner) }}
 {% endif %}
+
 {% endmacro %}

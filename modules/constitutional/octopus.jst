@@ -13,8 +13,12 @@
 - name: octopus_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
   input: {{ bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.realigned.bam
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    - {{ temp_dir }}/{{ loop.index }}.octopus.vcf
   walltime: "24:00:00"
-  cpus: 8
+  cpus: 4
   mem: 16G
   cmd: |
     set -eu
@@ -34,7 +38,7 @@
 
     octopus \
       --caller individual \
-      --threads 8 \
+      --threads 4 \
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
       --ignore-unmapped-contigs \
@@ -52,15 +56,19 @@
 
 {% endfor %}
 
-- name: octopus_merge_{{ sample.name }}_{{ aligner }}
+- name: octopus_merge_chunks_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
-  after-re: octopus_{{ sample.name }}_{{ aligner }}_.*
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.primary_contig_calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail
@@ -85,13 +93,13 @@
 
 - name: octopus_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, octopus, {{ sample.name }}]
-  after: octopus_merge_{{ sample.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
   walltime: "24:00:00"
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail
@@ -111,6 +119,5 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
 
-{%- set after_task = 'octopus_filter_variants_'+sample.name+'_'+aligner %}
-{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional', 'snp_indel_caller') }}
+{{- annotate_vcfs(sample, temp_dir, results_dir, pass_vcf, taskPrefix, aligner, 'octopus', 'constitutional', 'snp_indel_caller') }}
 {% endmacro -%}
