@@ -99,6 +99,7 @@
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_1.fq
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_2.fq
+    - {{ results_dir }}/{{ sample.name }}_star_fusion.post_blast_and_promiscuity_filter.abridged
     {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
     - {{ results_dir }}/{{ sample.name }}_starfusion.bam
     - {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
@@ -151,6 +152,9 @@
       --min_spanning_frags_only 5 \
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
+
+    {# cp filtered intermediate file for later development usage #}
+    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.post_blast_and_promiscuity_filter.abridged {{ results_dir }}/{{ sample.name }}_star_fusion.post_blast_and_promiscuity_filter.abridged
 
     {% if studyDisease == "Multiple Myeloma" | default(false) %}
     JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | gawk '{ print $3 }')
