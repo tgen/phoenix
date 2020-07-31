@@ -46,7 +46,7 @@
       {{ tumor_bam }} chr20 39671358 40971360 \
       {{ tumor_bam }} chr22 21995603 23057822 2> {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt
 
-    numLines=$(grep -v "Non-matching mate orientation." {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt | wc -l)
+    numLines=$(grep -v "Non-matching mate orientation." -c {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt || :)
     if [[ $numLines -gt 0 ]]; then
       grep -v "Non-matching mate orientation." {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt |\
       gawk -v var1="{{ sample.rgsm }}" 'BEGIN{OFS="\t" ; print "Specimen", "ChrA", "PositionA", "ChrB", "PositionB"}{print var1, $1, $2, $3, $4}' > \
