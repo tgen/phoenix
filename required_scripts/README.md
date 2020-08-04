@@ -21,8 +21,8 @@ plotCNVplus
 $ git clone git@github.com:tgen/plotCNVplus.git
 $ cd plotCNVplus
 $ git rev-parse --short HEAD
-06b34ff
-$ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_06b34ff.R
+4d89cb4
+$ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 ```
 
 ## Script Source Locations
