@@ -99,7 +99,7 @@
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_1.fq
     - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_evidence_reads_2.fq
-    - {{ results_dir }}/{{ sample.name }}_star_fusion.post_blast_and_promiscuity_filter.abridged
+    - {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass
     {% if tasks.RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM|default(true) %}
     - {{ results_dir }}/{{ sample.name }}_starfusion.bam
     - {{ results_dir }}/{{ sample.name }}_starfusion.bam.bai
@@ -153,9 +153,6 @@
       --genome_lib_dir {{ constants.phoenix.starfusion_index }} \
       --out_prefix {{ temp_dir }}/star-fusion.preliminary/star-fusion
 
-    {# cp filtered intermediate file for later development usage #}
-    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.filter.intermediates_dir/star-fusion.post_blast_and_promiscuity_filter.abridged {{ results_dir }}/{{ sample.name }}_star_fusion.post_blast_and_promiscuity_filter.abridged
-
     {% if studyDisease == "Multiple Myeloma" | default(false) %}
     JUNCTION_READS=$(tail -n1 {{ results_dir }}/{{ sample.name }}_Chimeric.out.junction | gawk '{ print $3 }')
     {#
@@ -199,6 +196,9 @@
     ${sf_path}/FusionFilter/util/filter_by_annotation_rules.pl \
       --fusions {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot \
       --genome_lib_dir {{ constants.phoenix.starfusion_index }}
+
+    {# cp filtered intermediate file for later development usage #}
+    cp {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass {{ results_dir }}/{{ sample.name }}_star_fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass
 
     ${sf_path}/util/filter_likely_RT_artifacts.pl {{ temp_dir }}/star-fusion.preliminary/star-fusion.fusion_candidates.preliminary.wSpliceInfo.wAnnot.annot_filter.pass
 
