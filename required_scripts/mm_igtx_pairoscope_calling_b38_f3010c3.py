@@ -260,7 +260,7 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
                 gene_max_window_top_position = gene_max_window_top.iat[0, 2]
                 gene_max_window_bottom_position = gene_max_window_bottom.iat[0, 2]
                 gene_maxwindowwidth = gene_max_window_bottom_position - gene_max_window_top_position
-                gene_maxwindowlocation = (gene_max_window_bottom_position + gene_max_window_top_position) / 2
+                gene_maxwindowlocation = int( (gene_max_window_bottom_position + gene_max_window_top_position) / 2 )
                 # NEW FEATURE END
                 # if the two bundle counts will be greater than total count reset the NextLargest to 0
                 if (gene_nextlargestwindowcount + gene_maxwindowcount) > count_gene:
@@ -280,7 +280,7 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
                 gene_max_window_top_position = gene_max_window_top.iat[0, 2]
                 gene_max_window_bottom_position = gene_max_window_bottom.iat[0, 2]
                 gene_nextwindowwidth = gene_max_window_bottom_position - gene_max_window_top_position
-                gene_nextwindowlocation = (gene_max_window_bottom_position + gene_max_window_top_position) / 2
+                gene_nextwindowlocation = int( (gene_max_window_bottom_position + gene_max_window_top_position) / 2 )
                 # NEW FEATURE END
 
     # Make result calls
