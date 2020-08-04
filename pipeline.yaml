@@ -2,7 +2,7 @@ __pipeline__:
   name: phoenix
   main: main.jst
   description: Human GRCh38 genomics suite
-  version: v1.0.0
+  version: development
 constants:
   tools:
     bedtools:
@@ -376,7 +376,7 @@ constants:
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel_8820499.py
     manta_prepare_sv_vcf: manta_prepare_sv_vcf_ba6879d.py
     manta_gene_annotation_parallel: manta_sv_annotation_parallel_8820499.py
-    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_fd920d4.py
+    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_f3010c3.py
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
     plotSamStats_Rscript: summarize_samstats_69627ba.R
