@@ -11,7 +11,7 @@
     set -eu
     set -o pipefail
 
-    rm -r {{ directory }}
+    rm -r {{ directory }} || true
 
 {% endmacro %}
 {# {% macro remove_files_by_input(inputs, inputs_re, name) %} #}

@@ -1,17 +1,26 @@
 # These macros are run on constitutional dna bams from the dna_alignment modules.
 
+{% set ref_fasta_input_bundle %}
+    - {{ constants.phoenix.reference_fasta|cloudpath }}
+    - {{ constants.phoenix.reference_fai|cloudpath }}
+    - {{ constants.phoenix.reference_dict|cloudpath }}
+{% endset %}
+
+{% set in_cloud = backend.startswith('cloud_') %}
+
 {% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: verifybamid2_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_contamination_check, VerifyBamID, {{ sample.name }}]
-  referenceinput:
-    {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
-    {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
-    {% endif %}
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
   input: 
     - {{ bam }}
     - {{ bam }}.bai
@@ -44,7 +53,7 @@
       {% if aligner == 'star' %}
       --Reference "{{ constants.phoenix.star_fasta }}" \
       {% elif aligner == 'bwa' %}
-      --Reference "{{ constants.phoenix.reference_fasta }}" \
+      --Reference {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       {% endif %}
       --BamFile "{{ bam }}" \
       --Output "{{ results_dir }}/{{ bam|basename }}.verifybamid2"
@@ -53,24 +62,29 @@
 
 
 {% macro sex_check(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 {% set output %}{{ results_dir }}/{{ bam|basename }}.sexCheck.txt{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
+{% set temp_dir %}./temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
 {% set vcf %}{{ temp_dir }}/{{ bam|basename }}.sexCheck.vcf{% endset %}
 
 - name: freebayes_sex_check_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, constitutional_sex_check, freebayes, {{ sample.name }}]
-  referenceinput:
-    - {{ constants.phoenix.reference_fasta }}
-    - {{ constants.phoenix.reference_fasta }}.fai
-    - {{ constants.phoenix.sex_check_targets }}
-    - {{ constants.phoenix.sex_check_vcf }}
-    - {{ constants.phoenix.sex_check_vcf }}.tbi
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+      - {{ constants.phoenix.sex_check_targets|cloudpath }}
+      - {{ constants.phoenix.sex_check_vcf|cloudpath }}
+      - {{ constants.phoenix.sex_check_vcf|cloudpath }}.tbi
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
   input:
     - {{ bam }}
     - {{ bam }}.bai
-  output: {{ output }}
+  output: 
+    - {{ output }}
   cpus: 1
   mem: 2G
   cmd: |
@@ -80,9 +94,9 @@
     #module load {{ constants.tools.samtools.module }}
     #module load {{ constants.tools.freebayes.module }}
     #module load {{ constants.tools.bcftools.module }}
-    echo "Starting freebayes"
 
     mkdir -p "{{ temp_dir }}/temp"
+    mkdir -p {{ results_dir }}
 
     {# Define Sex Prediction Thresholds #}
     MINIMUM_GENOTYPES_REQUIRED=500
@@ -94,15 +108,17 @@
     DEPTH_REQUIREMENT=5
 
     freebayes \
-      --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
-      --targets "{{ constants.phoenix.sex_check_targets }}" \
-      --variant-input "{{ constants.phoenix.sex_check_vcf }}" \
+      --fasta-reference {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
+      --targets {{ constants.phoenix.sex_check_targets|cloudbasename(in_cloud) }} \
+      --variant-input {{ constants.phoenix.sex_check_vcf|cloudbasename(in_cloud) }} \
       --only-use-input-alleles \
       --min-alternate-count 2 \
       --min-alternate-fraction 0.05 \
       --min-coverage 5 \
       --vcf "{{ vcf }}" \
       {{ bam }}
+    
+    {# echo 'done1' >> {{ results_dir }}/out.log #}
 
     {# Capture the RG_SM tag that is in the VCF header #}
     SAMPLE=`grep "#CHROM" {{ vcf }} | cut -f10`
@@ -128,7 +144,9 @@
 
     {# Positions meeting requirements with heterozygous calls; 0/1, 0/2, 0/3, 1/2, 1/3, or 2/3 (ie. AB.count) #}
     HETEROZYGOUS=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT="het"' {{ vcf }} | wc -l`
-
+    
+    {# echo 'done2' >> {{ results_dir }}/out.log #}
+    
     {# Determine if the sample meets TESTED_GENOTYPES requirement #}
     if [ $TESTED_GENOTYPES -ge $MINIMUM_GENOTYPES_REQUIRED ]
     then

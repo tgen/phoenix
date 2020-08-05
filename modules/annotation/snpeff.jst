@@ -1,9 +1,16 @@
 
 {%- macro snpeff(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type , analysis_type) %}
+{% set in_cloud = backend.startswith('cloud_') %}
+{% set is_temp_input = 'temp' in input_vcf %}
 
 - name: snpeff_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  after: {{ after_task }}
+  {# after: {{ after_task }} #}
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.snpeff_config|cloudpath }}
+      - {{ constants.phoenix.snpeff_data|cloudpath }}/genomes/*
+      - {{ constants.phoenix.snpeff_data|cloudpath }}/grch38.98/*
   input: {{ input_vcf }}
   output:
     - {{ final_vcf_prefix }}.snpeff.full.vcf.gz
@@ -16,8 +23,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.snpeff.module }}
-    module load {{ constants.tools.bcftools.module }}
+    {# module load {{ constants.tools.snpeff.module }} #}
+    {# module load {{ constants.tools.bcftools.module }} #}
 
     {# No long options available for the following:
       -t      Use multiple threads (implies '-noStats')
@@ -29,8 +36,8 @@
     {# Generate full annotation set #}
     snpEff ann \
       -t \
-      -c "{{ constants.phoenix.snpeff_config }}" \
-      -dataDir "{{ constants.phoenix.snpeff_data }}" \
+      -c "{{ constants.phoenix.snpeff_config|cloudbasename(in_cloud) }}" \
+      -dataDir "{{ constants.phoenix.snpeff_data|cloudbasename(in_cloud) }}" \
       -hgvs \
       -lof \
       "{{ constants.phoenix.snpeff_db }}" \
@@ -50,8 +57,8 @@
     {# Generate canonical annotation set #}
     snpEff ann \
       -t \
-      -c "{{ constants.phoenix.snpeff_config }}" \
-      -dataDir "{{ constants.phoenix.snpeff_data }}" \
+      -c "{{ constants.phoenix.snpeff_config|cloudbasename(in_cloud) }}" \
+      -dataDir "{{ constants.phoenix.snpeff_data|cloudbasename(in_cloud) }}" \
       -canon \
       -hgvs \
       -lof \

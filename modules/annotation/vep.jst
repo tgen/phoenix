@@ -1,7 +1,17 @@
 {% macro vep(sample_or_pair, results_dir, after_task, input_vcf, variant_caller, final_vcf_prefix, aligner, task_type, analysis_type) %}
+{% set in_cloud = backend.startswith('cloud_') %}
+
 - name: vep_all_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  after: {{ after_task }}
+  {# after: {{ after_task }} #}
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+      - {{ constants.phoenix.vep_data|trim('/')|cloudpath }}/homo_sapiens/98_GRCh38/*/*
   input: {{ input_vcf }}
   output:
     - {{ final_vcf_prefix }}.vep.full.vcf.gz
@@ -12,8 +22,8 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.vep.module }}
-    module load {{ constants.tools.bcftools.module }}
+    {# module load {{ constants.tools.vep.module }} #}
+    {# module load {{ constants.tools.bcftools.module }} #}
 
     {# Use VEP to create full annotation file with all transcripts #}
     vep --fork 4 \
@@ -26,10 +36,14 @@
         --force_overwrite \
         --no_stats \
         --cache \
+        {% if in_cloud %}
+        --dir_cache "{{ constants.phoenix.vep_data|trim('/')|cloudbasename(in_cloud) }}" \
+        {% else %}
         --dir_cache "{{ constants.phoenix.vep_data }}" \
+        {% endif %}
         --cache_version 98 \
         --offline \
-        --fasta "{{ constants.phoenix.reference_fasta }}" \
+        --fasta "{{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }}" \
         --buffer_size 10000 \
         --terms SO \
         --hgvs \
@@ -82,10 +96,14 @@
         --force_overwrite \
         --no_stats \
         --cache \
+        {% if in_cloud %}
+        --dir_cache "{{ constants.phoenix.vep_data|trim('/')|cloudbasename(in_cloud) }}" \
+        {% else %}
         --dir_cache "{{ constants.phoenix.vep_data }}" \
+        {% endif %}
         --cache_version 98 \
         --offline \
-        --fasta "{{ constants.phoenix.reference_fasta }}" \
+        --fasta "{{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }}" \
         --buffer_size 10000 \
         --terms SO \
         --hgvs \

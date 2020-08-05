@@ -1,29 +1,39 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {% macro manta_constitutional(sample, aligner='bwa', taskPrefix='Genome') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
+{% set temp_dir %}./temp/{{ sample.gltype }}/constitutional_structural_calls/manta/{{ sample.name }}{% endset %}
+{% set in_cloud = backend.startswith('cloud_') %}
 
 - name: manta_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, structural_caller, manta, {{ sample.name }}]
   methods: > 
     Constitutional structural variants and indels for {{ sample.name }} 
     ({{ aligner }}) were called with {{ constants.tools.manta.verbose }}.
-  referenceinput:
-    - {{ constants.phoenix.reference_fasta }}
-    - {{ constants.phoenix.reference_fasta }}.fai
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+    {# wrapper_frontmatter: 'export PATH=$PATH:/home/dominic/software/manta-1.6.0.centos6_x86_64/bin' #}
+    {# wrapper_frontmatter: 'export PATH=$PATH:/app/software/manta/1.6.0/bin' #}
+    singularity_container: '/containers/phoenix_manta.sif'
+    transfer_container_to_remote: False
   input: 
     - {{ bam }}
     - {{ bam }}.bai
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
-    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    {# - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
     - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
     - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
-    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
-  cpus: 12
+    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi #}
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
+  cpus: 8
   mem: 80G
   walltime: "48:00:00"
   cmd: |
@@ -67,7 +77,7 @@
       --callMemMb 10 \
       --callRegions "${MANTA_BED}.gz" \
       --bam "{{ bam }}" \
-      --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
+      --referenceFasta "{{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }}" \
       --runDir "{{ temp_dir }}"
 
     {# Execute on the local machine with 19 parallel jobs #}
@@ -84,8 +94,10 @@
     mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
 
     {# Remove the remaining files #}
-    {% set task %}manta_{{ sample.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
+    {% if not in_cloud %}
+        {% set task %}manta_{{ sample.name }}_{{ aligner }}{% endset %}
+        {% set directory %}{{ temp_dir }}{% endset %}
+        {{- remove_files(directory,none,task) }}
+    {% endif %}
 
 {% endmacro %}

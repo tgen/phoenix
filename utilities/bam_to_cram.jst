@@ -2,11 +2,19 @@
 
 {% macro bam_to_cram(sample, aligner='bwa') %}
 {% if cram|default(true) %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
+{% set bam_path %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set cram_path %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
+{% set in_cloud = backend.startswith('cloud_') %}
 
 - name: bam_to_cram_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, {{ sample.name }}, bam_to_cram ]
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
   input: {{ bam_path }}
   output:
     - {{ cram_path }}
@@ -24,9 +32,9 @@
       -C \
       -@ 8 \
       {% if aligner == 'star' %}
-      --reference "{{ constants.phoenix.star_fasta }}" \
+      --reference {{ constants.phoenix.star_fasta|cloudbasename(in_cloud) }} \
       {% elif aligner == 'bwa' %}
-      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --reference {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       {% endif %}
       -o "{{ cram_path }}" \
       "{{ bam_path }}"

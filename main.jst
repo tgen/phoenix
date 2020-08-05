@@ -126,12 +126,14 @@
 {# Move to utility scripts #}
 {% for fastq in dataFiles %}
 - name: copy_fastqs_{{ loop.index }}
-  output: temp/fastqs/{{ fastq.basename }}
+  output: ./temp/fastqs/{{ fastq.basename }}
   tags: [rsync,]
   sbatch_args: ['-p', 'isilon']
   retry: 2
   cpus: 6
   walltime: "4:00:00"
+  cloud_args:
+    local_task: True
   cmd: |
     set -uev
 
@@ -146,6 +148,8 @@
   after-re: .*
   cpus: 1
   walltime: "4:00:00"
+  cloud_args:
+    local_task: True
   cmd: | 
     set -uev
     #module load {{ constants.tools.multiqc.module }}
@@ -244,22 +248,22 @@
     {{- dna_alignment(samples) }}
 {% endif %}
 
-{% if tasks.constitutional_variant_calling|default(false) %}
+{% if tasks.constitutional_variant_calling|default(true) %}
     {{- constitutional_variant_calling(samples) }}
 {% endif %}
 
-{% if tasks.somatic_variant_calling|default(false) %}
+{% if tasks.somatic_variant_calling|default(true) %}
     {{- somatic_variant_calling(samples) }}
 {% endif %}
 
-{%- if tasks.rna_quant|default(false) %}
+{%- if tasks.rna_quant|default(true) %}
     {{- rna_quant(samples) }}
 {% endif -%}
 
-{%- if tasks.rna_fusion_detection|default(false) %}
+{%- if tasks.rna_fusion_detection|default(true) %}
     {{- rna_fusion_detection(samples) }}
 {% endif -%}
 
-{%- if tasks.single_cell_rna|default(false) %}
+{%- if tasks.single_cell_rna|default(true) %}
     {{- single_cell_rna(dataFiles) }}
 {% endif -%}

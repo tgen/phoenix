@@ -4,20 +4,37 @@
 
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
+{# Set often used reference bundles #}
+{% set bwa_fasta_input_bundle %}
+    - {{ constants.phoenix.reference_fasta|cloudpath }}
+    - {{ constants.phoenix.reference_fai|cloudpath }}
+    - {{ constants.phoenix.reference_dict|cloudpath }}
+{% endset %}
+{% set star_fasta_input_bundle %}
+    - {{ constants.phoenix.star_fasta|cloudpath }}
+    - {{ constants.phoenix.star_fasta|cloudpath }}.fai
+    - {{ constants.phoenix.star_fasta[:-3]|cloudpath }}.dict
+{% endset %}
+{% set in_cloud = backend.startswith('cloud_') %}
+
 {% macro bam_qc_samtools_stats(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_stats_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} stats.
-  referenceinput:
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    reference_input:
     {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
+        {{- star_fasta_input_bundle }}
     {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
+        {{- bwa_fasta_input_bundle }}
     {% endif %}
+    - {{ constants.phoenix.reference_non_N_bed|cloudpath }}
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.bamstats.txt
   walltime: "4:00:00"
@@ -35,7 +52,7 @@
     {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
     {% if sample.gltype == 'exome' %}
     bedtools intersect \
-      -a {{ constants.phoenix.reference_non_N_bed }} \
+      -a {{ constants.phoenix.reference_non_N_bed|cloudbasename(in_cloud) }} \
       -b {{ sample.capture_kit.no_header_targets_interval_list }} \
       | \
     sort -k1,1 -k2,2n \
@@ -64,15 +81,15 @@
       --filtering-flag 256 \
       --coverage 1,2500,1 \
       {% if aligner == 'star' %}
-      --reference "{{ constants.phoenix.star_fasta }}" \
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      --reference {{ constants.phoenix.star_fasta|cloudbasename(in_cloud) }} \
+      --target-regions {{ constants.phoenix.reference_non_N_bed|cloudbasename(in_cloud) }} \
       {% elif aligner == 'bwa' %}
       {% if sample.gltype == 'exome' %}
       --target-regions {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samstats_no_N_1based_target_regions.txt \
       {% else %}
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      --target-regions {{ constants.phoenix.reference_non_N_bed|cloudbasename(in_cloud) }} \
       {% endif %}
-      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --reference {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       {% endif %}
       > "{{ results_dir }}/{{ bam|basename }}.bamstats.txt"
 
@@ -81,12 +98,16 @@
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} stats.
-  referenceinput:
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    reference_input:
     {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
+        {{- star_fasta_input_bundle }}
     {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
+        {{- bwa_fasta_input_bundle }}
     {% endif %}
+    - {{ constants.phoenix.reference_non_N_bed|cloudpath }}
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt
   walltime: "4:00:00"
@@ -104,7 +125,7 @@
     {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
     {% if sample.gltype == 'exome' %}
     bedtools intersect \
-      -a {{ constants.phoenix.reference_non_N_bed }} \
+      -a {{ constants.phoenix.reference_non_N_bed|cloudbasename(in_cloud) }} \
       -b {{ sample.capture_kit.no_header_targets_interval_list }} \
       | \
     sort -k1,1 -k2,2n \
@@ -136,15 +157,15 @@
       --filtering-flag 256 \
       --coverage 1,2500,1 \
       {% if aligner == 'star' %}
-      --reference "{{ constants.phoenix.star_fasta }}" \
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      --reference {{ constants.phoenix.star_fasta|cloudbasename(in_cloud) }} \
+      --target-regions {{ constants.phoenix.reference_non_N_bed|cloudbasename(in_cloud) }} \
       {% elif aligner == 'bwa' %}
       {% if sample.gltype == 'exome' %}
       --target-regions {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.{{ lb }}.samstats_no_N_1based_target_regions.txt \
       {% else %}
-      --target-regions {{ constants.phoenix.reference_non_N_bed }} \
+      --target-regions {{ constants.phoenix.reference_non_N_bed|cloudbasename(in_cloud) }} \
       {% endif %}
-      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --reference {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       {% endif %}
       > "{{ results_dir }}/{{ bam|basename }}.{{ lb }}.bamstats.txt"
 {% endfor %}
@@ -153,18 +174,21 @@
 
 
 {% macro bam_qc_samtools_flagstat(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_flagstat_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_flagstat, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} flagstat.
-  referenceinput:
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    reference_input:
     {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
+        {{- star_fasta_input_bundle }}
     {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
+        {{- bwa_fasta_input_bundle }}
     {% endif %}
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.flagstats.txt
@@ -187,18 +211,21 @@
 
 
 {% macro bam_qc_samtools_idxstats(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: samtools_idxstats_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_idxstats, {{ sample.name }}]
   methods: Index stats for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} idxstats.
-  referenceinput:
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    reference_input:
     {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
+        {{- star_fasta_input_bundle }}
     {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
+        {{- bwa_fasta_input_bundle }}
     {% endif %}
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.idxstats.txt
@@ -220,8 +247,8 @@
 
 
 {% macro bam_qc_gatk_collectmultiplemetrics(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 {% set alignment_summary_metrics %}{{ results_dir }}/{{ bam|basename }}.alignment_summary_metrics{% endset %}
 {% set insert_size_metrics %}{{ results_dir }}/{{ bam|basename }}.insert_size_metrics{% endset %}
 
@@ -231,11 +258,14 @@
     and other metrics for {{ sample.name }} ({{ aligner }}) were
     gathered with {{ constants.tools.gatk.verbose }}
     CollectMultipleMetrics.
-  referenceinput:
+  cloud_args:
+    singularity_container: '/containers/gatk_4.1.6.0.sif'
+    transfer_container_to_remote: False
+    reference_input:
     {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
+        {{- star_fasta_input_bundle }}
     {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
+        {{- bwa_fasta_input_bundle }}
     {% endif %}
   input: {{ bam }}
   output:
@@ -274,9 +304,9 @@
       --INPUT "{{ bam }}" \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
       {% if aligner == 'star' %}
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.star_fasta|cloudbasename(in_cloud) }} \
       {% elif aligner == 'bwa' %}
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       {% endif %}
       --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
@@ -297,16 +327,19 @@
 
 
 {% macro bam_qc_gatk_convertsequencingarrtifacttooxog(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
-  referenceinput:
+  cloud_args:
+    singularity_container: '/containers/gatk_4.1.6.0.sif'
+    transfer_container_to_remote: False
+    reference_input:
     {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
+        {{- star_fasta_input_bundle }}
     {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
+        {{- bwa_fasta_input_bundle }}
     {% endif %}
   input:
     - {{ bam }}
@@ -340,9 +373,9 @@
 
     gatk ConvertSequencingArtifactToOxoG \
       {% if aligner == 'star' %}
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.star_fasta|cloudbasename(in_cloud) }} \
       {% elif aligner == 'bwa' %}
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       {% endif %}
       --INPUT_BASE "{{ results_dir }}/{{ bam|basename }}"
 
@@ -350,28 +383,34 @@
 
 
 {% macro bam_qc_snpsniffer_geno(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: snpsniffer_geno_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, genotype_concordance, snpSniffer, {{ sample.name }}]
-  referenceinput:
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    reference_input:
     {% if aligner == 'star' %}
-    - {{ constants.phoenix.star_fasta }}
+        {{- star_fasta_input_bundle }}
     {% elif aligner == 'bwa' %}
-    - {{ constants.phoenix.reference_fasta }}
+        {{- bwa_fasta_input_bundle }}
     {% endif %}
-    - {{ constants.phoenix.snpSniffer_sites }}
-    - {{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}
+    - {{ constants.phoenix.snpSniffer_sites|cloudpath }}
+    - {{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl|cloudpath }}
   input:
     - {{ bam }}
     - {{ bam }}.bai
-  output: {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf
+  output: 
+    - {{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf
   cpus: 4
   cmd: |
     set -eu
     set -o pipefail
     #module load {{ constants.tools.bcftools.module }}
+    
+    mkdir -p {{ results_dir }}
 
     {# Genotype the 387 test positions across the genome, filter to calls with DP >= 5, sort, remove chr from contig names #}
     bcftools mpileup \
@@ -380,11 +419,11 @@
       --min-MQ 0 \
       --min-BQ 13 \
       {% if aligner == 'star' %}
-      --fasta-ref "{{ constants.phoenix.star_fasta }}" \
+      --fasta-ref {{ constants.phoenix.star_fasta|cloudbasename(in_cloud) }} \
       {% elif aligner == 'bwa' %}
-      --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
+      --fasta-ref {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       {% endif %}
-      --regions-file "{{ constants.phoenix.snpSniffer_sites }}" \
+      --regions-file {{ constants.phoenix.snpSniffer_sites|cloudbasename(in_cloud) }} \
       {{ bam }} \
       | \
     bcftools call \
@@ -396,7 +435,7 @@
     bcftools annotate \
       --threads 2 \
       --include 'INFO/DP >= 5' \
-      --rename-chrs "{{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl }}" \
+      --rename-chrs {{ constants.phoenix.bcftools_annotate_contig_update_ucsc2ensembl|cloudbasename(in_cloud) }} \
       --output-type v \
       --output "{{ results_dir }}/{{ bam|basename }}.snpSniffer.vcf"
 

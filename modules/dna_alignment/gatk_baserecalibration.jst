@@ -126,14 +126,19 @@
 
 {# Moves the markduplicates bam without doing baserecalibration #}
 {% macro nobaserecalibration(sample, aligner='bwa') %}
+{% set in_cloud = backend.startswith('cloud_') %}
 - name: no_baserecalibration_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
-  input: temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+  input: ./temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam
   output:
-    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
-    - {{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
+    - ./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
+    - ./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
   walltime: "1:00:00"
-  cpus: 10
+  {# cpus: 10 #}
+  cpus: 8
   cmd: |
     set -eu
     set -o pipefail
@@ -145,12 +150,15 @@
       "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam" \
       "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
-    samtools index -@ 10 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+    {# samtools index -@ 10 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" #}
+    samtools index -@ 8 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
 {% set task %}no_baserecalibration_{{ sample.name }}_{{ aligner }}{% endset %}
 {% set before %}freebayes_sex_check_{{ sample.name }}_{{ aligner }}{% endset %}
 {% set directory %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{% endset %}
+{% if not in_cloud %}
 {{- remove_files(directory,before,task) }}
+{% endif %}
 {# {{- remove_files_by_input(inputs=[], name='no_baserecalibration') }} #}
 
 {% endmacro %}
