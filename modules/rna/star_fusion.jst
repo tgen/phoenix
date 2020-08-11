@@ -262,7 +262,7 @@
 
     cd "{{ temp_dir }}"
 
-    NUM_FUSIONS=$(grep -w "#FusionName" -c -v ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv)
+    NUM_FUSIONS=$(grep -w "#FusionName" -c -v ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_star_fusion.fusion_predictions.abridged.coding_effect.tsv || :)
     if (( NUM_FUSIONS == 0 )); then
         echo "Zero fusions found, skipping FusionInspector"
     else
@@ -286,20 +286,19 @@
           --include_Trinity \
           --annotate \
           --examine_coding_effect
+        {# Moving fusion inspector files to results dir #}
+        mv FusionInspector-inspect/finspector.bed ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.bed
+        mv FusionInspector-inspect/finspector.fa ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.fa
+        mv FusionInspector-inspect/finspector.fusion_inspector_web.html ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.html
+        mv FusionInspector-inspect/finspector.fusion_inspector_web.json ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.json
+        mv FusionInspector-inspect/finspector.junction_reads.bam ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam
+        mv FusionInspector-inspect/finspector.junction_reads.bam.bai ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam.bai
+        mv FusionInspector-inspect/finspector.spanning_reads.bam ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam
+        mv FusionInspector-inspect/finspector.spanning_reads.bam.bai ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam.bai
+        mv FusionInspector-inspect/finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz
+        mv FusionInspector-inspect/finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi
+        mv FusionInspector-inspect/fi_workdir/trinity_GG/Trinity-GG.fasta ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
     fi
-
-    {# Moving fusion inspector files to results dir #}
-    mv FusionInspector-inspect/finspector.bed ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.bed
-    mv FusionInspector-inspect/finspector.fa ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.fa
-    mv FusionInspector-inspect/finspector.fusion_inspector_web.html ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.html
-    mv FusionInspector-inspect/finspector.fusion_inspector_web.json ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.fusion_inspector_web.json
-    mv FusionInspector-inspect/finspector.junction_reads.bam ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam
-    mv FusionInspector-inspect/finspector.junction_reads.bam.bai ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.junction_reads.bam.bai
-    mv FusionInspector-inspect/finspector.spanning_reads.bam ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam
-    mv FusionInspector-inspect/finspector.spanning_reads.bam.bai ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.spanning_reads.bam.bai
-    mv FusionInspector-inspect/finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz
-    mv FusionInspector-inspect/finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_finspector.gmap_trinity_GG.fusions.gff3.bed.sorted.bed.gz.tbi
-    mv FusionInspector-inspect/fi_workdir/trinity_GG/Trinity-GG.fasta ${PROJECT_ROOT}/{{ results_dir }}/{{ sample.name }}_Trinity-GG.fasta
 
     {# Remove the remaining files #}
     {% set task %}fusion_inspector_{{ sample.name }}{% endset %}
