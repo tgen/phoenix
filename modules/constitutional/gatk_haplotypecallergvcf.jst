@@ -3,15 +3,27 @@
 # Call constitutional variants with haplotype caller. In order to call
 # variants, this step must be followed with genotype gvcfs task.
 {% macro haplotypecallergvcf(sample, aligner='bwa', taskPrefix='Genome') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}_{{ aligner }}{% endset %}
-{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}./temp/{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/constitutional_variant_calls/haplotypecaller/{{ sample.name }}{% endset %}
 {% set gvcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.hc.g.vcf.gz{% endset %}
+{% set in_cloud = backend.startswith('cloud_') %}
 
 {% for batch in constants.phoenix.calling_intervals %}
 - name: haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
-  input: {{ bam }}
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fasta|cloudpath }}.fai
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+    singularity_container: '/containers/gatk_4.1.6.0.sif'
+    transfer_container_to_remote: False
+  input:
+    - {{ bam }}
+    - {{ bam }}.bai
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.g.vcf.gz
   walltime: "24:00:00"
   cpus: 4
   mem: 16G
@@ -19,28 +31,34 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.gatk.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ temp_dir }}"
 
     gatk HaplotypeCaller \
-      --java-options "-Xmx14G" \
+      --java-options "-Xmx4G" \
       -ERC GVCF \
-      --reference {{ constants.phoenix.reference_fasta }} \
-      --input "{{ bam }}" \
+      --reference {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
+      --input {{ bam }} \
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      -O "{{ temp_dir }}/{{ loop.index }}.g.vcf.gz"
+      -O {{ temp_dir }}/{{ loop.index }}.g.vcf.gz
+    
 
 {% endfor %}
 
 
 - name: haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
-  after: 
+  cloud_args:
+    singularity_container: '/containers/gatk_4.1.6.0.sif'
+    transfer_container_to_remote: False
+  input:
     {% for batch in constants.phoenix.calling_intervals %}
-    - haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
+    - "{{ temp_dir }}/{{ loop.index }}.g.vcf.gz"
     {% endfor %}
   output:
     - {{ gvcf }}
@@ -52,7 +70,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.gatk.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -64,9 +84,11 @@
       --OUTPUT "{{ gvcf }}"
 
     {# Remove the remaining files #}
-    {% set task %}haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
+    {% if not in_cloud %}
+        {% set task %}haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}{% endset %}
+        {% set directory %}{{ temp_dir }}{% endset %}
+        {{- remove_files(directory,none,task) }}
+    {% endif %}
 
 {% endmacro %}
 

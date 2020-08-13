@@ -1,11 +1,18 @@
 # These macros are run on genome bams from the dna_alignment module.
+{% set in_cloud = backend.startswith('cloud_') %}
 
 {% macro bam_qc_gatk_collectwgsmetrics(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 - name: gatk_collectwgsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetrics, {{ sample.name }}]
+  cloud_args:
+    singularity_container: '/containers/gatk_4.1.6.0.sif'
+    transfer_container_to_remote: False
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.wgs_metrics
   walltime: "24:00:00"
@@ -14,7 +21,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.gatk.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -23,17 +33,24 @@
       --USE_FAST_ALGORITHM false \
       --INPUT {{ bam }} \
       --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_metrics \
-      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }}
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }}
 
 {% endmacro %}
 
 
 {% macro bam_qc_gatk_collectwgsmetricswithnonzerocoverage(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectwgsmetricswithnonzerocoverage_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectWgsMetricsWithNonZeroCoverage, {{ sample.name }}]
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+    singularity_container: '/containers/gatk_4.1.6.0.sif'
+    transfer_container_to_remote: False
   input: {{ bam }}
   output:
     - {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics
@@ -44,8 +61,11 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.gatk.module }}
-    #module load {{ constants.tools.R.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.R.module }}
+    {% endif %}
 
     mkdir -p {{ results_dir }}
 
@@ -54,17 +74,24 @@
       --INPUT {{ bam }} \
       --OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics \
       --CHART_OUTPUT {{ results_dir }}/{{ bam|basename }}.wgs_wnzc_metrics.pdf \
-      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }}
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }}
 
 {% endmacro %}
 
 
 {% macro bam_qc_gatk_collectrawwgsmetrics(sample, aligner='bwa') %}
-{% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+{% set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
 - name: gatk_collectrawwgsmetrics_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_CollectRawWgsMetrics, {{ sample.name }}]
+  cloud_args:
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+    singularity_container: '/containers/gatk_4.1.6.0.sif'
+    transfer_container_to_remote: False
   input: {{ bam }}
   output: {{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics
   walltime: "24:00:00"
@@ -73,7 +100,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.gatk.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -82,7 +112,7 @@
       --USE_FAST_ALGORITHM false \
       --INPUT "{{ bam }}" \
       --OUTPUT "{{ results_dir }}/{{ bam|basename }}.wgs_raw_metrics" \
-      --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }} \
       --INCLUDE_BQ_HISTOGRAM true
 
 {% endmacro %}

@@ -2,26 +2,44 @@
 
 {%- macro deepvariant(sample, aligner='bwa', taskPrefix='Genome') %}
 
-{%- set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{%- set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}_{{ aligner }}{% endset %}
-{%- set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}{% endset %}
+{%- set bam %}./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{%- set temp_dir %}./temp/{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}_{{ aligner }}{% endset %}
+{%- set results_dir %}./{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}{% endset %}
 {%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz{% endset %}
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
+{% set in_cloud = backend.startswith('cloud_') %}
 
 {%- set nshards=40 %}
+{% set zpad_nshards = (nshards|string).zfill(5) %}
+
 {% for i in range(nshards) %}
+{% set zpad_i = (i|string).zfill(5) %}
 
 - name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
-  input: {{ bam }}
+  cloud_args:
+    singularity_container: 'docker://registry.gitlab.com/coh_pipelines/tgen_phoenix_deepvariant_make_examples:20200229'
+    transfer_container_to_remote: False
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+  input:
+    - {{ bam }}
+    - {{ bam }}.bai
+  output:
+    - "{{ temp_dir }}/{{ sample.name }}.ex.tfrecord-{{ zpad_i }}-of-{{ zpad_nshards }}.gz"
+    - "{{ temp_dir }}/{{ sample.name }}.gvcf.tfrecord-{{ zpad_i }}-of-{{ zpad_nshards }}.gz"
   cpus: 1
   mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
-    set -o pipefail
+    set -o pipefail 
 
-    #module load {{ constants.tools.deepvariant.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.deepvariant.module }}
+    {% endif %}
 
     PROJECT_ROOT=$PWD
 
@@ -38,7 +56,11 @@
       --logging_level WARN \
       --mode calling \
       --task {{ i }} \
+      {% if in_cloud %}
+      --ref "${PROJECT_ROOT}/{{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }}" \
+      {% else %}
       --ref "{{ constants.phoenix.reference_fasta }}" \
+      {% endif %}
       --reads "${PROJECT_ROOT}/{{ bam }}" \
       --examples "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz" \
       --gvcf "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.gvcf.tfrecord@{{ nshards }}.gz"
@@ -47,10 +69,21 @@
 
 - name: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
-  after:
+  cloud_args:
+    singularity_container: 'docker://registry.gitlab.com/coh_pipelines/tgen_phoenix_deepvariant_make_examples:20200229'
+    transfer_container_to_remote: False
+    reference_input:
+    {% if sample.gltype == 'exome' %}
+      - {{ constants.phoenix.deepvariant_models.exome|cloudpath }}
+    {% else %}
+      - {{ constants.phoenix.deepvariant_models.genome_path }}/./model*
+    {% endif %}
+  input:
   {% for i in range(nshards) %}
-    - deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
+    {% set zpad_i = (i|string).zfill(5) %}
+    - "{{ temp_dir }}/{{ sample.name }}.ex.tfrecord-{{ zpad_i }}-of-{{ zpad_nshards }}.gz"
   {% endfor %}
+  output: {{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz
   cpus: 8
   mem: 40G
   sbatch_args: ['-p', 'gpu', '--gres', 'gpu:1', '-N', '1', '--tasks-per-node', '1' ]
@@ -58,8 +91,11 @@
   cmd: |
     set -eu
     set -o pipefail
+    echo "call variants"
 
+    {% if not in_cloud %}
     module load {{ constants.tools.deepvariant.module }}
+    {% endif %}
 
     PROJECT_ROOT=$PWD
 
@@ -68,9 +104,9 @@
     {# Run call_variants #}
     call_variants \
       {% if sample.gltype == 'exome' %}
-      --checkpoint "{{ constants.phoenix.deepvariant_models.exome }}" \
+      --checkpoint "{%if in_cloud %}${PROJECT_ROOT}/{% endif %}{{ constants.phoenix.deepvariant_models.exome|cloudbasename(in_cloud) }}" \
       {% else %}
-      --checkpoint  "{{ constants.phoenix.deepvariant_models.genome }}" \
+      --checkpoint "{%if in_cloud %}${PROJECT_ROOT}/{% endif %}{{ constants.phoenix.deepvariant_models.genome|cloudbasename(in_cloud) }}" \
       {% endif %}
       --examples "{{ sample.name }}.ex.tfrecord@{{ nshards }}.gz" \
       --outfile "{{ sample.name }}.cvo.tfrecord.gz"
@@ -78,7 +114,19 @@
 
 - name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
-  after: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
+  cloud_args:
+    singularity_container: '/home/dominic/containers/./phoenix_deepvariant_postprocess_variants.sif'
+    transfer_container_to_remote: True
+    reference_input:
+      - {{ constants.phoenix.reference_fasta|cloudpath }}
+      - {{ constants.phoenix.reference_fai|cloudpath }}
+      - {{ constants.phoenix.reference_dict|cloudpath }}
+  input:
+  {% for i in range(nshards) %}
+    {% set zpad_i = (i|string).zfill(5) %}
+    - "{{ temp_dir }}/{{ sample.name }}.gvcf.tfrecord-{{ zpad_i }}-of-{{ zpad_nshards }}.gz"
+  {% endfor %}
+    - {{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -89,18 +137,20 @@
     set -eu
     set -o pipefail
 
+    {% if not in_cloud %}
     module load {{ constants.tools.deepvariant.module }}
     module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     PROJECT_ROOT=$PWD
     
-    mkdir -p "{{ results_dir }}"
+    mkdir -p "{{ results_dir }}" 
 
     cd "{{ temp_dir }}"
     
     {# Run postprocess_variants with gVCFs #}
     postprocess_variants \
-        --ref "{{ constants.phoenix.reference_fasta }}" \
+        --ref "${PROJECT_ROOT}/{{ constants.phoenix.reference_fasta|cloudbasename(in_cloud) }}" \
         --infile "{{ sample.name }}.cvo.tfrecord.gz" \
         --outfile "${PROJECT_ROOT}/{{ all_vcf }}" \
         --nonvariant_site_tfrecord_path "${PROJECT_ROOT}/{{ temp_dir }}/{{ sample.name }}.gvcf.tfrecord@{{ nshards }}.gz" \
@@ -111,7 +161,12 @@
 
 - name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
-  after: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+  input:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
@@ -122,7 +177,9 @@
     set -eu
     set -o pipefail
 
+    {% if not in_cloud %}
     module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     {# Then filter out the PASS variants to a separate file #}
     bcftools filter \
@@ -137,5 +194,9 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
 {%- set after_task = 'deepvariant_filter_variants_'+sample.name+'_'+aligner %}
+{% if not in_cloud %}
+{# Because of the after, this task was skipped while were developing the cloud backend. If it's been removed in a  #}
+{# newer version we can probably throw it back in #}
 {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'deepvariant', 'constitutional', 'snp_indel_caller') }}
+{% endif %}
 {% endmacro %}

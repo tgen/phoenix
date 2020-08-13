@@ -1,9 +1,12 @@
 __pipeline__:
-  name: pw_phoenix
+  name: phoenix
   main: main.jst
   description: Human GRCh38 genomics suite
   version: v0.5.0
 constants:
+  containers:
+    bwa: /home/dominic/containers/jetstream_phoenix_full.sif
+    samtools: /home/dominic/containers/jetstream_phoenix_full.sif
   install_path:
     path_to_phoenix_repo: /home/dominic/jetstream_pipelines/pw_phoenix
   tools:
@@ -343,12 +346,14 @@ constants:
     reference_dict: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
     reference_non_N_bed: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
     dbsnp_v152: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
+    
     gnomad_exome_v2_1_1_liftover: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
     gnomad_genome_v3_0: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
     gnomad_exome_v2_1_1_mutect_germlinereference: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
     gnomad_genome_v3_0_mutect_germlinereference: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
     gnomad_exome_v2_1_1_mutect_contamination: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
     gnomad_genome_v3_0_mutect_contamination: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
+    
     cosmic_coding_v90: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
     cosmic_noncoding_v90: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
     clinvar_20190715: /home/dominic/resources/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
@@ -434,6 +439,7 @@ constants:
     deepvariant_models:
       exome: /home/dominic/resources/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.9.0/DeepVariant-inception_v3-0.9.0+data-wes_standard/model.ckpt
       genome: /home/dominic/resources/homo_sapiens/grch38_hg38/tool_specific_resources/deepvariant/0.9.0/DeepVariant-inception_v3-0.9.0+data-wgs_standard/model.ckpt
+      genome_path: /home/dominic/resources/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.9.0/DeepVariant-inception_v3-0.9.0+data-wgs_standard
     sequence_groupings:
       # Sequence groupings for BQSR (same groups as found in the GATK WDL example).
       - ['chr1']

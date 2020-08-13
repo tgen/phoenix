@@ -1,21 +1,32 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {% macro ichorcna(sample, aligner='bwa', taskPrefix='Genome') %}
-{% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
+{% set bam %}./{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}./{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
 {% set wig %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
-{% set temp_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
+{% set temp_dir %}./temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
+{% set in_cloud = backend.startswith('cloud_') %}
 
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
-  input: {{ bam }}
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    {# wrapper_frontmatter: 'export PATH=$PATH:/home/dominic/software/hmmcopy_utils/bin' #}
+  input:
+    - {{ bam }}
+    - {{ bam }}.bai
+  output:
+    - {{ wig }}
   walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.hmmcopy_utils.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.hmmcopy_utils.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}/"
 
@@ -31,21 +42,30 @@
 
 - name: ichor_cna_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
-  after: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
+  {# after: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }} #}
+  cloud_args:
+    reference_input:
+      - /home/dominic/jetstream_pipelines/pw_phoenix/./{{ constants.tools.ichorcna.launcher }}
+    {# wrapper_frontmatter: 'export PATH_TO_PHOENIX_REPO=.' #}
+    singularity_container: '/containers/phoenix_ichorcna.sif'
+    transfer_container_to_remote: False
+  input:
+    - {{ wig }}
   output:
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.cna.seg
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.correctedDepth.txt
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.params.txt
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.RData
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.seg.txt
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.cna.seg
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.correctedDepth.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.RData
+    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg.txt
   walltime: "24:00:00"
   cpus: 1
   cmd: |
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.ichorcna.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.ichorcna.module }}
+    {% endif %}
 
     {# Purge any existing results files prior to starting #}
     rm -r "{{ temp_dir }}" || true
@@ -100,8 +120,10 @@
     mv {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/*.pdf "{{ results_dir }}/"
 
     {# Remove the remaining files #}
-    {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
+    {% if not in_cloud %}
+        {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}
+        {% set directory %}{{ temp_dir }}{% endset %}
+        {{- remove_files(directory,none,task) }}
+    {% endif %}
 
 {% endmacro %}

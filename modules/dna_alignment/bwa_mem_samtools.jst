@@ -13,6 +13,8 @@
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
 {% macro bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) %}
+{% set rg_bams = [] %}
+{% set in_cloud = backend.startswith('cloud_') %}
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
@@ -23,11 +25,18 @@
 {% if n_chunks > 99 %}{{ raise('ValueError', 'Too many chunks!') }}{% endif %}
 
 {% for fastq in [r1fastq, r2fastq] %}
+{% set fastq_path %}temp/fastqs/{{ fastq.basename }}{% endset %}
+
 - name: split_fastq_{{ fastq.fastqPath|sha256 }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, split, {{ sample.name }}]
   reset: predecessors
   input:
-    - temp/fastqs/{{ fastq.basename }}
+    - ./temp/fastqs/{{ fastq.basename }}
+  output:
+    {% for i in range(n_chunks) %}
+    {% set chunk_suffix = '%02d' % i %}
+    - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/{{ chunk_suffix }}
+    {% endfor %}
   cpus: 1
   walltime: "4:00:00"
   cmd: |
@@ -37,7 +46,7 @@
     rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" || true
     mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
 
-    zcat "temp/fastqs/{{ fastq.basename }}" |\
+    zcat "{{ fastq_path }}" |\
       split \
         --numeric-suffixes \
         --suffix-length 2 \
@@ -57,21 +66,31 @@
 
 {% for i in range(n_chunks) %}
 {% set chunk_suffix = '%02d' % i %}
+{% do rg_bams.append('./temp/{}/alignment/bwa/{}/{}/{}.bwa.bam'.format(sample.gltype, sample.name, rgid, chunk_suffix)) %}
 - name: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_{{ rgid }}_{{ chunk_suffix }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   reset: predecessors
-  after:
-    - split_fastq_{{ r1fastq.fastqPath|sha256 }}
-    - split_fastq_{{ r2fastq.fastqPath|sha256 }}
+  cloud_args:
+    reference_input: {{ constants.phoenix.bwa_index|dirname }}/./*
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+  input:
+    - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}
+    - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}
+  output:
+    - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
   walltime: "48:00:00"
-  cpus: 10
+  {# cpus: 10 #}
+  cpus: 8
   mem: 50G
   cmd: |
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.bwa.module }}
-    #module load {{ constants.tools.samtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -101,13 +120,21 @@
         -            Input from stdin
         -o FILE      Write final output to FILE rather than standard output
     #}
+    {% set bwa_index_path %}
+        {% if in_cloud %}
+            {{- constants.phoenix.bwa_index|basename -}}
+        {% else %}
+            {{ constants.phoenix.bwa_index }}
+        {% endif %}
+    {% endset %}
+
     bwa mem \
       -v 3 \
       -Y \
       -K 100000000 \
       -t 9 \
       -R "{{ read_group_line(rg, format='bwa') }}" \
-      "{{ constants.phoenix.bwa_index }}" \
+      "{{ bwa_index_path }}" \
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
     samtools fixmate \
@@ -129,8 +156,14 @@
 
 - name: chunked_samtools_merge_rg_bams_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
-  after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
-  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+  input:
+    {% for rg_bam_path in rg_bams %}
+     - {{ rg_bam_path }}
+    {% endfor %}
+  output: ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
   mem: 16G
@@ -138,7 +171,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     {# No long options available for the following:
       -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
@@ -173,10 +208,13 @@
   tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools.verbose }} markdup.
-  input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+  input: ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   output:
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
-    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
+    - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
+    - ./{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 10
   mem: 40G
@@ -184,7 +222,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     {#
     # If this task was interrupted previously, temp files may exist

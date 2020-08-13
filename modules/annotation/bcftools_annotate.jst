@@ -1,8 +1,25 @@
 {%- macro bcftools_annotate(sample_or_pair, temp_dir, after_task, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, snpeff_flag, vep_flag, task_type) %}
 {%- set output_bcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.bcf{% endset %}
+{% set in_cloud = backend.startswith('cloud_') %}
+
 - name: bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  after: {{ after_task }}
+  cloud_args:
+    singularity_container: '/containers/jetstream_phoenix_full.sif'
+    transfer_container_to_remote: False
+    reference_input:
+      - {{ constants.phoenix.dbsnp_v152|cloudpath }}
+      - {{ constants.phoenix.dbsnp_v152|cloudpath }}.csi
+      - {{ constants.phoenix.gnomad_exome_v2_1_1_liftover|cloudpath }}
+      - {{ constants.phoenix.gnomad_exome_v2_1_1_liftover|cloudpath }}.csi
+      - {{ constants.phoenix.gnomad_genome_v3_0|cloudpath }}
+      - {{ constants.phoenix.gnomad_genome_v3_0|cloudpath }}.csi
+      - {{ constants.phoenix.cosmic_coding_v90|cloudpath }}
+      - {{ constants.phoenix.cosmic_coding_v90|cloudpath }}.csi
+      - {{ constants.phoenix.cosmic_noncoding_v90|cloudpath }}
+      - {{ constants.phoenix.cosmic_noncoding_v90|cloudpath }}.csi
+      - {{ constants.phoenix.clinvar_20190715|cloudpath }}
+      - {{ constants.phoenix.clinvar_20190715|cloudpath }}.csi
   input: {{ input_vcf }}
   output:
     - {{ output_vcf }}
@@ -13,7 +30,9 @@
     set -eu
     set -o pipefail
 
+    {% if not in_cloud %}
     module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     mkdir -p "{{ temp_dir }}"
 
@@ -33,7 +52,7 @@
     {# annotate with dbsnp #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.dbsnp_v152 }}" \
+      --annotations "{{ constants.phoenix.dbsnp_v152|cloudbasename(in_cloud) }}" \
       --mark-sites DBSNPv152 \
       --columns ID \
       --output-type b \
@@ -50,7 +69,7 @@
     {# annotate with gnomad exome #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.gnomad_exome_v2_1_1_liftover }}" \
+      --annotations "{{ constants.phoenix.gnomad_exome_v2_1_1_liftover|cloudbasename(in_cloud) }}" \
       --mark-sites GNOMAD_EXOME \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
@@ -66,7 +85,7 @@
     {# annotate with gnomad genome #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.gnomad_genome_v3_0 }}" \
+      --annotations "{{ constants.phoenix.gnomad_genome_v3_0|cloudbasename(in_cloud) }}" \
       --mark-sites GNOMAD_GENOME \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
@@ -82,7 +101,7 @@
     {# annotate with cosmic #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.cosmic_coding_v90 }}" \
+      --annotations "{{ constants.phoenix.cosmic_coding_v90|cloudbasename(in_cloud) }}" \
       --mark-sites COSMIC \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
@@ -98,7 +117,7 @@
     {# annotate with cosmic_nc #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.cosmic_noncoding_v90 }}" \
+      --annotations "{{ constants.phoenix.cosmic_noncoding_v90|cloudbasename(in_cloud) }}" \
       --mark-sites COSMIC_NC \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
@@ -114,7 +133,7 @@
     {# annotate with clinvar #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.clinvar_20190715 }}" \
+      --annotations "{{ constants.phoenix.clinvar_20190715|cloudbasename(in_cloud) }}" \
       --mark-sites CLINVAR \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
