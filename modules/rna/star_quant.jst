@@ -306,20 +306,28 @@ which appears to be working now after some code changes, keeping this here in ca
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- remove_files(directory,none,task) }}
     {% elif tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
-      {% set task %}htseq_{{ sample.name }}{% endset %}
+      {% set task %}[htseq_{{ sample.name }},fixmate_sort_star_{{ sample.name }}]{% endset %}
       {% set directory %}{{ temp_dir }}{% endset %}
+      {{- htseq(sample) }}
       {{- remove_files(directory,none,task) }}
     {% elif tasks.RNA_transcriptome_quantify_expression_subread_featureCounts and not tasks.RNA_transcriptome_quantify_expression_HTseq %}
-      {% set task %}featurecounts_{{ sample.name }}{% endset %}
+      {% set task %}[featurecounts_{{ sample.name }},fixmate_sort_star_{{ sample.name }}]{% endset %}
       {% set directory %}{{ temp_dir }}{% endset %}
+      {{- featurecounts(sample) }}
       {{- remove_files(directory,none,task) }}
     {% else %}
-      {% set task %}htseq_{{ sample.name }}{% endset %}
+      {% set task %}[htseq_{{ sample.name }},featurecounts_{{ sample.name }},fixmate_sort_star_{{ sample.name }}]{% endset %}
       {% set directory %}{{ temp_dir }}{% endset %}
+      {{- htseq(sample) }}
+      {{- featurecounts(sample) }}
       {{- remove_files(directory,none,task) }}
     {% endif %}
+{% endmacro %}
 
-{% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
+{% macro htseq(sample) %}
+{% set temp_dir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
+{% set star_bam_unsort %}{{ temp_dir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
+
 - name: htseq_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, HTseq, {{ sample.name }}]
   reset: predecessors
@@ -364,9 +372,12 @@ which appears to be working now after some code changes, keeping this here in ca
       "{{ star_bam_unsort }}" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
-{% endif %}
+{% endmacro %}
 
-{% if tasks.RNA_transcriptome_quantify_expression_subread_featureCounts|default(true) %}
+{% macro featurecounts(sample) %}
+{% set temp_dir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
+{% set star_bam_unsort %}{{ temp_dir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
+
 - name: featurecounts_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, subread_featureCounts, {{ sample.name }}]
   reset: predecessors
@@ -406,6 +417,4 @@ which appears to be working now after some code changes, keeping this here in ca
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
       "{{ star_bam_unsort }}"
-{% endif %}
-
 {% endmacro %}
