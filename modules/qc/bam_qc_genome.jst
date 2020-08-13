@@ -1,10 +1,4 @@
 # These macros are run on genome bams from the dna_alignment module.
-
-{% set ref_fasta_input_bundle %}
-- {{ constants.phoenix.reference_fasta|cloudpath }}
-- {{ constants.phoenix.reference_fai|cloudpath }}
-- {{ constants.phoenix.reference_dict|cloudpath }}
-{% endset %}
 {% set in_cloud = backend.startswith('cloud_') %}
 
 {% macro bam_qc_gatk_collectwgsmetrics(sample, aligner='bwa') %}
@@ -27,7 +21,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.gatk.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -64,8 +61,11 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.gatk.module }}
-    #module load {{ constants.tools.R.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.R.module }}
+    {% endif %}
 
     mkdir -p {{ results_dir }}
 
@@ -100,7 +100,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.gatk.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 

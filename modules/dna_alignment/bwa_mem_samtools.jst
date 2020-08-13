@@ -52,11 +52,7 @@
         --suffix-length 2 \
         --lines {{ n_lines }} \
         - \
-        {# {% if in_cloud %}
-        ./
-        {% else %} #}
         "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
-        {# {% endif %} #}
 
     N_CREATED=$(ls "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
 
@@ -83,9 +79,6 @@
     - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}
   output:
     - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
-  {# after:
-    - split_fastq_{{ r1fastq.fastqPath|sha256 }}
-    - split_fastq_{{ r2fastq.fastqPath|sha256 }} #}
   walltime: "48:00:00"
   {# cpus: 10 #}
   cpus: 8
@@ -94,8 +87,10 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.bwa.module }}
-    #module load {{ constants.tools.samtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -132,8 +127,7 @@
             {{ constants.phoenix.bwa_index }}
         {% endif %}
     {% endset %}
-    {# {% if in_cloud %}{% set bwa_index_path = os.path.basename(constants.phoenix.bwa_index) %}
-    {% else %}{% set bwa_index_path = constants.phoenix.bwa_index %}{% endif %} #}
+
     bwa mem \
       -v 3 \
       -Y \
@@ -169,7 +163,6 @@
     {% for rg_bam_path in rg_bams %}
      - {{ rg_bam_path }}
     {% endfor %}
-  {# after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.* #}
   output: ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
@@ -178,7 +171,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     {# No long options available for the following:
       -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
@@ -221,14 +216,15 @@
     - ./temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
     - ./{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
-  {# cpus: 10 #}
-  cpus: 8
+  cpus: 10
   mem: 40G
   cmd: |
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     {#
     # If this task was interrupted previously, temp files may exist
@@ -254,8 +250,7 @@
       -d {{ opt_dup_distance }} \
       -S \
       -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt" \
-      {# --threads 10 \ #}
-      --threads 8 \
+      --threads 10 \
       --write-index \
       -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}" \
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \

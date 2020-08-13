@@ -44,9 +44,11 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
-    #module load {{ constants.tools.bedtools.module }}
-
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bedtools.module }}
+    {% endif %}
+    
     mkdir -p "{{ results_dir }}"
 
     {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
@@ -117,8 +119,10 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
-    #module load {{ constants.tools.bedtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bedtools.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -198,7 +202,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.samtools.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -235,7 +242,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.samtools.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -294,8 +304,10 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.gatk.module }}
-    #module load {{ constants.tools.R.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.R.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -361,7 +373,6 @@
     - {{ results_dir }}/{{ bam|basename }}.quality_distribution_metrics
     - {{ results_dir }}/{{ bam|basename }}.quality_distribution.pdf
     - {{ results_dir }}/{{ bam|basename }}.quality_yield_metrics
-  {# after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }} #}
   output: {{ results_dir }}/{{ bam|basename }}.oxog_metrics
   walltime: "24:00:00"
   cpus: 8
@@ -369,7 +380,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.gatk.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     gatk ConvertSequencingArtifactToOxoG \
       {% if aligner == 'star' %}
@@ -408,7 +422,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.bcftools.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.bcftools.module }}
+    {% endif %}
     
     mkdir -p {{ results_dir }}
 

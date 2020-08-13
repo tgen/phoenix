@@ -1,11 +1,4 @@
 # These macros are run on constitutional dna bams from the dna_alignment modules.
-
-{% set ref_fasta_input_bundle %}
-    - {{ constants.phoenix.reference_fasta|cloudpath }}
-    - {{ constants.phoenix.reference_fai|cloudpath }}
-    - {{ constants.phoenix.reference_dict|cloudpath }}
-{% endset %}
-
 {% set in_cloud = backend.startswith('cloud_') %}
 
 {% macro bam_qc_verifybamid2(sample, aligner='bwa') %}
@@ -33,7 +26,10 @@
   cmd: |
     set -eu
     set -o pipefail
-    #module load {{ constants.tools.verifybamid2.module }}
+    
+    {% if not in_cloud %}
+    module load {{ constants.tools.verifybamid2.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -91,9 +87,11 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
-    #module load {{ constants.tools.freebayes.module }}
-    #module load {{ constants.tools.bcftools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.freebayes.module }}
+    module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     mkdir -p "{{ temp_dir }}/temp"
     mkdir -p {{ results_dir }}
@@ -117,8 +115,6 @@
       --min-coverage 5 \
       --vcf "{{ vcf }}" \
       {{ bam }}
-    
-    {# echo 'done1' >> {{ results_dir }}/out.log #}
 
     {# Capture the RG_SM tag that is in the VCF header #}
     SAMPLE=`grep "#CHROM" {{ vcf }} | cut -f10`
@@ -144,8 +140,6 @@
 
     {# Positions meeting requirements with heterozygous calls; 0/1, 0/2, 0/3, 1/2, 1/3, or 2/3 (ie. AB.count) #}
     HETEROZYGOUS=`bcftools view -H --types snps --max-alleles 2 --include 'FORMAT/DP[0]>=6 & GT="het"' {{ vcf }} | wc -l`
-    
-    {# echo 'done2' >> {{ results_dir }}/out.log #}
     
     {# Determine if the sample meets TESTED_GENOTYPES requirement #}
     if [ $TESTED_GENOTYPES -ge $MINIMUM_GENOTYPES_REQUIRED ]

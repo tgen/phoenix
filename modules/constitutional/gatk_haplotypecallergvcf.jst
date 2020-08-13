@@ -31,7 +31,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.gatk.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ temp_dir }}"
 
@@ -51,10 +53,6 @@
 
 - name: haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, gatk_HaplotypeCaller, {{ sample.name }}]
-  {# after: 
-    {% for batch in constants.phoenix.calling_intervals %}
-    - haplotypecaller_gvcf_{{ sample.name }}_{{ aligner }}_{{ loop.index }}
-    {% endfor %} #}
   cloud_args:
     singularity_container: '/containers/gatk_4.1.6.0.sif'
     transfer_container_to_remote: False
@@ -72,7 +70,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.gatk.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.gatk.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}"
 
@@ -87,9 +87,7 @@
     {% if not in_cloud %}
         {% set task %}haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}{% endset %}
         {% set directory %}{{ temp_dir }}{% endset %}
-        {# {{- remove_files(directory,none,task) }} #}
-    {% else %}
-        {{ log('We are in the cloud', level='CRITICAL') }}
+        {{- remove_files(directory,none,task) }}
     {% endif %}
 
 {% endmacro %}

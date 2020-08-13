@@ -137,21 +137,21 @@
     - ./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam
     - ./{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam.bai
   walltime: "1:00:00"
-  {# cpus: 10 #}
-  cpus: 8
+  cpus: 10
   cmd: |
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.samtools.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.samtools.module }}
+    {% endif %}
 
     mkdir -p "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/"
     mv \
       "temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.md.bam" \
       "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
-    {# samtools index -@ 10 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam" #}
-    samtools index -@ 8 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
+    samtools index -@ 10 "{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam"
 
 {% set task %}no_baserecalibration_{{ sample.name }}_{{ aligner }}{% endset %}
 {% set before %}freebayes_sex_check_{{ sample.name }}_{{ aligner }}{% endset %}
@@ -159,6 +159,5 @@
 {% if not in_cloud %}
 {{- remove_files(directory,before,task) }}
 {% endif %}
-{# {{- remove_files_by_input(inputs=[], name='no_baserecalibration') }} #}
 
 {% endmacro %}

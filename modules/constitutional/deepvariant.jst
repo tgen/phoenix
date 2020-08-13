@@ -37,7 +37,9 @@
     set -eu
     set -o pipefail 
 
-    #module load {{ constants.tools.deepvariant.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.deepvariant.module }}
+    {% endif %}
 
     PROJECT_ROOT=$PWD
 
@@ -91,7 +93,9 @@
     set -o pipefail
     echo "call variants"
 
-    {# module load {{ constants.tools.deepvariant.module }} #}
+    {% if not in_cloud %}
+    module load {{ constants.tools.deepvariant.module }}
+    {% endif %}
 
     PROJECT_ROOT=$PWD
 
@@ -126,8 +130,6 @@
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-    {# - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.g.vcf.gz
-    - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.g.vcf.gz.tbi #}
   cpus: 8
   mem: 64G
   walltime: "24:00:00"
@@ -135,8 +137,10 @@
     set -eu
     set -o pipefail
 
-    {# module load {{ constants.tools.deepvariant.module }} #}
-    {# module load {{ constants.tools.bcftools.module }} #}
+    {% if not in_cloud %}
+    module load {{ constants.tools.deepvariant.module }}
+    module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     PROJECT_ROOT=$PWD
     
@@ -173,7 +177,9 @@
     set -eu
     set -o pipefail
 
-    {# module load {{ constants.tools.bcftools.module }} #}
+    {% if not in_cloud %}
+    module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     {# Then filter out the PASS variants to a separate file #}
     bcftools filter \
@@ -188,5 +194,9 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
 {%- set after_task = 'deepvariant_filter_variants_'+sample.name+'_'+aligner %}
-{# {{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'deepvariant', 'constitutional', 'snp_indel_caller') }} #}
+{% if not in_cloud %}
+{# Because of the after, this task was skipped while were developing the cloud backend. If it's been removed in a  #}
+{# newer version we can probably throw it back in #}
+{{- annotate_vcfs(sample, temp_dir, results_dir, after_task, pass_vcf, taskPrefix, aligner, 'deepvariant', 'constitutional', 'snp_indel_caller') }}
+{% endif %}
 {% endmacro %}

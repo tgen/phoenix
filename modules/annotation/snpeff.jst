@@ -5,7 +5,6 @@
 
 - name: snpeff_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  {# after: {{ after_task }} #}
   cloud_args:
     reference_input:
       - {{ constants.phoenix.snpeff_config|cloudpath }}
@@ -23,8 +22,10 @@
     set -eu
     set -o pipefail
 
-    {# module load {{ constants.tools.snpeff.module }} #}
-    {# module load {{ constants.tools.bcftools.module }} #}
+    {% if not in_cloud %}
+    module load {{ constants.tools.snpeff.module }}
+    module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     {# No long options available for the following:
       -t      Use multiple threads (implies '-noStats')

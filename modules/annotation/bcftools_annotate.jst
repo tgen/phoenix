@@ -4,7 +4,6 @@
 
 - name: bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
   tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
-  {# after: {{ after_task }} #}
   cloud_args:
     singularity_container: '/containers/jetstream_phoenix_full.sif'
     transfer_container_to_remote: False
@@ -31,7 +30,9 @@
     set -eu
     set -o pipefail
 
-    {# module load {{ constants.tools.bcftools.module }} #}
+    {% if not in_cloud %}
+    module load {{ constants.tools.bcftools.module }}
+    {% endif %}
 
     mkdir -p "{{ temp_dir }}"
 
@@ -64,8 +65,7 @@
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
-    {# {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover"]|default(true) %} #}
-    {% if false %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover"]|default(true) %}
     {# annotate with gnomad exome #}
     bcftools annotate \
       --threads 4 \
@@ -81,8 +81,7 @@
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
-    {# {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome_v3_0"]|default(true) %} #}
-    {% if false %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome_v3_0"]|default(true) %}
     {# annotate with gnomad genome #}
     bcftools annotate \
       --threads 4 \

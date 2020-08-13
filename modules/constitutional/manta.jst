@@ -15,8 +15,6 @@
     reference_input:
       - {{ constants.phoenix.reference_fasta|cloudpath }}
       - {{ constants.phoenix.reference_fai|cloudpath }}
-    {# wrapper_frontmatter: 'export PATH=$PATH:/home/dominic/software/manta-1.6.0.centos6_x86_64/bin' #}
-    {# wrapper_frontmatter: 'export PATH=$PATH:/app/software/manta/1.6.0/bin' #}
     singularity_container: '/containers/phoenix_manta.sif'
     transfer_container_to_remote: False
   input: 
@@ -25,10 +23,6 @@
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
-    {# - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
-    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
-    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
-    - {{ results_dir }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi #}
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
@@ -40,9 +34,11 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.manta.module }}
-    #module load {{ constants.tools.htslib.module }}
-    #module load {{ constants.tools.python_2_7_15.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.manta.module }}
+    module load {{ constants.tools.htslib.module }}
+    module load {{ constants.tools.python_2_7_15.module }}
+    {% endif %}
 
     {# Purge any existing run files prior to starting #}
     rm -r "{{ temp_dir }}" || true

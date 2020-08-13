@@ -24,7 +24,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.hmmcopy_utils.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.hmmcopy_utils.module }}
+    {% endif %}
 
     mkdir -p "{{ results_dir }}/"
 
@@ -61,7 +63,9 @@
     set -eu
     set -o pipefail
 
-    #module load {{ constants.tools.ichorcna.module }}
+    {% if not in_cloud %}
+    module load {{ constants.tools.ichorcna.module }}
+    {% endif %}
 
     {# Purge any existing results files prior to starting #}
     rm -r "{{ temp_dir }}" || true
