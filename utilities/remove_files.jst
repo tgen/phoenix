@@ -1,6 +1,8 @@
 {% macro remove_files(directory, before, after) %}
 
-- name: removing_files_{{ after }}
+{% set task_name %}{{ after[0] }}{% endset %}
+
+- name: removing_files_{{ task_name }}
   {% if before is not none %}
   before-re: {{ before }}
   {% endif %}

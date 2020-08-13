@@ -306,28 +306,35 @@ which appears to be working now after some code changes, keeping this here in ca
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- remove_files(directory,none,task) }}
     {% elif tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
-      {% set task = [] %}
-      {{ task.append(htseq_{{ sample.name }}) }}
-      {{ task.append(fixmate_sort_star_{{ sample.name }}) }}
+      {% set task_list = [] %}
+      {% set task %}htseq_{{ sample.name }}{% endset %}
+      {{ task_list.append(task) }}
+      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {{ task_list.append(task) }}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- htseq(sample) }}
-      {{- remove_files(directory,none,task) }}
+      {{- remove_files(directory,none,task_list) }}
     {% elif tasks.RNA_transcriptome_quantify_expression_subread_featureCounts and not tasks.RNA_transcriptome_quantify_expression_HTseq %}
-      {% set task = [] %}
-      {{ task.append(featurecounts_{{ sample.name }}) }}
-      {{ task.append(fixmate_sort_star_{{ sample.name }}) }}
+      {% set task_list = [] %}
+      {% set task %}featurecounts_{{ sample.name }}{% endset %}
+      {{ task_list.append(task) }}
+      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {{ task_list.append(task) }}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- featurecounts(sample) }}
-      {{- remove_files(directory,none,task) }}
+      {{- remove_files(directory,none,task_list) }}
     {% else %}
-      {% set task = [] %}
-      {{ task.append(htseq_{{ sample.name }}) }}
-      {{ task.append(featurecounts_{{ sample.name }}) }}
-      {{ task.append(fixmate_sort_star_{{ sample.name }}) }}
+      {% set task_list = [] %}
+      {% set task %}htseq_{{ sample.name }}{% endset %}
+      {{ task_list.append(task) }}
+      {% set task %}featurecounts_{{ sample.name }}{% endset %}
+      {{ task_list.append(task) }}
+      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {{ task_list.append(task) }}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- htseq(sample) }}
       {{- featurecounts(sample) }}
-      {{- remove_files(directory,none,task) }}
+      {{- remove_files(directory,none,task_list) }}
     {% endif %}
 {% endmacro %}
 
