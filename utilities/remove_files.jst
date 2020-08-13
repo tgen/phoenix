@@ -11,9 +11,13 @@
   before-re: {{ before }}
   {% endif %}
   after-re:
+    {% if after is string %}
+    - {{ after }}
+    {% else %}
     {% for task in after %}
     - {{ task }}
     {% endfor %}
+    {% endif %}
   walltime: "0:10:00"
   cpus: 1
   mem: 2G
