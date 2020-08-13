@@ -63,7 +63,7 @@
     {# Constitutional dna specific tasks #}
     {% if sample.subGroup|lower == 'constitutional' and ( sample.gltype|lower == 'genome' or sample.gltype|lower == 'exome' )  %}
       {{- bam_qc_verifybamid2(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
-      {{- sex_check(sample, libraryCount, sample_lb, aligner=aligner) }}
+      {{- sex_check(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {% endif %}
 
     {# get oxo stats unless it is single cell rna #}
