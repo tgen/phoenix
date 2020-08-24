@@ -90,7 +90,7 @@
 
     bcftools sort \
       --output-type z \
-      --output "{{ all_vcf }}" \
+      --output-file "{{ all_vcf }}" \
       "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz"
 
     bcftools index --tbi --force "{{ all_vcf }}"
