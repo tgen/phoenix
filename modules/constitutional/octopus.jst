@@ -79,7 +79,7 @@
 
     bcftools concat \
       --output-type z \
-      --output "{{ all_vcf }}" \
+      --output "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz" \
       {% for b in constants.phoenix.primary_contig_calling_intervals %}
       {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
@@ -87,6 +87,11 @@
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf"
       {% endif %}
       {% endfor %}
+
+    bcftools sort \
+      --output-type z \
+      --output-file "{{ all_vcf }}" \
+      "{{ temp_dir }}/{{ sample.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz"
 
     bcftools index --tbi --force "{{ all_vcf }}"
 

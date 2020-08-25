@@ -88,7 +88,7 @@
     {# Vcf merge #}
     bcftools concat \
       --output-type z \
-      --output "{{ all_vcf }}" \
+      --output "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz" \
       {% for b in constants.phoenix.primary_contig_calling_intervals %}
       {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
@@ -97,7 +97,12 @@
       {% endif %}
       {% endfor %}
 
-    bcftools index --tbi "{{ all_vcf }}"
+    bcftools sort \
+      --output-type z \
+      --output-file "{{ all_vcf }}" \
+      "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz"
+
+    bcftools index --tbi --force "{{ all_vcf }}"
     {# No long options available for the following:
 {#      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]#}
 {#      -f           Overwrite the output BAM if exist#}

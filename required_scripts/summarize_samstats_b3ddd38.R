@@ -655,24 +655,24 @@ insertSize_summary <- function(input, bam, rgsm, rglb, rgid) {
               SD_lineNumerator = sum(SD_lineNumerator))
 
   # Get position information for insertSize percentiles
-  median_position <- summary %>% pull(var = Total_Pairs) * 0.5
-  median_value <- insertSize %>% filter(First_Ordered_Pair <= median_position) %>% filter(Last_Ordered_Pair > median_position) %>% pull(var = Insert_Size)
-  percentile1_position <- summary %>% pull(var = Total_Pairs) * 0.01
-  percentile1_value <- insertSize %>% filter(First_Ordered_Pair <= percentile1_position) %>% filter(Last_Ordered_Pair > percentile1_position) %>% pull(var = Insert_Size)
-  percentile5_position <- summary %>% pull(var = Total_Pairs) * 0.05
-  percentile5_value <- insertSize %>% filter(First_Ordered_Pair <= percentile5_position) %>% filter(Last_Ordered_Pair > percentile5_position) %>% pull(var = Insert_Size)
-  percentile10_position <- summary %>% pull(var = Total_Pairs) * 0.10
-  percentile10_value <- insertSize %>% filter(First_Ordered_Pair <= percentile10_position) %>% filter(Last_Ordered_Pair > percentile10_position) %>% pull(var = Insert_Size)
-  percentile25_position <- summary %>% pull(var = Total_Pairs) * 0.25
-  percentile25_value <- insertSize %>% filter(First_Ordered_Pair <= percentile25_position) %>% filter(Last_Ordered_Pair > percentile25_position) %>% pull(var = Insert_Size)
-  percentile75_position <- summary %>% pull(var = Total_Pairs) * 0.75
-  percentile75_value <- insertSize %>% filter(First_Ordered_Pair <= percentile75_position) %>% filter(Last_Ordered_Pair > percentile75_position) %>% pull(var = Insert_Size)
-  percentile90_position <- summary %>% pull(var = Total_Pairs) * 0.90
-  percentile90_value <- insertSize %>% filter(First_Ordered_Pair <= percentile90_position) %>% filter(Last_Ordered_Pair > percentile90_position) %>% pull(var = Insert_Size)
-  percentile95_position <- summary %>% pull(var = Total_Pairs) * 0.95
-  percentile95_value <- insertSize %>% filter(First_Ordered_Pair <= percentile95_position) %>% filter(Last_Ordered_Pair > percentile95_position) %>% pull(var = Insert_Size)
-  percentile99_position <- summary %>% pull(var = Total_Pairs) * 0.99
-  percentile99_value <- insertSize %>% filter(First_Ordered_Pair <= percentile99_position) %>% filter(Last_Ordered_Pair > percentile99_position) %>% pull(var = Insert_Size)
+  median_position <- round(summary %>% pull(var = Total_Pairs) * 0.5)
+  median_value <- insertSize %>% filter(First_Ordered_Pair <= median_position) %>% filter(Last_Ordered_Pair >= median_position) %>% pull(var = Insert_Size)
+  percentile1_position <- round(summary %>% pull(var = Total_Pairs) * 0.01)
+  percentile1_value <- insertSize %>% filter(First_Ordered_Pair <= percentile1_position) %>% filter(Last_Ordered_Pair >= percentile1_position) %>% pull(var = Insert_Size)
+  percentile5_position <- round(summary %>% pull(var = Total_Pairs) * 0.05)
+  percentile5_value <- insertSize %>% filter(First_Ordered_Pair <= percentile5_position) %>% filter(Last_Ordered_Pair >= percentile5_position) %>% pull(var = Insert_Size)
+  percentile10_position <- round(summary %>% pull(var = Total_Pairs) * 0.10)
+  percentile10_value <- insertSize %>% filter(First_Ordered_Pair <= percentile10_position) %>% filter(Last_Ordered_Pair >= percentile10_position) %>% pull(var = Insert_Size)
+  percentile25_position <- round(summary %>% pull(var = Total_Pairs) * 0.25)
+  percentile25_value <- insertSize %>% filter(First_Ordered_Pair <= percentile25_position) %>% filter(Last_Ordered_Pair >= percentile25_position) %>% pull(var = Insert_Size)
+  percentile75_position <- round(summary %>% pull(var = Total_Pairs) * 0.75)
+  percentile75_value <- insertSize %>% filter(First_Ordered_Pair <= percentile75_position) %>% filter(Last_Ordered_Pair >= percentile75_position) %>% pull(var = Insert_Size)
+  percentile90_position <- round(summary %>% pull(var = Total_Pairs) * 0.90)
+  percentile90_value <- insertSize %>% filter(First_Ordered_Pair <= percentile90_position) %>% filter(Last_Ordered_Pair >= percentile90_position) %>% pull(var = Insert_Size)
+  percentile95_position <- round(summary %>% pull(var = Total_Pairs) * 0.95)
+  percentile95_value <- insertSize %>% filter(First_Ordered_Pair <= percentile95_position) %>% filter(Last_Ordered_Pair >= percentile95_position) %>% pull(var = Insert_Size)
+  percentile99_position <- round(summary %>% pull(var = Total_Pairs) * 0.99)
+  percentile99_value <- insertSize %>% filter(First_Ordered_Pair <= percentile99_position) %>% filter(Last_Ordered_Pair >= percentile99_position) %>% pull(var = Insert_Size)
 
   # Determin the MAD
   mad_insertSize <- insertSize %>%

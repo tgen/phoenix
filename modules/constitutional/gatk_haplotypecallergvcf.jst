@@ -66,9 +66,19 @@
       --OUTPUT "{{ gvcf }}"
 
     {# Remove the remaining files #}
-    {% set task %}haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
+    {% set task %}haplotypecaller_gvcf_merge_{{ sample.name }}_{{ aligner }}{% endset %}
+    {% if sample.gltype in 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+    {% elif sample.gltype in 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+    {% endif %}
+    {%- if tasks[taskPrefix+"_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs"]|default(true) %}
+    {% set before %}genotypegvcf_{{ sample.name }}_{{ aligner }}_.*{% endset %}
+    {{- remove_files(directory,before,task) }}
+    {% else %}
     {{- remove_files(directory,none,task) }}
+    {% endif %}
 
 {% endmacro %}
 
