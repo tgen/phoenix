@@ -2,7 +2,7 @@ __pipeline__:
   name: phoenix
   main: main.jst
   description: Human GRCh38 genomics suite
-  version: v1.0.2
+  version: development
 constants:
   tools:
     bedtools:
