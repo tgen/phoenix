@@ -144,7 +144,7 @@ baseQuality_summary <- function(input, bam, rgsm, rglb, rgid, format) {
     # Join the two tables together, remove lines with Bases = NA
     bq_table <- bind_rows(ffbq_long, sfbq_long) %>% filter(!is.na(Bases))
   } else {
-    bq_table <- ffbq_long
+    bq_table <- ffbq_long %>% filter(!is.na(Bases))
   }
 
   # Summarize the overall yield
