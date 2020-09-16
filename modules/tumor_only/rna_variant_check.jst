@@ -1,0 +1,261 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro add_rna_header_to_vcf(input_vcf, output_vcf, pair, aligner, temp_dir) %}
+
+- name: add_rna_header_to_vcf_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  input: {{ input_vcf }}
+  output:
+    - {{ output_vcf }}
+    - {{ output_vcf }}.csi
+    - {{ output_vcf }}.tbi
+  walltime: "8:00:00"
+  cpus: 2
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Write the needed header lines to a temporary file, which will be inserted into the VCF #}
+    echo "##INFO=<ID=RNA_REF_COUNT,Number=.,Type=Integer,Description=\"Count of REF alleles seen in RNA\">" > {{ temp_dir }}/temp_header
+    echo "##INFO=<ID=RNA_ALT_FREQ,Number=.,Type=Float,Description=\"Frequency of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_header
+    echo "##INFO=<ID=RNA_ALT_COUNT,Number=.,Type=Integer,Description=\"Count of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_header
+
+    {#
+    #Add the RNA count headers to the VCF, this ensures all
+    #.final.vcf files have the same header lines regardless of matching RNA files
+    #}
+    bcftools annotate \
+        --threads 2 \
+        --header-lines {{ temp_dir }}/temp_header \
+        --output-type z \
+        --output {{ output_vcf }} \
+        {{ input_vcf }}
+
+    bcftools index \
+        --threads 2 \
+        --tbi \
+        --force \
+        {{ output_vcf }}
+
+    bcftools index \
+      --threads 2 \
+      --force \
+      {{ output_vcf }}
+
+{% endmacro %}
+
+
+{% macro add_matched_rna(input_vcf, output_vcf, pair, aligner, temp_dir) %}
+{% set rna_sample = pair.tumor.rna_samples[0].rna_name %}
+{% set star_bam_final %}rna/alignment/star/{{ rna_sample }}/{{ rna_sample }}.star.bam{% endset %}
+
+- name: add_matched_rna_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  input:
+    - {{ input_vcf }}
+    - {{ star_bam_final }}
+  output:
+    - {{ output_vcf }}
+    - {{ output_vcf }}.csi
+    - {{ output_vcf }}.tbi
+  walltime: "8:00:00"
+  cpus: 2
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.bedtools.module }}
+    module load {{ constants.tools.freebayes.module }}
+
+    cut -f2,3 "{{ constants.phoenix.reference_dict }}" | \
+      gawk 'NR>1' | \
+      sed 's/SN://g' | \
+      sed 's/LN://g' > \
+      {{ temp_dir }}/contig_lengths.txt
+
+    {#
+    # Freebayes can genotype based on an input VCF but it must be bgzip compressed with a .tbi index
+    # To speed up freebayes and call indels, provide a targets file, BED format, that is 100bp padded
+    # Bcftools query,  to make a BED file: chr, pos (0-based), end pos (1-based)
+    #}
+    bcftools query \
+      --format '%CHROM\t%POS0\t%END\n' \
+      {{ input_vcf }} > \
+      {{ temp_dir }}/temp_variant_pos.bed
+
+    {# No long options available for the following:
+        bedtools slop
+          -i      <bed/gff/vcf>
+          -g      <genome>
+          -l      The number of base pairs to subtract from the start coordinate
+          -r      The number of base pairs to add to the end coordinate
+
+        bedtools merge
+          -i      <bed/gff/vcf>
+    #}
+
+    {#
+    # Bedtools slop is used to add 100bp padding and ensure padding does not extend off a contig, if so it is trimmed
+    # to the contig start or end
+    #}
+    bedtools slop \
+      -i {{ temp_dir }}/temp_variant_pos.bed \
+      -g {{ temp_dir }}/contig_lengths.txt \
+      -l 100 \
+      -r 100 > \
+      {{ temp_dir }}/temp_intervals.bed
+
+    {# Bedtools merge is used to join any overlapping intervals created by the padding to prevent calling events twice #}
+    bedtools merge \
+      -i {{ temp_dir }}/temp_intervals.bed > \
+      {{ temp_dir }}/temp_target_intervals.bed
+
+    {### Call freebayes forcing genotyping even if only a single alternate allele is seen #}
+
+    {## Limitation: Does not output anything at positions with no reads (ie. DP=0 is not seen) #}
+    freebayes \
+      --fasta-reference "{{ constants.phoenix.reference_fasta }}" \
+      --targets {{ temp_dir }}/temp_target_intervals.bed \
+      --variant-input {{ input_vcf }} \
+      --only-use-input-alleles \
+      --min-alternate-count 1 \
+      --min-alternate-fraction 0.0001 \
+      --vcf {{ temp_dir }}/{{ rna_sample }}_DnaVarInRNA.vcf \
+      {{ star_bam_final }}
+
+    {#
+    # Since the input variants are all normalized, use bcftools to normalize the RNA calls and remove any variant line
+    # with no ALT allele noted (ie. ALT = ".") (Largely a Seurat related bug)
+    #}
+    bcftools norm \
+      --check-ref s \
+      --fasta-ref "{{ constants.phoenix.reference_fasta }}" \
+      --multiallelics -any \
+      {{ temp_dir }}/{{ rna_sample }}_DnaVarInRNA.vcf \
+    | \
+    bcftools filter \
+      --threads 2 \
+      --exclude 'N_ALT==0' \
+      --output-type z \
+      --output {{ temp_dir }}/{{ rna_sample }}_DnaVarInRNA_norm.vcf.gz
+
+    bcftools index \
+      --threads 2 \
+      --tbi \
+      {{ temp_dir }}/{{ rna_sample }}_DnaVarInRNA_norm.vcf.gz
+
+    {#
+    ## Create a new template DNA VCF the provides the full list of variants from the mergeVCF
+    ## This is done to ultimately merge with the RNA variant calls that only exist when an ALT allele was observed
+    ## So the DNA variant positions with no read coverage are missing in the RNA call set
+    ## For final annotation we want to know if a position had no RNA reads as well, which the subsequent procedures
+    ## provide
+
+    # Remove the INFO and FORMAT columns from the merge.vcf along with the genotypes, we just want the variant
+    # positions and alleles
+    #}
+    bcftools annotate \
+      --threads 2 \
+      --remove INFO,FORMAT \
+      {{ input_vcf }} \
+    | \
+    bcftools view \
+      --threads 2 \
+      --drop-genotypes \
+      --output-type z \
+      --output-file {{ temp_dir }}/temp_DNA.vcf.gz
+
+    bcftools index \
+      --threads 2 \
+      --tbi \
+      {{ temp_dir }}/temp_DNA.vcf.gz
+
+    {# Merge the RNA calls into the temp DNA to figure out which variants had no coverage #}
+    bcftools merge \
+      --threads 2 \
+      --missing-to-ref \
+      --output-type z \
+      --output {{ temp_dir }}/merged_RNA.vcf.gz \
+      {{ temp_dir }}/temp_DNA.vcf.gz \
+      {{ temp_dir }}/{{ rna_sample }}_DnaVarInRNA_norm.vcf.gz
+
+    {## Now Create a file that can be used to annotate the existing merged VCF #}
+
+    {# Write the header for a new RNA VCF #}
+    echo "##fileformat=VCFv4.2" > {{ temp_dir }}/temp_RNA.vcf
+    echo "##INFO=<ID=RNA_REF_COUNT,Number=.,Type=Integer,Description=\"Count of REF alleles seen in RNA\">" >> {{ temp_dir }}/temp_RNA.vcf
+    echo "##INFO=<ID=RNA_ALT_FREQ,Number=.,Type=Float,Description=\"Frequency of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_RNA.vcf
+    echo "##INFO=<ID=RNA_ALT_COUNT,Number=.,Type=Integer,Description=\"Count of ALT alleles seen in RNA\">" >> {{ temp_dir }}/temp_RNA.vcf
+    echo $'#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO' >> {{ temp_dir }}/temp_RNA.vcf
+
+    {# Print a temp file with the variant info and the split AD counts #}
+    bcftools query \
+      --format '%CHROM\t%POS\t%REF\t%ALT\t[ %AD{0}]\t[ %AD{1}]\n' \
+      {{ temp_dir }}/merged_RNA.vcf.gz \
+      > {{ temp_dir }}/temp_RNA_Counts.txt
+
+    {#
+    # Create a temp VCF with RNA INFO keys
+    # Need to deal with a variety of observed allele scenarios
+    # gawk if, elseif decision tree to parse the temp_RNA_Counts.txt into a VCF with proper header for final annotation step
+    #}
+    gawk '{
+      OFS = "\t" ;
+      if ( $5 == "." && $6 == "." )
+        print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT=0;RNA_ALT_COUNT=0;RNA_ALT_FREQ=0.00";
+      else if ( $5 >= 1 && $6 >= 1 )
+        print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT="$5";RNA_ALT_COUNT="$6";RNA_ALT_FREQ="$6/($5+$6);
+      else if ( $5 == "." && $6 >= 1 )
+        print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT=0;RNA_ALT_COUNT="$6";RNA_ALT_FREQ=1.0";
+      else if ( $5 >= 1 && $6 == "." )
+        print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT="$5";RNA_ALT_COUNT=0;RNA_ALT_FREQ=0.00";
+      else if ( $5 >= 1 && $6 == 0 )
+        print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT="$5";RNA_ALT_COUNT=0;RNA_ALT_FREQ=0.00";
+      else if ( $5 == 0 && $6 >= 1 )
+        print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT=0;RNA_ALT_COUNT="$6";RNA_ALT_FREQ=1.00";
+      else if ( $5 == 0 && $6 == 0 )
+        print $1, $2, ".", $3, $4, ".", ".", "RNA_REF_COUNT=0;RNA_ALT_COUNT=0;RNA_ALT_FREQ=0.00";
+      }' {{ temp_dir }}/temp_RNA_Counts.txt >> {{ temp_dir }}/temp_RNA.vcf
+
+    {# Compress and index to prepare for annotation step #}
+    bcftools view \
+      --threads 2 \
+      --output-type z \
+      --output-file {{ temp_dir }}/temp_RNA.vcf.gz \
+      {{ temp_dir }}/temp_RNA.vcf
+
+    bcftools index \
+      --threads 2 \
+      --tbi \
+      --force \
+      {{ temp_dir }}/temp_RNA.vcf.gz
+
+    {#
+    # Annotate the original mergeVCF output with the RNA INFO keys
+    # Since the annotation VCF only has the 3 INFO keys of interest, the field definition is all INFO keys
+    #}
+    bcftools annotate \
+      --threads 2 \
+      --annotations {{ temp_dir }}/temp_RNA.vcf.gz \
+      --columns "INFO" \
+      --output-type z \
+      --output {{ output_vcf }} \
+      {{ input_vcf }}
+
+    bcftools index \
+      --threads 2 \
+      --tbi \
+      --force \
+      {{ output_vcf }}
+
+    bcftools index \
+      --threads 2 \
+      --force \
+      {{ output_vcf }}
+
+{% endmacro %}

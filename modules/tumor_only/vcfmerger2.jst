@@ -1,0 +1,158 @@
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'modules/tumor_only/rna_variant_check.jst' import add_rna_header_to_vcf with context %}
+{% from 'modules/tumor_only/rna_variant_check.jst' import add_matched_rna with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro vcfmerger2_tumor_only(pair, aligner='bwa', taskPrefix='Genome') %}
+
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
+{% set merged_vcf %}{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.merged.vcf{% endset %}
+{% set merged_vcf_gz %}{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.merged.vcf.gz{% endset %}
+{% set output_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.merged.vcf.gz{% endset %}
+
+{% set vcfs_to_merge=[] %}
+
+{#
+# Here we iterate over the callers for each pair calculating the necessary
+# paths. Callers add themselves to the pair object when their macro is used.
+#}
+{% for caller in pair.callers %}
+{% set bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set gzipped_path %}{{ pair.gltype }}/tumor_only_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
+{% set unzipped_path %}{{ temp_dir }}/{{ caller }}.vcf{% endset %}
+{% set prepped_path %}{{ temp_dir }}/{{ caller }}.prepz.vcf{% endset %}
+{% set filtered_path %}{{ temp_dir }}/{{ caller }}.filt.vcf{% endset %}
+{% do vcfs_to_merge.append({
+  'normal_bam': normal_bam,
+  'tumor_bam': tumor_bam,
+  'gzipped_path': gzipped_path, 
+  'unzipped_path': unzipped_path,
+  'prepped_path': prepped_path,
+  'filtered_path': filtered_path
+}) %}
+
+- name: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  input: {{ gzipped_path }}
+  output: {{ prepped_path }}
+  cpus: 4
+  mem: 8G
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.vcfmerger2.module }}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.htslib.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.phaser.module }}
+    module load {{ constants.tools.bedtools.module }}
+    module load {{ constants.tools.vt.module }}
+    
+    mkdir -p "{{ temp_dir }}"
+    gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
+
+    {# Locate the prep_vcf.sh script relative to vcfMerger2.py #}
+    PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_tumor_only/prep_vcf_tumor_only.sh
+    WORKDIR=`pwd`
+
+    ${PREPVCF} \
+      --ref-genome "{{ constants.phoenix.reference_fasta }}" \
+      --dir-work "{{ temp_dir }}" \
+      --bam ${WORKDIR}/{{ bam }} \
+      --toolname "{{ caller }}" \
+      --normal-sname "{{ pair.normal.rgsm }}" \
+      --tumor-sname "{{ pair.tumor.rgsm }}" \
+      --vcf "{{ unzipped_path }}" \
+      -o "{{ prepped_path }}"
+
+
+- name: vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  reset: predecessors
+  input: {{ prepped_path }}
+  output: {{ filtered_path }}
+  cpus: 1
+  mem: 4G
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    bcftools filter \
+      --output-type v \
+      --exclude 'FMT/DP<10 | FMT/AR[0]>=0.02 | FMT/AR[1]<0.05' \
+      "{{ prepped_path }}" \
+      > "{{ filtered_path }}"
+
+{% endfor %}
+
+
+- name: vcfmerger2_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for caller in pair.callers %}
+    {% set filtered_path %}{{ temp_dir }}/{{ caller }}.filt.vcf{% endset %}
+    - {{ filtered_path }}
+    {% endfor %}
+  output: {{ merged_vcf_gz }}
+  cpus: 4
+  mem: 8G
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.vcfmerger2.module }}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.phaser.module }}
+    module load {{ constants.tools.bedtools.module }}
+    module load {{ constants.tools.vt.module }}
+
+    if [ -d {{ results_dir }} ]
+    then
+      rm -rf {{ results_dir }}/SummaryPlots_* || true
+    fi
+
+    mkdir -p "{{ results_dir }}"
+
+    vcfMerger2.py \
+      --skip-prep-vcfs \
+      --do-venn \
+      --precedence "{{ pair.callers|join('|') }}" \
+      --toolnames "{{ pair.callers|join('|') }}" \
+      --vcfs "{{ vcfs_to_merge|map(attribute='filtered_path')|join('|') }}" \
+      -g "{{ constants.phoenix.reference_fasta }}" \
+      --dict "{{ constants.phoenix.reference_dict }}" \
+      --normal-sname "{{ pair.normal.rgsm }}" \
+      --tumor-sname "{{ pair.tumor.rgsm }}" \
+      -d "{{ temp_dir }}" \
+      -o "{{ merged_vcf }}"
+
+    {# 
+    # Moving to archive folder the Venn diagrams plots generated for Indels, Snvs and Indels+Snvs
+    # The common prefix for the Venn folders is: SummaryPlots_ ; do not go beyond as the number represents
+    # the number of tools used to call variants and may change from one project to another 
+    #}
+    rm -rf {{ temp_dir }}/SummaryPlots_*/sets
+    mv {{ temp_dir }}/SummaryPlots_* "{{ results_dir }}"
+
+
+{% if 'rna_samples' in pair.tumor %}
+  {{- add_matched_rna(merged_vcf_gz, output_vcf, pair, aligner, temp_dir) }}
+{% else %}
+  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
+{% endif %}
+  {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'tumor_only', 'snp_indel_caller') }}
+{% endmacro %}

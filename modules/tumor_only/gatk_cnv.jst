@@ -1,0 +1,719 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/annotation/annot_seg.jst' import annot_seg with context %}
+# The macros found in this template are used to generate the gatk4 tumor_only cnv workflow.
+
+{% macro gatk_cnv_tumor_only(pair, aligner='bwa') %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set normal_bam_stats %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/stats/{{ normal_bam|basename }}.bamstats.txt{% endset %}
+{% set tumor_bam_stats %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ tumor_bam|basename }}.bamstats.txt{% endset %}
+{% set normal_sex_check %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/stats/{{ normal_bam|basename }}.sexCheck.txt{% endset %}
+{% set deepvariant_vcf %}{{ tumor_only_temp }}/{{ pair.normal.deepvariant_vcf }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.name }}{% endset %}
+{% set config_sex %}{{ sex|default("Female") }}{% endset %}
+
+{# Step 1 #}
+- name: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ deepvariant_vcf }}
+    - {{ normal_bam_stats }}
+    - {{ tumor_bam_stats }}
+    - {{ normal_sex_check }}
+  output:
+    - {{ temp_dir }}/preprocessed_filt.interval_list
+    - {{ temp_dir }}/anno_preprocessed.interval_list
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp"
+    mkdir -p "{{ temp_dir }}/results/plots"
+    mkdir -p "{{ results_dir }}"
+
+    {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
+    SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
+    CONFIG_SEX={{ config_sex }}
+
+    if [ ${SEX} != "Male" ] && [ ${SEX} != "Female" ]
+    then
+      if [ ${CONFIG_SEX} == "Male" ] || [ ${CONFIG_SEX} == "Female" ]
+      then
+        SEX=${CONFIG_SEX}
+      else
+        SEX=Female
+      fi
+    fi
+
+    {# PreprocessIntervals #}
+    {# Make the intersect interval file that will go into PreprocessIntervals if exomes #}
+    {% if pair.gltype in 'exome' %}
+    gatk --java-options "-Xmx12g" IntervalListTools \
+      --INPUT {{ pair.normal.capture_kit.targets_interval_list }} \
+      --INPUT {{ pair.tumor.capture_kit.targets_interval_list }} \
+      --ACTION INTERSECT \
+      --OUTPUT {{ temp_dir }}/pair_intersect.interval_list
+
+    {# Remove the chrY if the sex is female #}
+    if [ ${SEX} == "Female" ]
+    then
+      {# hg38tgen specific due to the chrY contig names   #}
+      grep -v "chrY" {{ temp_dir }}/pair_intersect.interval_list > {{ temp_dir }}/temp.interval_list
+      mv {{ temp_dir }}/temp.interval_list {{ temp_dir }}/pair_intersect.interval_list
+    fi
+
+    {# Set the variable for the --low-count-filter-count-threshold option used in FilterIntervals #}
+    {# With the default padding of 250 during PreprocessIntervals set to 500 + min(interval length) #}
+    {# If the cpature kits from above are different this could result in a smaller than expected interval length #}
+    MAX_LENGTH=`gawk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
+
+    {# From the interect intervals file extract the smallest. If the smallest is less than 100 set the default as 100 #}
+    MIN_INTERVAL=`gawk -F'\t' -v MAX_LENGTH=${MAX_LENGTH} 'BEGIN { MIN = MAX_LENGTH } $1 !~ /@/ { if ( $3-$2 < MIN ) { MIN = $3-$2 }} END { print MIN }' {{ temp_dir }}/pair_intersect.interval_list`
+
+    if [[ ${MIN_INTERVAL} -lt 100 ]]
+    then
+      MIN_INTERVAL=100
+    fi
+
+    BIN_LENGTH=$(( 200 + MIN_INTERVAL ))
+
+    {# Divide by two to accomidate autosomes then times by 20 to reach an esitmated 20x depth #}
+    EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2*20 ))
+
+    MIN_VAF=0.45
+    MAX_VAF=0.55
+    MIN_DP=20
+
+    {% elif pair.gltype in 'genome' %}
+
+    if [ ${SEX} == "Female" ]
+    then
+      INTERVALS={{ constants.phoenix.gatk_cnv_primary_contigs_female }}
+    else
+      INTERVALS={{ constants.phoenix.gatk_cnv_primary_contigs_male }}
+    fi
+
+    {# Set sample specific variables #}
+    COVERAGE_CONSTANT=30
+    BIN_LENGTH_CONSTANT=2000
+    MIN_BIN_LENGTH=2000
+    MAX_LENGTH=`gawk -F'\t' '$2 ~ /maximum length/ { print $3 ; exit }' {{ normal_bam_stats }}`
+    NORMAL_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
+    TUMOR_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ tumor_bam_stats }}`
+
+    if [ ${NORMAL_AVERAGE_DEPTH} -lt ${TUMOR_AVERAGE_DEPTH} ]
+    then
+      AVERAGE_DEPTH=${NORMAL_AVERAGE_DEPTH}
+    else
+      AVERAGE_DEPTH=${TUMOR_AVERAGE_DEPTH}
+    fi
+
+    BIN_LENGTH_MODIFYER=`bc -l <<< ${COVERAGE_CONSTANT}/${AVERAGE_DEPTH}`
+    BIN_LENGTH=`gawk -v BIN_LENGTH_CONSTANT=${BIN_LENGTH_CONSTANT} -v BIN_LENGTH_MODIFYER=${BIN_LENGTH_MODIFYER} 'BEGIN { printf("%d\n",BIN_LENGTH_CONSTANT*BIN_LENGTH_MODIFYER)}'`
+
+    {# If the bin length is shorter than the max read length then set the bin length to the read length #}
+    if [[ ${BIN_LENGTH} -lt ${MIN_BIN_LENGTH} ]]
+    then
+      BIN_LENGTH=${MIN_BIN_LENGTH}
+    fi
+
+    {# Set the variable for the --low-count-filter-count-threshold option used in FilterIntervals #}
+    EXP_1X_COUNTS=$(( BIN_LENGTH/MAX_LENGTH/2 ))
+
+    if [ ${NORMAL_AVERAGE_DEPTH} -lt 20 ]
+    then
+      MIN_VAF=0.333
+      MAX_VAF=0.666
+      MIN_DP=5
+    else
+      MIN_VAF=0.45
+      MAX_VAF=0.55
+      MIN_DP=20
+    fi
+
+    {% endif %}
+
+    {# Generate an intervals list to perform CNA on #}
+    gatk --java-options "-Xmx12g" PreprocessIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      {% if pair.gltype in 'exome' %}
+      --intervals {{ temp_dir }}/pair_intersect.interval_list \
+      --bin-length 0 \
+      --padding 100 \
+      {% elif pair.gltype in 'genome' %}
+      --intervals ${INTERVALS} \
+      --bin-length ${BIN_LENGTH} \
+      {% endif %}
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY
+
+    {# Extract heterozygous snps from the matched normal excluding the PAR regions on XY#}
+    bcftools view \
+      --exclude-types indels,mnps,ref,bnd,other \
+      --genotype het \
+      --targets ^chrX:10001-2781479,chrX:155701383-156030895,chrY:10001-2781479,chrY:56887903-57217415 \
+      --exclude "VAF<${MIN_VAF} | VAF>${MAX_VAF} | DP<${MIN_DP}" \
+      --output-type v \
+      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf \
+      {{ deepvariant_vcf }}
+
+    {# Filter out Blacklist regions (https://doi.org/10.1038/s41598-019-45839-z) and centromeres #}
+    bcftools view \
+      --targets-file ^{{ constants.phoenix.encode_denylist }} \
+      --output-type v \
+      --output-file {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
+
+    {# Remove preFilt.snps.vcf #}
+    rm {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.preFilt.snps.vcf
+
+    {# Perform first round of CollectReadCounts on the normal for filtering intervals with little to no reads #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --read-filter FirstOfPairReadFilter \
+      --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+
+    gatk --java-options "-Xmx12g" AnnotateIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --mappability-track {{ constants.phoenix.mappability_track }} \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --output {{ temp_dir }}/PreFilter_anno_preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --reference {{ constants.phoenix.reference_fasta }}
+
+    gatk --java-options "-Xmx12g" FilterIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --intervals {{ temp_dir }}/preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --minimum-gc-content 0.1 \
+      --maximum-gc-content 0.9 \
+      --minimum-mappability 0.9 \
+      --maximum-mappability 1.0 \
+      --annotated-intervals {{ temp_dir }}/PreFilter_anno_preprocessed.interval_list \
+      --output {{ temp_dir }}/preprocessed_filt_map.interval_list
+
+    {#
+    Filter the intervals based on the counts from the normal.
+    EXP_1X_COUNTS is the number of expected reads for 1x depth (20x for exomes).
+    We only want to filter based on the counts so we set the following additional options to prevent unwanted filtering.
+      --low-count-filter-percentage-of-samples 90.0 \
+      --extreme-count-filter-minimum-percentile 1.0 \
+      --extreme-count-filter-maximum-percentile 99.0 \
+      --extreme-count-filter-percentage-of-samples 90.0 \
+      --minimum-gc-content 0.1 \
+      --maximum-gc-content 0.9 \
+      --minimum-mappability 0.1 \
+      --maximum-mappability 0.9 \
+      --maximum-segmental-duplication-content 0.5 \
+    #}
+    gatk --java-options "-Xmx12g" FilterIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --intervals {{ temp_dir }}/preprocessed_filt_map.interval_list \
+      --exclude-intervals {{ constants.phoenix.encode_denylist }} \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --low-count-filter-count-threshold ${EXP_1X_COUNTS} \
+      --low-count-filter-percentage-of-samples 0 \
+      --extreme-count-filter-minimum-percentile 0 \
+      --extreme-count-filter-maximum-percentile 100 \
+      --extreme-count-filter-percentage-of-samples 100 \
+      --output {{ temp_dir }}/preprocessed_filt.interval_list
+
+    {# Annotate intervals with gc content to be used with CreateReadCountPanelOfNormals #}
+    gatk --java-options "-Xmx12g" AnnotateIntervals \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
+      --output {{ temp_dir }}/anno_preprocessed.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --reference {{ constants.phoenix.reference_fasta }}
+
+
+{# Step 2a #}
+- name: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ normal_bam }}
+    - {{ temp_dir }}/preprocessed_filt.interval_list
+  output:
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2a"
+
+    {# Collect read counts for the normal using the filtered interval list #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+      --tmp-dir {{ temp_dir }}/temp2a/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --read-filter FirstOfPairReadFilter \
+      --output {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+
+
+{# Step 2b #}
+- name: gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ normal_bam }}
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
+  output:
+    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2b"
+
+    {# Collect allelic counts for the normal #}
+    gatk --java-options "-Xmx12g" CollectAllelicCounts \
+      --tmp-dir {{ temp_dir }}/temp2b/ \
+      --input {{ normal_bam }} \
+      --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+
+
+{# Step 2c #}
+- name: gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ tumor_bam }}
+    - {{ temp_dir }}/preprocessed_filt.interval_list
+  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2c"
+
+    {# Collect read counts for the tumor using the filtered interval list #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+      --tmp-dir {{ temp_dir }}/temp2c/ \
+      --input {{ tumor_bam }} \
+      --intervals {{ temp_dir }}/preprocessed_filt.interval_list \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --read-filter FirstOfPairReadFilter \
+      --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+
+
+{# Step 2d #}
+- name: gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
+  reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ tumor_bam }}
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf
+  output:
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp2d"
+
+    {# Collect allelic counts for the normal #}
+    gatk --java-options "-Xmx12g" CollectAllelicCounts \
+      --tmp-dir {{ temp_dir }}/temp2d/ \
+      --input {{ tumor_bam }} \
+      --intervals {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.snps.vcf \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+
+
+{# Step 3 #}
+- name: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
+  reset:
+    - gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
+    - gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ temp_dir }}/anno_preprocessed.interval_list
+    - {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5
+    - {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+    - {{ temp_dir }}/cnv.pon.hdf5
+    - {{ normal_bam_stats }}
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.normal.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelBegin.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.cr.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.af.param
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.af.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.igv.seg
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp3"
+
+    {#
+    Create a panel of normals file consiting of the matched normal.
+    The --minimum-interval-median-percentile option was changed from it's default to include all data from the matched normal
+      --minimum-interval-median-percentile 10.0
+    #}
+    gatk --java-options "-Xmx12g" CreateReadCountPanelOfNormals \
+      --tmp-dir {{ temp_dir }}/temp3/ \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.{{ aligner }}.counts.hdf5 \
+      --minimum-interval-median-percentile 0.0 \
+      --annotated-intervals {{ temp_dir }}/anno_preprocessed.interval_list \
+      --output {{ temp_dir }}/cnv.pon.hdf5
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp4"
+
+    {# Denoise the tumor using the panel of normals made from the matched normal #}
+    gatk --java-options "-Xmx12g" DenoiseReadCounts \
+      --tmp-dir {{ temp_dir }}/temp4/ \
+      --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
+      --count-panel-of-normals {{ temp_dir }}/cnv.pon.hdf5 \
+      --standardized-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.standardizedCR.tsv \
+      --denoised-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp5"
+
+    {# Get the average depth of the normal if it is a genome #}
+    {% if pair.gltype in 'genome' %}
+      NORMAL_AVERAGE_DEPTH=`gawk -F'\t' '$1 ~ /^COV/ { TOT=$4 + TOT ; SUM=($3*$4)+SUM} END { print int(SUM/TOT)}' {{ normal_bam_stats }}`
+
+      if [ ${NORMAL_AVERAGE_DEPTH} -ge 20 ]
+      then
+        NORMAL_MIN_ALLELE_COUNT=20
+      else
+        NORMAL_MIN_ALLELE_COUNT=5
+      fi
+    {% else %}
+      NORMAL_MIN_ALLELE_COUNT=20
+    {% endif %}
+
+    {#
+    Perform segmentation
+    Non-default parameters used
+      --number-of-smoothing-iterations-per-fit 1 \
+      --number-of-changepoints-penalty-factor 0.05 \
+      --kernel-variance-allele-fraction 0.0 \
+      --kernel-scaling-allele-fraction 0.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 3.0 \
+      --smoothing-credible-interval-threshold-allele-fraction 3.0 \
+      --window-size 2 \
+      --window-size 4 \
+      --minimum-total-allele-count-normal 30 \
+      --minimum-total-allele-count-normal 6 \
+    #}
+    gatk --java-options "-Xmx12g" ModelSegments \
+      --tmp-dir {{ temp_dir }}/temp5/ \
+      --number-of-smoothing-iterations-per-fit 1 \
+      --number-of-changepoints-penalty-factor 0.05 \
+      --kernel-variance-allele-fraction 0.0 \
+      --kernel-scaling-allele-fraction 0.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 3.5 \
+      --smoothing-credible-interval-threshold-allele-fraction 3.5 \
+      --window-size 4 \
+      --window-size 8 \
+      --window-size 16 \
+      --window-size 32 \
+      --window-size 64 \
+      --window-size 128 \
+      --window-size 256 \
+      --minimum-total-allele-count-normal ${NORMAL_MIN_ALLELE_COUNT} \
+      --denoised-copy-ratios {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv \
+      --allelic-counts {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
+      --normal-allelic-counts {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.allelicCounts.tsv \
+      --output {{ results_dir }} \
+      --output-prefix {{ pair.name }}.{{ aligner }}
+
+    gatk --java-options "-Xmx12g" CallCopyRatioSegments \
+      --tmp-dir {{ temp_dir }}/temp5/ \
+      --input {{ results_dir }}/{{ pair.name }}.{{ aligner }}.cr.seg \
+      --output {{ results_dir }}/{{ pair.name }}.{{ aligner }}.called.seg
+
+
+{# Step 4 #}
+- name: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
+  reset: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+  input:
+    - {{ normal_sex_check }}
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.re_centered.cr.igv.seg
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.dLRs.tsv
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.hets.density.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna_withhets.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_cna.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_baf.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr1.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr2.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr3.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr4.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr5.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr6.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr7.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr8.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr9.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr10.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr11.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr12.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr13.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr14.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr15.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr16.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr17.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr18.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr19.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr20.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr21.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chr22.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chrX.png
+    - {{ results_dir }}/plots/{{ pair.name }}.{{ aligner }}_chrY.png
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}"
+
+    {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
+    SEX=`grep {{ pair.normal.name }} {{ normal_sex_check }} | cut -f20`
+    CONFIG_SEX={{ config_sex }}
+
+    if [ ${SEX} != "Male" ] && [ ${SEX} != "Female" ]
+    then
+      if [ ${CONFIG_SEX} == "Male" ] || [ ${CONFIG_SEX} == "Female" ]
+      then
+        SEX=${CONFIG_SEX}
+      else
+        SEX=Female
+      fi
+    fi
+
+    if [ ${SEX} == "Male" ]
+    then
+      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $4 = $4-1} ; { OFS = "\t" ; print $0 }}' {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv > \
+        {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+
+      gawk -F'\t' '{ if ($1 == "chrX" || $1 == "chrY") { $6 = $6-1 ; $7 = $7-1 ; $8 = $8-1 } ; { OFS = "\t" ; print $0 }}' {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg > \
+        {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+      contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrXCONTIG_DELIMITERchrY"
+      contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895CONTIG_DELIMITER57227415"
+    else
+      touch {{ temp_dir }}/results/plots/{{ pair.name }}.{{ aligner }}_chrY.png
+      cp {{ results_dir }}/{{ pair.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+      cp {{ results_dir }}/{{ pair.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+      contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrX"
+      contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895"
+    fi
+
+    for CHR in {1..24}
+    do
+      if [[ ${CHR} -eq "23" ]]
+      then
+        CHR="chrX"
+      elif [[ ${CHR} -eq "24" ]]
+      then
+        CHR="chrY"
+      else
+        CHR="chr${CHR}"
+      fi
+
+      declare START_${CHR}=$(gawk -F'\t' -v CHROM=${CHR} '$1 == CHROM' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg | sort -k2,2n | awk -F'\t' 'NR == 1 { print $2 }')
+      export START_${CHR}
+      declare STOP_${CHR}=$(gawk -F'\t' -v CHROM=${CHR} '$1 == CHROM' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg | sort -k3,3nr | awk -F'\t' 'NR == 1 { print $3 }')
+      export STOP_${CHR}
+    done
+
+    for CHR in {1..24}
+    do
+      # Get centromere start and stop
+      if [[ $CHR -eq "23" ]]
+      then
+        CHR="chrX"
+      elif [[ $CHR -eq "24" ]]
+      then
+        CHR="chrY"
+      else
+        CHR="chr${CHR}"
+      fi
+
+      eval "START=\${START_${CHR}}"
+      eval "STOP=\${STOP_${CHR}}"
+
+      START_C=$(gawk -v CHR=$CHR '$1==CHR { print $2 }' {{ constants.phoenix.centromere }})
+      STOP_C=$(gawk -v CHR=$CHR '$1==CHR { print $3 }' {{ constants.phoenix.centromere }})
+
+      if [[ ${START} -ge ${START_C} ]]
+      then
+        START=${STOP_C}
+      fi
+
+      export CHR
+      export START
+      export START_C
+      export STOP
+      export STOP_C
+
+      echo -e "${CHR}\t${START}\t${STOP}"
+      echo -e "${CHR}\t${START_C}\t${STOP_C}"
+
+      LINES=$(wc -l < "{{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg")
+      HEADER=$(grep -c "@" "{{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg" || :)
+
+      gawk -F'\t' -v HEADER="${HEADER}" -v CHROM="${CHR}" -v START="${START}" -v STOP="${STOP}" -v LINES="${LINES}" -v STARTC="${START_C}" -v STOPC="${STOP_C}" 'BEGIN { INC=1 } ;
+        # Skip GATK header
+        $0 ~ /^@/ { next } ;
+        # Print the header
+        NR == HEADER + 1 { print $0 ; next } ;
+        # Remove segments that fall within the centromere
+        $2 == CHROM && $3 >= STARTC && $4 <= STOPC { next } ;
+        # Store the second line in the seg file and set the INC to 2 if we are working on the chromosome
+        NR == HEADER + 2 && $1 == CHROM { C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=2 ; next } ;
+        NR == HEADER + 2 && $1 != CHROM { C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        ## Last line of seg file
+        NR == LINES && $1 == CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,START,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 == CHROM && INC == 2 { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 == CHROM && INC == 3 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM && INC == 2 { OFS = "\t" ; print C1,START,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM && INC == 3 { OFS = "\t" ; print C1,C2,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        ### Segment is the current chromosome we are working on
+        ## First segment in the CHROM, print previous segment variables
+        NR != LINES && $1 == CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=2 ; next } ;
+        ## Second segment for CHROM, Tests and print is for the First segment
+        # If the previous segments start is >= the centromere stop
+        NR != LINES && $1 == CHROM && INC == 2 && C2 >= STOPC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C2 < STARTC && C3 < STOPC && $2 > STARTC && $3 > STOPC { OFS = "\t" ; print C1,START,STARTC,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=STOPC ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C2 < STARTC && C3 < STOPC && $2 < STARTC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C3 > STOPC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        # Third segment for CHROM
+        NR != LINES && $1 == CHROM && INC == 3 && C2 < STARTC && C3 < STOPC && $2 > STARTC && $3 > STOPC { OFS = "\t" ; print C1,C2,STARTC,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=STOPC ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 3 && C2 < STARTC && C3 < STOPC && $2 < STARTC { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 3 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        ## Segment is on a Chromosome that is NOT our current CHROM
+        NR != LINES && $1 != CHROM && INC == 2 { OFS = "\t" ; print C1,START,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=1 ; next } ;
+        NR != LINES && $1 != CHROM && INC == 3 { OFS = "\t" ; print C1,C2,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=1 ; next } ;
+        NR != LINES && $1 != CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next }' {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg > {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg.temp
+
+      mv {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg.temp {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    done
+
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.cna_seg_extend }} {{ constants.phoenix.centromere }} {{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+    Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotCNVplus_Rscript }} \
+      --hetDPfilter 1 \
+      --hetAFlow 0.45 \
+      --hetAFhigh 0.55 \
+      --hetMAFposteriorOffset 0.01 \
+      --lowerCNvalidatePeakOffset 0.125 \
+      --UpperCNvalidatePeakOffset 0.125 \
+      --lowerCNcenteringPeakOffset 0.125 \
+      --UpperCNcenteringPeakOffset 0.125 \
+      --sample_name={{ pair.tumor.name }} \
+      --output_prefix={{ pair.name }}.{{ aligner }} \
+      --plots_directory={{ temp_dir }}/results/plots \
+      --re_center_CNA=TRUE \
+      --re_centered_seg_directory={{ temp_dir }}/results \
+      --contig_names_string=${contig_names_string} \
+      --contig_lengths_string=${contig_lengths_string} \
+      --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
+      --allelic_counts_file={{ results_dir }}/{{ pair.name }}.{{ aligner }}.hets.tsv \
+      --modeled_segments_file={{ temp_dir }}/results/{{ pair.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+    {# If the task has already been run then we need to remove the plots directory. #}
+    if [ -d {{ results_dir }}/plots ]
+    then
+      rm -rf {{ results_dir }}/plots
+    fi
+
+    mv {{ temp_dir }}/results/* {{ results_dir }}/
+
+    {% set final_seg %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.re_centered.cr.igv.seg{% endset %}
+    {{- annot_seg(final_seg, pair.name) }}
+
+    {% set task %}gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+{% endmacro %}

@@ -1,0 +1,172 @@
+{% from 'utilities/prepare_tumor_only.jst' import prepare_tumor_only with context %}
+{% from 'modules/tumor_only/manta.jst' import manta_tumor_only with context %}
+{% from 'modules/tumor_only/strelka2.jst' import strelka2_tumor_only with context %}
+{% from 'modules/tumor_only/mutect2.jst' import mutect2_tumor_only with context %}
+{% from 'modules/tumor_only/lancet.jst' import lancet_tumor_only with context %}
+{% from 'modules/tumor_only/vardict.jst' import vardict_tumor_only with context %}
+{% from 'modules/tumor_only/octopus.jst' import octopus_tumor_only with context %}
+{% from 'modules/tumor_only/vcfmerger2.jst' import vcfmerger2_tumor_only with context %}
+{% from 'modules/tumor_only/delly.jst' import delly_tumor_only with context %}
+{% from 'modules/tumor_only/gridss.jst' import gridss_tumor_only with context %}
+{% from 'modules/tumor_only/gatk_cnv.jst' import gatk_cnv_tumor_only with context %}
+
+
+# tumor_only tools generally operate on pairs of DNA samples (tumor/normal).
+# WARNING - This pairs together all tumor and constitutional samples (of the same gltype)
+# without comparing any sample identifiers. This means multiple individuals in the same 
+# project will be incorrectly paired together for tumor_only variant calling.
+
+{% macro tumor_only_variant_calling(samples, controlDataFiles) %}
+
+{% set normSamples = {} %}
+
+{% for file in controlDataFiles %}
+    {# Creating name to use as unique identifier #}
+    {% set name = file.pathToBam | basename | replace(".", "_") | replace("bwa", "") | replace("bam", "") | replace("__", "_") %}
+    {% set bam = file.pathToBam | basename %}
+    {% set bai = file.pathToBai | basename %}
+    {% set deepvariant_vcf = file.deepVariant_VCF | basename %}
+    {% set pon_mutect = file.panelOfNormals_ForMutect | basename %}
+    {% set pon_count = file.panelOfNormals_Count | basename %}
+
+    {% do file.update({'name': name}) %}
+    {% do file.update({'bam': bam}) %}
+    {% do file.update({'bai': bai}) %}
+    {% do file.update({'deepvariant_vcf': deepvariant_vcf}) %}
+    {% do file.update({'pon_mutect': pon_mutect}) %}
+    {% do file.update({'pon_count': pon_count}) %}
+
+    {% if name not in normSamples %}
+        {% do normSamples.update({name: {}}) %}
+        {% do normSamples[name].update(file) %}
+        {% do normSamples[name].update({"name": name}) %}
+        {% do normSamples[name].update({'bam': bam}) %}
+        {% do normSamples[name].update({'bai': bai}) %}
+        {% do normSamples[name].update({'deepvariant_vcf': deepvariant_vcf}) %}
+        {% do normSamples[name].update({'pon_mutect': pon_mutect}) %}
+        {% do normSamples[name].update({'pon_count': pon_count}) %}
+    {% endif %}
+{% endfor %}
+
+{# Setup calculated props for samples #}
+{% for sample in samples.values() if sample.gltype == 'exome' %}
+    {% do sample.update({'library_code': sample.assayCode[0:2]|upper}) %}
+    {% do sample.update({'capture_kit_code': sample.assayCode[2:5]|upper}) %}
+
+    {% set targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.targets.interval_list{% endset %}
+    {% set no_header_targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.no.header.targets.interval_list{% endset %}
+    {% set baits_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.baits.interval_list{% endset %}
+    {% set extended_bed %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.extended.bed{% endset %}
+
+    {% do sample.update({'capture_kit': {}}) %}
+    {% do sample['capture_kit'].update({'targets_interval_list': targets_interval_list}) %}
+    {% do sample['capture_kit'].update({'no_header_targets_interval_list': no_header_targets_interval_list}) %}
+    {% do sample['capture_kit'].update({'baits_interval_list': baits_interval_list}) %}
+    {% do sample['capture_kit'].update({'extended_bed': extended_bed}) %}
+{% endfor %}
+
+{% for sample in samples.values() if sample.gltype == 'rna' %}
+    {% set readOrientation=sample.readOrientation|default('inward')|lower %}
+    {% set rnaStrandType=sample.rnaStrandType|default('unstranded')|lower %}
+    {% set rnaStrandDirection=sample.rnaStrandDirection|default('notapplicable')|lower %}
+    {% set strandedness %}{{ readOrientation }}-{{ rnaStrandType }}-{{ rnaStrandDirection }}{% endset %}
+    {% do sample.update({'strandedness': strandedness}) %}
+{% endfor %}
+
+{% set pairs = [] %}
+{% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'exome' %}
+    {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+        {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+            {% if 'rna_samples' not in tumor %}
+               {% do tumor.update({'rna_samples': []}) %}
+            {% endif %}
+            {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+       {% endfor %}
+    {% endif %}
+
+    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
+        {% set pair_name = tumor.name %}
+        {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
+    {% endfor %}
+{% endfor %}
+{% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'genome' %}
+    {% if tasks['RNA_alignment_rna_alignment_STAR']|default(true) and tumor.dnaRnaMergeKey is defined %}
+        {% for rna in samples.values() if rna.dnaRnaMergeKey is defined and rna.dnaRnaMergeKey == tumor.dnaRnaMergeKey and rna.gltype == 'rna' %}
+            {% if 'rna_samples' not in tumor %}
+               {% do tumor.update({'rna_samples': []}) %}
+            {% endif %}
+            {% do tumor.rna_samples.append({'rna_name': rna.name}) %}
+       {% endfor %}
+    {% endif %}
+
+    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
+        {% set pair_name = tumor.name %}
+        {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
+    {% endfor %}
+{% endfor %}
+
+{#
+# Variant caller macros that are used should add their name to the pair.caller list 
+# and then vcfmerger will merge all variants for callers that were used.
+# For example: {% do pair.callers.append('mutect2') %}
+# This requires that the output vcfs be located and named consitently, more details
+# in vcfmerger2.jst
+#}
+{% for pair in pairs %}{% do pair.update({'callers': []}) %}{% endfor %}
+
+{# prepare reference normal files for tumor only #}
+{% for normal in normSamples.values() %}
+    {{- prepare_tumor_only(normal) }}
+{% endfor %}
+
+{# Start of the macro calls that will actually add the tasks to the workflow #}
+{% for pair in pairs %}
+    {% if pair.gltype in 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+    {% elif pair.gltype in 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_gatk_mutect2"]|default(true) %}
+        {{- mutect2_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_structural_caller_manta"]|default(true) %}
+        {{- manta_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_strelka2"]|default(true) %}
+        {{- strelka2_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_lancet"]|default(true) %}
+        {{- lancet_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_VarDict"]|default(true) %}
+        {{- vardict_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_octopus"]|default(true) %}
+        {{- octopus_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_merge_vcfs_vcfMerger2"]|default(true) %}
+        {{- vcfmerger2_tumor_only(pair, aligner='bwa', taskPrefix=taskPrefix) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_structural_caller_delly"]|default(true) %}
+        {{- delly_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_structural_caller_gridss"]|default(false) %}
+        {{- gridss_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(true) %}
+        {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+{% endfor %}
+
+{% endmacro %}

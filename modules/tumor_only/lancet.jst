@@ -1,0 +1,139 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro lancet_tumor_only(pair, aligner='bwa') %}
+{% do pair.callers.append('lancet') %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/lancet/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/lancet/{{ pair.name }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz{% endset %}
+
+{% for batch in constants.phoenix.calling_intervals %}
+- name: lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, lancet, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.lancet.vcf
+  cpus: 4
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.lancet.module }}
+    module load {{ constants.tools.bcftools.module }}
+    
+    mkdir -p "{{ temp_dir }}"
+
+    {# Write out the regions in this batch to a bed file #}
+    TAB=$'\t'
+    cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+
+    lancet \
+      --num-threads 4 \
+      --max-vaf-normal 0.05 \
+      --max-alt-count-normal 50 \
+      --bed "{{ temp_dir }}/{{ loop.index }}.bed" \
+      --ref "{{ constants.phoenix.reference_fasta }}" \
+      --normal "{{ normal_bam }}" \
+      --tumor "{{ tumor_bam }}" \
+      > "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
+
+    {#
+    # Lancet sorts output in lexicographical order and this does not
+    # match the reference fasta order. Here we resort to match the reference
+    #}
+
+    bcftools reheader \
+      -f "{{ constants.phoenix.reference_fai }}" \
+      "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf" \
+    | bcftools sort > "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
+
+{% endfor %}
+
+
+- name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, lancet, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.lancet.vcf
+    {% endfor %}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+  cpus: 1
+  mem: 4G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    bcftools concat \
+      --output-type z \
+      --output "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.lancet.all.uns.vcf.gz" \
+      {% for b in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
+      "{{ temp_dir }}/{{ loop.index }}.lancet.vcf" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
+      {% endif %}
+      {% endfor %}
+
+    bcftools sort \
+      --output-type z \
+      --output-file "{{ all_vcf }}" \
+      "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.lancet.all.uns.vcf.gz"
+
+    bcftools index --tbi --force "{{ all_vcf }}"
+
+    {#
+    # This version of Lancet leaves behind a config.txt file in the top
+    # of the project dir. This was patched in a later versions so that
+    # we can remove later.
+    #}
+    rm config.txt || true
+
+    {% set task %}lancet_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+
+- name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, lancet, {{ pair.name }}]
+  input: {{ all_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 2G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
+      {% if pair.gltype == 'exome' %}
+      --targets-file "{{ pair.tumor.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
+    
+    bcftools index --tbi --force "{{ pass_vcf }}"
+
+{% endmacro %}

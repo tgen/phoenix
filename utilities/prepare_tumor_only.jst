@@ -1,0 +1,28 @@
+{% macro prepare_tumor_only(normal) %}
+
+{% set tumor_only_temp %}temp/tumor_only/{{ normal.name }}{% endset %}
+
+- name: prepare_tumor_only_{{ normal.name }}
+  tags: [rsync,]
+  output:
+    - {{ tumor_only_temp }}/{{ normal.bam }}
+    - {{ tumor_only_temp }}/{{ normal.bai }}
+    - {{ tumor_only_temp }}/{{ normal.deepvariant_vcf }}
+    - {{ tumor_only_temp }}/{{ normal.pon_mutect }}
+    - {{ tumor_only_temp }}/{{ normal.pon_count }}
+  walltime: "8:00:00"
+  cpus: 1
+  mem: 2G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    mkdir -p {{ tumor_only_temp }}
+
+    rsync {{ normal.pathToBam }} {{ tumor_only_temp }}
+    rsync {{ normal.pathToBai }} {{ tumor_only_temp }}
+    rsync {{ normal.deepVariant_VCF }} {{ tumor_only_temp }}
+    rsync {{ normal.panelOfNormals_ForMutect }} {{ tumor_only_temp }}
+    rsync {{ normal.panelOfNormals_Count }} {{ tumor_only_temp }}
+
+{% endmacro %}

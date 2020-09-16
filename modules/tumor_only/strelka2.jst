@@ -1,0 +1,171 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro strelka2_tumor_only(pair, aligner='bwa') %}
+{% do pair.callers.append('strelka2') %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set indel_candidates %}{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/strelka2/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
+
+- name: strelka2_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, strelka2, {{ pair.name }}]
+  methods: > 
+    tumor_only variants for {{ pair.name }} ({{ aligner }}) were called with
+    {{ constants.tools.strelka.verbose }}.
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+    - {{ indel_candidates }}
+  output:
+    - {{ temp_dir }}/results/variants/tumor_only.indels.vcf.gz
+    - {{ temp_dir }}/results/variants/tumor_only.snvs.vcf.gz
+    {% if cram|default(true) %}
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram.crai
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram.crai
+    {% else %}
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam
+    - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam
+    - {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai
+    {% endif %}
+  cpus: 20
+  mem: 20G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.strelka.module }}
+    module load {{ constants.tools.htslib.module }}
+    module load {{ constants.tools.python_2_7_15.module }}
+    module load {{ constants.tools.samtools.module }}
+
+    {# Purge any existing run files prior to starting #}
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
+
+    {#
+    # In order to restrict calling to only the specified regions
+    # strelka requires a bed file (that has been bgzipped and indexed
+    # with tabix). Here we generate that file on the fly, store in
+    # the run dir, and pass the path to Strelka.
+    #}
+    TAB=$'\t'
+    cat <<EOF > "{{ temp_dir }}/callRegions.bed"
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
+    {% endfor %}
+    EOF
+
+    bgzip -f "{{ temp_dir }}/callRegions.bed"
+    tabix -f -p bed "{{ temp_dir }}/callRegions.bed.gz"
+
+    {#
+    # Some settings are only configurable via an ini file. Here
+    # we generate this ini file and save it to the run dir.
+    #}
+    cat <<EOF > "{{ temp_dir }}/config.ini"
+    [Strelkatumor_only]
+    isWriteRealignedBam = 1
+    EOF
+
+    {# Build the Strelka run file #}
+    configureStrelkatumor_onlyWorkflow.py \
+      {% if pair.gltype == 'exome' %}
+      --exome \
+      {% endif %}
+      --config "{{ temp_dir }}/config.ini" \
+      --callRegions "{{ temp_dir }}/callRegions.bed.gz" \
+      --normalBam "{{ normal_bam }}" \
+      --tumorBam "{{ tumor_bam }}" \
+      --indelCandidates "{{ indel_candidates }}" \
+      --ref "{{ constants.phoenix.reference_fasta }}" \
+      --runDir "{{ temp_dir }}"
+
+    {# Execute on the local machine with 19 parallel jobs #}
+    "{{ temp_dir }}/runWorkflow.py" -m local -j 19
+
+    mkdir -p "{{ results_dir }}/evidence"
+
+    {# Move and rename the evidence bams or make crams #}
+    {% if cram|default(true) %}
+    samtools view \
+      -C \
+      -@ 16 \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      -o {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram \
+      {{ temp_dir }}/results/realigned/realigned.normal.bam
+
+    samtools index {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
+
+    samtools view \
+      -C \
+      -@ 16 \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      -o {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram \
+      {{ temp_dir }}/results/realigned/realigned.tumor.bam
+
+    samtools index {{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.cram
+    {% else %}
+    mv "{{ temp_dir }}/results/realigned/realigned.normal.bam" "{{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "{{ temp_dir }}/results/realigned/realigned.normal.bam.bai" "{{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam"
+    mv "{{ temp_dir }}/results/realigned/realigned.tumor.bam.bai" "{{ results_dir }}/evidence/{{ pair.tumor.name }}.{{ aligner }}.strelka2.realigned.bam.bai"
+    {% endif %}
+
+
+- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, strelka2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/results/variants/tumor_only.indels.vcf.gz
+    - {{ temp_dir }}/results/variants/tumor_only.snvs.vcf.gz
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 2G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Merge the snvs and indels into a final vcf #}
+    bcftools concat \
+      --allow-overlaps \
+      --threads 1 \
+      --output-type z \
+      --output "{{ all_vcf }}" \
+      "{{ temp_dir }}/results/variants/tumor_only.indels.vcf.gz" \
+      "{{ temp_dir }}/results/variants/tumor_only.snvs.vcf.gz"
+
+    bcftools index --tbi --force "{{ all_vcf }}"
+
+    {# Then filter out the PASS variants to a separate file #}
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
+      {% if pair.gltype == 'exome' %}
+      --targets-file "{{ pair.tumor.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
+
+    bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {# Finally remove the run dir #}
+    {% set task %}strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+
+{% endmacro %}

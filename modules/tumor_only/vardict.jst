@@ -1,0 +1,260 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro vardict_tumor_only(pair, aligner='bwa') %}
+{% do pair.callers.append('vardict') %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/vardict/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/vardict/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.vardict.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz{% endset %}
+
+{% for batch in constants.phoenix.calling_intervals %}
+- name: vardict_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, VarDict, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz
+    - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz.tbi
+  cpus: 4
+  mem: 32G
+  walltime: "48:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.vardict.module }}
+    module load {{ constants.tools.bedtools.module }}
+    
+    mkdir -p "{{ temp_dir }}"
+
+    {#
+    # Write out the regions in this batch to a file
+    # Here we use bedtools to split each interval into smaller chunks
+    # and the -s option to create overlaps in the chunks. This is due
+    # to the VarDict memory usage spiking very high on larger intervals.
+    #}
+    TAB=$'\t'
+    cat <<EOF | bedtools makewindows -w 20000 -s 19850 -b /dev/stdin > "{{ temp_dir }}/{{ loop.index }}.bed"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+
+    {#
+    # Custom settings:
+    # -Q 1 (default is 0) -O 5 (default is no filtering, suspect that means 0)
+    # -q 20 (default is 25), set as novaseq has bins of 2, 12, 23, 37
+    # enabled -UN to only count the first in pair when an overlap exists, didn't use -u that uses the
+    # forward strand read which might be second in pairs that typically has worse quality.
+    #}
+
+    {# No long options available for the following:
+      VarDict
+          -th <INT>                           Threads count.
+          -b <string>                         The indexed BAM file
+          -N <string>                         The sample name to be used directly.  Will overwrite -n option
+          -G <Genome fasta>                   The reference fasta. Should be indexed (.fai).
+                                              Defaults to: /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa.  Also short commands can be used to
+                                              set path to:
+                                              hg19 - /ngs/reference_data/genomes/Hsapiens/hg19/seq/hg19.fa
+                                              hg38 - /ngs/reference_data/genomes/Hsapiens/hg38/seq/hg38.fa
+                                              mm10 - /ngs/reference_data/genomes/Mmusculus/mm10/seq/mm10.fa
+          -A <INT>                            The number of STD. A pair will be considered for DEL if INSERT > INSERT_SIZE + INSERT_STD_AMT *
+                                              INSERT_STD.  Default: 4
+          -B <INT>                            The minimum # of reads to determine strand bias, default 2
+          -F <bit>                            The hexical to filter reads using samtools. Default: 0x504 (filter 2nd alignments, unmapped reads and
+                                              duplicates).  Use -F 0 to turn it off.
+          -f <double>                         The threshold for allele frequency, default: 0.01 or 1%
+          -I <INT>                            The indel size.  Default: 50bp
+          -k <0/1>                            Indicate whether to perform local realignment.  Default: 1.  Set to 0 to disable it.  For Ion or PacBio,
+                                              0 is recommended.
+          -M <INT>                            The minimum matches for a read to be considered. If, after soft-clipping, the matched bp is less than
+                                              INT, then the read is discarded. It's meant for PCR based targeted sequencing where there's no insert and
+                                              the matching is only the primers.
+                                              Default: 0, or no filtering
+          -m <INT>                            If set, reads with mismatches more than INT will be filtered and ignored.  Gaps are not counted as
+                                              mismatches.
+                                              Valid only for bowtie2/TopHat or BWA aln followed by sampe.  BWA mem is calculated as NM - Indels.
+                                              Default: 8,
+                                              or reads with more than 8 mismatches will not be used.
+          -O <MapQ>                           The reads should have at least mean MapQ to be considered a valid variant.  Default: no filtering
+          -o <Qratio>                         The Qratio of (good_quality_reads)/(bad_quality_reads+0.5).  The quality is defined by -q option.
+                                              Default: 1.5
+          -P <number>                         The read position filter.  If the mean variants position is less that specified, it's considered false
+                                              positive.  Default: 5
+          -Q <INT>                            If set, reads with mapping quality less than INT will be filtered and ignored
+          -q <INT>                            The phred score for a base to be considered a good call.  Default: 25 (for Illumina)
+                                              For PGM, set it to ~15, as PGM tends to under estimate base quality.
+          -r <minimum reads>                  The minimum # of variant reads, default 2
+          -UN                                 Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once using
+                                              first read only.
+          -V <freq>                           The lowest frequency in the normal sample allowed for a putative tumor_only mutation.  Defaults to 0.05
+          -VS <STRICT | LENIENT | SILENT>     How strict to be when reading a SAM or BAM.
+                                              STRICT	- throw an exception if something looks wrong.
+                                              LENIENT	- Emit warnings but keep going if possible.
+                                              SILENT	- Like LENIENT, only don't emit warning messages.
+                                              Default: LENIENT
+          -X <INT>                            Extension of bp to look for mismatches after insersion or deletion.  Default to 2 bp, or only calls when
+                                              they're within 2 bp.
+          -x <INT>                            The number of nucleotide to extend for each segment, default: 0
+          -c <INT>                            The column for chromosome
+          -S <INT>                            The column for region start, e.g. gene start
+          -E <INT>                            The column for region end, e.g. gene end
+      var2vcf_paired.pl
+          -N  Name(s)                         The sample name(s).  If only one name is given, the matched will be simply names as "name-match".  Two names
+          are given separated by "|", such as "tumor|blood".
+          -c  int
+          If two tumor_only candidates are within {int} bp, they're both filtered.  Default: 0 or no filtering
+          -I  int
+          The maximum non-monomer MSI allowed for a HT variant with AF < 0.6.  By default, 12, or any variants with AF < 0.6 in a region
+          with > 12 non-monomer MSI will be considered false positive.  For monomers, that number is 10.
+          -m  int
+          The maximum mean mismatches allowed.  Default: 5.25, or if a variant is supported by reads with more than 5.25 mismathes, it'll be considered
+          false positive.  Mismatches don't includes indels in the alignment.
+          -P  float
+          The maximum p-value.  Default to 0.05.
+          -p	float
+          The minimum mean position of variants in the read.  Default: 5.
+          -q	float
+          The minimum mean base quality.  Default to 22.5 for Illumina sequencing
+          -Q	float
+          The minimum mapping quality.  Default to 0 for Illumina sequencing
+          -d	integer
+          The minimum total depth.  Default to 5
+          -v	integer
+          The minimum variant depth.  Default to 3
+          -f	float
+          The minimum allele frequency.  Default to 0.02
+          -F	float
+          The minimum allele frequency to consider to be homozygous.  Default to 0.2.  Thus frequency > 0.8 (1-0.2) will
+          be considered homozygous "1/1", between 0.5 - (1-0.2) will be "1/0", between (-f) - 0.5 will be "0/1",
+          below (-f) will be "0/0"
+          -o	signal/noise
+          The minimum signal to noise, or the ratio of hi/(lo+0.5).  Default to 1.5.  Set it higher for deep sequencing.
+    #}
+    JAVA_OPTS="-Xmx26g" VarDict \
+      -th 4 \
+      -b "{{ tumor_bam }}|{{ normal_bam }}" \
+      -N "{{ pair.tumor.rgsm }}" \
+      -G "{{ constants.phoenix.reference_fasta }}" \
+      -A 4 \
+      -B 2 \
+      -F 0x500 \
+      -f 0.01 \
+      -I 50 \
+      -k 1 \
+      -M 0 \
+      -m 8 \
+      -O 5 \
+      -o 1.5 \
+      -P 5 \
+      -Q 1 \
+      -q 20 \
+      -r 2 \
+      --dedup \
+      --nosv \
+      -UN \
+      -V 0.05 \
+      -VS LENIENT \
+      -X 2 \
+      -x 0 \
+      -c 1 -S 2 -E 3 \
+      "{{ temp_dir }}/{{ loop.index }}.bed" \
+    | testtumor_only.R \
+    | var2vcf_paired.pl \
+      -N "{{ pair.tumor.rgsm }}|{{ pair.normal.rgsm }}" \
+      -c 0 \
+      -I 12 \
+      -m 5.25 \
+      -P 0.05 \
+      -p 5 \
+      -q 22.5 \
+      -Q 1 \
+      -d 5 \
+      -v 3 \
+      -f 0.02 \
+      -F 0.2 \
+      -o 1.5 \
+    | bcftools view \
+      --output-type z \
+      --output-file "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
+    
+    bcftools index --tbi --force "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
+
+{% endfor %}
+
+
+- name: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, VarDict, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz
+    {% endfor %}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+  cpus: 1
+  mem: 4G
+  walltime: "12:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    
+    mkdir -p "{{ results_dir }}"
+    
+    bcftools concat \
+      --allow-overlaps \
+      --output-type z \
+      --output "{{ all_vcf }}" \
+      {% for b in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
+      "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.vardict.vcf.gz"
+      {% endif %}
+      {% endfor %}
+    
+    bcftools index --tbi --force "{{ all_vcf }}"
+    
+    {% set task %}vardict_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+
+- name: vardict_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, VarDict, {{ pair.name }}]
+  input: {{ all_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 4G
+  walltime: "12:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS" & INFO/STATUS == "Strongtumor_only"' \
+      {% if pair.gltype == 'exome' %}
+      --targets-file "{{ pair.tumor.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
+     
+    bcftools index --tbi --force "{{ pass_vcf }}"
+
+{% endmacro %}
+

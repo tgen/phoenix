@@ -1,0 +1,345 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro mutect2_tumor_only(pair, aligner='bwa') %}
+{% do pair.callers.append('mutect2') %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/mutect2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/mutect2/{{ pair.name }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.mutect2.pass.vcf.gz{% endset %}
+
+{% for batch in constants.phoenix.calling_intervals %}
+- name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats
+    - {{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+    
+    mkdir -p "{{ temp_dir }}/temp_mutect2_{{ loop.index }}"
+
+    {#
+      Create the read orientation file
+      This is not absolutely needed but is implemented in the Broad WDL for a cromwell issue
+      Internally we have random failure associated with a complete MuTect run but no read orientation file created
+    #}
+    touch "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz"
+
+    {#
+      we always use a matching normal from the same patient
+      not using -pon as we often don't have a set of matching normals with the identical assay
+      not using --alleles to force calls at specific locations
+      might want to enable "--bam-output "{{ temp_dir }}/{{ loop.index }}.bamout.bam" \"
+      but it makes a very big bam file
+    #}
+    gatk Mutect2 \
+      --java-options "-Xmx14G" \
+      --tmp-dir {{ temp_dir }}/temp_mutect2_{{ loop.index }}/ \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --germline-resource {{ constants.phoenix.gnomad_genome_v3_0_mutect_germlinereference }} \
+      --input "{{ normal_bam }}" \
+      --normal-sample "{{ pair.normal.rgsm }}" \
+      --input "{{ tumor_bam }}" \
+      --tumor-sample "{{ pair.tumor.rgsm }}" \
+      {% for interval in batch %}
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      --output "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz" \
+      --f1r2-tar-gz "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz" \
+      --independent-mates true
+
+{% endfor %}
+
+{% for batch in constants.phoenix.calling_intervals %}
+- name: mutect2_GetPileupSummaries_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p "{{ temp_dir }}/temp_GetPileupSummaries_tumor_{{ loop.index }}"
+    mkdir -p "{{ temp_dir }}/temp_GetPileupSummaries_normal_{{ loop.index }}"
+
+    {# GetPileupSummaries this can happen at the same time as the variant calling, no need to wait #}
+    {# Tumor pileups #}
+    gatk --java-options "-Xmx7G" GetPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_GetPileupSummaries_tumor_{{ loop.index }}/ \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --input "{{ tumor_bam }}" \
+      --interval-set-rule UNION \
+      {% for interval in batch %}
+      -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
+      --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
+
+    {# Normal pileups #}
+    gatk --java-options "-Xmx7g" GetPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_GetPileupSummaries_normal_{{ loop.index }}/ \
+      -reference {{ constants.phoenix.reference_fasta }} \
+      --input "{{ normal_bam }}" \
+      --interval-set-rule UNION \
+      {% for interval in batch %}
+      --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
+      {% endfor %}
+      --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
+      --output {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
+
+{% endfor %}
+
+- name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz
+    {% endfor %}
+  output:
+    - {{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz
+    - {{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz.tbi
+  methods: tumor_only variant calls for {{ pair.name }} were called with
+    {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
+    then merged together with {{ constants.tools.samtools.verbose }} concat.
+  cpus: 1
+  mem: 4G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    
+    bcftools concat \
+      --output-type z \
+      --output "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
+      {% for b in constants.phoenix.calling_intervals %}
+      {% if not loop.last %}
+      "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz"
+      {% endif %}
+      {% endfor %}
+
+    bcftools index --tbi --force "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz"
+
+- name: mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }},l tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats
+    {% endfor %}
+  output: {{ temp_dir }}/merged.stats
+  methods: tumor_only variant calls for {{ pair.name }} were called with
+    {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
+    then stats files were merged together with {{ constants.tools.gatk.verbose }} for filtering.
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p {{ temp_dir }}/temp_stats
+
+    gatk --java-options "-Xmx7G" MergeMutectStats \
+      --tmp-dir {{ temp_dir }}/temp_stats/ \
+      {% for b in constants.phoenix.calling_intervals %}
+      -stats "{{ temp_dir }}/{{ loop.index }}.mutect2.vcf.gz.stats" \
+      {% endfor %}
+      -O "{{ temp_dir }}/merged.stats"
+
+- name: mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz
+    {% endfor %}
+  output: {{ temp_dir }}/artifact-priors.tar.gz
+  methods: tumor_only variant calls for {{ pair.name }} were called with
+    {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
+    then read orientation files were merged together with {{ constants.tools.gatk.verbose }} for filtering.
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p {{ temp_dir }}/temp_readorientationmodel
+
+    gatk --java-options "-Xmx7G" LearnReadOrientationModel \
+      --tmp-dir {{ temp_dir }}/temp_readorientationmodel/ \
+      {% for b in constants.phoenix.calling_intervals %}
+      -I "{{ temp_dir }}/{{ loop.index }}.f1r2.tar.gz" \
+      {% endfor %}
+      -O {{ temp_dir }}/artifact-priors.tar.gz
+
+- name: mutect2_merge_pileup_summaries_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
+    - {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
+    {% endfor %}
+  output:
+    - {{ temp_dir }}/merged.tumor-pileups.table.tsv
+    - {{ temp_dir }}/merged.normal-pileups.table.tsv
+  methods: tumor_only variant calls for {{ pair.name }} were called with
+    {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
+    then pileups for contamination analysis were merged together with {{ constants.tools.gatk.verbose }} .
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p {{ temp_dir }}/temp_merge_tumor
+    mkdir -p {{ temp_dir }}/temp_merge_normal
+
+    {# Merge tumor pileup #}
+    gatk --java-options "-Xmx7G" GatherPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_merge_tumor/ \
+      --sequence-dictionary {{ constants.phoenix.reference_dict }} \
+      {% for b in constants.phoenix.calling_intervals %}
+      -I "{{ temp_dir }}/{{ loop.index }}.tumor-pileups.table" \
+      {% endfor %}
+      -O {{ temp_dir }}/merged.tumor-pileups.table.tsv
+
+    {# Merge normal pileup #}
+    gatk --java-options "-Xmx7G" GatherPileupSummaries \
+      --tmp-dir {{ temp_dir }}/temp_merge_normal/ \
+      --sequence-dictionary {{ constants.phoenix.reference_dict }} \
+      {% for b in constants.phoenix.calling_intervals %}
+      -I "{{ temp_dir }}/{{ loop.index }}.normal-pileups.table" \
+      {% endfor %}
+      -O {{ temp_dir }}/merged.normal-pileups.table.tsv
+
+- name: mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/merged.tumor-pileups.table.tsv
+    - {{ temp_dir }}/merged.normal-pileups.table.tsv
+  output:
+    - {{ temp_dir }}/contamination.table
+    - {{ temp_dir }}/segments.table
+  methods: tumor_only variant calls for {{ pair.name }} were called with
+    {{ constants.tools.gatk.verbose }} Mutect2 in parallel chunks and
+    then pileup files were merged together with {{ constants.tools.gatk.verbose }} for filtering.
+  cpus: 1
+  mem: 4G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p {{ temp_dir }}/temp_calculate_contamination
+
+    gatk --java-options "-Xmx3G" CalculateContamination \
+      --tmp-dir {{ temp_dir }}/temp_calculate_contamination/ \
+      -I "{{ temp_dir }}/merged.tumor-pileups.table.tsv" \
+      -matched "{{ temp_dir }}/merged.normal-pileups.table.tsv" \
+      -O "{{ temp_dir }}/contamination.table" \
+      --tumor-segmentation "{{ temp_dir }}/segments.table"
+
+- name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz
+    - {{ temp_dir }}/merged.stats
+    - {{ temp_dir }}/artifact-priors.tar.gz
+    - {{ temp_dir }}/contamination.table
+    - {{ temp_dir }}/segments.table
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p "{{ results_dir }}"
+    mkdir -p {{ temp_dir }}/temp_filter
+
+    gatk FilterMutectCalls \
+      --tmp-dir {{ temp_dir }}/temp_filter/ \
+      --java-options "-Xmx7G" \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --max-alt-allele-count 2 \
+      --variant "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
+      --stats "{{ temp_dir }}/merged.stats" \
+      --contamination-table "{{ temp_dir }}/contamination.table" \
+      --tumor-segmentation "{{ temp_dir }}/segments.table" \
+      --ob-priors "{{ temp_dir }}/artifact-priors.tar.gz" \
+      --filtering-stats "{{ temp_dir }}/filtering.stats" \
+      --output "{{ all_vcf }}"
+
+- name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input: {{ all_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  cpu: 1
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
+      {% if pair.gltype == 'exome' %}
+      --targets-file "{{ pair.tumor.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
+    
+    bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {% set task %}mutect2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+{% endmacro %}

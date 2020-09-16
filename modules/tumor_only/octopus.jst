@@ -1,0 +1,164 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro octopus_tumor_only(pair, aligner='bwa') %}
+{% do pair.callers.append('octopus') %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/octopus/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/octopus/{{ pair.name }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
+
+{% for batch in constants.phoenix.primary_contig_calling_intervals %}
+- name: octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.realigned.bam
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    - {{ temp_dir }}/{{ loop.index }}.octopus.vcf
+  cpus: 4
+  mem: 16G
+  walltime: "48:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.octopus.module }}
+    
+    mkdir -p "{{ temp_dir }}"
+
+    {# Write out the regions in this batch to a bed file #}
+    TAB=$'\t'
+    cat <<EOF > "{{ temp_dir }}/{{ loop.index }}.bed"
+    {% for interval in batch %}
+    {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
+    {% endfor %}
+    EOF
+    
+    {# tumor_only calling with octopus #}
+    octopus \
+      --caller cancer \
+      --threads 4 \
+      --max-reference-cache-footprint 4GB \
+      --target-read-buffer-footprint 6GB \
+      --ignore-unmapped-contigs \
+      --tumor_onlys-only \
+      --phasing-level minimal \
+      --legacy \
+      --annotations AD ADP AF SB \
+      --tumor_only-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SD > 0.9 | BQ < 20 | DP < 3 | MF > 0.2 | NC > 5 | FRF > 0.5 | AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
+      --working-directory {{ temp_dir }} \
+      --reference "{{ constants.phoenix.reference_fasta }}" \
+      --regions-file "{{ loop.index }}.bed" \
+      --skip-regions-file {{ constants.phoenix.black_list }} \
+      --reads "{{ normal_bam }}" "{{ tumor_bam }}" \
+      --normal-sample "{{ pair.normal.rgsm }}" \
+      --temp-directory-prefix "{{ loop.index }}" \
+      --bamout "{{ loop.index }}.realigned.bam" \
+      --output "{{ loop.index }}.octopus.vcf"
+      
+{% endfor %}
+
+
+- name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.primary_contig_calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    {% endfor %}
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+  cpus: 1
+  mem: 4G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.samtools.module }}
+
+    mkdir -p "{{ results_dir }}"
+
+    {# Vcf merge #}
+    bcftools concat \
+      --output-type z \
+      --output "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz" \
+      {% for b in constants.phoenix.primary_contig_calling_intervals %}
+      {% if not loop.last %}
+      "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
+      {% else %}
+      "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf"
+      {% endif %}
+      {% endfor %}
+
+    bcftools sort \
+      --output-type z \
+      --output-file "{{ all_vcf }}" \
+      "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz"
+
+    bcftools index --tbi --force "{{ all_vcf }}"
+    {# No long options available for the following:
+{#      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]#}
+{#      -f           Overwrite the output BAM if exist#}
+{#      -l INT       Compression level, from 0 to 9 [-1]#}
+{#    #}
+    {# Tumor evidence bam merge - the * in {{ temp_dir }}/*.realigned.bam requires us to not #}
+    {# use quotes in order to allow bash/shell to expand out to grab everything that matches #}
+{#    samtools merge \#}
+{#      --threads 4 \#}
+{#      -c \#}
+{#      -f \#}
+{#      -l 6 \#}
+{#      {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.octopus.bam \#}
+{#      {{ temp_dir }}/*.realigned.bam/{{ pair.tumor.name }}.{{ aligner }}.bam#}
+{##}
+    {# Normal evidence bam merge - the * in {{ temp_dir }}/*.realigned.bam requires us to not #}
+    {# use quotes in order to allow bash/shell to expand out to grab everything that matches #}
+{#    samtools merge \#}
+{#      --threads 4 \#}
+{#      -c \#}
+{#      -f \#}
+{#      -l 6 \#}
+{#      {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.octopus.bam \#}
+{#      {{ temp_dir }}/*.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam#}
+
+
+- name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
+  input: {{ all_vcf }}
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  walltime: "24:00:00"
+  cpus: 1
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
+      {% if pair.gltype == 'exome' %}
+      --targets-file "{{ pair.tumor.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ all_vcf }}" \
+      > "{{ pass_vcf }}"
+    
+    bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {% set task %}octopus_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+
+{% endmacro %}

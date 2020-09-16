@@ -1,0 +1,198 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro manta_tumor_only(pair, aligner='bwa') %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
+{% set summary_samtools_stats %}{{ pair.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ pair.tumor.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
+
+- name: manta_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, structural_caller, manta, {{ pair.name }}]
+  methods: > 
+    tumor_only structural variants and indels for {{ pair.name }} ({{ aligner }})
+    were called with {{ constants.tools.manta.verbose }}.
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output: 
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.vcf.gz.tbi
+  cpus: 20
+  mem: 20G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.manta.module }}
+    module load {{ constants.tools.htslib.module }}
+    module load {{ constants.tools.python_2_7_15.module }}
+
+    {# Purge any existing run files prior to starting #}
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
+
+    {#
+    # In order to restrict calling to only the specified regions
+    # Manta requires a bed file (that has been bgzipped and indexed
+    # with tabix). Here we generate that file on the fly, store in
+    # the run dir, and pass the path to Manta.
+    #}
+    MANTA_BED="{{ temp_dir }}/callRegions.bed"
+    TAB=$'\t'
+    cat <<EOF > "${MANTA_BED}"
+    {% for contig in constants.phoenix.calling_contigs %}
+    {{ contig.contig }}${TAB}0${TAB}{{ contig.length }}
+    {% endfor %}
+    EOF
+
+    bgzip -f "${MANTA_BED}"
+    tabix -f -p bed "${MANTA_BED}.gz"
+
+    {#
+    # Some settings are only configurable via tha ini file. Here
+    # we generate this ini file and save it to the run dir.
+    #}
+    MANTA_CONFIG="{{ temp_dir }}/config.ini"
+    cat <<EOF > "${MANTA_CONFIG}"
+    [manta]
+    enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
+    EOF
+
+    {# Build the Manta run file #}
+    configManta.py \
+      {% if pair.gltype == 'exome' %}
+      --exome \
+      {% endif %}
+      --callRegions "${MANTA_BED}.gz" \
+      --config "${MANTA_CONFIG}" \
+      --normalBam "{{ normal_bam }}" \
+      --tumorBam "{{ tumor_bam }}" \
+      --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
+      --runDir "{{ temp_dir }}"
+
+    {# Execute on the local machine with 19 parallel jobs #}
+    "{{ temp_dir }}/runWorkflow.py" -m local -j 19
+
+    {# Save all the vcs in the sample dir #}
+    mkdir -p "{{ results_dir }}" || true
+
+    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/candidateSmallIndels.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/candidateSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/diploidSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.diploidSV.vcf.gz.tbi"
+    mv "{{ temp_dir }}/results/variants/tumor_onlySV.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/tumor_onlySV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.vcf.gz.tbi"
+
+
+- name: manta_flag_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, manta, flag, {{ pair.name }}]
+  input:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.vcf.gz.tbi
+    - {{ tumor_bam }}
+    - {{ normal_bam }}
+    - {{ summary_samtools_stats }}
+  output:
+    - {{ temp_dir }}/results/variants/tumor_onlySV.pass.vcf.gz
+    - {{ temp_dir }}/results/variants/tumor_onlySV.pass.vcf.gz.tbi
+    - {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf.gz
+    - {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf.gz.tbi
+  cpus: 4
+  mem: 4G
+  walltime: "12:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
+
+    {# Ensuring that the output dir exists for bcftools filter #}
+    mkdir -p {{ temp_dir }}/results/variants
+
+    {# filtering tumor_only vcf by PASS #}
+    bcftools filter -i 'FILTER == "PASS"' -O z -o {{ temp_dir }}/results/variants/tumor_onlySV.pass.vcf.gz {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.vcf.gz
+    bcftools index --threads 4 --tbi --force {{ temp_dir }}/results/variants/tumor_onlySV.pass.vcf.gz
+
+    {# Capturing the insert_size and its standard deviation from summary samtools stats file #}
+    INSERT_SIZE=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f9 )
+    STD_IS=$(cat {{ summary_samtools_stats }} | tail -n 1 | cut -f11 )
+    echo -e "----------------"
+    echo ${INSERT_SIZE}
+    echo ${STD_IS}
+    echo -e "----------------"
+    {# adding fields and flags to pass.vcf.gz file #}
+    {% set temp_dir_pass_vcf %}{{ temp_dir }}/results/variants/tumor_onlySV.pass.vcf{% endset %}
+
+    python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_prepare_sv_vcf }} \
+      -p 4 \
+      -i {{ temp_dir }}/results/variants/tumor_onlySV.pass.vcf.gz \
+      -t {{ tumor_bam }} \
+      -n {{ normal_bam }} \
+      --tumor-name {{ pair.tumor.rgsm }} \
+      --insert-size ${INSERT_SIZE} \
+      --sigma ${STD_IS} \
+      --minmapq 15 \
+      --output {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf \
+      --logfile {{ temp_dir }}/results/variants/log_prepare_sv_vcf.txt
+
+    {# compress vcf to vcf.gz #}
+    bcftools view --threads 4 -O z -o {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf.gz {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf
+    bcftools index --threads 4 --tbi --force {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf.gz
+
+
+- name: manta_annotate_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, manta, flag, gene, annotation, {{ pair.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf.gz
+    - {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf.gz.tbi
+  output:
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.pass.vcf.gz
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.pass.vcf.gz.tbi
+  cpus: 4
+  mem: 16G
+  walltime: "12:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
+
+    mkdir -p {{ temp_dir }}/pybedtools/ || true
+
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_gene_annotation_parallel }} \
+      -a {{ constants.phoenix.delly_annotation }} \
+      -i {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.vcf.gz \
+      -o {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.anno.vcf \
+      --threads 4 \
+      --tempdir {{ temp_dir }}/pybedtools/
+
+    bcftools view --threads 4 -O z -o {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.anno.vcf.gz {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.anno.vcf
+    bcftools index --threads 4 --tbi --force {{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.anno.vcf.gz
+
+    {# Save all the vcf in the sample's dir results #}
+    mv "{{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.anno.vcf.gz" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.pass.vcf.gz"
+    mv "{{ temp_dir }}/results/variants/tumor_onlySV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.tumor_onlySV.pass.vcf.gz.tbi"
+
+    {# Remove the remaining files #}
+    {% set task %}manta_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+
+{% endmacro %}

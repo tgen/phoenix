@@ -1,0 +1,43 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro gridss_tumor_only(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_structural_calls/gridss/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/gridss/{{ pair.name }}{% endset %}
+
+- name: gridss_tumor_only_{{ aligner }}
+  tags: [tumor_only, gridss]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output: {{ results_dir }}/{{ pair.name }}.sv.vcf
+  cpus: 20
+  mem: 60G
+  walltime: "48:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.sambamba.module }}
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.R.module }}
+    {# gcc/5.1.0 gets loaded with R/3.5.2 on our system #}
+    module load {{ constants.tools.gcc.module }}
+    {# all of the modules above get loaded with gridss at the moment, but this many not be the case on other systems #}
+    module load {{ constants.tools.gridss.module }}
+
+    mkdir -p {{ results_dir }}
+
+    gridss CallVariants \
+      -r {{ constants.phoenix.reference_fasta }} \
+      -w {{ temp_dir }} \
+      -o {{ results_dir }}/{{ pair.name }}.sv.vcf \
+      {{ normal_bam }} {{ tumor_bam }}
+
+    {# Remove the remaining files #}
+    {% set task %}gridss_tumor_only_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+{% endmacro %}
