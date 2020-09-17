@@ -41,13 +41,6 @@
     {% if name not in normSamples %}
         {% do normSamples.update({name: {}}) %}
         {% do normSamples[name].update(file) %}
-        {% do normSamples[name].update({"name": name}) %}
-        {% do normSamples[name].update({'rgsm': rgsm}) %}
-        {% do normSamples[name].update({'bam': bam}) %}
-        {% do normSamples[name].update({'bai': bai}) %}
-        {% do normSamples[name].update({'deepvariant_vcf': deepvariant_vcf}) %}
-        {% do normSamples[name].update({'pon_mutect': pon_mutect}) %}
-        {% do normSamples[name].update({'pon_count': pon_count}) %}
     {% endif %}
 {% endfor %}
 
@@ -166,7 +159,7 @@
         {{- gridss_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(false) %}
         {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
