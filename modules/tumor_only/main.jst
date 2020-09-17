@@ -23,6 +23,7 @@
 {% for file in controlDataFiles %}
     {# Creating name to use as unique identifier #}
     {% set name = file.pathToBam | basename | replace(".", "_") | replace("bwa", "") | replace("bam", "") | replace("__", "_") %}
+    {% set rgsm = name | replace( "_"+file.assayCode, "") %}
     {% set bam = file.pathToBam | basename %}
     {% set bai = file.pathToBai | basename %}
     {% set deepvariant_vcf = file.deepVariant_VCF | basename %}

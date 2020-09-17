@@ -46,16 +46,13 @@
       but it makes a very big bam file
     #}
 
-    {# Temporary bit of code for calculating normal rgsm #}
-    {% set normal_rgsm %}{{ pair.normal.bam | replace( "_"+pair.normal.assayCode, "") }}{% endset %}
-
     gatk Mutect2 \
       --java-options "-Xmx14G" \
       --tmp-dir {{ temp_dir }}/temp_mutect2_{{ loop.index }}/ \
       --reference {{ constants.phoenix.reference_fasta }} \
       --germline-resource {{ constants.phoenix.gnomad_genome_v3_0_mutect_germlinereference }} \
       --input "{{ normal_bam }}" \
-      --normal-sample "{{ normal_rgsm }}" \
+      --normal-sample "{{ pair.normal.rgsm }}" \
       --input "{{ tumor_bam }}" \
       --tumor-sample "{{ pair.tumor.rgsm }}" \
       {% for interval in batch %}
