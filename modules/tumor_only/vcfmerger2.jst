@@ -59,7 +59,7 @@
     gunzip -c "{{ gzipped_path }}" > "{{ unzipped_path }}"
 
     {# Locate the prep_vcf.sh script relative to vcfMerger2.py #}
-    PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_tumor_only/prep_vcf_tumor_only.sh
+    PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
     WORKDIR=`pwd`
 
     ${PREPVCF} \
@@ -154,5 +154,5 @@
 {% else %}
   {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
 {% endif %}
-  {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'tumor_only', 'snp_indel_caller') }}
+  {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
 {% endmacro %}

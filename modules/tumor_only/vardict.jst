@@ -94,7 +94,7 @@
           -r <minimum reads>                  The minimum # of variant reads, default 2
           -UN                                 Indicate unique mode, which when mate pairs overlap, the overlapping part will be counted only once using
                                               first read only.
-          -V <freq>                           The lowest frequency in the normal sample allowed for a putative tumor_only mutation.  Defaults to 0.05
+          -V <freq>                           The lowest frequency in the normal sample allowed for a putative somatic mutation.  Defaults to 0.05
           -VS <STRICT | LENIENT | SILENT>     How strict to be when reading a SAM or BAM.
                                               STRICT	- throw an exception if something looks wrong.
                                               LENIENT	- Emit warnings but keep going if possible.
@@ -110,7 +110,7 @@
           -N  Name(s)                         The sample name(s).  If only one name is given, the matched will be simply names as "name-match".  Two names
           are given separated by "|", such as "tumor|blood".
           -c  int
-          If two tumor_only candidates are within {int} bp, they're both filtered.  Default: 0 or no filtering
+          If two somatic candidates are within {int} bp, they're both filtered.  Default: 0 or no filtering
           -I  int
           The maximum non-monomer MSI allowed for a HT variant with AF < 0.6.  By default, 12, or any variants with AF < 0.6 in a region
           with > 12 non-monomer MSI will be considered false positive.  For monomers, that number is 10.
@@ -247,7 +247,7 @@
     
     bcftools filter \
       --output-type z \
-      --include 'FILTER == "PASS" & INFO/STATUS == "Strongtumor_only"' \
+      --include 'FILTER == "PASS" & INFO/STATUS == "StrongSomatic"' \
       {% if pair.gltype == 'exome' %}
       --targets-file "{{ pair.tumor.capture_kit.extended_bed }}" \
       {% endif %}

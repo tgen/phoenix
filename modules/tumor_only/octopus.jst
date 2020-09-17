@@ -39,18 +39,18 @@
     {% endfor %}
     EOF
     
-    {# tumor_only calling with octopus #}
+    {# somatic calling with octopus #}
     octopus \
       --caller cancer \
       --threads 4 \
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
       --ignore-unmapped-contigs \
-      --tumor_onlys-only \
+      --somatics-only \
       --phasing-level minimal \
       --legacy \
       --annotations AD ADP AF SB \
-      --tumor_only-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SD > 0.9 | BQ < 20 | DP < 3 | MF > 0.2 | NC > 5 | FRF > 0.5 | AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
+      --somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SD > 0.9 | BQ < 20 | DP < 3 | MF > 0.2 | NC > 5 | FRF > 0.5 | AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
       --working-directory {{ temp_dir }} \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --regions-file "{{ loop.index }}.bed" \

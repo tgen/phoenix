@@ -21,8 +21,8 @@
     - {{ tumor_bam }}
     - {{ indel_candidates }}
   output:
-    - {{ temp_dir }}/results/variants/tumor_only.indels.vcf.gz
-    - {{ temp_dir }}/results/variants/tumor_only.snvs.vcf.gz
+    - {{ temp_dir }}/results/variants/somatic.indels.vcf.gz
+    - {{ temp_dir }}/results/variants/somatic.snvs.vcf.gz
     {% if cram|default(true) %}
     - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram
     - {{ results_dir }}/evidence/{{ pair.normal.name }}.{{ aligner }}.strelka2.realigned.cram.crai
@@ -71,12 +71,12 @@
     # we generate this ini file and save it to the run dir.
     #}
     cat <<EOF > "{{ temp_dir }}/config.ini"
-    [Strelkatumor_only]
+    [StrelkaSomatic]
     isWriteRealignedBam = 1
     EOF
 
     {# Build the Strelka run file #}
-    configureStrelkatumor_onlyWorkflow.py \
+    configureStrelkaSomaticWorkflow.py \
       {% if pair.gltype == 'exome' %}
       --exome \
       {% endif %}
@@ -124,8 +124,8 @@
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, strelka2, {{ pair.name }}]
   reset: predecessors
   input:
-    - {{ temp_dir }}/results/variants/tumor_only.indels.vcf.gz
-    - {{ temp_dir }}/results/variants/tumor_only.snvs.vcf.gz
+    - {{ temp_dir }}/results/variants/somatic.indels.vcf.gz
+    - {{ temp_dir }}/results/variants/somatic.snvs.vcf.gz
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -145,8 +145,8 @@
       --threads 1 \
       --output-type z \
       --output "{{ all_vcf }}" \
-      "{{ temp_dir }}/results/variants/tumor_only.indels.vcf.gz" \
-      "{{ temp_dir }}/results/variants/tumor_only.snvs.vcf.gz"
+      "{{ temp_dir }}/results/variants/somatic.indels.vcf.gz" \
+      "{{ temp_dir }}/results/variants/somatic.snvs.vcf.gz"
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
