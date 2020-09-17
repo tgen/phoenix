@@ -27,8 +27,8 @@
     {% set deepvariant_vcf = file.deepVariant_VCF | basename %}
     {% set pon_mutect = file.panelOfNormals_ForMutect | basename %}
     {% set pon_count = file.panelOfNormals_Count | basename %}
-    {% set name = bam | replace("bwa", "") | replace("bam", "") | replace(".", "_") | trim("_") %}
-    {% set rgsm = name | replace(file.assayCode, "") | trim("_") %}
+    {% set name = bam | replace("bwa", "") | replace("bam", "") | replace(".", "_") | replace("_", " ") | trim | replace(" ", "_") %}
+    {% set rgsm = name | replace(file.assayCode, "") | replace("_", " ") | trim | replace(" ", "_") %}
 
     {% do file.update({'name': name}) %}
     {% do file.update({'rgsm': rgsm}) %}
