@@ -166,7 +166,7 @@
       -x 0 \
       -c 1 -S 2 -E 3 \
       "{{ temp_dir }}/{{ loop.index }}.bed" \
-    | testtumor_only.R \
+    | testsomatic.R \
     | var2vcf_paired.pl \
       -N "{{ pair.tumor.rgsm }}|{{ pair.normal.rgsm }}" \
       -c 0 \
