@@ -31,6 +31,7 @@
     {% set pon_count = file.panelOfNormals_Count | basename %}
 
     {% do file.update({'name': name}) %}
+    {% do file.update({'rgsm': rgsm}) %}
     {% do file.update({'bam': bam}) %}
     {% do file.update({'bai': bai}) %}
     {% do file.update({'deepvariant_vcf': deepvariant_vcf}) %}
@@ -41,6 +42,7 @@
         {% do normSamples.update({name: {}}) %}
         {% do normSamples[name].update(file) %}
         {% do normSamples[name].update({"name": name}) %}
+        {% do normSamples[name].update({'rgsm': rgsm}) %}
         {% do normSamples[name].update({'bam': bam}) %}
         {% do normSamples[name].update({'bai': bai}) %}
         {% do normSamples[name].update({'deepvariant_vcf': deepvariant_vcf}) %}
