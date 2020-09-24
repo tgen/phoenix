@@ -1,0 +1,145 @@
+{%- macro tumor_only_bcftools_annotate(sample_or_pair, temp_dir, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, snpeff_flag, vep_flag, task_type) %}
+{%- set output_bcf %}{{ temp_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.db.bcf{% endset %}
+- name: bcftools_annotate_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
+  tags: [{{ sample_or_pair.gltype }}, {{ analysis_type }}, {{ task_type }}, annotate_vcfs, {{ variant_caller }}, {{ sample_or_pair.name }}]
+  input: {{ input_vcf }}
+  output:
+    {% if snpeff_flag or vep_flag %}
+    - {{ temp_vcf }}
+    - {{ temp_vcf }}.tbi
+    {% else %}
+    - {{ output_vcf }}
+    - {{ output_vcf }}.tbi
+    {% endif %}
+  walltime: "8:00:00"
+  cpus: 4
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    mkdir -p "{{ temp_dir }}"
+
+    {#
+    # we need to convert whatever vcf type we are given into a bcf (bcftools loves bcfs)
+    # also create a temp bcf that we will use for all annotation runs
+    #}
+    bcftools view \
+      --threads 4 \
+      --output-type b \
+      --output-file "{{ output_bcf }}" \
+      "{{ input_vcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_dbsnp_v154"]|default(true) %}
+    {# annotate with dbsnp #}
+    bcftools annotate \
+      --threads 4 \
+      --annotations "{{ constants.phoenix.dbsnp_v152 }}" \
+      --mark-sites DBSNPv154 \
+      --columns DBSNPv154_ID:=ID,DBSNPv154_AF:=AF  \
+      --output-type b \
+      --output "{{ temp_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
+
+    {# move tempout to tempin for next step #}
+    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover"]|default(true) %}
+    {# annotate with gnomad exome #}
+    bcftools annotate \
+      --threads 4 \
+      --annotations "{{ constants.phoenix.gnomad_exome_v2_1_1_liftover }}" \
+      --mark-sites GNOMAD_EXOME \
+      --columns GNOMAD_EXOME_AC:=AC,GNOMAD_EXOME_AN:=AN,GNOMAD_EXOME_AF:=AF,GNOMAD_EXOME_n_alt_alleles:=n_alt_alleles
+      --output-type b \
+      --output "{{ temp_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
+
+    {# move tempout to tempin for next step #}
+    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_genome_v3_0"]|default(true) %}
+    {# annotate with gnomad genome #}
+    bcftools annotate \
+      --threads 4 \
+      --annotations "{{ constants.phoenix.gnomad_genome_v3_0 }}" \
+      --mark-sites GNOMAD_GENOME \
+      --columns GNOMAD_GENOME_AC:=AC,GNOMAD_GENOME_AN:=AN,GNOMAD_GENOME_AF:=AF,GNOMAD_GENOME_n_alt_alleles:=n_alt_alleles
+      --output-type b \
+      --output "{{ temp_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
+
+    {# move tempout to tempin for next step #}
+    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_coding_v92"]|default(true) %}
+    {# annotate with cosmic #}
+    bcftools annotate \
+      --threads 4 \
+      --annotations "{{ constants.phoenix.cosmic_coding_v92 }}" \
+      --mark-sites COSMIC \
+      --columns COSMIC_CNT:=CNT,COSMIC_SNP:=SNP
+      --output-type b \
+      --output "{{ temp_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
+
+    {# move tempout to tempin for next step #}
+    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_cosmic_noncoding_v92"]|default(true) %}
+    {# annotate with cosmic_nc #}
+    bcftools annotate \
+      --threads 4 \
+      --annotations "{{ constants.phoenix.cosmic_noncoding_v92 }}" \
+      --mark-sites COSMIC_NC \
+      --columns COSMIC_NC_CNT:=CNT,COSMIC_NC_SNP:=SNP
+      --output-type b \
+      --output "{{ temp_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
+
+    {# move tempout to tempin for next step #}
+    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+    {% endif %}
+
+    {# convert back to vcf.gz for the average users #}
+    {% if snpeff_flag or vep_flag %}
+
+    bcftools view \
+    --threads 4 \
+    --output-type z \
+    --output-file "{{ temp_vcf }}" \
+    "{{ output_bcf }}"
+
+    bcftools index --threads 4 --tbi --force "{{ temp_vcf }}"
+    bcftools index --threads 4 --force "{{ temp_vcf }}"
+
+    {% else %}
+
+    bcftools view \
+    --threads 4 \
+    --output-type z \
+    --output-file "{{ output_vcf }}" \
+    "{{ output_bcf }}"
+
+    bcftools index --threads 4 --tbi --force "{{ output_vcf }}"
+
+    {% endif -%}
+{% endmacro -%}
