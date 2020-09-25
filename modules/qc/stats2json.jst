@@ -4,7 +4,7 @@
 
 {% from 'modules/qc/stats2lims.jst' import stats2lims with context %}
 
-{% macro stats2json(tag1, tag2, task, input_file, output_file, file_type, sample_name=none, library_name=none, read_group_name=none ) %}
+{% macro stats2json(tag1, tag2, task, input_file, output_file, file_type, sample_name=none, library_name=none, read_group_name=none, lims_upload=true ) %}
 
 - name: stats2json_{{ task }}_{{ file_type }}
   tags: [{{ tag1 }}, quality_control, stats, stats2json, {{ tag2 }}]
@@ -33,6 +33,8 @@
       {{ input_file }} \
       {{ file_type }}
 
-  {{ stats2lims(tag1, tag2, task, output_file, file_type) }}
+    {% if lims_upload is sameas true %}
+      {{ stats2lims(tag1, tag2, task, output_file, file_type) }}
+    {% endif %}
 
 {% endmacro %}

@@ -38,6 +38,19 @@
   {% set summaryNumbers_output %}{{ results_dir }}/{{ sample_name_string }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.tsv{% endset %}
   {% set summaryNumbers_output_json %}{{ results_dir }}/{{ sample_name_string }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.json{% endset %}
 
+{% if bam_level is sameas true %}
+  {% set bam_level_baseQuality_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_baseQualityYield_summary.tsv{% endset %}
+  {% set bam_level_baseQuality_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_baseQualityYield_summary.json{% endset %}
+
+  {% set bam_level_coverage_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_coverage_summary.tsv{% endset %}
+  {% set bam_level_coverage_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_coverage_summary.json{% endset %}
+
+  {% set bam_level_insertSize_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
+  {% set bam_level_insertSize_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_insertSize_summary.json{% endset %}
+
+  {% set bam_level_summaryNumbers_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.tsv{% endset %}
+  {% set bam_level_summaryNumbers_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.json{% endset %}
+{% endif %}
 
 - name: samtools_stats_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
@@ -174,6 +187,13 @@
         --bam={{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam \
         --sample={{ sample.name }} \
         --library={{ sample_lb }}
+    {% endif %}
+
+    {% if bam_level is sameas true and sample.gltype != 'singlecellrna' %}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_baseQuality_output, bam_level_baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_coverage_output, bam_level_coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_insertSize_output, bam_level_insertSize_output_json, "samtools_insertSize_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_summaryNumbers_output, bam_level_summaryNumbers_output_json, "samtools_summaryNumbers_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
     {% endif %}
 
     {% if libraryCount == 1 or bam_level is sameas false %}
