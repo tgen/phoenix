@@ -230,6 +230,8 @@
     set -eu
     set -o pipefail
 
+    module load {{ constants.tools.R.module }}
+
     cd {{ results_dir }}
 
     Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotSamStats_Rscript }} \
