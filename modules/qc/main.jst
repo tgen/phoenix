@@ -10,6 +10,7 @@
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_collectmultiplemetrics with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_convertsequencingarrtifacttooxog with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_snpsniffer_geno with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_markdup with context %}
 {% from 'modules/qc/stats2lims.jst' import stats2lims with context %}
 
 # Performed on genomes
@@ -73,6 +74,7 @@
 
     {# Tasks performed on all bams #}
     {{- bam_qc_samtools_stats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+    {{- bam_qc_samtools_markdup(sample, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {{- bam_qc_samtools_flagstat(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {{- bam_qc_samtools_idxstats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {{- bam_qc_gatk_collectmultiplemetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}

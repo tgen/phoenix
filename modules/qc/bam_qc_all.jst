@@ -210,6 +210,37 @@
 {% endif %}
 {% endmacro %}
 
+{% macro bam_qc_samtools_markdup(sample, sample_lb, taskPrefix=taskPrefix, aligner=aligner) %}
+{% if tasks[taskPrefix+"_quality_control_stats_samtools_markdup_stats"]|default(true) %}
+
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+  {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+  {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+
+- name: samtools_markdup_stats_{{ task }}
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_markdup, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools.verbose }} stats.
+  input: {{ results_dir }}/{{ sample.name }}.bwa.bam.samtools.markdup.txt
+  output: {{ results_dir }}/{{ bam|basename }}_samtools_markdup_summary.tsv
+  walltime: "4:00:00"
+  cpus: 1
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    cd {{ results_dir }}
+
+    Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotSamStats_Rscript }} \
+        --samtoolsDuplicatesFile={{ sample.name }}.bwa.bam.samtools.markdup.txt \
+        --bam={{ bam|basename }} \
+        --sample={{ sample.name }} \
+        --library={{ sample_lb }}
+
+{% endif %}
+{% endmacro %}
+
 
 {% macro bam_qc_samtools_flagstat(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner, bam_level=true) %}
 {% if tasks[taskPrefix+"_quality_control_stats_samtools_flagstat"]|default(true) %}
