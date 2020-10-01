@@ -34,23 +34,6 @@
 
     bcftools index --threads 4 --force "{{ output_bcf }}"
 
-    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_dbsnp_v154"]|default(true) %}
-    {# annotate with dbsnp #}
-    bcftools annotate \
-      --threads 4 \
-      --annotations "{{ constants.phoenix.dbsnp_v152 }}" \
-      --mark-sites DBSNPv154 \
-      --columns DBSNPv154_ID:=ID,DBSNPv154_AF:=AF  \
-      --output-type b \
-      --output "{{ temp_dir }}/tempout.bcf" \
-      "{{ output_bcf }}"
-
-    {# move tempout to tempin for next step #}
-    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
-
-    bcftools index --threads 4 --force "{{ output_bcf }}"
-    {% endif %}
-
     {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover"]|default(true) %}
     {# annotate with gnomad exome #}
     bcftools annotate \
