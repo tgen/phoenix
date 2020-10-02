@@ -15,7 +15,7 @@
 {% set config_sex %}{{ sex|default("Female") }}{% endset %}
 
 {# Step 1 #}
-- name: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
   input:
     - {{ normal_bam }}
@@ -245,7 +245,7 @@
 
 
 {# Step 2a #}
-- name: gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
   reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
@@ -277,7 +277,7 @@
 
 
 {# Step 2b #}
-- name: gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_gatk_call_cnv_step2b_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
   reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
@@ -308,7 +308,7 @@
 
 
 {# Step 2c #}
-- name: gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_gatk_call_cnv_step2c_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
   reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
@@ -340,7 +340,7 @@
 
 
 {# Step 2d #}
-- name: gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_gatk_call_cnv_step2d_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
   reset: gatk_call_cnv_step1_{{ pair.name }}_{{ aligner }}
   input:
@@ -371,7 +371,7 @@
 
 
 {# Step 3 #}
-- name: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
   reset:
     - gatk_call_cnv_step2a_{{ pair.name }}_{{ aligner }}
@@ -499,7 +499,7 @@
 
 
 {# Step 4 #}
-- name: gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.name }}]
   reset: gatk_call_cnv_step3_{{ pair.name }}_{{ aligner }}
   input:

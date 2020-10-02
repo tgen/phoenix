@@ -11,7 +11,7 @@
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.vardict.pass.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
-- name: vardict_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+- name: tumor_only_vardict_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, VarDict, {{ pair.name }}]
   input:
     - {{ normal_bam }}
@@ -190,7 +190,7 @@
 {% endfor %}
 
 
-- name: vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_vardict_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, VarDict, {{ pair.name }}]
   reset: predecessors
   input:
@@ -230,7 +230,7 @@
     {{- remove_files(directory,none,task) }}
 
 
-- name: vardict_filter_variants_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_vardict_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, VarDict, {{ pair.name }}]
   input: {{ all_vcf }}
   output:

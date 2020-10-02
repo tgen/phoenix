@@ -35,7 +35,7 @@
   'filtered_path': filtered_path
 }) %}
 
-- name: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input: {{ gzipped_path }}
   output: {{ prepped_path }}
@@ -73,7 +73,7 @@
       -o "{{ prepped_path }}"
 
 
-- name: vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
   input: {{ prepped_path }}
@@ -96,7 +96,7 @@
 {% endfor %}
 
 
-- name: vcfmerger2_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_vcfmerger2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
   input:

@@ -16,7 +16,7 @@
 {% set filt_bcf %}{{ pair.name }}.{{ aligner }}.delly.{{ svtype }}.flt.bcf{% endset %}
 {% set sample_file %}sample.{{ svtype }}.{{ pair.name }}.tsv{% endset %}
 
-- name: delly_{{ pair.name }}_{{ aligner }}_{{ svtype }}
+- name: tumor_only_delly_{{ pair.name }}_{{ aligner }}_{{ svtype }}
   tags: [{{ pair.gltype }}, tumor_only, delly, {{ pair.name }}]
   input:
     - {{ normal_bam }}
@@ -63,7 +63,7 @@
 
 {% endfor %}
 
-- name: delly_merge_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_delly_merge_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, delly, {{ pair.name }}]
   reset: predecessors
   input:
@@ -102,7 +102,7 @@
 
     bcftools view -f PASS {{ all_vcf }} > {{ pass_vcf }}
 
-- name: delly_annotate_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_delly_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, delly, {{ pair.name }}]
   reset: predecessors
   input:

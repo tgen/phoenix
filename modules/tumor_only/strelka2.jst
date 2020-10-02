@@ -11,7 +11,7 @@
 {% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
-- name: strelka2_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_strelka2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, strelka2, {{ pair.name }}]
   methods: > 
     tumor_only variants for {{ pair.name }} ({{ aligner }}) were called with
@@ -120,7 +120,7 @@
     {% endif %}
 
 
-- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, strelka2, {{ pair.name }}]
   reset: predecessors
   input:

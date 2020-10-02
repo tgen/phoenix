@@ -8,7 +8,7 @@
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
 {% set summary_samtools_stats %}{{ pair.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ pair.tumor.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
 
-- name: manta_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_manta_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, structural_caller, manta, {{ pair.name }}]
   methods: > 
     somatic structural variants and indels for {{ pair.name }} ({{ aligner }})
@@ -95,7 +95,7 @@
     mv "{{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
 
 
-- name: manta_flag_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_manta_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, {{ pair.name }}]
   input:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
@@ -153,7 +153,7 @@
     bcftools index --threads 4 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
 
 
-- name: manta_annotate_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_manta_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, gene, annotation, {{ pair.name }}]
   reset: predecessors
   input:

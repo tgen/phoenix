@@ -11,7 +11,7 @@
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.mutect2.pass.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
-- name: mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+- name: tumor_only_mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
     - {{ normal_bam }}
@@ -65,7 +65,7 @@
 {% endfor %}
 
 {% for batch in constants.phoenix.calling_intervals %}
-- name: mutect2_GetPileupSummaries_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+- name: tumor_only_mutect2_GetPileupSummaries_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
     - {{ normal_bam }}
@@ -110,7 +110,7 @@
 
 {% endfor %}
 
-- name: mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_mutect2_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   reset: predecessors
   input:
@@ -145,7 +145,7 @@
 
     bcftools index --tbi --force "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz"
 
-- name: mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_mutect2_merge_stats_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   reset: predecessors
   input:
@@ -174,7 +174,7 @@
       {% endfor %}
       -O "{{ temp_dir }}/merged.stats"
 
-- name: mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_mutect2_learn_readorientationmodel_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   reset: predecessors
   input:
@@ -203,7 +203,7 @@
       {% endfor %}
       -O {{ temp_dir }}/artifact-priors.tar.gz
 
-- name: mutect2_merge_pileup_summaries_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_mutect2_merge_pileup_summaries_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   reset: predecessors
   input:
@@ -247,7 +247,7 @@
       {% endfor %}
       -O {{ temp_dir }}/merged.normal-pileups.table.tsv
 
-- name: mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_mutect2_calculate_contamination_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   reset: predecessors
   input:
@@ -277,7 +277,7 @@
       -O "{{ temp_dir }}/contamination.table" \
       --tumor-segmentation "{{ temp_dir }}/segments.table"
 
-- name: mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   reset: predecessors
   input:
@@ -314,7 +314,7 @@
       --filtering-stats "{{ temp_dir }}/filtering.stats" \
       --output "{{ all_vcf }}"
 
-- name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input: {{ all_vcf }}
   output:

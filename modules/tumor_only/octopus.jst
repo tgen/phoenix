@@ -11,7 +11,7 @@
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.octopus.pass.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.primary_contig_calling_intervals %}
-- name: octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+- name: tumor_only_octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
   input:
     - {{ normal_bam }}
@@ -64,7 +64,7 @@
 {% endfor %}
 
 
-- name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
   reset: predecessors
   input:
@@ -130,7 +130,7 @@
 {#      {{ temp_dir }}/*.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam#}
 
 
-- name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
   input: {{ all_vcf }}
   output:
