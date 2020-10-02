@@ -217,12 +217,16 @@
   {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
   {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 
+  {% set output %}{{ results_dir }}/{{ bam|basename }}_samtools_markdup_summary.tsv{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samtools.markdup.json{% endset %}
+
+
 - name: samtools_markdup_stats_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_markdup, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} stats.
   input: {{ results_dir }}/{{ sample.name }}.bwa.bam.samtools.markdup.txt
-  output: {{ results_dir }}/{{ bam|basename }}_samtools_markdup_summary.tsv
+  output: {{ output }}
   walltime: "4:00:00"
   cpus: 1
   mem: 4G
@@ -235,10 +239,12 @@
     cd {{ results_dir }}
 
     Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotSamStats_Rscript }} \
-        --samtoolsDuplicatesFile={{ sample.name }}.bwa.bam.samtools.markdup.txt \
+        --samtoolsDuplicatesFile={{ sample.name }}.{{ aligner }}.bam.samtools.markdup.txt \
         --bam={{ bam|basename }} \
         --sample={{ sample.name }} \
         --library={{ sample_lb }}
+
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "samtools_markdup", sample_name=sample.name, library_name=sample_lb) }}
 
 {% endif %}
 {% endmacro %}
