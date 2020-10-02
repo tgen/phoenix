@@ -852,12 +852,6 @@ argv <- commandArgs(trailingOnly = FALSE)
 # base_dir <- dirname(substring(argv[grep("--file=", argv)], 8))
 
 ####################################
-## Read in the samtools stats output file
-####################################
-
-stats_file <- read_lines(opt$samtoolsStatsFile)
-
-####################################
 ## Call Functions
 ####################################
 
@@ -865,6 +859,8 @@ stats_file <- read_lines(opt$samtoolsStatsFile)
 
 # Execute summaries of samtools stats output
 if (!is.null(opt$samtoolsStatsFile)) {
+
+  stats_file <- read_lines(opt$samtoolsStatsFile)
 
   # Extract summary stats
   print("Summarizing Samtools stats Summary Numbers Statistics:")
@@ -887,12 +883,12 @@ if (!is.null(opt$samtoolsStatsFile)) {
   print("Summarizing Samtools stats Base Quality Statistics:")
   # Call the base quality function
   baseQuality_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup, opt$readformat)
-  
+
   # Plot Base distribution by Cycle
   print("Summarizing Samtools stats Base Distribution per Cycle:")
   # Call the base distribution function
   baseDistribution_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
-  
+
   # Summarize GC data
   print("Summarizing Samtools stats GC Effect on Coverage:")
   # Call the base distribution function (mean_cov is returned from the coverage function)
@@ -906,8 +902,11 @@ if (!is.null(opt$samtoolsStatsFile)) {
 
 # Execute summaries of samtools markduplicates output
 if (!is.null(opt$samtoolsDuplicatesFile)) {
+
+  dup_file <- read_lines(opt$samtoolsDuplicatesFile)
+
   print("Summarizing Samtools markdups Statistics:")
   # Call Coverage Summary
-  markdup_summary(opt$samtoolsDuplicatesFile, opt$bam, opt$sample, opt$library, opt$readgroup)
+  markdup_summary(dup_file, opt$bam, opt$sample, opt$library, opt$readgroup)
 }
 
