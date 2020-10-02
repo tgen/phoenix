@@ -106,7 +106,7 @@
     #}
     rm config.txt || true
 
-    {% set task %}lancet_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_lancet_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 

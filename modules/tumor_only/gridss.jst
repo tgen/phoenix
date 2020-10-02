@@ -36,7 +36,7 @@
       {{ normal_bam }} {{ tumor_bam }}
 
     {# Remove the remaining files #}
-    {% set task %}gridss_tumor_only_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_gridss_tumor_only_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 

@@ -173,7 +173,7 @@
     mv {{ temp_dir }}/{{ all_vcf }}.gz.tbi {{ results_dir }}
 
     {# Remove the remaining files #}
-    {% set task %}delly_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_delly_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 

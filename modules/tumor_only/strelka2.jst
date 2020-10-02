@@ -163,7 +163,7 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
     {# Finally remove the run dir #}
-    {% set task %}strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 
