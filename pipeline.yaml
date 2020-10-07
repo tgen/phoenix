@@ -381,7 +381,7 @@ constants:
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_f3010c3.py
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
-    plotSamStats_Rscript: summarize_samstats_833ac13.R
+    plotSamStats_Rscript: summarize_samstats_8c45d63.R
     stats2json: samStats2json_deb00a0.py
     stats2lims: uploadStats2Lims_98319ea.py
     annotSeg_script: annotSeg_8820499.pl
