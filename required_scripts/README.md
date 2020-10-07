@@ -35,6 +35,6 @@ $ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 [runIchorCNA_47ce8db.R](https://github.com/broadinstitute/ichorCNA/commit/47ce8db4d81ada2d3ce09280661d1240f3dcd530#diff-79cb887cc56cef135b77c5b7a725975c)  
 [samStats2json_deb00a0.py](https://github.com/tgen/samStats2json/commit/deb00a0199dca764da0542584616ad4333b9e8b5)  
 [seg_extend_229b8c7.py](https://github.com/tgen/jetstream_resources/commit/229b8c7641dd505789664aab88c1662d1f97e429)  
-[summarize_samstats_9aa4509.R](https://github.com/tgen/plot_samstats/commit/9aa45097cb8b6bd7360d73339c870ec86036def3)  
+[summarize_samstats_833ac13.R](https://github.com/tgen/plot_samstats/commit/833ac1351207714c37df7a784739b28e917f8c8e)  
 [svtop.delly.sv_annotation.parallel_8820499.py](https://github.com/tgen/jetstream_resources/commit/8820499e113a387fee98044112951fa534ad6f8e)  
 [uploadStats2Lims_98319ea.py](https://github.com/tgen/uploadStats2Lims/commit/98319eaa56cad71c726df308e68262156c152caf)  
