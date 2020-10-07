@@ -94,19 +94,23 @@ fileTypes = {
     },
     "samtools_baseQualityYield_summary": {
         "prefix": "samStats_baseQualityYield_",
-        "help": "\"bam_name.Barcodes.stats\" file generated from the starsolo_count task in the phoenix pipeline. "
+        "help": "\"bam_name.bam_samtools_baseQualityYield_summary.tsv\" file generated from summarize_samstats.R in the phoenix pipeline. "
     },
     "samtools_coverage_summary": {
         "prefix": "samStats_coverage_",
-        "help": "\"bam_name.Barcodes.stats\" file generated from the starsolo_count task in the phoenix pipeline. "
+        "help": "\"bam_name.bam_samtools_coverage_summary.tsv\" file generated from summarize_samstats.R in the phoenix pipeline. "
     },
     "samtools_insertSize_summary": {
         "prefix": "samStats_insertSize_",
-        "help": "\"bam_name.Barcodes.stats\" file generated from the starsolo_count task in the phoenix pipeline. "
+        "help": "\"bam_name.bam_samtools_insertSize_summary.tsv\" file generated from summarize_samstats.R in the phoenix pipeline. "
     },
     "samtools_summaryNumbers_summary": {
         "prefix": "samStats_summaryNumbers_",
-        "help": "\"bam_name.Barcodes.stats\" file generated from the starsolo_count task in the phoenix pipeline. "
+        "help": "\"bam_name.bam_samtools_summaryNumbers_summary.tsv\" file generated from summarize_samstats.R in the phoenix pipeline. "
+    },
+    "samtools_markdup_summary": {
+        "prefix": "samStats_markdup_",
+        "help": "\"bam_name.bam_samtools_markdup_summary.tsv\" file generated from summarize_samstats.R in the phoenix pipeline. "
     }
 }
 
