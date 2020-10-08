@@ -309,6 +309,9 @@ def parse_arguments_and_validate():
     parser.add_argument('-R', '--readgroupname', metavar="<arg>",
                         help='accumulated stats at the readgroup level, requires library and sample arguments')
 
+    parser.add_argument('-C', '--chrname', metavar="<arg>",
+                        help='optional flag to rename chromosomes')
+
     # need to make dynamic still "2.0"
     parser.add_argument('--version', action='version', version='%(prog)s 2.0')
 
