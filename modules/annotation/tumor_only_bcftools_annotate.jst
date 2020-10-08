@@ -102,6 +102,23 @@
     bcftools index --threads 4 --force "{{ output_bcf }}"
     {% endif %}
 
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_topmed_freeze8"]|default(true) %}
+    {# annotate with topmed #}
+    bcftools annotate \
+      --threads 4 \
+      --annotations "{{ constants.phoenix.topmed_freeze8 }}" \
+      --mark-sites TOPMED \
+      --columns TOPMED_AF:=AF,TOPMED_AN:=AN,TOPMED_AC:=AC,TOPMED_HET:=Het,TOPMED_HOM:=Hom
+      --output-type b \
+      --output "{{ temp_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
+
+    {# move tempout to tempin for next step #}
+    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+    {% endif %}
+
     {# convert back to vcf.gz for the average users #}
     {% if snpeff_flag or vep_flag %}
 
