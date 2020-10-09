@@ -7,6 +7,7 @@
   output:
     - {{ tumor_only_temp }}/{{ normal.bam }}
     - {{ tumor_only_temp }}/{{ normal.bai }}
+    - {{ tumor_only_temp }}/{{ normal.manta_bam }}
     - {{ tumor_only_temp }}/{{ normal.deepvariant_vcf }}
     - {{ tumor_only_temp }}/{{ normal.pon_mutect }}
     - {{ tumor_only_temp }}/{{ normal.pon_count }}
@@ -21,6 +22,7 @@
 
     rsync {{ normal.pathToBam }} {{ tumor_only_temp }}
     rsync {{ normal.pathToBai }} {{ tumor_only_temp }}
+    rsync {{ normal.pathToMantaBam }} {{ tumor_only_temp }}
     rsync {{ normal.deepVariant_VCF }} {{ tumor_only_temp }}
     rsync {{ normal.panelOfNormals_ForMutect }} {{ tumor_only_temp }}
     rsync {{ normal.panelOfNormals_Count }} {{ tumor_only_temp }}

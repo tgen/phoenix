@@ -2,7 +2,7 @@
 
 {% macro manta_tumor_only(pair, aligner='bwa') %}
 {% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
-{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.manta_bam }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
@@ -32,7 +32,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.manta.module }}
+    module load {{ constants.tools.manta_tgen.module }}
     module load {{ constants.tools.htslib.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
@@ -65,6 +65,8 @@
     cat <<EOF > "${MANTA_CONFIG}"
     [manta]
     enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
+    minMapq = 0
+    maxDepthFactor = 12
     EOF
 
     {# Build the Manta run file #}
@@ -74,6 +76,8 @@
       {% endif %}
       --callRegions "${MANTA_BED}.gz" \
       --config "${MANTA_CONFIG}" \
+      --scanSizeMb 5 \
+      --callMemMb 50 \
       --normalBam "{{ normal_bam }}" \
       --tumorBam "{{ tumor_bam }}" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
@@ -108,6 +112,7 @@
     - {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz.tbi
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
+    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}_mantaTxCalls.txt
   cpus: 4
   mem: 4G
   walltime: "12:00:00"
@@ -133,9 +138,8 @@
     echo ${INSERT_SIZE}
     echo ${STD_IS}
     echo -e "----------------"
-    {# adding fields and flags to pass.vcf.gz file #}
-    {% set temp_dir_pass_vcf %}{{ temp_dir }}/results/variants/somaticSV.pass.vcf{% endset %}
 
+    {# adding fields and flags to pass.vcf.gz file #}
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_prepare_sv_vcf }} \
       -p 4 \
       -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
@@ -144,9 +148,23 @@
       --tumor-name {{ pair.tumor.rgsm }} \
       --insert-size ${INSERT_SIZE} \
       --sigma ${STD_IS} \
-      --minmapq 15 \
+      --minmapq 0 \
       --output {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
       --logfile {{ temp_dir }}/results/variants/log_prepare_sv_vcf.txt
+
+    {# bcftools query for translocations #}
+    bcftools query \
+        -H \
+        -i 'TRA="." & (FORMAT/PR[1:1]>=5 || FORMAT/SR[1:1]>=5 || FORMAT/PR[1:1]+FORMAT/SR[1:1]>=5)' \
+        -f '[%SAMPLE]\t%CHROM\t%POS\t%ALT\t%INFO/SVTYPE\t[%PR]\t[%SR]\n' \
+        {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
+        > {{ temp_dir }}/results/variants/somaticSV.filtered.tab
+
+    {# Process the translocation calls from query #}
+    python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.gen_fileTable }} \
+      --input_file {{ temp_dir }}/results/variants/somaticSV.filtered.tab \
+      --specimen {{ pair.tumor.rgsm }} \
+      --output_file {{ results_dir }}/{{ pair.name }}.{{ aligner }}_mantaTxCalls.txt
 
     {# compress vcf to vcf.gz #}
     bcftools view --threads 4 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf

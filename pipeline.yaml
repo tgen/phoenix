@@ -156,6 +156,11 @@ constants:
       citation: >
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
+    manta_tgen:
+      module: manta/1.6_tgen
+      version: "1.6"
+      verbose: Manta v1.6 tgen_fork
+      website: https://github.com/tgen/manta
     multiqc:
       module: Python/3.7.2-foss-2019a
       version: "1.9"
@@ -386,6 +391,7 @@ constants:
     stats2json: samStats2json_deb00a0.py
     stats2lims: uploadStats2Lims_98319ea.py
     annotSeg_script: annotSeg_8820499.pl
+    gen_fileTable: gen_fileTableSimple_a49204c.py
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/hg38tgen_ensembl_v98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
     scrna_chemistry_options:
