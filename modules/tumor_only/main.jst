@@ -9,6 +9,7 @@
 {% from 'modules/tumor_only/delly.jst' import delly_tumor_only with context %}
 {% from 'modules/tumor_only/gridss.jst' import gridss_tumor_only with context %}
 {% from 'modules/tumor_only/gatk_cnv.jst' import gatk_cnv_tumor_only with context %}
+{% from 'modules/tumor_only/assembly.jst' import assembly with context %}
 
 
 # tumor_only tools generally operate on pairs of DNA samples (tumor/normal).
@@ -24,9 +25,8 @@
 
     {% set bam = file.pathToBam | basename %}
     {% set bai = file.pathToBai | basename %}
+    {% set manta_bam = file.pathToMantaBam | basename %}
     {% set deepvariant_vcf = file.deepVariant_VCF | basename %}
-    {% set pon_mutect = file.panelOfNormals_ForMutect | basename %}
-    {% set pon_count = file.panelOfNormals_Count | basename %}
     {% set name = bam | replace("bwa", "") | replace("bam", "") | replace(".", "_") | replace("_", " ") | trim | replace(" ", "_") %}
     {% set rgsm = name | replace(file.assayCode, "") | replace("_", " ") | trim | replace(" ", "_") %}
 
@@ -34,6 +34,7 @@
     {% do file.update({'rgsm': rgsm}) %}
     {% do file.update({'bam': bam}) %}
     {% do file.update({'bai': bai}) %}
+    {% do file.update({'manta_bam': manta_bam}) %}
     {% do file.update({'deepvariant_vcf': deepvariant_vcf}) %}
     {% do file.update({'pon_mutect': pon_mutect}) %}
     {% do file.update({'pon_count': pon_count}) %}
@@ -161,6 +162,10 @@
 
     {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(false) %}
         {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(true) %}
+        {{- assembly(pair, aligner='bwa') }}
     {% endif %}
 
 {% endfor %}

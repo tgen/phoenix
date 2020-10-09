@@ -1,0 +1,114 @@
+
+{% macro assembly(pair, aligner='bwa') %}
+
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_assembly/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_assembly/{{ pair.name }}{% endset %}
+
+- name: discordant_loci_extraction_{{ pair.name }}
+  tags: [assembly,]
+  input: {{ tumor_bam }}
+  output: {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
+  walltime: "12:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Purge any existing run files prior to starting #}
+    rm -r "{{ temp_dir }}" || true
+    mkdir -p "{{ temp_dir }}"
+
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.dle.module }}
+
+    python3 dle.py \
+      --alignment-file {{ tumor_bam }} \
+      --reference-genome {{ constants.phoenix.reference_fasta }} \
+      --regions "chr4:1798273-1998273" "chr6:41632262-42332262" "chr8:124987758-129487754" "chr8:142918584-143925832" "chr11:68732532-69685232" "chr12:3690834-4690834" "chr16:78096103-79866103" "chr20:39671358-40971360" \
+      --igs-regions "chr2:88750483-90261139" "chr14:105533663-106881350" "chr22:21995603-23057822" \
+      --dir-out-fq {{ temp_dir }} \
+      --prefix-fq {{ pair.name }} \
+      --min-mapq 0 \
+      --threads 4 \
+      --min-tuples 3 \
+      --left-position-clustering-only True \
+      --min-reads-per-cluster 3 \
+      --clustering-distance 600
+
+    {# Concatenating the list of fastqs to reduce downstream processing #}
+    cat {{ temp_dir }}/*_list_of_fastqs.txt > {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
+
+- name: trinity_assembly_{{ pair.name }}
+  tags: [assembly,]
+  reset: predecessors
+  input: {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
+  output: {{ results_dir }}/{{ pair.name }}_merged_trinity.bam
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 10G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.trinity.module }}
+    trin_path=$(dirname `which Trinity`)
+
+    {# Build a list of fastqs to iterate through #}
+    fqr1arr=()
+    fqr2arr=()
+    for fq in `cut -f1 {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt`
+    do
+      fqr1arr+=("${fq}")
+    done
+    for fq in `cut -f2 {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt`
+    do
+      fqr2arr+=("${fq}")
+    done
+
+    {# Submit a trinity job for each pair of fastqs #}
+    i=0
+    while i < ${#fqr1arr[@]}
+    do
+      leftfq=${fqr1arr[i]}
+      rightfq=${fqr2arr[i]}
+      chrRegion=$(echo ${leftfq#{{ pair.name }}_} | cut -d'_' -f1-3)
+      cluster=$(echo ${leftfq#{{ pair.name }}_} | cut -d'_' -f4-5)
+      Trinity \
+        --seqType fq \
+        --left-fq {{ temp_dir }}/$leftfq \
+        --right-fq {{ temp_dir }}/$rightfq \
+        --output {{ temp_dir }}/trinity/$chrRegion/$cluster \
+        --trimmomatic \
+        --no_normalize_reads \
+        --CPU 4 \
+        --max_memory 10G &
+      wait
+      ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/trinity/$chrRegion/$cluster/Trinity.fasta
+
+      bwa mem \
+        -t 4 \
+        -o {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile.sam \
+        {{ constants.phoenix.bwa_index }} \
+        {{ temp_dir }}/trinity/$chrRegion/$cluster/Trinity.fasta
+
+      samtools view \
+        -@ 4 \
+        -b {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile.sam |\
+      samtools sort \
+        -o {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile_sorted.bam
+
+      samtools index -@ 4 {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile_sorted.bam
+      i=$(expr $i + 1)
+    done
+
+    samtools merge \
+      -@ 4 \
+      {{ results_dir }}/{{ pair.name }}_merged_trinity.bam \
+      {{ temp_dir }}/trinity/*/*/trinbwafile_sorted.bam
+
+{% endmacro %}
