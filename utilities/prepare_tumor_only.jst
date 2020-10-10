@@ -26,8 +26,15 @@
 
     rsync {{ normal.pathToBam }} {{ tumor_only_temp }}
     rsync {{ normal.pathToBai }} {{ tumor_only_temp }}
-    rsync {{ normal.pathToMantaBam }} {{ tumor_only_temp }}
     rsync {{ normal.deepVariant_VCF }} {{ tumor_only_temp }}
+
+    {% if normal.pathToBam == normal.pathToMantaBam %}
+    {% set diffBam = false %}
+    {% else %}
+    {% set diffBam = true %}
+    rsync {{ normal.pathToMantaBam }} {{ tumor_only_temp }}
+    {% endif %}
+
     {% if normal.panelOfNormals_ForMutect is defined %}
     rsync {{ normal.panelOfNormals_ForMutect }} {{ tumor_only_temp }}
     {% endif %}
@@ -41,7 +48,7 @@
     samtools view -@ 4 -h -b -o {{ tumor_only_temp }}/{{ normal.bam }} {{ tumor_only_temp }}/{{ normal.pathToBam | basename }}
     samtools index -@ 4 {{ tumor_only_temp }}/{{ normal.bam }}
     {% endif %}
-    {% if 'cram' in normal.pathToMantaBam %}
+    {% if 'cram' in normal.pathToMantaBam and diffBam %}
     module load {{ constants.tools.samtools.module }}
 
     samtools view -@ 4 -h -b -o {{ tumor_only_temp }}/{{ normal.manta_bam }} {{ tumor_only_temp }}/{{ normal.pathToMantaBam | basename }}
