@@ -244,7 +244,7 @@
         --sample={{ sample.name }} \
         --library={{ sample_lb }}
 
-    {{ stats2json(sample.gltype, sample.name, task, output, json, "samtools_markdup", sample_name=sample.name, library_name=sample_lb) }}
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "samtools_markdup_summary", sample_name=sample.name, library_name=sample_lb) }}
 
 {% endif %}
 {% endmacro %}
