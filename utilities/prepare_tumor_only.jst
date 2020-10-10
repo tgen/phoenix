@@ -9,8 +9,12 @@
     - {{ tumor_only_temp }}/{{ normal.bai }}
     - {{ tumor_only_temp }}/{{ normal.manta_bam }}
     - {{ tumor_only_temp }}/{{ normal.deepvariant_vcf }}
+    {% if normal.panelOfNormals_ForMutect is defined %}
     - {{ tumor_only_temp }}/{{ normal.pon_mutect }}
+    {% endif %}
+    {% if normal.panelOfNormals_Count is defined %}
     - {{ tumor_only_temp }}/{{ normal.pon_count }}
+    {% endif %}
   walltime: "8:00:00"
   cpus: 4
   mem: 8G
@@ -24,8 +28,12 @@
     rsync {{ normal.pathToBai }} {{ tumor_only_temp }}
     rsync {{ normal.pathToMantaBam }} {{ tumor_only_temp }}
     rsync {{ normal.deepVariant_VCF }} {{ tumor_only_temp }}
+    {% if normal.panelOfNormals_ForMutect is defined %}
     rsync {{ normal.panelOfNormals_ForMutect }} {{ tumor_only_temp }}
+    {% endif %}
+    {% if normal.panelOfNormals_Count is defined %}
     rsync {{ normal.panelOfNormals_Count }} {{ tumor_only_temp }}
+    {% endif %}
 
     {% if 'cram' in normal.pathToBam %}
     module load {{ constants.tools.samtools.module }}

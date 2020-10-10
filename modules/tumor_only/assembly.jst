@@ -71,8 +71,7 @@
     done
 
     {# Submit a trinity job for each pair of fastqs #}
-    i=0
-    while i < ${#fqr1arr[@]}
+    for i in ${!fqr1arr[@]}
     do
       leftfq=${fqr1arr[i]}
       rightfq=${fqr2arr[i]}
