@@ -155,7 +155,7 @@
     {# bcftools query for translocations #}
     bcftools query \
         -H \
-        -i 'TRA="." & (FORMAT/PR[1:1]>=5 || FORMAT/SR[1:1]>=5 || FORMAT/PR[1:1]+FORMAT/SR[1:1]>=5)' \
+        -i 'TRA=1 & (FORMAT/PR[1:1]>=5 || FORMAT/SR[1:1]>=5 || FORMAT/PR[1:1]+FORMAT/SR[1:1]>=5)' \
         -f '[%SAMPLE]\t%CHROM\t%POS\t%ALT\t%INFO/SVTYPE\t[%PR]\t[%SR]\n' \
         {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
         > {{ temp_dir }}/results/variants/somaticSV.filtered.tab
