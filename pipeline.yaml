@@ -69,6 +69,10 @@ constants:
         Tobias Rausch, Thomas Zichner, Andreas Schlattl, Adrian M. Stütz, Vladimir Benes, Jan O. Korbel,
         DELLY: structural variant discovery by integrated paired-end and split-read analysis, Bioinformatics,
         Volume 28, Issue 18, 15 September 2012, Pages i333–i339, https://doi.org/10.1093/bioinformatics/bts378
+    dle:
+      module: DLE/0.1.0
+      version: "0.1.0"
+      verbose: Discordant Loci Extractor v0.1.0
     freebayes:
       module: freebayes/1.3.1-foss-2019a
       version: "1.3.1"
