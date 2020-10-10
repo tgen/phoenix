@@ -12,8 +12,8 @@
     - {{ tumor_only_temp }}/{{ normal.pon_mutect }}
     - {{ tumor_only_temp }}/{{ normal.pon_count }}
   walltime: "8:00:00"
-  cpus: 1
-  mem: 2G
+  cpus: 4
+  mem: 8G
   cmd: |
     set -eu
     set -o pipefail
@@ -26,5 +26,18 @@
     rsync {{ normal.deepVariant_VCF }} {{ tumor_only_temp }}
     rsync {{ normal.panelOfNormals_ForMutect }} {{ tumor_only_temp }}
     rsync {{ normal.panelOfNormals_Count }} {{ tumor_only_temp }}
+
+    {% if 'cram' in normal.pathToBam %}
+    module load {{ constants.tools.samtools.module }}
+
+    samtools view -@ 4 -h -b -o {{ tumor_only_temp }}/{{ normal.bam }} {{ tumor_only_temp }}/{{ normal.pathToBam | basename }}
+    samtools index -@ 4 {{ tumor_only_temp }}/{{ normal.bam }}
+    {% endif %}
+    {% if 'cram' in normal.pathToMantaBam %}
+    module load {{ constants.tools.samtools.module }}
+
+    samtools view -@ 4 -h -b -o {{ tumor_only_temp }}/{{ normal.manta_bam }} {{ tumor_only_temp }}/{{ normal.pathToMantaBam | basename }}
+    samtools index -@ 4 {{ tumor_only_temp }}/{{ normal.manta_bam }}
+    {% endif %}
 
 {% endmacro %}
