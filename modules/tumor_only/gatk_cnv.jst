@@ -66,7 +66,7 @@
     gatk --java-options "-Xmx12g" DenoiseReadCounts \
       --tmp-dir {{ temp_dir }}/temp/ \
       --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
-      --count-panel-of-normals {{ tumor_only_temp }}/{{ pair.normal.cnvPon \
+      --count-panel-of-normals {{ tumor_only_temp }}/{{ pair.normal.cnvPon }} \
       --standardized-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv \
       --denoised-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
 
