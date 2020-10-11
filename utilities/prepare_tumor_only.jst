@@ -7,13 +7,18 @@
   output:
     - {{ tumor_only_temp }}/{{ normal.bam }}
     - {{ tumor_only_temp }}/{{ normal.bai }}
-    - {{ tumor_only_temp }}/{{ normal.manta_bam }}
     - {{ tumor_only_temp }}/{{ normal.deepvariant_vcf }}
     {% if normal.panelOfNormals_ForMutect is defined %}
     - {{ tumor_only_temp }}/{{ normal.pon_mutect }}
     {% endif %}
-    {% if normal.panelOfNormals_Count is defined %}
-    - {{ tumor_only_temp }}/{{ normal.pon_count }}
+    {% if normal.gatkCnvPon is defined %}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvPon }}
+    {% endif %}
+    {% if normal.gatkCnvSnps is defined %}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvSnps }}
+    {% endif %}
+    {% if normal.gatkCnvPonIntervals is defined %}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvPonIntervals }}
     {% endif %}
   walltime: "8:00:00"
   cpus: 4
@@ -28,31 +33,19 @@
     rsync {{ normal.pathToBai }} {{ tumor_only_temp }}
     rsync {{ normal.deepVariant_VCF }} {{ tumor_only_temp }}
 
-    {% if normal.pathToBam == normal.pathToMantaBam %}
-    {% set diffBam = false %}
-    {% else %}
-    {% set diffBam = true %}
-    rsync {{ normal.pathToMantaBam }} {{ tumor_only_temp }}
-    {% endif %}
-
     {% if normal.panelOfNormals_ForMutect is defined %}
     rsync {{ normal.panelOfNormals_ForMutect }} {{ tumor_only_temp }}
     {% endif %}
-    {% if normal.panelOfNormals_Count is defined %}
-    rsync {{ normal.panelOfNormals_Count }} {{ tumor_only_temp }}
+
+    {# Change this block of ifs into one large block since all are required for cnv workflow #}
+    {% if normal.gatkCnvPon is defined %}
+    rsync {{ normal.gatkCnvPon }} {{ tumor_only_temp }}
     {% endif %}
-
-    {% if 'cram' in normal.pathToBam %}
-    module load {{ constants.tools.samtools.module }}
-
-    samtools view -@ 4 -h -b -o {{ tumor_only_temp }}/{{ normal.bam }} {{ tumor_only_temp }}/{{ normal.pathToBam | basename }}
-    samtools index -@ 4 {{ tumor_only_temp }}/{{ normal.bam }}
+    {% if normal.gatkCnvSnps is defined %}
+    rsync {{ normal.gatkCnvSnps }} {{ tumor_only_temp }}
     {% endif %}
-    {% if 'cram' in normal.pathToMantaBam and diffBam %}
-    module load {{ constants.tools.samtools.module }}
-
-    samtools view -@ 4 -h -b -o {{ tumor_only_temp }}/{{ normal.manta_bam }} {{ tumor_only_temp }}/{{ normal.pathToMantaBam | basename }}
-    samtools index -@ 4 {{ tumor_only_temp }}/{{ normal.manta_bam }}
+    {% if normal.gatkCnvPonIntervals is defined %}
+    rsync {{ normal.gatkCnvPonIntervals }} {{ tumor_only_temp }}
     {% endif %}
 
 {% endmacro %}
