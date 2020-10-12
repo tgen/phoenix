@@ -112,6 +112,7 @@
         {% set taskPrefix = 'Genome' %}
     {% endif %}
 
+    {% if pair.normal.pathToBam is defined %}
     {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_gatk_mutect2"]|default(true) %}
         {{- mutect2_tumor_only(pair, aligner='bwa') }}
     {% endif %}
@@ -148,12 +149,15 @@
         {{- gridss_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
+    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(true) %}
+        {{- assembly(pair, aligner='bwa') }}
+    {% endif %}
+    {% endif %}
+
+    {% if pair.normal.gatkCnvPon is defined %}
     {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(true) %}
         {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
     {% endif %}
-
-    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(true) %}
-        {{- assembly(pair, aligner='bwa') }}
     {% endif %}
 
 {% endfor %}
