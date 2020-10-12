@@ -149,7 +149,7 @@
         {{- gridss_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(false) %}
         {{- assembly(pair, aligner='bwa') }}
     {% endif %}
     {% endif %}
