@@ -11,54 +11,20 @@
 {% from 'modules/tumor_only/gatk_cnv.jst' import gatk_cnv_tumor_only with context %}
 {% from 'modules/tumor_only/assembly.jst' import assembly with context %}
 
-
-# tumor_only tools generally operate on pairs of DNA samples (tumor/normal).
-# WARNING - This pairs together all tumor and constitutional samples (of the same gltype)
-# without comparing any sample identifiers. This means multiple individuals in the same 
-# project will be incorrectly paired together for tumor_only variant calling.
-
 {% macro tumor_only_variant_calling(samples, controlDataFiles) %}
 
 {% set normSamples = {} %}
 
 {% for file in controlDataFiles %}
 
-    {% set bam = file.pathToBam | basename %}
-    {% set bai = file.pathToBai | basename %}
-    {% set deepvariant_vcf = file.deepVariant_VCF | basename %}
-    {% set name = bam | replace("bwa", "") | replace("bam", "") | replace(".", "_") | replace("_", " ") | trim | replace(" ", "_") %}
+    {% if file.pathToBam is defined %}
+    {% set name = file.pathToBam | basename | replace("bwa", "") | replace("bam", "") | replace(".", "_") | replace("_", " ") | trim | replace(" ", "_") %}
     {% set rgsm = name | replace(file.assayCode, "") | replace("_", " ") | trim | replace(" ", "_") %}
-
-    {% if file.panelOfNormals_ForMutect is defined %}
-    {% set pon_mutect = file.panelOfNormals_ForMutect | basename %}
-    {% endif %}
-    {% if file.gatkCnvPon is defined %}
-    {% set cnvPon = file.gatkCnvPon | basename %}
-    {% endif %}
-    {% if file.gatkCnvSnps is defined %}
-    {% set cnvSnps = file.gatkCnvSnps | basename %}
-    {% endif %}
-    {% if file.gatkCnvPonIntervals is defined %}
-    {% set cnvPonIntervals = file.gatkCnvPonIntervals | basename %}
-    {% endif %}
-
     {% do file.update({'name': name}) %}
     {% do file.update({'rgsm': rgsm}) %}
-    {% do file.update({'bam': bam}) %}
-    {% do file.update({'bai': bai}) %}
-    {% do file.update({'deepvariant_vcf': deepvariant_vcf}) %}
-    {% if pon_mutect is defined %}
-    {% do file.update({'pon_mutect': pon_mutect}) %}
-    {% endif %}
-    {# Change this block of ifs into one large block since all are required for cnv workflow #}
-    {% if cnvPon is defined %}
-    {% do file.update({'cnvPon': cnvPon}) %}
-    {% endif %}
-    {% if cnvSnps is defined %}
-    {% do file.update({'cnvSnps': cnvSnps}) %}
-    {% endif %}
-    {% if cnvPonIntervals is defined %}
-    {% do file.update({'cnvPonIntervals': cnvPonIntervals}) %}
+    {% elif file.gatkCnvPon is defined %}
+    {% set name %}{{ study }}_{{ file.assayCode }}{% endset %}
+    {% do file.update({'name': name}) %}
     {% endif %}
 
     {% if name not in normSamples %}
@@ -182,7 +148,7 @@
         {{- gridss_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(false) %}
+    {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(true) %}
         {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 

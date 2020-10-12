@@ -3,7 +3,10 @@
 # The macros found in this template are used to generate the gatk4 tumor_only cnv workflow.
 
 {% macro gatk_cnv_tumor_only(pair, aligner='bwa') %}
-{% set tumor_only_temp %}temp/tumor_only/{{ pair.tumor.name }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
+{% set cnvIntervals %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPonIntervals | basename }}{% endset %}
+{% set cnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvSnps | basename }}{% endset %}
+{% set cnvPon %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPon | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.tumor.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.tumor.name }}{% endset %}
@@ -49,7 +52,7 @@
     gatk --java-options "-Xmx12g" CollectReadCounts \
       --tmp-dir {{ temp_dir }}/temp/ \
       --input {{ tumor_bam }} \
-      --intervals {{ tumor_only_temp }}/{{ pair.normal.cnvPonIntervals }} \
+      --intervals {{ cnvIntervals }} \
       --interval-merging-rule OVERLAPPING_ONLY \
       --read-filter FirstOfPairReadFilter \
       --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
@@ -58,7 +61,7 @@
     gatk --java-options "-Xmx12g" CollectAllelicCounts \
       --tmp-dir {{ temp_dir }}/temp/ \
       --input {{ tumor_bam }} \
-      --intervals {{ tumor_only_temp }}/{{ pair.normal.cnvSnps }} \
+      --intervals {{ cnvSnps }} \
       --reference {{ constants.phoenix.reference_fasta }} \
       --output {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
 
@@ -66,7 +69,7 @@
     gatk --java-options "-Xmx12g" DenoiseReadCounts \
       --tmp-dir {{ temp_dir }}/temp/ \
       --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
-      --count-panel-of-normals {{ tumor_only_temp }}/{{ pair.normal.cnvPon }} \
+      --count-panel-of-normals {{ cnvPon }} \
       --standardized-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv \
       --denoised-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
 

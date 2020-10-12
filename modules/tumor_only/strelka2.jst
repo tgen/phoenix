@@ -2,8 +2,8 @@
 
 {% macro strelka2_tumor_only(pair, aligner='bwa') %}
 {% do pair.callers.append('strelka2') %}
-{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
-{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only//{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set indel_candidates %}{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
 {% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/strelka2/{{ pair.name }}{% endset %}

@@ -1,24 +1,18 @@
 {% macro prepare_tumor_only(normal) %}
 
-{% set tumor_only_temp %}temp/tumor_only/{{ normal.name }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only//{{ normal.assayCode }}/{{ normal.name }}{% endset %}
 
 - name: prepare_tumor_only_{{ normal.name }}
   tags: [rsync,]
   output:
-    - {{ tumor_only_temp }}/{{ normal.bam }}
-    - {{ tumor_only_temp }}/{{ normal.bai }}
-    - {{ tumor_only_temp }}/{{ normal.deepvariant_vcf }}
-    {% if normal.panelOfNormals_ForMutect is defined %}
-    - {{ tumor_only_temp }}/{{ normal.pon_mutect }}
+    {% if normal.pathToBam is defined and normal.pathToBam is defined %}
+    - {{ tumor_only_temp }}/{{ normal.pathToBam | basename }}
+    - {{ tumor_only_temp }}/{{ normal.pathToBai | basename }}
     {% endif %}
-    {% if normal.gatkCnvPon is defined %}
-    - {{ tumor_only_temp }}/{{ normal.gatkCnvPon }}
-    {% endif %}
-    {% if normal.gatkCnvSnps is defined %}
-    - {{ tumor_only_temp }}/{{ normal.gatkCnvSnps }}
-    {% endif %}
-    {% if normal.gatkCnvPonIntervals is defined %}
-    - {{ tumor_only_temp }}/{{ normal.gatkCnvPonIntervals }}
+    {% if normal.gatkCnvPon is defined and normal.gatkCnvSnps is defined and normal.gatkCnvPonIntervals is defined %}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvPon | basename }}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvSnps | basename }}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvPonIntervals | basename }}
     {% endif %}
   walltime: "8:00:00"
   cpus: 4
@@ -29,22 +23,14 @@
 
     mkdir -p {{ tumor_only_temp }}
 
+    {% if normal.pathToBam is defined and normal.pathToBai is defined %}
     rsync {{ normal.pathToBam }} {{ tumor_only_temp }}
     rsync {{ normal.pathToBai }} {{ tumor_only_temp }}
-    rsync {{ normal.deepVariant_VCF }} {{ tumor_only_temp }}
-
-    {% if normal.panelOfNormals_ForMutect is defined %}
-    rsync {{ normal.panelOfNormals_ForMutect }} {{ tumor_only_temp }}
     {% endif %}
 
-    {# Change this block of ifs into one large block since all are required for cnv workflow #}
-    {% if normal.gatkCnvPon is defined %}
+    {% if normal.gatkCnvPon is defined and normal.gatkCnvSnps is defined and normal.gatkCnvPonIntervals is defined %}
     rsync {{ normal.gatkCnvPon }} {{ tumor_only_temp }}
-    {% endif %}
-    {% if normal.gatkCnvSnps is defined %}
     rsync {{ normal.gatkCnvSnps }} {{ tumor_only_temp }}
-    {% endif %}
-    {% if normal.gatkCnvPonIntervals is defined %}
     rsync {{ normal.gatkCnvPonIntervals }} {{ tumor_only_temp }}
     {% endif %}
 

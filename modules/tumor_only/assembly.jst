@@ -1,7 +1,7 @@
 
 {% macro assembly(pair, aligner='bwa') %}
 
-{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only//{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ pair.gltype }}/tumor_only_assembly/{{ pair.name }}{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_assembly/{{ pair.name }}{% endset %}

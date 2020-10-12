@@ -2,8 +2,8 @@
 
 {% macro mutect2_tumor_only(pair, aligner='bwa') %}
 {% do pair.callers.append('mutect2') %}
-{% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.name }}{% endset %}
-{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.bam }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only//{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/mutect2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/mutect2/{{ pair.name }}{% endset %}
