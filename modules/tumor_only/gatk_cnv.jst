@@ -101,7 +101,7 @@
 {# Step 2 #}
 - name: tumor_only_gatk_call_cnv_step2_{{ pair.tumor.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.tumor.name }}]
-  reset: gatk_call_cnv_step3_{{ pair.tumor.name }}_{{ aligner }}
+  reset: tumor_only_gatk_call_cnv_step1_{{ pair.tumor.name }}_{{ aligner }}
   input:
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg
