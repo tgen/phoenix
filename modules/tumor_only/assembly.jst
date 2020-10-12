@@ -39,7 +39,7 @@
       --clustering-distance 600
 
     {# Concatenating the list of fastqs to reduce downstream processing #}
-    cat {{ temp_dir }}/*_list_of_fastqs.txt > {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
+    cat {{ temp_dir }}/*_list_fastq_files.txt > {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
 
 - name: trinity_assembly_{{ pair.name }}
   tags: [assembly,]
