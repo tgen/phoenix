@@ -79,8 +79,8 @@
       cluster=$(echo ${leftfq#{{ pair.name }}_} | cut -d'_' -f4-5)
       Trinity \
         --seqType fq \
-        --left-fq {{ temp_dir }}/$leftfq \
-        --right-fq {{ temp_dir }}/$rightfq \
+        --left {{ temp_dir }}/$leftfq \
+        --right {{ temp_dir }}/$rightfq \
         --output {{ temp_dir }}/trinity/$chrRegion/$cluster \
         --trimmomatic \
         --no_normalize_reads \
