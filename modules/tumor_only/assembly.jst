@@ -55,7 +55,8 @@
 
     module load {{ constants.tools.bwa.module }}
     module load {{ constants.tools.samtools.module }}
-    module load {{ constants.tools.trinity.module }}
+    {# star_fusion loads Trinity and it's dependencies in the background, ensuring compatibility #}
+    module load {{ constants.tools.star_fusion.module }}
     trin_path=$(dirname `which Trinity`)
 
     {# Build a list of fastqs to iterate through #}
@@ -75,39 +76,39 @@
     do
       leftfq=${fqr1arr[i]}
       rightfq=${fqr2arr[i]}
-      chrRegion=$(echo ${leftfq#{{ pair.name }}_} | cut -d'_' -f1-3)
-      cluster=$(echo ${leftfq#{{ pair.name }}_} | cut -d'_' -f4-5)
+      chrRegion=$(echo ${leftfq#{{ temp_dir }}/{{ pair.name }}_} | cut -d'_' -f1-3)
+      cluster=$(echo ${leftfq#{{ temp_dir }}/{{ pair.name }}_} | cut -d'_' -f4-5)
       Trinity \
         --seqType fq \
-        --left {{ temp_dir }}/$leftfq \
-        --right {{ temp_dir }}/$rightfq \
-        --output {{ temp_dir }}/trinity/$chrRegion/$cluster \
+        --left $leftfq \
+        --right $rightfq \
+        --output {{ temp_dir }}/$chrRegion/$cluster/trinity \
         --trimmomatic \
         --no_normalize_reads \
         --CPU 4 \
         --max_memory 10G &
       wait
-      ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/trinity/$chrRegion/$cluster/Trinity.fasta
+      ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/$chrRegion/$cluster/trinity/Trinity.fasta
 
       bwa mem \
         -t 4 \
-        -o {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile.sam \
+        -o {{ temp_dir }}/$chrRegion/$cluster/trinity/trinbwafile.sam \
         {{ constants.phoenix.bwa_index }} \
-        {{ temp_dir }}/trinity/$chrRegion/$cluster/Trinity.fasta
+        {{ temp_dir }}/$chrRegion/$cluster/trinity/Trinity.fasta
 
       samtools view \
         -@ 4 \
-        -b {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile.sam |\
+        -b {{ temp_dir }}/$chrRegion/$cluster/trinity/trinbwafile.sam |\
       samtools sort \
-        -o {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile_sorted.bam
+        -o {{ temp_dir }}/$chrRegion/$cluster/trinity/trinbwafile_sorted.bam
 
-      samtools index -@ 4 {{ temp_dir }}/trinity/$chrRegion/$cluster/trinbwafile_sorted.bam
+      samtools index -@ 4 {{ temp_dir }}/$chrRegion/$cluster/trinity/trinbwafile_sorted.bam
       i=$(expr $i + 1)
     done
 
     samtools merge \
       -@ 4 \
       {{ results_dir }}/{{ pair.name }}_merged_trinity.bam \
-      {{ temp_dir }}/trinity/*/*/trinbwafile_sorted.bam
+      {{ temp_dir }}/*/*/trinbwafile_sorted.bam
 
 {% endmacro %}
