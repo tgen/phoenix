@@ -141,7 +141,7 @@
         {{- vcfmerger2_tumor_only(pair, aligner='bwa', taskPrefix=taskPrefix) }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_structural_caller_delly"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_only_structural_caller_delly"]|default(false) %}
         {{- delly_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
