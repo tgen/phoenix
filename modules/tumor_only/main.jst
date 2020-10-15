@@ -69,9 +69,13 @@
        {% endfor %}
     {% endif %}
 
-    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode and normal.rgsm != tumor.rgsm %}
+    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
         {% set pair_name = tumor.name %}
+        {% if normal.rgsm is not defined %}
         {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
+        {% elif normal.rgsm != tumor.rgsm %}
+        {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
+        {% endif %}
     {% endfor %}
 {% endfor %}
 {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'genome' %}
@@ -84,9 +88,13 @@
        {% endfor %}
     {% endif %}
 
-    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode and normal.rgsm != tumor.rgsm %}
+    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
         {% set pair_name = tumor.name %}
+        {% if normal.rgsm is not defined %}
         {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
+        {% elif normal.rgsm != tumor.rgsm %}
+        {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
+        {% endif %}
     {% endfor %}
 {% endfor %}
 
