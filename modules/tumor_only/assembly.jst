@@ -73,12 +73,13 @@
 
     {# Submit a trinity job for each pair of fastqs #}
     assemErrors=0
+    assemBams=()
     for i in ${!fqr1arr[@]}
     do
       leftfq=${fqr1arr[i]}
       rightfq=${fqr2arr[i]}
       chrRegion=$(echo ${leftfq#{{ temp_dir }}/{{ pair.name }}_} | cut -d'_' -f1-3)
-      cluster=$(echo ${leftfq#{{ temp_dir }}/{{ pair.name }}_} | cut -d'_' -f4-5)
+      cluster=$(echo ${leftfq#{{ temp_dir }}/{{ pair.name }}_} | cut -d'_' -f4-6)
       Trinity \
         --seqType fq \
         --left $leftfq \
@@ -106,17 +107,31 @@
           -@ 4 \
           -b {{ temp_dir }}/$chrRegion/$cluster/trinity/trinbwafile.sam |\
         samtools sort \
-          -o {{ temp_dir }}/$chrRegion/$cluster/trinity/trinbwafile_sorted.bam
+          -o {{ temp_dir }}/$chrRegion/$cluster/trinity/{{ pair.name }}_$chrRegion_$cluster_sorted.bam
 
-        samtools index -@ 4 {{ temp_dir }}/$chrRegion/$cluster/trinity/trinbwafile_sorted.bam
+        samtools index -@ 4 {{ temp_dir }}/$chrRegion/$cluster/trinity/{{ pair.name }}_$chrRegion_$cluster_sorted.bam
+        assemBam+=("{{ temp_dir }}/$chrRegion/$cluster/trinity/{{ pair.name }}_$chrRegion_$cluster_sorted.bam")
       fi
       i=$(expr $i + 1)
     done
 
     echo "$assemErrors out of {{ '${#fqr1arr[@]}' }} fastq pairs failed to assemble"
-    samtools merge \
-      -@ 4 \
-      {{ results_dir }}/{{ pair.name }}_merged_trinity.bam \
-      {{ temp_dir }}/*/*/trinbwafile_sorted.bam
+
+    TAB=$'\t'
+    cat <<EOF > "{{ temp_dir }}/pairoscopeRegions.bed"
+    chr2${TAB}88750483${TAB}90261139
+    chr4${TAB}1798273${TAB}1998273
+    chr6${TAB}41632262${TAB}42332262
+    chr8${TAB}124987758${TAB}129487754
+    chr8${TAB}142918584${TAB}143925832
+    chr11${TAB}68732532${TAB}69685232
+    chr12${TAB}3690834${TAB}4690834
+    chr14${TAB}105533663${TAB}106881350
+    chr16${TAB}78096103${TAB}79866103
+    chr20${TAB}39671358${TAB}40971360
+    chr22${TAB}21995603${TAB}23057822
+    EOF
+
+    python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} $assemBam $fqr1arr 280 {{ temp_dir }}/pairoscopeRegions.bed
 
 {% endmacro %}
