@@ -92,7 +92,7 @@
       if [[ -v error ]]
       then
         assemErrors=$(expr $assemErrors + 1)
-        unset error {# unset error for next iteration #}
+        unset error
       else
         ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/$chrRegion/$cluster/trinity/Trinity.fasta
 
