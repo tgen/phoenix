@@ -69,7 +69,7 @@
        {% endfor %}
     {% endif %}
 
-    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
+    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode and normal.rgsm != tumor.rgsm %}
         {% set pair_name = tumor.name %}
         {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
     {% endfor %}
@@ -84,7 +84,7 @@
        {% endfor %}
     {% endif %}
 
-    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
+    {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode and normal.rgsm != tumor.rgsm %}
         {% set pair_name = tumor.name %}
         {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
     {% endfor %}
