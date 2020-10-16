@@ -134,9 +134,11 @@
     chr22${TAB}21995603${TAB}23057822
     EOF
 
+    bamList=$(IFS=,; echo "${$assemBam[*]}")
+    fqList=$(IFS=,; echo "${$fqr1arr[*]}")
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
-      $(IFS=,; echo "${$assemBam[*]}") \
-      $(IFS=,; echo "${$fqr1arr[*]}") \
+      $bamList \
+      $fqList \
       280 \
       {{ temp_dir }}/pairoscopeRegions.bed
     mv MergedTableAllRegions.txt {{ results_dir }}
