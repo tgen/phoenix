@@ -45,7 +45,7 @@
   tags: [assembly,]
   reset: predecessors
   input: {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
-  output: {{ results_dir }}/{{ pair.name }}_merged_trinity.bam
+  output: {{ results_dir }}/
   walltime: "24:00:00"
   cpus: 4
   mem: 10G
@@ -58,6 +58,8 @@
     {# star_fusion loads Trinity and it's dependencies in the background, ensuring compatibility #}
     module load {{ constants.tools.star_fusion.module }}
     trin_path=$(dirname `which Trinity`)
+
+    mkdir -p {{ results_dir }}
 
     {# Build a list of fastqs to iterate through #}
     fqr1arr=()
@@ -132,6 +134,11 @@
     chr22${TAB}21995603${TAB}23057822
     EOF
 
-    python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} $assemBam $fqr1arr 280 {{ temp_dir }}/pairoscopeRegions.bed
+    python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
+      $(IFS=,; echo "${$assemBam[*]}") \
+      $(IFS=,; echo "${$fqr1arr[*]}") \
+      280 \
+      {{ temp_dir }}/pairoscopeRegions.bed
+    mv MergedTableAllRegions.txt {{ results_dir }}
 
 {% endmacro %}
