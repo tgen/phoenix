@@ -76,6 +76,7 @@
     {# Submit a trinity job for each pair of fastqs #}
     assemErrors=0
     assemBams=()
+    assemFqs=()
     for i in ${!fqr1arr[@]}
     do
       leftfq=${fqr1arr[i]}
@@ -113,6 +114,7 @@
 
         samtools index -@ 4 {{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
         assemBam+=("{{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
+        assemFqs+=("${leftfq}")
       fi
       i=$(expr $i + 1)
     done
@@ -135,7 +137,7 @@
     EOF
 
     bamList=$(IFS=,; echo "${assemBam[*]}")
-    fqList=$(IFS=,; echo "${fqr1arr[*]}")
+    fqList=$(IFS=,; echo "${assemFqs[*]}")
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
       $bamList \
       $fqList \
