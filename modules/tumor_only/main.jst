@@ -10,6 +10,7 @@
 {% from 'modules/tumor_only/gridss.jst' import gridss_tumor_only with context %}
 {% from 'modules/tumor_only/gatk_cnv.jst' import gatk_cnv_tumor_only with context %}
 {% from 'modules/tumor_only/assembly.jst' import assembly with context %}
+{% from 'modules/tumor_only/deepvariant.jst' import deepvariant_tumor_only with context %}
 
 {% macro tumor_only_variant_calling(samples, controlDataFiles) %}
 
@@ -166,6 +167,10 @@
     {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(true) %}
         {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
     {% endif %}
+    {% endif %}
+
+    {%- if tasks[taskPrefix+"_tumor_only_snp_indel_caller_deepvariant"]|default(true) %}
+        {{- deepvariant_tumor_only(pair.tumor, aligner='bwa', taskPrefix=taskPrefix) }}
     {% endif %}
 
 {% endfor %}
