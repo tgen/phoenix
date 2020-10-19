@@ -127,6 +127,8 @@
       {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
       ${assemBam[*]}
 
+    samtools index -@ 4 {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam
+
     TAB=$'\t'
     cat <<EOF > "{{ temp_dir }}/pairoscopeRegions.bed"
     chr2${TAB}88750483${TAB}90261139
