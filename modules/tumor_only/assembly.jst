@@ -117,6 +117,14 @@
           -o {{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
 
         samtools index -@ 4 {{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
+
+        bwa index {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
+        bwa mem \
+          -t 4 \
+          -o {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadsToContigs.sam \
+          {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta \
+          ${leftfq} ${rightfq}
+
         assemBam+=("{{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
         assemFqs+=("${leftfq}")
       fi
