@@ -45,7 +45,8 @@
   tags: [assembly,]
   reset: predecessors
   input: {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
-  output: {{ results_dir }}/
+  output:
+    - {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam
   walltime: "24:00:00"
   cpus: 4
   mem: 10G
@@ -59,6 +60,7 @@
     module load {{ constants.tools.star_fusion.module }}
     trin_path=$(dirname `which Trinity`)
 
+    rm -r {{ results_dir }} || true
     mkdir -p {{ results_dir }}
 
     {# Build a list of fastqs to iterate through #}
@@ -99,6 +101,8 @@
         unset error
       else
         ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
+
+        sed -i "s/^>/>{{ pair.name }}_${chrRegion}_${cluster}:/g" {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
 
         bwa mem \
           -t 4 \
