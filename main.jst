@@ -179,6 +179,6 @@
     {{- chip_workflow(samples) }}
 {% endif -%}
 
-{%- if tasks.tumor_only_variant_calling|default(true) %}
+{%- if tasks.tumor_only_variant_calling|default(true) and controlDataFiles is defined %}
     {{- tumor_only_variant_calling(samples, controlDataFiles) }}
 {% endif -%}
