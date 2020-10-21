@@ -180,13 +180,14 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
 
     # add data to
     names2.append(names)
-  final_table = pd.DataFrame({'name': names2
-                              })
+  final_table = pd.DataFrame({'name': names2,
+                              'Gene_1': "",
+                              'IgTxCalled': 0})
 
   # Process each contig
   for currIndex in final_table.index:
     names = final_table.at[currIndex, 'name']
-    print("\nNow Processing" + names)
+    print("\nNow Processing " + names)
     contig_table_by_read = contig_table[(contig_table.name == names)]
     # if contigs aligns to multiple locations
     count = len(contig_table_by_read.index)
@@ -212,12 +213,9 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
                                             'chr20'] and Gene_found == ""):
           Gene_found = mygene
 
-        # print("contig_chr="+contig_chr +"contig_pos " + str(contig_pos) + mygene)
-
         mVal = get_junctionBreak(contig_table_by_read.at[contig_row, 'r1_cigar'])
         if (mVal <= min_mVal):
           min_mVal = mVal
-          print("Value lower than thr " + str(mVal))
         juncbreak = mVal
 
         contig_len = get_contigLength(contig_table_by_read.at[contig_row, 'r1_cigar'])
@@ -233,7 +231,6 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
 
         ffastq = fastq_path + "/" + fastq
         reads_sam = reads_sam_path + "/" + namesSplit[0] + "/" + namesSplit[0] + "_ReadstoContigs.bam"
-        # print("\nfastq name is " + fastq)
 
         # extract 25mers left and right of contig
         jright = juncbreak + 25
@@ -253,7 +250,6 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
 
         # get unique fragments at junction
         frag_count = getFragsatJunction_samtools(location, contig, reads_sam)
-        print("read count is " + str(r1_count))
 
         # define df columns
         CIGAR = "cigar_" + str(loop_var)
@@ -283,7 +279,6 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
           # increment counter
 
           loop_var = loop_var + 1
-          print("\nIG " + IG_found + "gene " + Gene_found)
           if (count > 1 and IG_found != "" and Gene_found != ""):
             final_table.at[[currIndex], 'IgTxCalled'] = 1
   return final_table
@@ -330,7 +325,6 @@ def isKnownTx(qchr, qpos, listofRegions):
 def getReadsatjunction(region, contig, fastq):
   r1_count = 0
   # grep region1 from fastq
-  print(fastq)
   print("\n Now checking for this sequence in fastq \n")
   print(region)
   # @Bryce Should be changed to a tmp location
@@ -349,13 +343,11 @@ def getReadsatjunction(region, contig, fastq):
 ###############################################
 #  Simple approach to find reads at junction
 #  Need to be replaced with samtools in next
-#   update. NOT CURRENTLY USED
+#  update. NOT CURRENTLY USED
 ###############################################
 def getAllMappedReadsatJunction(region, contig, readsam):
   r1_count = 0
   r2_count = 0
-  # grep region1 from fastq
-  # print(fastq)
   print("\n Now checking for this sequence in fastq \n" + contig)
   print(region)
 
@@ -363,8 +355,6 @@ def getAllMappedReadsatJunction(region, contig, readsam):
 
   # @Bryce Should be changed to a tmp location
   tmp_file = sys.argv[5] + "/r1counts.txt"
-  # status = call("/home/snasser/toolkit_snasser/IgTxAssembly/findinfile.sh "+ fastq +" "+region+" "+tmp_file, shell=True)
-  print("egrep \"" + region + "|" + region_rev + "\" " + readsam + " | awk '{ print $1 }' | sort | uniq | wc -l ")
   status = call(
     "egrep \"" + region + "|" + region_rev + "\" " + readsam + " | awk '{ print $1 }' | sort | uniq | wc -l  > " + tmp_file,
     shell=True)
@@ -381,15 +371,13 @@ def getAllMappedReadsatJunction(region, contig, readsam):
 ###############################################
 #  Simple approach to find reads at junction
 #  Need to be replaced with samtools in next
-#   update
+#  update
 ###############################################
 def getFragsatJunction_samtools(location, contig, bam):
   r1_count = 0
   r2_count = 0
   # grep region1 from fastq
-  # print(fastq)
   print("\n Now checking for this sequence in fastq \n")
-  # print(region)
   # @Bryce Should be changed to a tmp location
   tmp_file = sys.argv[5] + "/r1counts.txt"
   # "zcat " + fastq + " | grep " + region + " > " + tmp_file, shell=True
@@ -446,12 +434,16 @@ if (assm_sam_file != ""):
   results_table = check_contigs(table, fastq_path, reads_sam_file_path, igregions, window_size, min_reads)
 
 # filter results table
-filt_table = results_table[
-  results_table.Gene_1.isin(['IGH', 'IGL', 'NSD2', 'CCND1', 'CCND2', 'CCND3', 'IGK', 'MYC', 'MAFA', 'MAFB', 'MAF'])]
-print("\nWriting outfile ****************")
+print(results_table)
+if not results_table.empty:
+  filt_table = results_table[
+    results_table.Gene_1.isin(['IGH', 'IGL', 'NSD2', 'CCND1', 'CCND2', 'CCND3', 'IGK', 'MYC', 'MAFA', 'MAFB', 'MAF'])]
+  print("\nWriting outfile ****************")
 
-out_file = out_path + "/ContigResults.txt"
-out_file_filt = out_path + "/FilteredContigResults.txt"
-results_table.to_csv(out_file, sep="\t", index=False, na_rep=0, float_format='%.0f')
-filt_table.to_csv(out_file_filt, sep="\t", index=False, na_rep=0, float_format='%.0f')
+  out_file = out_path + "/ContigResults.txt"
+  out_file_filt = out_path + "/FilteredContigResults.txt"
+  results_table.to_csv(out_file, sep="\t", index=False, na_rep=0, float_format='%.0f')
+
+  if not filt_table.empty:
+    filt_table.to_csv(out_file_filt, sep="\t", index=False, na_rep=0, float_format='%.0f')
 print("Test Done")

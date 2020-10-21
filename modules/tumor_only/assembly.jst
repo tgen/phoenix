@@ -124,6 +124,7 @@
           {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta \
           ${leftfq} ${rightfq}
 
+        mkdir -p {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}
         samtools view -b {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadstoContigs.sam |\
         samtools sort -o {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
 
