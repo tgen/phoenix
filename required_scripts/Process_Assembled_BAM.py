@@ -162,7 +162,7 @@ def reverseComplement(seq):
 
 
 # Function to check contigs
-def check_contigs(contig_table, fastq_list, fastq_path, igregions, window_size=200, min_reads=5, contig_perc=0.1):
+def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_size=200, min_reads=5, contig_perc=0.1):
   list_names = []
 
   # find unique contigs
@@ -180,8 +180,8 @@ def check_contigs(contig_table, fastq_list, fastq_path, igregions, window_size=2
 
     # add data to
     names2.append(names)
-  final_table = pd.DataFrame({'name': names2,
-                              'seq': ''})
+  final_table = pd.DataFrame({'name': names2
+                              })
 
   # Process each contig
   for currIndex in final_table.index:
@@ -227,51 +227,47 @@ def check_contigs(contig_table, fastq_list, fastq_path, igregions, window_size=2
 
         # extract fastq name from contig name
         namesSplit = names.split(':')
+
         fastq = namesSplit[0]
         fastq = fastq + '_R1_001.fastq.gz'
 
         ffastq = fastq_path + "/" + fastq
-        print("\nfastq name is " + fastq)
+        reads_sam = reads_sam_path + "/" + namesSplit[0] + "/" + namesSplit[0] + "_ReadstoContigs.bam"
+        # print("\nfastq name is " + fastq)
 
         # extract 25mers left and right of contig
         jright = juncbreak + 25
         jleft = juncbreak - 25
 
+        # extract chromosome coordinates 25mers around contig
+        location = contig_table_by_read.at[contig_row, 'name'] + ":" + str(jleft) + "-" + str(jright)
+
         rr = contig[jleft:jright:1]
         rr_rev = reverseComplement(rr)
-
-        # get junction count
+        # get junction count  read 1 and read2
         r1_count = getReadsatjunction(rr, contig, ffastq) + getReadsatjunction(rr_rev, contig, ffastq)
         ffastq_2 = ffastq
         ffastq_2 = ffastq_2.replace("_R1", "_R2")
 
         r2_count = getReadsatjunction(rr, contig, ffastq_2) + getReadsatjunction(rr_rev, contig, ffastq_2)
+
+        # get unique fragments at junction
+        frag_count = getFragsatJunction_samtools(location, contig, reads_sam)
         print("read count is " + str(r1_count))
 
-        # @sara Can simplify the "if" section to match else. At this point keeping it
-        # as is for development.
-        if (loop_var == 1 and mVal >= window_size):
+        # define df columns
+        CIGAR = "cigar_" + str(loop_var)
+        GENE = "Gene_" + str(loop_var)
+        LEN = "length_" + str(loop_var)
+        PERC = "percent_of_contig_at_Gene_" + str(loop_var)
+        R1_C = "R1_reads_at_junc_" + str(loop_var)
+        R2_C = "R2_reads_at_junc_" + str(loop_var)
+        FRAG_C = "Fragments_at_junc_" + str(loop_var)
+        POS_START = "pos_" + str(loop_var) + "_start"
+        POS_END = "pos_" + str(loop_var) + "_end"
+        REV = "r1_is_reversed" + str(loop_var)
 
-          final_table.at[[currIndex], 'cigar_1'] = contig_table_by_read.at[contig_row, 'r1_cigar']
-          final_table.at[[currIndex], 'Gene_1'] = mygene
-          final_table.at[[currIndex], 'length_1'] = mVal
-          final_table.at[[currIndex], 'percent_of_contig_at_Gene_1'] = mVal * 100 / contig_len
-          final_table.at[[currIndex], 'R1_count_1'] = r1_count
-          final_table.at[[currIndex], 'R2_count_1'] = r2_count
-          final_table.at[[currIndex], 'pos_1_start'] = contig_table_by_read.at[contig_row, 'r1_pos']
-          final_table.at[[currIndex], 'pos_1_end'] = contig_table_by_read.at[contig_row, 'r1_pos'] + mVal
-          # final_table.at[[currIndex],'IgTxCalled'] = 1
-          loop_var = loop_var + 1
-
-        elif (loop_var >= 1 and mVal >= window_size):
-          CIGAR = "cigar_" + str(loop_var)
-          GENE = "Gene_" + str(loop_var)
-          LEN = "length_" + str(loop_var)
-          PERC = "percent_of_contig_at_Gene_" + str(loop_var)
-          R1_C = "R1_count_" + str(loop_var)
-          R2_C = "R2_count_" + str(loop_var)
-          POS_START = "pos_" + str(loop_var) + "_start"
-          POS_END = "pos_" + str(loop_var) + "_end"
+        if (mVal >= window_size):
 
           final_table.at[[currIndex], CIGAR] = contig_table_by_read.at[contig_row, 'r1_cigar']
           final_table.at[[currIndex], GENE] = mygene
@@ -279,8 +275,10 @@ def check_contigs(contig_table, fastq_list, fastq_path, igregions, window_size=2
           final_table.at[[currIndex], PERC] = mVal * 100 / contig_len
           final_table.at[[currIndex], R1_C] = r1_count
           final_table.at[[currIndex], R2_C] = r2_count
+          final_table.at[[currIndex], FRAG_C] = r2_count
           final_table.at[[currIndex], POS_START] = contig_table_by_read.at[contig_row, 'r1_pos']
           final_table.at[[currIndex], POS_END] = contig_table_by_read.at[contig_row, 'r1_pos'] + mVal
+          final_table.at[[currIndex], REV] = contig_table_by_read.at[contig_row, 'r1_is_reversed']
 
           # increment counter
 
@@ -348,6 +346,69 @@ def getReadsatjunction(region, contig, fastq):
   return r1_count
 
 
+###############################################
+#  Simple approach to find reads at junction
+#  Need to be replaced with samtools in next
+#   update. NOT CURRENTLY USED
+###############################################
+def getAllMappedReadsatJunction(region, contig, readsam):
+  r1_count = 0
+  r2_count = 0
+  # grep region1 from fastq
+  # print(fastq)
+  print("\n Now checking for this sequence in fastq \n" + contig)
+  print(region)
+
+  region_rev = reverseComplement(region)
+
+  # @Bryce Should be changed to a tmp location
+  tmp_file = sys.argv[5] + "/r1counts.txt"
+  # status = call("/home/snasser/toolkit_snasser/IgTxAssembly/findinfile.sh "+ fastq +" "+region+" "+tmp_file, shell=True)
+  print("egrep \"" + region + "|" + region_rev + "\" " + readsam + " | awk '{ print $1 }' | sort | uniq | wc -l ")
+  status = call(
+    "egrep \"" + region + "|" + region_rev + "\" " + readsam + " | awk '{ print $1 }' | sort | uniq | wc -l  > " + tmp_file,
+    shell=True)
+  if status < 0:
+    print("### Cat Command Failed....now exiting!!")
+    sys.exit(-1)
+  else:
+    with open(tmp_file, "r") as myfile:
+      data = myfile.readlines()
+      r1_count = int(data[0])
+  return r1_count
+
+
+###############################################
+#  Simple approach to find reads at junction
+#  Need to be replaced with samtools in next
+#   update
+###############################################
+def getFragsatJunction_samtools(location, contig, bam):
+  r1_count = 0
+  r2_count = 0
+  # grep region1 from fastq
+  # print(fastq)
+  print("\n Now checking for this sequence in fastq \n")
+  # print(region)
+  # @Bryce Should be changed to a tmp location
+  tmp_file = sys.argv[5] + "/r1counts.txt"
+  # "zcat " + fastq + " | grep " + region + " > " + tmp_file, shell=True
+
+  # region_rev = reverseComplement(region)
+
+  status = call(
+    "samtools view " + bam + " | grep " + location + " | awk '{ print $1 }' | sort | uniq | wc -l > " + tmp_file,
+    shell=True)
+  if status < 0:
+    print("### Cat Command Failed....now exiting!!")
+    sys.exit(-1)
+  else:
+    with open(tmp_file, "r") as myfile:
+      data = myfile.readlines()
+      r1_count = int(data[0])
+  return r1_count
+
+
 # END FUNCTION DEFINITIONS
 
 print("Importing Data")
@@ -360,6 +421,7 @@ assm_sam_file = sys.argv[1]
 # get fastq
 fastq_str = sys.argv[2]
 fastq_path = fastq_str
+reads_sam_file_path = sys.argv[5]
 fastq_list = []  # fastq_str.split(',')
 
 # get Ig/parter bed file
@@ -381,10 +443,15 @@ if (assm_sam_file != ""):
 
   table = bam_to_df(samfile, file_name=assm_sam_file)
   table_hrd = list(table.columns)
-  results_table = check_contigs(table, fastq_list, fastq_path, igregions, window_size, min_reads)
+  results_table = check_contigs(table, fastq_path, reads_sam_file_path, igregions, window_size, min_reads)
 
+# filter results table
+filt_table = results_table[
+  results_table.Gene_1.isin(['IGH', 'IGL', 'NSD2', 'CCND1', 'CCND2', 'CCND3', 'IGK', 'MYC', 'MAFA', 'MAFB', 'MAF'])]
 print("\nWriting outfile ****************")
 
 out_file = out_path + "/ContigResults.txt"
+out_file_filt = out_path + "/FilteredContigResults.txt"
 results_table.to_csv(out_file, sep="\t", index=False, na_rep=0, float_format='%.0f')
+filt_table.to_csv(out_file_filt, sep="\t", index=False, na_rep=0, float_format='%.0f')
 print("Test Done")

@@ -78,7 +78,6 @@
     {# Submit a trinity job for each pair of fastqs #}
     assemErrors=0
     assemBams=()
-    assemFqs=()
     for i in ${!fqr1arr[@]}
     do
       leftfq=${fqr1arr[i]}
@@ -121,12 +120,14 @@
         bwa index {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
         bwa mem \
           -t 4 \
-          -o {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadsToContigs.sam \
+          -o {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadstoContigs.sam \
           {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta \
           ${leftfq} ${rightfq}
 
+        samtools view -b {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadstoContigs.sam |\
+        samtools sort -o {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
+
         assemBam+=("{{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
-        assemFqs+=("${leftfq}")
       fi
       i=$(expr $i + 1)
     done
