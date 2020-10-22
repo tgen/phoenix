@@ -4,6 +4,13 @@
 {% set tumor_bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/somatic_structural_calls/pairoscope/{{ sample.name }}{% endset %}
 
+{% if controlDataFiles is defined %}
+{% set toAssayCodes = [] %}
+{% for file in controlDataFiles %}
+    {% do toAssayCodes.append(file.assayCode) %}
+{% endfor %}
+{% endif %}
+
 - name: mm_igtx_pairoscope_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, structural_caller, pairoscope, {{ sample.name }}]
   tags: [pairoscope, mm_igtx_calling, {{ sample.gltype }}]
@@ -61,6 +68,10 @@
       --output_file {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_calls.txt \
       --window 2000 \
       --window_min 100 \
+      {% if controlDataFiles is defined and sample.assayCode in toAssayCodes %}
+      --call_requirement 5
+      {% else %}
       --call_requirement 4
+      {% endif %}
 
 {% endmacro %}
