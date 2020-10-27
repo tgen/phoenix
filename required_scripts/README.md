@@ -34,7 +34,7 @@ $ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 [mm_igtx_pairoscope_calling_b38_f3010c3.py](https://github.com/tgen/mm_IgTx_Calling/commit/f3010c358970f4c25cefddc824636f60a19842e1)  
 [plotCNVplus_4d89cb4.R](https://github.com/tgen/plotCNVplus/commit/4d89cb4d8f35e48b916d660c82c52b8725ade16f)  
 [runIchorCNA_47ce8db.R](https://github.com/broadinstitute/ichorCNA/commit/47ce8db4d81ada2d3ce09280661d1240f3dcd530#diff-79cb887cc56cef135b77c5b7a725975c)  
-[samStats2json_deb00a0.py](https://github.com/tgen/samStats2json/commit/deb00a0199dca764da0542584616ad4333b9e8b5)  
+[samStats2json_b3854a1.py](https://github.com/tgen/samStats2json/commit/b3854a123de55ae95646d33bba8df3a9d1f91858)  
 [seg_extend_229b8c7.py](https://github.com/tgen/jetstream_resources/commit/229b8c7641dd505789664aab88c1662d1f97e429)  
 [summarize_samstats_8c45d63.R](https://github.com/tgen/plot_samstats/commit/8c45d63dbd7f5037d7bb658ac91647898bf7509f)  
 [svtop.delly.sv_annotation.parallel_8820499.py](https://github.com/tgen/jetstream_resources/commit/8820499e113a387fee98044112951fa534ad6f8e)  
