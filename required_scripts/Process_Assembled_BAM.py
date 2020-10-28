@@ -477,7 +477,10 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
         CHR = 'chr_' + str(loop_var)
         MVAL = 'aligned_length_' + str(loop_var)
         STRAND = 'strand_' + str(loop_var)
-        SEQ = 'seq_' + str(loop_var)
+        SEQ = 'seq'
+
+        if (loop_var == 1):
+          final_table.at[[currIndex], SEQ] = contig
 
         # if( mygene !=''):
         if (mVal >= window_size and mygene != ''):
@@ -495,7 +498,6 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
           final_table.at[[currIndex], CHR] = contig_table_by_read.at[contig_row, 'r1_chr']
           final_table.at[[currIndex], JUNC] = juncbreak
           final_table.at[[currIndex], STRAND] = strand
-          final_table.at[[currIndex], SEQ] = contig
           # increment counter
 
           loop_var = loop_var + 1
@@ -628,7 +630,8 @@ def check_gene_call(table, gene, nreads, min_con_len):
 
     if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
       if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        ig_breakpoint = str(table_by_gene.at[row, 'pos_2_start']) + ";" + str(table_by_gene.at[row, 'pos_3_start'])
+        ig_breakpoint = str(int(table_by_gene.at[row, 'pos_2_start'])) + ";" + str(
+          int(table_by_gene.at[row, 'pos_3_start']))
       else:
         ig_breakpoint = table_by_gene.at[row, 'pos_2_start']
     else:
@@ -689,7 +692,8 @@ def check_gene_call(table, gene, nreads, min_con_len):
 
     if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
       if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        ig_breakpoint = str(table_by_gene.at[row, 'pos_1_start']) + ";" + str(table_by_gene.at[row, 'pos_3_start'])
+        ig_breakpoint = str(int(table_by_gene.at[row, 'pos_1_start'])) + ";" + str(
+          int(table_by_gene.at[row, 'pos_3_start']))
       else:
         ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
     else:
@@ -750,7 +754,8 @@ def check_gene_call(table, gene, nreads, min_con_len):
 
     if (('Gene_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
       if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
-        ig_breakpoint = str(table_by_gene.at[row, 'pos_1_start']) + ";" + str(table_by_gene.at[row, 'pos_2_start'])
+        ig_breakpoint = str(int(table_by_gene.at[row, 'pos_1_start'])) + ";" + str(
+          int(table_by_gene.at[row, 'pos_2_start']))
       else:
         ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
     else:
