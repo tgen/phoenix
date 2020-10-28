@@ -128,7 +128,8 @@
         samtools view -b {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadstoContigs.sam |\
         samtools sort -o {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
 
-        assemBam+=("{{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
+        mv {{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam {{ temp_dir }}/
+        assemBam+=("{{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
       fi
       i=$(expr $i + 1)
     done
