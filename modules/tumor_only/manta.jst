@@ -172,7 +172,7 @@
     EOF
 
     bash transParser.sh \
-      --bed-genes {{ temp_dir }}/genes_regions.bed \
+      --bed-genes {{ temp_dir }}/gene_regions.bed \
       --bed-igs {{ temp_dir }}/igs_regions.bed \
       --vcf {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
       --samplename {{ pair.tumor.rgsm }} \
