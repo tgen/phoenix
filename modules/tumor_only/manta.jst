@@ -177,6 +177,7 @@
       --vcf {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
       --samplename {{ pair.tumor.rgsm }} \
       --threads 2 \
+      --dirtemp {{ temp_dir }} \
       --dirout {{ results_dir }} \
       --tabfilename {{ pair.name }}.{{ aligner }}_mantaTxCalls.txt \
       --min-reads 5
