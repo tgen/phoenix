@@ -310,7 +310,7 @@ constants:
       module: Subread/2.0.0-foss-2018b
       version: "2.0.0"
       verbose: Subread v2.0.0
-      webiste: http://subread.sourceforge.net
+      website: http://subread.sourceforge.net
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
@@ -318,6 +318,11 @@ constants:
       module: trinityrnaseq/2.8.6-gcc-8.2.0-2.31.1-perl-5.28.1
       version: "2.8.6"
       verbose: Trinity-v2.8.6
+    transparser:
+      module: transParser/1.0.0
+      version: "1.0.0"
+      verbose: transParser v1.0.0
+      website: https://github.com/tgen/transParser
     vardict:
       module: vardict/1.7.0-java-1.8
       version: "1.7.0"
@@ -400,7 +405,6 @@ constants:
     stats2json: samStats2json_b3854a1.py
     stats2lims: uploadStats2Lims_98319ea.py
     annotSeg_script: annotSeg_8820499.pl
-    gen_fileTable: gen_fileTableSimple_a49204c.py
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/hg38tgen_ensembl_v98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
     scrna_chemistry_options:
