@@ -174,7 +174,7 @@
     bash transParser.sh \
       --bed-genes {{ temp_dir }}/gene_regions.bed \
       --bed-igs {{ temp_dir }}/igs_regions.bed \
-      --vcf {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
+      --vcf {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
       --samplename {{ pair.tumor.rgsm }} \
       --threads 2 \
       --dirout {{ results_dir }} \
