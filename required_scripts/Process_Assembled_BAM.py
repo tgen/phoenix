@@ -1,7 +1,9 @@
 # Usage
-# python Process_Discordant_SAM_File.py <Collapsed_TophatFusion_File> <Discordant_Reads.sam>
-
-# requires python 3.4 with pandas, numpy, pysam packages
+#
+# (c) TGEN 2020
+# requires python 3.0 with pandas, numpy, pysam packages
+#
+#
 
 print("Importing Packages")
 # Configure Enviroment
@@ -11,16 +13,74 @@ import pysam
 import sys
 import os.path
 import re
+import argparse
 from subprocess import call
+import itertools
 
 # Variables
-# call_threshold = 3
-# minimum_window_count = 2
-window_size = int(sys.argv[3])
-min_reads = 5
 
-# tophat = int(sys.argv[4])
 minimum_count_threshold = 0.75
+
+parser = argparse.ArgumentParser(description='Assemble DLE fastqs and call myeloma Ig translocation calls.')
+
+parser.add_argument('-i', '--input_bam',
+                    required=True,
+                    metavar='File.bam',
+                    dest="input_file",
+                    help='Merged bam of all regional contigs from DLE')
+parser.add_argument('-s', '--specimen',
+                    required=True,
+                    help='Specimen Name, must match the bam')
+parser.add_argument('-o', '--output_path',
+                    required=True,
+                    metavar='File.tsv',
+                    help='Output path')
+parser.add_argument('-c', '--contig',
+                    default=200,
+                    type=int,
+                    metavar='INT',
+                    help='Minimum contig overlap length at each breakend ')
+parser.add_argument('-r', '--reads',
+                    default=5,
+                    type=int,
+                    metavar='INT',
+                    help='Minimum fragments at junction')
+parser.add_argument('-f', '--fastq_dir',
+                    default='Path',
+                    required=True,
+                    metavar='/scratch/',
+                    help='Path to original fastqs')
+parser.add_argument('-b', '--bam_path',
+                    default='Path',
+                    required=True,
+                    metavar='/scratch/',
+                    help='Path to bams for each region with fastq mapped to bam')
+parser.add_argument('-p', '--pairoscope_bed_file',
+                    default='BED',
+                    required=True,
+                    metavar='regions.bed',
+                    help='BED file with MM Ig Tx regions ')
+
+args = parser.parse_args()
+
+###########################################
+# args to variables
+
+window_size = args.contig
+min_reads = args.reads
+sample_name = args.specimen
+out_path = args.output_path
+assm_sam_file = args.input_file
+bed_file = args.pairoscope_bed_file
+reads_sam_file_path = args.bam_path
+fastq_path = args.fastq_dir
+
+# define constants
+ig_dict = {
+  "IGH": "1",
+  "IGK": "2",
+  "IGL": "3"
+}
 
 print("Defining Functions")
 
@@ -29,7 +89,7 @@ print("Defining Functions")
 def bam_to_df(bam, chr=None, start=None, stop=None, file_name=None):
   file_name = os.path.basename(file_name)
   file_name = file_name.replace('\_R1\_Trinity\_sorted\.bam', '')
-  print('Updated file name is ' + file_name)
+  # print('Updated file name is ' + file_name)
   index = 0
   seq = []
   name = []
@@ -47,9 +107,7 @@ def bam_to_df(bam, chr=None, start=None, stop=None, file_name=None):
   r2_mapq = []
   pair_orientation = []
   for read in bam.fetch(chr, start, stop):
-    # index = index + 1
     seq.append(read.query_sequence)
-    # name.append(file_name+":"+read.query_name) #+"_"+str(index))
     name.append(read.query_name)
     r1_chr.append(read.reference_name)
     r1_pos.append(read.reference_start)
@@ -79,7 +137,7 @@ def bam_to_df(bam, chr=None, start=None, stop=None, file_name=None):
       pair_orientation.append("RR")
     else:
       pair_orientation.append("Error")
-    # print(str(r1_cigar) + " and  " + str(name) + " mapq "+str(r1_mapq))
+
   return pd.DataFrame({'seq': seq,
                        'name': name,
                        'r1_pos': r1_pos,
@@ -97,7 +155,9 @@ def bam_to_df(bam, chr=None, start=None, stop=None, file_name=None):
                        'pair_orientation': pair_orientation})
 
 
+###############################
 # function to get junction break
+###############################
 def get_junctionBreak(cigarStr):
   # split cigar by M,S,H
   Mval = 0
@@ -107,13 +167,99 @@ def get_junctionBreak(cigarStr):
     tmp_cigar = tmp_cigar.replace('S', 'M')
     tmp_cigar = tmp_cigar.replace('I', 'M')
     tmp_cigar = tmp_cigar.replace('D', 'M')
-    # print( tmp_cigar)
+
+    total_len = 0
     cigar_list = tmp_cigar.split('M')
     for values in cigar_list:
       if (values != '' and cigarStr.find(str(values) + 'M') != -1):
         if (int(values) > Mval):
           Mval = int(values)
   return Mval
+
+
+##################################
+# function to get junction break
+##################################
+def get_junctionBreakNew(cigarStr):
+  Mval = 0
+  Sval = 0
+  Hval = 0
+  Junc = 0
+  if (cigarStr != ''):
+    tmp_cigar = cigarStr
+    tmp_cigar = tmp_cigar.replace('H', 'M')
+    tmp_cigar = tmp_cigar.replace('S', 'M')
+    tmp_cigar = tmp_cigar.replace('I', 'M')
+    tmp_cigar = tmp_cigar.replace('D', 'M')
+
+    total_len = 0
+    cigar_list = tmp_cigar.split('M')
+    for values in cigar_list:
+      if (values != '' and cigarStr.find(str(values) + 'M') != -1):
+        if (int(values) > Mval):
+          Mval = int(values)
+      # Generall only one S and/or H, keep first S or H
+      if (values != '' and cigarStr.find(str(values) + 'S') != -1 and Sval == 0):
+        Sval = int(values)
+      if (values != '' and cigarStr.find(str(values) + 'H') != -1 and Hval == 0):
+        Hval = int(values)
+
+    # if clipping is sbefore M  then Mval =Mval -length
+    sindex = cigarStr.find('S')
+    hindex = cigarStr.find('H')
+    mindex = cigarStr.find('M')
+
+    if (sindex > 0 and hindex > 0):
+      if (sindex < mindex and sindex < hindex):
+        Junc = Sval
+      elif (hindex < mindex and hindex < sindex):
+        Junc = Hval
+    elif (sindex > 0 and sindex < mindex):  # mval after s
+      Junc = Sval
+    elif (hindex > 0 and hindex < mindex):
+      Junc = Hval
+    elif (mindex < sindex):
+      Junc = Mval
+    elif (mindex < hindex):
+      Junc = Mval
+  return Junc
+
+
+##########################################
+#
+##########################################
+def get_junctionBreakNewMPos(cigarStr):
+  Mval = 0
+  Sval = 0
+  Hval = 0
+  Junc = 0
+  if (cigarStr != ''):
+    tmp_cigar = cigarStr
+    tmp_cigar = tmp_cigar.replace('H', 'M')
+    tmp_cigar = tmp_cigar.replace('S', 'M')
+    tmp_cigar = tmp_cigar.replace('I', 'M')
+    tmp_cigar = tmp_cigar.replace('D', 'M')
+
+    total_len = 0
+    final_len = 0
+    cigar_list = tmp_cigar.split('M')
+    for values in cigar_list:
+      if (values != ''):
+        if (cigarStr.find(str(values) + 'M') != -1):
+          if (int(values) > Mval):
+            Mval = int(values)
+        final_len = final_len + int(values)
+    # get posn
+    for values in cigar_list:
+      if (values != ''):
+        total_len = total_len + int(values)
+        if ((cigarStr.find(str(values) + 'M') != -1) and (int(values) == int(Mval))):
+          if (total_len == final_len):
+            total_len = total_len - Mval  # if M was the last matched go to prev junction
+          break
+
+    Junc = total_len
+  return Junc
 
 
 # function to get junction break
@@ -132,13 +278,43 @@ def get_contigLength(cigarStr):
   return con_len
 
 
-def get_longest_seqforcontig(contig_read_table_tmp):
+########################################
+#
+########################################
+def get_longest_seqforcontig(contig_read_table_tmp, cur_row):
   longest_seq = ""
+  cur_row_rev = contig_read_table_tmp.at[cur_row, 'r1_is_reversed']
+
   for row in contig_read_table_tmp.index:
     next_seq = contig_read_table_tmp.at[row, 'seq']
-    if (len(next_seq) > len(longest_seq)):
+    if (len(next_seq) >= len(longest_seq)):
       longest_seq = next_seq
+      rev_chr_str = contig_read_table_tmp.at[row, 'r1_chr'] + 'r'
+      longest_rev = contig_read_table_tmp.at[row, 'r1_is_reversed']
+      if (contig_read_table_tmp.at[row, 'r1_is_reversed']):  # and not cur_row_rev):
+        longest_seq = reverseComplement(next_seq, 1)
+        print("longest reversed")
   return longest_seq
+
+
+########################################
+#
+########################################
+def orient_match_with_longest(contig_read_table_tmp, cur_row):
+  longest_seq = ""
+  cur_row_rev = contig_read_table_tmp.at[cur_row, 'r1_is_reversed']
+  longest_seq_orient = cur_row_rev
+
+  for row in contig_read_table_tmp.index:
+    next_seq = contig_read_table_tmp.at[row, 'seq']
+    if (len(next_seq) >= len(longest_seq)):
+      longest_seq = next_seq
+      longest_seq_orient = contig_read_table_tmp.at[row, 'r1_is_reversed']
+
+  if (longest_seq_orient == cur_row_rev):
+    return 1
+
+  return 0
 
 
 ########################################
@@ -146,9 +322,12 @@ def get_longest_seqforcontig(contig_read_table_tmp):
 # Only doing a complement not reverse
 #
 ########################################
-def reverseComplement(seq):
+def reverseComplement(seq, rflag):
   # Reverse sequence string
-  rseq = seq  # [::-1]
+  if (rflag == 1):
+    rseq = seq[::-1]
+  else:
+    rseq = seq
 
   rseq = rseq.replace('A', 'B')
   rseq = rseq.replace('T', 'A')
@@ -161,7 +340,9 @@ def reverseComplement(seq):
   return rseq
 
 
+########################################
 # Function to check contigs
+########################################
 def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_size=200, min_reads=5, contig_perc=0.1):
   list_names = []
 
@@ -199,12 +380,21 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
       # track variables for IG and Gene
       IG_found = ""
       Gene_found = ""
-
+      strand = ""
       for contig_row in contig_table_by_read.index:
         contig_chr = contig_table_by_read.at[contig_row, 'r1_chr']
+        contig_name = contig_table_by_read.at[contig_row, 'name']
+        r_contig = "_" + contig_chr + "r"
+        f_contig = "_" + contig_chr + "f"
+        print("\n  " + contig_chr + "===" + r_contig + " ^^^^******* " + f_contig + "=" + name)
+        if (f_contig in contig_name):
+          strand = "Pos"
+        if (r_contig in contig_name):
+          strand = "Neg"
         contig_pos = contig_table_by_read.at[contig_row, 'r1_pos']
         # check if gene is in Tx region
         # @Sara Need to read updated bedfile as agreed by JJK
+
         mygene = isKnownTx(contig_chr, int(contig_pos), igregions)
 
         if (mygene != "" and contig_chr in ['chr2', 'chr14', 'chr22'] and IG_found == ""):
@@ -213,17 +403,37 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
                                             'chr20'] and Gene_found == ""):
           Gene_found = mygene
 
+        # junctions in contig
         mVal = get_junctionBreak(contig_table_by_read.at[contig_row, 'r1_cigar'])
+        juncbreak = get_junctionBreakNewMPos(contig_table_by_read.at[contig_row, 'r1_cigar'])
         if (mVal <= min_mVal):
           min_mVal = mVal
-        juncbreak = mVal
 
+        # find longest seq for contig from bam to address  hard clipping
         contig_len = get_contigLength(contig_table_by_read.at[contig_row, 'r1_cigar'])
 
         # since bwa hardclips supplementary reads find the longest seq for contig
-        contig = get_longest_seqforcontig(contig_table_by_read)  # contig_table_by_read.at[contig_row,'seq']
+        longest_contig = get_longest_seqforcontig(contig_table_by_read,
+                                                  contig_row)  # contig_table_by_read.at[contig_row,'seq']
+        if (len(longest_contig) > len(contig_table_by_read.at[contig_row, 'seq'])):
+          # ddi orientation switch?
+          same_orient_as_longest = orient_match_with_longest(contig_table_by_read, contig_row)
+          contig = longest_contig
+        else:
+          same_orient_as_longest = 1
+          contig = contig_table_by_read.at[contig_row, 'seq']
 
-        # extract fastq name from contig name
+        # updating contigs for reverse
+
+        # switch only if orientation of longest os different than current
+        # case 1 query contig is reversed by longest is not, since longest contig func reverses dont do anything
+        if ((contig_table_by_read.at[contig_row, 'r1_is_reversed']) and (
+            same_orient_as_longest == 0)):  # (rev_chr_str in contig_table_by_read.at[contig_row,'name'])):
+          print("reverse contig junc" + str(juncbreak))
+        # if longest was reversed and query is not
+        elif ((not contig_table_by_read.at[contig_row, 'r1_is_reversed']) and (same_orient_as_longest == 0)):
+          contig = reverseComplement(contig, 1)
+
         namesSplit = names.split(':')
 
         fastq = namesSplit[0]
@@ -240,7 +450,8 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
         location = contig_table_by_read.at[contig_row, 'name'] + ":" + str(jleft) + "-" + str(jright)
 
         rr = contig[jleft:jright:1]
-        rr_rev = reverseComplement(rr)
+        rr_rev = reverseComplement(rr, 0)
+
         # get junction count  read 1 and read2
         r1_count = getReadsatjunction(rr, contig, ffastq) + getReadsatjunction(rr_rev, contig, ffastq)
         ffastq_2 = ffastq
@@ -254,28 +465,37 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
         # define df columns
         CIGAR = "cigar_" + str(loop_var)
         GENE = "Gene_" + str(loop_var)
-        LEN = "length_" + str(loop_var)
+        LEN = "Contig_length_" + str(loop_var)
+        JUNC = "Contig_BP_" + str(loop_var)
         PERC = "percent_of_contig_at_Gene_" + str(loop_var)
         R1_C = "R1_reads_at_junc_" + str(loop_var)
         R2_C = "R2_reads_at_junc_" + str(loop_var)
-        FRAG_C = "Fragments_at_junc_" + str(loop_var)
+        FRAG_C = "fragments_at_junc_" + str(loop_var)
         POS_START = "pos_" + str(loop_var) + "_start"
         POS_END = "pos_" + str(loop_var) + "_end"
-        REV = "r1_is_reversed" + str(loop_var)
+        REV = "Contig_reversed" + str(loop_var)
+        CHR = 'chr_' + str(loop_var)
+        MVAL = 'aligned_length_' + str(loop_var)
+        STRAND = 'strand_' + str(loop_var)
+        SEQ = 'seq_' + str(loop_var)
 
-        if (mVal >= window_size):
-
+        # if( mygene !=''):
+        if (mVal >= window_size and mygene != ''):
           final_table.at[[currIndex], CIGAR] = contig_table_by_read.at[contig_row, 'r1_cigar']
           final_table.at[[currIndex], GENE] = mygene
-          final_table.at[[currIndex], LEN] = mVal
+          final_table.at[[currIndex], LEN] = len(contig)
           final_table.at[[currIndex], PERC] = mVal * 100 / contig_len
+          final_table.at[[currIndex], MVAL] = mVal
           final_table.at[[currIndex], R1_C] = r1_count
           final_table.at[[currIndex], R2_C] = r2_count
-          final_table.at[[currIndex], FRAG_C] = r2_count
+          final_table.at[[currIndex], FRAG_C] = frag_count
           final_table.at[[currIndex], POS_START] = contig_table_by_read.at[contig_row, 'r1_pos']
           final_table.at[[currIndex], POS_END] = contig_table_by_read.at[contig_row, 'r1_pos'] + mVal
           final_table.at[[currIndex], REV] = contig_table_by_read.at[contig_row, 'r1_is_reversed']
-
+          final_table.at[[currIndex], CHR] = contig_table_by_read.at[contig_row, 'r1_chr']
+          final_table.at[[currIndex], JUNC] = juncbreak
+          final_table.at[[currIndex], STRAND] = strand
+          final_table.at[[currIndex], SEQ] = contig
           # increment counter
 
           loop_var = loop_var + 1
@@ -325,18 +545,16 @@ def isKnownTx(qchr, qpos, listofRegions):
 def getReadsatjunction(region, contig, fastq):
   r1_count = 0
   # grep region1 from fastq
-  print("\n Now checking for this sequence in fastq \n")
-  print(region)
   # @Bryce Should be changed to a tmp location
-  tmp_file = sys.argv[5] + "/r1counts.txt"
-  status = call("zcat " + fastq + " | grep " + region + " | wc -l > " + tmp_file, shell=True)
+  tmp_file = out_path + "/r1counts.txt"
+  status = call("zcat " + fastq + " | grep " + region + " > " + tmp_file, shell=True)
   if status < 0:
     print("### Cat Command Failed....now exiting!!")
     sys.exit(-1)
   else:
     with open(tmp_file, "r") as myfile:
       data = myfile.readlines()
-      r1_count = int(data[0])
+      r1_count = len(data)
   return r1_count
 
 
@@ -348,15 +566,13 @@ def getReadsatjunction(region, contig, fastq):
 def getAllMappedReadsatJunction(region, contig, readsam):
   r1_count = 0
   r2_count = 0
-  print("\n Now checking for this sequence in fastq \n" + contig)
-  print(region)
 
   region_rev = reverseComplement(region)
 
   # @Bryce Should be changed to a tmp location
-  tmp_file = sys.argv[5] + "/r1counts.txt"
+  tmp_file = out_path + "/r1counts.txt"
   status = call(
-    "egrep \"" + region + "|" + region_rev + "\" " + readsam + " | awk '{ print $1 }' | sort | uniq | wc -l  > " + tmp_file,
+    "egrep \"" + region + "|" + region_rev + "\" " + readsam + " | awk '{ print $1 }' | sort | uniq  > " + tmp_file,
     shell=True)
   if status < 0:
     print("### Cat Command Failed....now exiting!!")
@@ -364,8 +580,297 @@ def getAllMappedReadsatJunction(region, contig, readsam):
   else:
     with open(tmp_file, "r") as myfile:
       data = myfile.readlines()
-      r1_count = int(data[0])
+      r1_count = len(data)
   return r1_count
+
+
+##########################################
+#
+#  Check for individual gene calls
+#
+##########################################
+def check_gene_call(table, gene, nreads, min_con_len):
+  # initialize return vars
+  found_flag = 0
+  count_gene = 0
+  call = 0
+  contig_length = 0
+  ig_breakpoint = 0
+  breakpoint = 0
+  source = ''
+  gene_overlap = 0
+  gene_cigar = ''
+  ig_cigar = ''
+  ig_overlap = 0
+  der_gene = ''
+  der_ig = ''
+  pos_strand_der = 0
+  neg_strand_der = 0
+  pos_strand_list = (0, 0, 0, 0, 0, 0, 0, 0, 0)
+  neg_strand_list = (0, 0, 0, 0, 0, 0, 0, 0, 0)
+  res_gene = ()
+
+  # filter Tx by window and contig overlap
+  # Case 1 : Gene_1 is Target gene
+  table_by_gene = table[(table.Gene_1 == gene)]
+  table_by_gene = table_by_gene[(table_by_gene.IgTxCalled == 1)]
+  # print(table_by_gene)
+  for row in table_by_gene.index:
+    print("In Table")
+    print(table_by_gene.at[row, 'name'])
+
+    if (table_by_gene.at[row, 'fragments_at_junc_1'] >= table_by_gene.at[row, 'fragments_at_junc_2']):
+      count_gene = table_by_gene.at[row, 'fragments_at_junc_1']
+    else:
+      count_gene = table_by_gene.at[row, 'fragments_at_junc_2']
+
+    contig_length = table_by_gene.at[row, 'Contig_length_1']
+
+    if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
+      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
+        ig_breakpoint = str(table_by_gene.at[row, 'pos_2_start']) + ";" + str(table_by_gene.at[row, 'pos_3_start'])
+      else:
+        ig_breakpoint = table_by_gene.at[row, 'pos_2_start']
+    else:
+      ig_breakpoint = table_by_gene.at[row, 'pos_2_start']
+
+    if (('cigar_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
+      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
+        ig_cigar = table_by_gene.at[row, 'cigar_2'] + ";" + table_by_gene.at[row, 'cigar_3']
+      else:
+        ig_cigar = table_by_gene.at[row, 'cigar_2']
+    else:
+      ig_cigar = table_by_gene.at[row, 'cigar_2']
+
+    breakpoint = table_by_gene.at[row, 'pos_1_start']
+    gene_cigar = table_by_gene.at[row, 'cigar_1']
+
+    gene_tmp = table_by_gene.at[row, 'Gene_2']
+    source = ig_dict[gene_tmp]
+    gene_overlap = table_by_gene.at[row, 'aligned_length_1']
+    ig_overlap = table_by_gene.at[row, 'aligned_length_2']
+
+    if (table_by_gene.at[row, 'aligned_length_1'] >= min_con_len and table_by_gene.at[
+      row, 'aligned_length_2'] >= min_con_len and count_gene >= nreads):
+      call = 1
+      print("Tx pass")
+      if (table_by_gene.at[row, 'strand_1'] == 'Pos'):
+        print("Found pos")
+        pos_strand_der = 1
+        pos_strand_list = (
+        pos_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        count_gene)
+      elif (table_by_gene.at[row, 'strand_1'] == 'Neg'):
+        neg_strand_der = 1
+        print("found neg")
+        neg_strand_list = (
+        neg_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        count_gene)
+
+  # Case:2 Gene 2 is Target Gene
+  # This is the case when IG is Gene 1 and Target Gene is gene2
+  if ('Gene_2' in table):
+    table_by_gene = table[(table.Gene_2 == gene)]
+    table_by_gene = table_by_gene[(table_by_gene.IgTxCalled == 1)]
+  else:
+    table_by_gene = pd.DataFrame()
+
+  # print(table_by_gene)
+  for row in table_by_gene.index:
+    print("In Table")
+    print(table_by_gene.at[row, 'name'])
+
+    if (table_by_gene.at[row, 'fragments_at_junc_2'] >= table_by_gene.at[row, 'fragments_at_junc_1']):
+      count_gene = table_by_gene.at[row, 'fragments_at_junc_2']
+    else:
+      count_gene = table_by_gene.at[row, 'fragments_at_junc_1']
+
+    contig_length = table_by_gene.at[row, 'Contig_length_2']
+
+    if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
+      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
+        ig_breakpoint = str(table_by_gene.at[row, 'pos_1_start']) + ";" + str(table_by_gene.at[row, 'pos_3_start'])
+      else:
+        ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+    else:
+      ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+
+    if (('cigar_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
+      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
+        ig_cigar = table_by_gene.at[row, 'cigar_1'] + ";" + table_by_gene.at[row, 'cigar_3']
+      else:
+        ig_cigar = table_by_gene.at[row, 'cigar_1']
+    else:
+      ig_cigar = table_by_gene.at[row, 'cigar_1']
+
+    breakpoint = table_by_gene.at[row, 'pos_2_start']
+    gene_cigar = table_by_gene.at[row, 'cigar_2']
+
+    gene_tmp = table_by_gene.at[row, 'Gene_1']
+    source = ig_dict[gene_tmp]
+    gene_overlap = table_by_gene.at[row, 'aligned_length_2']
+    ig_overlap = table_by_gene.at[row, 'aligned_length_1']
+
+    if (table_by_gene.at[row, 'aligned_length_2'] >= min_con_len and table_by_gene.at[
+      row, 'aligned_length_1'] >= min_con_len and count_gene >= nreads):
+      call = 1
+      print("Tx pass")
+      if (table_by_gene.at[row, 'strand_2'] == 'Pos'):
+        print("Found pos")
+        pos_strand_der = 1
+        pos_strand_list = (
+        pos_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        count_gene)
+      elif (table_by_gene.at[row, 'strand_2'] == 'Neg'):
+        neg_strand_der = 1
+        print("found neg")
+        neg_strand_list = (
+        neg_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        count_gene)
+  ########
+  # Case 3: Gene_3 is target gene  when 1 and 2 match to IG and 3 is the gene. Case of IG multialignment
+  ########
+  if ('Gene_3' in table):
+    table_by_gene = table[(table.Gene_3 == gene)]
+    table_by_gene = table_by_gene[(table_by_gene.IgTxCalled == 1)]
+  else:
+    table_by_gene = pd.DataFrame()
+
+  # print(table_by_gene)
+  for row in table_by_gene.index:
+    print("In Table")
+    print(table_by_gene.at[row, 'name'])
+
+    if (table_by_gene.at[row, 'fragments_at_junc_3'] >= table_by_gene.at[row, 'fragments_at_junc_1']):
+      count_gene = table_by_gene.at[row, 'fragments_at_junc_3']
+    else:
+      count_gene = table_by_gene.at[row, 'fragments_at_junc_1']
+
+    contig_length = table_by_gene.at[row, 'Contig_length_3']
+
+    if (('Gene_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
+      if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
+        ig_breakpoint = str(table_by_gene.at[row, 'pos_1_start']) + ";" + str(table_by_gene.at[row, 'pos_2_start'])
+      else:
+        ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+    else:
+      ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+
+    if (('cigar_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
+      if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
+        ig_cigar = table_by_gene.at[row, 'cigar_1'] + ";" + table_by_gene.at[row, 'cigar_2']
+      else:
+        ig_cigar = table_by_gene.at[row, 'cigar_1']
+    else:
+      ig_cigar = table_by_gene.at[row, 'cigar_1']
+
+    breakpoint = table_by_gene.at[row, 'pos_3_start']
+    gene_cigar = table_by_gene.at[row, 'cigar_3']
+
+    gene_tmp = table_by_gene.at[row, 'Gene_1']
+    source = ig_dict[gene_tmp]
+    gene_overlap = table_by_gene.at[row, 'aligned_length_3']
+    ig_overlap = table_by_gene.at[row, 'aligned_length_1']
+
+    if (table_by_gene.at[row, 'aligned_length_3'] >= min_con_len and table_by_gene.at[
+      row, 'aligned_length_1'] >= min_con_len and count_gene >= nreads):
+      call = 1
+      print("Tx pass")
+      if (table_by_gene.at[row, 'strand_3'] == 'Pos'):
+        print("Found pos")
+        pos_strand_der = 1
+        pos_strand_list = (
+        pos_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        count_gene)
+      elif (table_by_gene.at[row, 'strand_3'] == 'Neg'):
+        neg_strand_der = 1
+        print("found neg")
+        neg_strand_list = (
+        neg_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        count_gene)
+
+  print("call = " + str(call))
+  # Collapse into one list
+  if (call == 1):
+    print(pos_strand_list)
+    print(neg_strand_list)
+    res_gene = [call, source]
+    for x in pos_strand_list:
+      res_gene.append(x)
+    for x in neg_strand_list:
+      res_gene.append(x)
+    found_flag = 1
+  # check for Gene 2
+  if (found_flag == 0):
+    res_gene = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  print("res gene")
+  print(res_gene)
+
+  full_list = []
+  for t_elem in res_gene:
+    full_list.append(t_elem)
+  return full_list
+
+
+##########################################
+# Generate summary table
+##########################################
+def gen_summ_table(filt_table, results_table, nreads, min_con_len, sample):
+  # prepare final table
+  list_of_genes = ['NSD2', 'CCND3', 'MYC', 'MAFA', 'CCND1', 'CCND2', 'MAF', 'MAFB']
+  list_of_features = ['Call', 'Ig_Loci', 'PosStrand_Derivative', 'PosStrand_Contig_Length',
+                      'PosStrand_Target_Match', 'PosStrand_Target_Match_Cigars', 'PosStrand_Ig_Match',
+                      'PosStrand_Ig_Match_Cigars', 'PosStrand_Target_Breakpoint', 'PosStrand_Ig_Breakpoint',
+                      'PosStrand_Junction_Fragments', 'NegStrand_Derivative',
+                      'NegStrand_Contig_Length', 'NegStrand_Target_Match', 'NegStrand_Target_Match_Cigars',
+                      'NegStrand_Ig_Match', 'NegStrand_Ig_Match_Cigars',
+                      'NegStrand_Target_Breakpoint', 'NegStrand_Ig_Breakpoint', 'NegStrand_Junction_Fragments']
+
+  column_names = ['Specimen']
+  # Make list of column_names:
+  for gene in list_of_genes:
+    for feature in list_of_features:
+      header = '_'.join([gene, feature])
+      column_names.append(header)
+
+  # check for NSD2
+  nsd2_call = check_gene_call(filt_table, "NSD2", nreads, min_con_len)
+  ccnd3_call = check_gene_call(filt_table, "CCND3", nreads, min_con_len)
+  myc_call = check_gene_call(filt_table, "MYC", nreads, min_con_len)
+  mafa_call = check_gene_call(filt_table, "MAFA", nreads, min_con_len)
+  ccnd1_call = check_gene_call(filt_table, "CCND1", nreads, min_con_len)
+  ccnd2_call = check_gene_call(filt_table, "CCND2", nreads, min_con_len)
+  maf_call = check_gene_call(filt_table, "MAF", nreads, min_con_len)
+  mafb_call = check_gene_call(filt_table, "MAFB", nreads, min_con_len)
+
+  results = ((sample,), nsd2_call, ccnd3_call, myc_call, mafa_call, ccnd1_call, ccnd2_call, maf_call, mafb_call)
+
+  print(mafb_call)
+  con_results = []
+  con_results.append(sample)
+  # con_results=con_results+nsd2_call+ccnd3_call+myc_call+mafa_call+ccnd1_call+ccnd2_call+maf_call+mafb_call
+  for x in nsd2_call:
+    con_results.append(x)  # ,ignore_index=True,verify_integrity=False)
+  for x in ccnd3_call:
+    con_results.append(x)
+  for x in myc_call:
+    con_results.append(x)
+  for x in mafa_call:
+    con_results.append(x)
+  for x in ccnd1_call:
+    con_results.append(x)
+  for x in ccnd2_call:
+    con_results.append(x)
+  for x in maf_call:
+    con_results.append(x)
+  for x in mafb_call:
+    con_results.append(x)
+
+  print("full list")
+  print(con_results)
+  translocationsTable = pd.DataFrame(columns=column_names)
+  translocationsTable.loc[len(translocationsTable)] = con_results
+  return translocationsTable
 
 
 ###############################################
@@ -377,47 +882,36 @@ def getFragsatJunction_samtools(location, contig, bam):
   r1_count = 0
   r2_count = 0
   # grep region1 from fastq
-  print("\n Now checking for this sequence in fastq \n")
   # @Bryce Should be changed to a tmp location
-  tmp_file = sys.argv[5] + "/r1counts.txt"
-  # "zcat " + fastq + " | grep " + region + " > " + tmp_file, shell=True
+  tmp_file = out_path + "/r1counts.txt"
 
-  # region_rev = reverseComplement(region)
-
-  status = call(
-    "samtools view " + bam + " | grep " + location + " | awk '{ print $1 }' | sort | uniq | wc -l > " + tmp_file,
-    shell=True)
+  print("samtools view " + bam + " " + location + " | awk '{ print $1 }' | sort | uniq | wc -l ")
+  status = call("samtools view " + bam + " " + location + " | awk '{ print $1 }' | sort | uniq  > " + tmp_file,
+                shell=True)
   if status < 0:
     print("### Cat Command Failed....now exiting!!")
     sys.exit(-1)
   else:
     with open(tmp_file, "r") as myfile:
       data = myfile.readlines()
-      r1_count = int(data[0])
+      r1_count = len(data)
   return r1_count
 
 
+###################################################
+#
 # END FUNCTION DEFINITIONS
-
+#
+###################################################
 print("Importing Data")
 
 print("Reading SAM File")
 
 # Create python object for the SAM file
-assm_sam_file = sys.argv[1]
-
-# get fastq
-fastq_str = sys.argv[2]
-fastq_path = fastq_str
-reads_sam_file_path = sys.argv[5]
-fastq_list = []  # fastq_str.split(',')
 
 # get Ig/parter bed file
 ig_headers = ['chr', 'start', 'stop', 'name']
-igregions = pd.read_csv(sys.argv[4], sep="\t", header=None, names=ig_headers)
-
-# get outpath
-out_path = sys.argv[5]
+igregions = pd.read_csv(bed_file, sep="\t", header=None, names=ig_headers)
 
 results_full_table = pd.DataFrame()
 index_sam = 0
@@ -446,4 +940,10 @@ if not results_table.empty:
 
   if not filt_table.empty:
     filt_table.to_csv(out_file_filt, sep="\t", index=False, na_rep=0, float_format='%.0f')
+
+# generate summary table
+summ_table = gen_summ_table(filt_table, results_table, min_reads, window_size, sample_name)
+print(summ_table)
+out_file_summ = out_path + "/DEX_IgTx_GA_Summary.txt"
+summ_table.to_csv(out_file_summ, sep="\t", index=False, na_rep=0, float_format='%.0f')
 print("Test Done")

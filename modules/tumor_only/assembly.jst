@@ -159,10 +159,13 @@
     EOF
 
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
-      {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
-      {{ temp_dir }} \
-      180 \
-      {{ temp_dir }}/pairoscopeRegions.bed \
-      {{ results_dir }}
+      -i {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
+      -f {{ temp_dir }} \
+      -c 180 \
+      -p {{ temp_dir }}/pairoscopeRegions.bed \
+      -o {{ results_dir }} \
+      -r 2 \
+      -s {{ pair.tumor.rgsm }} \
+      -b {{ temp_dir }}
 
 {% endmacro %}
