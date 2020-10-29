@@ -42,7 +42,6 @@ parser.add_argument('-c', '--call_requirement',
                     help='Required number of discordant read pairs meeting requirements to define a call (recommend >= 3)')
 
 args = parser.parse_args()
-print("args: " + str(args))
 
 #################################################################
 # Capture Run Parameters
@@ -85,93 +84,33 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
     # and target can switch columns
     if order == "standard":
         print('1 - In Standard Loop')
-        if gene == 'MYC':
+        if gene != 'MYC':
             print('1 - In MYC Sub-loop')
-            print("dreads.PositionA is: " + str(dreads.PositionA))
+            gene_igh = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr14")
+                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
+
+            count_gene_igh = len(gene_igh.index)
+
+            gene_igk = dreads[(dreads.Specimen == sample) & (dreads.ChrA == "chr2") & (dreads.ChrB == gene_chr)
+                              & (dreads.PositionB >= window_start) & (dreads.PositionB <= window_end)]
+            count_gene_igk = len(gene_igk.index)
+            gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
+                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
+            count_gene_igl = len(gene_igl.index)
+        else:
+            print('1 - In Non-MYC Sub-loop')
             gene_igh = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr14")
                               & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)
                               & ((dreads.PositionA <= 128559215) | (dreads.PositionA >= 128559389))]
             count_gene_igh = len(gene_igh.index)
-            print(str(gene_igh.columns))
-            print(str(gene_igh))
             gene_igk = dreads[(dreads.Specimen == sample) & (dreads.ChrA == "chr2") & (dreads.ChrB == gene_chr)
                               & (dreads.PositionB >= window_start) & (dreads.PositionB <= window_end)
                               & ((dreads.PositionB <= 128559215) | (dreads.PositionB >= 128559389))]
             count_gene_igk = len(gene_igk.index)
-            print(str(gene_igk.columns))
-            print(str(gene_igk))
             gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
                               & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)
                               & ((dreads.PositionA <= 128559215) | (dreads.PositionA >= 128559389))]
             count_gene_igl = len(gene_igl.index)
-            print(str(gene_igl.columns))
-            print(str(gene_igl))
-        elif gene == 'CCND1':
-            print('1 - In CCND1 Sub-loop')
-            gene_igh = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr14")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
-            count_gene_igh = len(gene_igh.index)
-            gene_igk = dreads[(dreads.Specimen == sample) & (dreads.ChrA == "chr2") & (dreads.ChrB == gene_chr)
-                              & (dreads.PositionB >= window_start) & (dreads.PositionB <= window_end)]
-            count_gene_igk = len(gene_igk.index)
-            gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
-            count_gene_igl = len(gene_igl.index)
-        elif gene == 'NSD2':
-            print('1 - In NSD2 Sub-loop')
-            gene_igh = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr14")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
-            count_gene_igh = len(gene_igh.index)
-            print(str(gene_igh.columns))
-            print(str(gene_igh))
-            gene_igk = dreads[(dreads.Specimen == sample) & (dreads.ChrA == "chr2") & (dreads.ChrB == gene_chr)
-                              & (dreads.PositionB >= window_start) & (dreads.PositionB <= window_end)]
-            count_gene_igk = len(gene_igk.index)
-            print(str(gene_igk.columns))
-            print(str(gene_igk))
-            gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
-            count_gene_igl = len(gene_igl.index)
-            print(str(gene_igl.columns))
-            print(str(gene_igl))
-        elif gene == 'MAFA':
-            print('1 - In MAFA Sub-loop')
-            print("dreads.PositionA is: " + str(dreads.PositionA))
-            gene_igh = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr14")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)
-                              & ((dreads.PositionA <= 143844522) | (dreads.PositionA >= 143844542))]
-            print(str(gene_igh.columns))
-            print(str(gene_igh))
-            count_gene_igh = len(gene_igh.index)
-            gene_igk = dreads[(dreads.Specimen == sample) & (dreads.ChrA == "chr2") & (dreads.ChrB == gene_chr)
-                              & (dreads.PositionB >= window_start) & (dreads.PositionB <= window_end)
-                              & ((dreads.PositionA <= 143844522) | (dreads.PositionA >= 143844542))]
-            count_gene_igk = len(gene_igk.index)
-            print(str(gene_igk.columns))
-            print(str(gene_igk))
-            gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)
-                              & ((dreads.PositionA <= 143844522) | (dreads.PositionA >= 143844542))]
-            count_gene_igl = len(gene_igl.index)
-            print(str(gene_igl.columns))
-            print(str(gene_igl))
-            print("\nCOUNTS:")
-            print(count_gene_igh)
-            print(count_gene_igk)
-            print(count_gene_igl)
-            print('1 - In MAFA Sub-loop --------END OF MAFA ELIF STATEMENT')
-        else:
-            print('1 - In Else Non-CCND1- Non-MAFA-and  Non-MYC Sub-loop')
-            gene_igh = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr14")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
-            count_gene_igh = len(gene_igh.index)
-            gene_igk = dreads[(dreads.Specimen == sample) & (dreads.ChrA == "chr2") & (dreads.ChrB == gene_chr)
-                              & (dreads.PositionB >= window_start) & (dreads.PositionB <= window_end)]
-            count_gene_igk = len(gene_igk.index)
-            gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
-                              & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
-            count_gene_igl = len(gene_igl.index)
-        print("\nCOUNTS:")
         print(count_gene_igh)
         print(count_gene_igk)
         print(count_gene_igl)
@@ -207,7 +146,7 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
             # What if two but not all three have the same number of counts?
             print('2 - Argh - WHAT CAUSES THiS TO HAPPEN')
             if count_gene_igh < 3 and count_gene_igk < 3 and count_gene_igl < 3:
-                print('DEFAULTiNG TO iGH COUNTS BECAUSE ALL COUNTS LESS THAN 3')
+                print('DEFAULTiNG TO iGH COUNTS BECAUSE ALL LESS THAN 3')
                 table_gene = gene_igh
                 count_gene = len(table_gene.index)
                 gene_ighsource = 1
@@ -216,11 +155,6 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
                 table_gene = gene_igh
                 count_gene = len(table_gene.index)
                 gene_ighsource = 1
-            # else:
-            #     print('If we reach here this is because we got a CASE not dealt with before.')
-            #     table_gene = gene_igh
-            #     count_gene = len(table_gene.index)
-            #     gene_ighsource = 0
 
     elif order == "reverse":
         print('1 - In Reverse Loop')
@@ -233,7 +167,7 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
         gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
                           & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)]
         count_gene_igl = len(gene_igl.index)
-        print("\nCOUNTS:")
+
         print(count_gene_igh)
         print(count_gene_igk)
         print(count_gene_igl)
@@ -294,17 +228,6 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
                 table_gene = gene_igh[cols]
                 count_gene = len(table_gene.index)
                 gene_ighsource = 1
-            # else:
-            #     print('If we reach HERE this is because we got a CASE not dealt with before.')
-            #     # Update the column headers
-            #     new_cols = ['Speciment', 'ChrB', 'PositionB', 'ChrA', 'PositionA']
-            #     gene_igh.columns = new_cols
-            #     # Create new GENE table with the relabelled columns in the expected order
-            #     cols = ['Speciment', 'ChrA', 'PositionA', 'ChrB', 'PositionB']
-            #     table_gene = gene_igh[cols]
-            #     count_gene = len(table_gene.index)
-            #     gene_ighsource = 1
-
     # Do Stuff
     if count_gene > 1:
         # Sort the table by PositionA
@@ -446,9 +369,9 @@ jobs.append(job)
 
 results = []
 for job in jobs:
-    print("job: " + str(job))
+    print(job)
     result = job.get()
-    print("result: " + str(result))
+    print(result)
     results.append(result)
 
 
