@@ -89,7 +89,7 @@
         --left $leftfq \
         --right $rightfq \
         --run_as_paired \
-        --output {{ temp_dir }}/${chrRegion}/${cluster}/trinity \
+        --output {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity \
         --trimmomatic \
         --no_normalize_reads \
         --CPU 4 \
@@ -99,36 +99,36 @@
         assemErrors=$(expr $assemErrors + 1)
         unset error
       else
-        ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
+        ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
 
-        sed -i "s/^>/>{{ pair.name }}_${chrRegion}_${cluster}:/g" {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
+        sed -i "s/^>/>{{ pair.name }}_${chrRegion}_${cluster}:/g" {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
 
         bwa mem \
           -t 4 \
-          -o {{ temp_dir }}/${chrRegion}/${cluster}/trinity/trinbwafile.sam \
+          -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/trinbwafile.sam \
           {{ constants.phoenix.bwa_index }} \
-          {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
+          {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
 
         samtools view \
           -@ 4 \
-          -b {{ temp_dir }}/${chrRegion}/${cluster}/trinity/trinbwafile.sam |\
+          -b {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/trinbwafile.sam |\
         samtools sort \
-          -o {{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
+          -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
 
-        samtools index -@ 4 {{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
+        samtools index -@ 4 {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
 
-        bwa index {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta
+        bwa index {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
         bwa mem \
           -t 4 \
-          -o {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadstoContigs.sam \
-          {{ temp_dir }}/${chrRegion}/${cluster}/trinity/Trinity.fasta \
+          -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam \
+          {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta \
           ${leftfq} ${rightfq}
 
         mkdir -p {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}
-        samtools view -b {{ temp_dir }}/${chrRegion}/${cluster}/trinity/ReadstoContigs.sam |\
-        samtools sort -o {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
+        samtools view -b {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam |\
+        samtools sort -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
 
-        assemBam+=("{{ temp_dir }}/${chrRegion}/${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
+        assemBam+=("{{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
       fi
       i=$(expr $i + 1)
     done
@@ -166,6 +166,6 @@
       -o {{ results_dir }} \
       -r 2 \
       -s {{ pair.name }} \
-      -b {{ results_dir }}
+      -b {{ temp_dir }}
 
 {% endmacro %}
