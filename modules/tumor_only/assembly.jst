@@ -126,8 +126,8 @@
 
         mkdir -p {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}
         samtools view -b {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam |\
-        samtools sort -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
-        samtools index {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
+        samtools sort -o {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
+        samtools index {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
 
         assemBam+=("{{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
       fi
@@ -167,6 +167,6 @@
       -o {{ results_dir }} \
       -r 2 \
       -s {{ pair.name }} \
-      -b {{ temp_dir }}
+      -b {{ results_dir }}
 
 {% endmacro %}
