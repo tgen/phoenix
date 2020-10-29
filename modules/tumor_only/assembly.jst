@@ -166,7 +166,7 @@
       -p {{ temp_dir }}/pairoscopeRegions.bed \
       -o {{ results_dir }} \
       -r 2 \
-      -s {{ pair.tumor.rgsm }} \
+      -s {{ pair.name }} \
       -b {{ temp_dir }}
 
 {% endmacro %}
