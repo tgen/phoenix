@@ -62,7 +62,11 @@
       echo $'Specimen\tChrA\tPositionA\tChrB\tPositionB' > {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt
     fi
 
+    {% if controlDataFiles is defined and sample.assayCode in toAssayCodes %}
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.pairoscope_mm_igtx_calling_tumor_only_script }} \
+    {% else %}
     python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.pairoscope_mm_igtx_calling_script }} \
+    {% endif %}
       --input_file {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt \
       --specimen {{ sample.rgsm }} \
       --output_file {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_calls.txt \
