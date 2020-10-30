@@ -45,6 +45,11 @@ parser.add_argument('-r', '--reads',
                     type=int,
                     metavar='INT',
                     help='Minimum fragments at junction')
+parser.add_argument('-w', '--window',
+                    default=25,
+                    type=int,
+                    metavar='INT',
+                    help='Window length in basepairs to check for fragments at junction ')
 parser.add_argument('-f', '--fastq_dir',
                     default='Path',
                     required=True,
@@ -67,6 +72,7 @@ args = parser.parse_args()
 # args to variables
 
 window_size = args.contig
+bp_win_at_junc = args.window
 min_reads = args.reads
 sample_name = args.specimen
 out_path = args.output_path
@@ -443,8 +449,8 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
         reads_sam = reads_sam_path + "/" + namesSplit[0] + "/" + namesSplit[0] + "_ReadstoContigs.bam"
 
         # extract 25mers left and right of contig
-        jright = juncbreak + 25
-        jleft = juncbreak - 25
+        jright = juncbreak + int(bp_win_at_junc)
+        jleft = juncbreak - int(bp_win_at_junc)
 
         # extract chromosome coordinates 25mers around contig
         location = contig_table_by_read.at[contig_row, 'name'] + ":" + str(jleft) + "-" + str(jright)
@@ -493,7 +499,7 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
           final_table.at[[currIndex], R2_C] = r2_count
           final_table.at[[currIndex], FRAG_C] = frag_count
           final_table.at[[currIndex], POS_START] = contig_table_by_read.at[contig_row, 'r1_pos']
-          final_table.at[[currIndex], POS_END] = contig_table_by_read.at[contig_row, 'r1_pos'] + mVal
+          final_table.at[[currIndex], POS_END] = contig_table_by_read.at[contig_row, 'r1_pos'] + juncbreak  # + mVal
           final_table.at[[currIndex], REV] = contig_table_by_read.at[contig_row, 'r1_is_reversed']
           final_table.at[[currIndex], CHR] = contig_table_by_read.at[contig_row, 'r1_chr']
           final_table.at[[currIndex], JUNC] = juncbreak
@@ -588,6 +594,65 @@ def getAllMappedReadsatJunction(region, contig, readsam):
 
 ##########################################
 #
+#
+#
+##########################################
+def get_genomic_bp(cigar, matchlen, orient, pos_start):
+  gen_bp = pos_start
+  # find location of match for region in Q
+  Mval = 0
+  Sval = 0
+  Hval = 0
+  Junc = 0
+  if (cigar != ''):
+    tmp_cigar = cigar
+    tmp_cigar = tmp_cigar.replace('H', 'M')
+    tmp_cigar = tmp_cigar.replace('S', 'M')
+    tmp_cigar = tmp_cigar.replace('I', 'M')
+    tmp_cigar = tmp_cigar.replace('D', 'M')
+
+    # if clipping is sbefore M  then Mval =Mval -length
+    sindex = cigar.find('S')
+    hindex = cigar.find('H')
+    mindex = cigar.find('M')
+    total_len = 0
+    # split
+    cigar_list = tmp_cigar.split('M')
+    for values in cigar_list:
+      if (values != '' and cigar.find(str(values) + 'M') != -1):
+        if (int(values) > Mval):
+          Mval = int(values)
+      # Generall only one S and/or H, keep first S or H
+      if (values != '' and cigar.find(str(values) + 'S') != -1 and Sval == 0):
+        Sval = int(values)
+      if (values != '' and cigar.find(str(values) + 'H') != -1 and Hval == 0):
+        Hval = int(values)
+    # if(values != '' and cigar.find(str(values)+'M') !=-1 and Hval ==0):
+    #      Mval = int(values)
+
+    # if clipping is sbefore M  then Mval =Mval -length
+    print("cigar=" + cigar)
+    sindex = cigar.find('S')
+    hindex = cigar.find('H')
+    mindex = cigar.find('M')
+    print(" h in " + str(hindex) + " m index " + str(mindex) + " s index" + str(sindex))
+    if (hindex < mindex and hindex != -1):  # Hard clipping first
+      print("h first")
+      gen_bp = pos_start
+    elif (sindex < mindex and sindex != -1):  # add soft clip region to np
+      gen_bp = pos_start  # + Sval
+      print(" s fiesr")
+    else:  # if(mindex < sindex and index < hindex):
+      gen_bp = pos_start + Mval
+      print(" m first=" + str(Mval))
+  # split
+  # count
+  # if H dont add
+  return gen_bp
+
+
+##########################################
+#
 #  Check for individual gene calls
 #
 ##########################################
@@ -628,12 +693,31 @@ def check_gene_call(table, gene, nreads, min_con_len):
 
     contig_length = table_by_gene.at[row, 'Contig_length_1']
 
+    if (table_by_gene.at[row, 'Contig_reversed2']):
+      ig_bp2_tmp = table_by_gene.at[row, 'pos_2_end']
+    else:
+      ig_bp2_tmp = table_by_gene.at[row, 'pos_2_start']
+
     if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
       if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        ig_breakpoint = str(int(table_by_gene.at[row, 'pos_2_start'])) + ";" + str(
-          int(table_by_gene.at[row, 'pos_3_start']))
+        # if(table_by_gene.at[row,'Contig_reversed3']):
+        #    ig_bp3_tmp = table_by_gene.at[row,'pos_3_end']
+        # else:
+        ig_breakpoint3 = get_genomic_bp(table_by_gene.at[row, 'cigar_3'], table_by_gene.at[row, 'aligned_length_3'],
+                                        table_by_gene.at[row, 'Contig_reversed3'], table_by_gene.at[row, 'pos_3_start'])
+        ig_breakpoint2 = get_genomic_bp(table_by_gene.at[row, 'cigar_2'], table_by_gene.at[row, 'aligned_length_2'],
+                                        table_by_gene.at[row, 'Contig_reversed2'], table_by_gene.at[row, 'pos_2_start'])
+        ig_breakpoint = str(int(ig_breakpoint2)) + ";" + str(int(ig_breakpoint3))
+        # ig_bp3_tmp = table_by_gene.at[row,'pos_3_start']
+        # ig_gene_cigar = table_by_gene.at[row,'cigar_3']
+        # matchlen = table_by_gene.at[row,'aligned_length_3']
+        # ig_breakpoint = get_genomic_bp(ig_gene_cigar, matchlen, table_by_gene.at[row,'Contig_reversed3'],ig_bp3_tmp)
+        # str(int(ig_bp2_tmp))+";"+str(int(ig_bp3_tmp))
       else:
-        ig_breakpoint = table_by_gene.at[row, 'pos_2_start']
+        ig_bp2_tmp = table_by_gene.at[row, 'pos_2_start']
+        ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_2'], table_by_gene.at[row, 'aligned_length_2'],
+                                       table_by_gene.at[row, 'Contig_reversed2'], ig_bp2_tmp)
+        # ig_breakpoint = table_by_gene.at[row,'pos_2_start']
     else:
       ig_breakpoint = table_by_gene.at[row, 'pos_2_start']
 
@@ -645,8 +729,10 @@ def check_gene_call(table, gene, nreads, min_con_len):
     else:
       ig_cigar = table_by_gene.at[row, 'cigar_2']
 
-    breakpoint = table_by_gene.at[row, 'pos_1_start']
+    pos_start = table_by_gene.at[row, 'pos_1_start']
     gene_cigar = table_by_gene.at[row, 'cigar_1']
+    matchlen = table_by_gene.at[row, 'aligned_length_1']
+    breakpoint = get_genomic_bp(gene_cigar, matchlen, table_by_gene.at[row, 'Contig_reversed1'], pos_start)
 
     gene_tmp = table_by_gene.at[row, 'Gene_2']
     source = ig_dict[gene_tmp]
@@ -690,14 +776,29 @@ def check_gene_call(table, gene, nreads, min_con_len):
 
     contig_length = table_by_gene.at[row, 'Contig_length_2']
 
-    if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
-      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        ig_breakpoint = str(int(table_by_gene.at[row, 'pos_1_start'])) + ";" + str(
-          int(table_by_gene.at[row, 'pos_3_start']))
-      else:
-        ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+    if (table_by_gene.at[row, 'Contig_reversed1']):
+      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_start'] + table_by_gene.at[row, 'aligned_length_1']
     else:
-      ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_start'] + table_by_gene.at[row, 'aligned_length_1']
+
+    # this case  is highly unlikely as bam is sorted by posn.
+    if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
+
+      ig_bp3_tmp = table_by_gene.at[row, 'pos_3_start']
+
+      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
+        ig_bp3_tmp = table_by_gene.at[row, 'pos_3_start']
+        ig_breakpoint1 = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
+                                        table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
+        ig_breakpoint3 = get_genomic_bp(table_by_gene.at[row, 'cigar_3'], table_by_gene.at[row, 'aligned_length_3'],
+                                        table_by_gene.at[row, 'Contig_reversed3'], ig_bp3_tmp)
+        ig_breakpoint = str(int(ig_breakpoint1)) + ";" + str(int(ig_breakpoint3))
+      else:
+        ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
+                                       table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
+    else:
+      ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
+                                     table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
 
     if (('cigar_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
       if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
@@ -707,8 +808,15 @@ def check_gene_call(table, gene, nreads, min_con_len):
     else:
       ig_cigar = table_by_gene.at[row, 'cigar_1']
 
-    breakpoint = table_by_gene.at[row, 'pos_2_start']
+    # if(table_by_gene.at[row,'Contig_reversed2']):
+    #    breakpoint = table_by_gene.at[row,'pos_2_end'] + table_by_gene.at[row,'aligned_length_2']
+    # else:
+    #    breakpoint = table_by_gene.at[row,'pos_2_start']  + table_by_gene.at[row,'aligned_length_2']
+
     gene_cigar = table_by_gene.at[row, 'cigar_2']
+    pos_start = table_by_gene.at[row, 'pos_2_start']
+    matchlen = table_by_gene.at[row, 'aligned_length_2']
+    breakpoint = get_genomic_bp(gene_cigar, matchlen, table_by_gene.at[row, 'Contig_reversed2'], pos_start)
 
     gene_tmp = table_by_gene.at[row, 'Gene_1']
     source = ig_dict[gene_tmp]
@@ -752,14 +860,33 @@ def check_gene_call(table, gene, nreads, min_con_len):
 
     contig_length = table_by_gene.at[row, 'Contig_length_3']
 
-    if (('Gene_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
-      if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
-        ig_breakpoint = str(int(table_by_gene.at[row, 'pos_1_start'])) + ";" + str(
-          int(table_by_gene.at[row, 'pos_2_start']))
-      else:
-        ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+    if (table_by_gene.at[row, 'Contig_reversed1']):
+      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_end']
     else:
-      ig_breakpoint = table_by_gene.at[row, 'pos_1_start']
+      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_start']
+
+    if (('Gene_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
+      if (table_by_gene.at[row, 'Contig_reversed2']):
+        ig_bp2_tmp = table_by_gene.at[row, 'pos_2_end']
+      else:
+        ig_bp2_tmp = table_by_gene.at[row, 'pos_2_start']
+
+      if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
+        ig_breakpoint1 = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
+                                        table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
+        ig_breakpoint2 = get_genomic_bp(table_by_gene.at[row, 'cigar_2'], table_by_gene.at[row, 'aligned_length_2'],
+                                        table_by_gene.at[row, 'Contig_reversed2'], table_by_gene.at[row, 'pos_2_start'])
+        ig_breakpoint = str(int(ig_breakpoint1)) + ";" + str(int(ig_breakpoint2))
+
+      # ig_breakpoint = str(int(ig_bp1_tmp))+";"+str(int(ig_bp2_tmp))  # str(int(table_by_gene.at[row,'pos_1_start']))+";"+str(int(table_by_gene.at[row,'pos_2_start']))
+      else:
+        ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
+                                       table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
+        # ig_breakpoint =ig_bp1_tmp  #table_by_gene.at[row,'pos_1_start']
+    else:
+      ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
+                                     table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
+      # ig_breakpoint = table_by_gene.at[row,'pos_1_start']
 
     if (('cigar_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
       if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
@@ -769,8 +896,15 @@ def check_gene_call(table, gene, nreads, min_con_len):
     else:
       ig_cigar = table_by_gene.at[row, 'cigar_1']
 
-    breakpoint = table_by_gene.at[row, 'pos_3_start']
+    # if(table_by_gene.at[row,'Contig_reversed3']):
+    #     breakpoint = table_by_gene.at[row,'pos_3_start'] + table_by_gene.at[row,'aligned_length_3']
+    # else:
+    #    breakpoint = table_by_gene.at[row,'pos_3_start'] +table_by_gene.at[row,'aligned_length_3']
+
     gene_cigar = table_by_gene.at[row, 'cigar_3']
+    pos_start = table_by_gene.at[row, 'pos_3_start']
+    matchlen = table_by_gene.at[row, 'aligned_length_3']
+    breakpoint = get_genomic_bp(gene_cigar, matchlen, table_by_gene.at[row, 'Contig_reversed3'], pos_start)
 
     gene_tmp = table_by_gene.at[row, 'Gene_1']
     source = ig_dict[gene_tmp]

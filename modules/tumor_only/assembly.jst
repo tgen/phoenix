@@ -160,13 +160,14 @@
     EOF
 
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
-      -i {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
-      -f {{ temp_dir }} \
-      -c 180 \
-      -p {{ temp_dir }}/pairoscopeRegions.bed \
-      -o {{ results_dir }} \
-      -r 2 \
-      -s {{ pair.name }} \
-      -b {{ results_dir }}
+      --input_bam {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
+      --fastq_dir {{ temp_dir }} \
+      --contig 125 \
+      --reads 3 \
+      --window 25 \
+      --pairoscope_bed_file {{ temp_dir }}/pairoscopeRegions.bed \
+      --output_path {{ results_dir }} \
+      --specimen {{ pair.name }} \
+      --bam_path {{ results_dir }}
 
 {% endmacro %}
