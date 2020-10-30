@@ -28,7 +28,7 @@ $ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 ## Script Source Locations
 [addRC_to_Delly_VCF_f4d178e.py](https://github.com/tgen/jetstream_resources/commit/f4d178e2b8982ff49025d42cb7c18d7b12053f42)  
 [annotSeg_8820499.pl](https://github.com/tgen/jetstream_resources/commit/8820499e113a387fee98044112951fa534ad6f8e)  
-[Process_Assembled_BAM_e75772a](https://github.com/tgen/jetstream_resources/commit/e75772a1e8b4e25e7e426ba3bc6c357083409a87)
+[Process_Assembled_BAM_34437bb.py](https://github.com/tgen/jetstream_resources/commit/34437bb90a67070d4a9c33a68891ba26ac449ef4)  
 [manta_prepare_sv_vcf_ba6879d.py](https://github.com/tgen/jetstream_resources/commit/ba6879d05fad13b8e6c7aecd86498bc5c8e1b76e)  
 [manta_sv_annotation_parallel_8820499.py](https://github.com/tgen/jetstream_resources/commit/8820499e113a387fee98044112951fa534ad6f8e)  
 [mm_igtx_pairoscope_calling_b38_f3010c3.py](https://github.com/tgen/mm_IgTx_Calling/commit/f3010c358970f4c25cefddc824636f60a19842e1)  

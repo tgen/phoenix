@@ -400,7 +400,7 @@ constants:
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
     plotSamStats_Rscript: summarize_samstats_8c45d63.R
-    process_assembled_bam: Process_Assembled_BAM_e75772a.py
+    process_assembled_bam: Process_Assembled_BAM_34437bb.py
     stats2json: samStats2json_b3854a1.py
     stats2lims: uploadStats2Lims_98319ea.py
     annotSeg_script: annotSeg_8820499.pl

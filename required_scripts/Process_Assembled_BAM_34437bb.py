@@ -379,6 +379,7 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
     # if contigs aligns to multiple locations
     count = len(contig_table_by_read.index)
     if (count > 1):  # only need Txs
+      print("In test loop " + str(count))
       # initialize vars for loop
       loop_var = 1
       # track mininum mval
@@ -387,6 +388,8 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
       IG_found = ""
       Gene_found = ""
       strand = ""
+      gene_len = 0
+      IG_len = 0
       for contig_row in contig_table_by_read.index:
         contig_chr = contig_table_by_read.at[contig_row, 'r1_chr']
         contig_name = contig_table_by_read.at[contig_row, 'name']
@@ -414,6 +417,12 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
         juncbreak = get_junctionBreakNewMPos(contig_table_by_read.at[contig_row, 'r1_cigar'])
         if (mVal <= min_mVal):
           min_mVal = mVal
+
+        # fine IG and Gene length
+        if (Gene_found == mygene and Gene_found != ""):
+          gene_len = mVal
+        if (IG_found == mygene and IG_found != ""):
+          IG_len = mVal
 
         # find longest seq for contig from bam to address  hard clipping
         contig_len = get_contigLength(contig_table_by_read.at[contig_row, 'r1_cigar'])
@@ -488,6 +497,7 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
         if (loop_var == 1):
           final_table.at[[currIndex], SEQ] = contig
 
+        print("IG_found =" + IG_found + " and Gene_found " + Gene_found)
         # if( mygene !=''):
         if (mVal >= window_size and mygene != ''):
           final_table.at[[currIndex], CIGAR] = contig_table_by_read.at[contig_row, 'r1_cigar']
@@ -507,7 +517,8 @@ def check_contigs(contig_table, fastq_path, reads_sam_path, igregions, window_si
           # increment counter
 
           loop_var = loop_var + 1
-          if (count > 1 and IG_found != "" and Gene_found != ""):
+          if (count > 1 and IG_found != "" and Gene_found != "" and gene_len > window_size and IG_len > window_size):
+            print("count " + str(count) + " ig len " + str(IG_len) + " gene len " + str(gene_len))
             final_table.at[[currIndex], 'IgTxCalled'] = 1
   return final_table
 
