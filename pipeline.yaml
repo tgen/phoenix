@@ -375,18 +375,16 @@ constants:
     bowtie2_index_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bowtie2_2.3.5.1
     bowtie2_index: GRCh38tgen_decoy
     bowtie2_chip_index: GRCh38tgen_decoy_Ecoli
-    dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
+    dbsnp_v154: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b154/dbSNP_b154_hg38tgen.bcf
     gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
     gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
     gnomad_exome_v2_1_1_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
     gnomad_genome_v3_0_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
     gnomad_exome_v2_1_1_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
     gnomad_genome_v3_0_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
-    cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
-    cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
     cosmic_coding_v92: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v92/CosmicCodingMuts_v92_hg38tgen.bcf
     cosmic_noncoding_v92: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v92/CosmicNonCodingMuts_v92_hg38tgen.bcf
-    clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
+    clinvar_20201020: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20201020/clinvar_20201020_hg38tgen.bcf
     topmed_freeze8: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/topmed/merged.BRAVO_TOPMed_Freeze_8.bcf
     bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
     black_list: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz

@@ -38,8 +38,8 @@
     {# annotate with dbsnp #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.dbsnp_v152 }}" \
-      --mark-sites DBSNPv152 \
+      --annotations "{{ constants.phoenix.dbsnp_v154 }}" \
+      --mark-sites DBSNPv154 \
       --columns ID \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
@@ -57,6 +57,7 @@
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_exome_v2_1_1_liftover }}" \
       --mark-sites GNOMAD_EXOME \
+      --columns GNOMAD_EXOME_AC:=AC,GNOMAD_EXOME_AN:=AN,GNOMAD_EXOME_AF:=AF,GNOMAD_EXOME_n_alt_alleles:=n_alt_alleles \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
@@ -73,6 +74,7 @@
       --threads 4 \
       --annotations "{{ constants.phoenix.gnomad_genome_v3_0 }}" \
       --mark-sites GNOMAD_GENOME \
+      --columns GNOMAD_GENOME_AC:=AC,GNOMAD_GENOME_AN:=AN,GNOMAD_GENOME_AF:=AF,GNOMAD_GENOME_n_alt_alleles:=n_alt_alleles \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
@@ -87,8 +89,9 @@
     {# annotate with cosmic #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.cosmic_coding_v90 }}" \
+      --annotations "{{ constants.phoenix.cosmic_coding_v92 }}" \
       --mark-sites COSMIC \
+      --columns COSMIC_CNT:=CNT,COSMIC_SNP:=SNP \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
@@ -103,8 +106,9 @@
     {# annotate with cosmic_nc #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.cosmic_noncoding_v90 }}" \
+      --annotations "{{ constants.phoenix.cosmic_noncoding_v92 }}" \
       --mark-sites COSMIC_NC \
+      --columns COSMIC_NC_CNT:=CNT,COSMIC_NC_SNP:=SNP \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
@@ -119,8 +123,25 @@
     {# annotate with clinvar #}
     bcftools annotate \
       --threads 4 \
-      --annotations "{{ constants.phoenix.clinvar_20190715 }}" \
+      --annotations "{{ constants.phoenix.clinvar_20201020 }}" \
       --mark-sites CLINVAR \
+      --output-type b \
+      --output "{{ temp_dir }}/tempout.bcf" \
+      "{{ output_bcf }}"
+
+    {# move tempout to tempin for next step #}
+    mv "{{ temp_dir }}/tempout.bcf" "{{ output_bcf }}"
+
+    bcftools index --threads 4 --force "{{ output_bcf }}"
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_topmed_freeze8"]|default(true) %}
+    {# annotate with topmed #}
+    bcftools annotate \
+      --threads 4 \
+      --annotations "{{ constants.phoenix.topmed_freeze8 }}" \
+      --mark-sites TOPMED \
+      --columns TOPMED_AF:=AF,TOPMED_AN:=AN,TOPMED_AC:=AC,TOPMED_HET:=Het,TOPMED_HOM:=Hom
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
