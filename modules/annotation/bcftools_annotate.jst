@@ -40,7 +40,7 @@
       --threads 4 \
       --annotations "{{ constants.phoenix.dbsnp_v154 }}" \
       --mark-sites DBSNPv154 \
-      --columns ID \
+      --columns DBSNPv154_ID:=ID \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
