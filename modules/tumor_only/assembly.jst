@@ -179,7 +179,10 @@
 
       mv {{ results_dir }}/ContigResults.txt {{ results_dir }}/{{ pair.name }}_ContigResults.txt
       mv {{ results_dir }}/DEX_IgTx_GA_Summary.txt {{ results_dir }}/{{ pair.name }}_DEX_IgTx_GA_Summary.txt
-      mv {{ results_dir }}/FilteredContigResults.txt {{ results_dir }}/{{ pair.name }}_FilteredContigResults.txt
+      if [ -f {{ results_dir }}/FilteredContigResults.txt ]
+      then
+        mv {{ results_dir }}/FilteredContigResults.txt {{ results_dir }}/{{ pair.name }}_FilteredContigResults.txt
+      fi
       rm {{ results_dir }}/r1counts.txt
     fi
 
