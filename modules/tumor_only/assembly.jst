@@ -164,7 +164,7 @@
 
       samtools index -@ 4 {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam
 
-      cat {{ temp_dir }}/gene_regions.bed {{ temp_dir }}/igs_regions.bed | cut f1-3 > "{{ temp_dir }}/pairoscopeRegions.bed"
+      cat {{ temp_dir }}/gene_regions.bed {{ temp_dir }}/igs_regions.bed | cut -f1-3 > "{{ temp_dir }}/pairoscopeRegions.bed"
 
       python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
         --input_bam {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
