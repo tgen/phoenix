@@ -14,8 +14,12 @@
 {# Step 1 #}
 - name: tumor_only_gatk_call_cnv_step1_{{ pair.tumor.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.tumor.name }}]
+  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ tumor_bam }}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvPon | basename }}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvSnps | basename }}
+    - {{ tumor_only_temp }}/{{ normal.gatkCnvPonIntervals | basename }}
   output:
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv
