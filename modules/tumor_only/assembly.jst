@@ -183,7 +183,7 @@
       then
         mv {{ results_dir }}/FilteredContigResults.txt {{ results_dir }}/{{ pair.name }}_FilteredContigResults.txt
       fi
-      rm {{ results_dir }}/r1counts.txt
+      rm {{ results_dir }}/r1counts.txt || true
     fi
 
 {% endmacro %}
