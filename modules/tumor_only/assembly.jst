@@ -1,15 +1,14 @@
 
-{% macro assembly(pair, aligner='bwa') %}
+{% macro assembly(tumor, aligner='bwa') %}
 
-{% set tumor_only_temp %}temp/tumor_only//{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
-{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ pair.gltype }}/tumor_only_assembly/{{ pair.name }}{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_assembly/{{ pair.name }}{% endset %}
+{% set tumor_bam %}{{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set results_dir %}{{ tumor.gltype }}/tumor_only_structural_calls/gammit/{{ tumor.name }}{% endset %}
+{% set temp_dir %}temp/{{ tumor.gltype }}/tumor_only_structural_calls/gammit/{{ tumor.name }}{% endset %}
 
-- name: discordant_loci_extraction_{{ pair.name }}
+- name: discordant_loci_extraction_{{ tumor.name }}
   tags: [assembly,]
   input: {{ tumor_bam }}
-  output: {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
+  output: {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
   walltime: "12:00:00"
   cpus: 4
   mem: 8G
@@ -48,7 +47,7 @@
       --regions-bed-file {{ temp_dir }}/gene_regions.bed \
       --igs-regions-bed-file {{ temp_dir }}/igs_regions.bed \
       --dir-out-fq {{ temp_dir }} \
-      --prefix-fq {{ pair.name }} \
+      --prefix-fq {{ tumor.name }} \
       --min-mapq 0 \
       --threads 4 \
       --min-tuples 3 \
@@ -57,14 +56,14 @@
       --clustering-distance 600
 
     {# Concatenating the list of fastqs to reduce downstream processing #}
-    cat {{ temp_dir }}/*_list_fastq_files.txt > {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
+    cat {{ temp_dir }}/*_list_fastq_files.txt > {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
 
-- name: trinity_assembly_{{ pair.name }}
+- name: trinity_assembly_{{ tumor.name }}
   tags: [assembly,]
   reset: predecessors
-  input: {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt
+  input: {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
   output:
-    - {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam
+    - {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
   walltime: "24:00:00"
   cpus: 4
   mem: 10G
@@ -84,11 +83,11 @@
     {# Build a list of fastqs to iterate through #}
     fqr1arr=()
     fqr2arr=()
-    for fq in `cut -f1 {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt`
+    for fq in `cut -f1 {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt`
     do
       fqr1arr+=("${fq}")
     done
-    for fq in `cut -f2 {{ temp_dir }}/{{ pair.name }}_list_of_fastqs.txt`
+    for fq in `cut -f2 {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt`
     do
       fqr2arr+=("${fq}")
     done
@@ -100,14 +99,14 @@
     do
       leftfq=${fqr1arr[i]}
       rightfq=${fqr2arr[i]}
-      chrRegion=$(echo ${leftfq#{{ temp_dir }}/{{ pair.name }}_} | cut -d'_' -f1-3)
-      cluster=$(echo ${leftfq#{{ temp_dir }}/{{ pair.name }}_} | cut -d'_' -f4-6)
+      chrRegion=$(echo ${leftfq#{{ temp_dir }}/{{ tumor.name }}_} | cut -d'_' -f1-3)
+      cluster=$(echo ${leftfq#{{ temp_dir }}/{{ tumor.name }}_} | cut -d'_' -f4-6)
       Trinity \
         --seqType fq \
         --left $leftfq \
         --right $rightfq \
         --run_as_paired \
-        --output {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity \
+        --output {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity \
         --trimmomatic \
         --no_normalize_reads \
         --CPU 4 \
@@ -117,37 +116,37 @@
         assemErrors=$(expr $assemErrors + 1)
         unset error
       else
-        ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
+        ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
 
-        sed -i "s/^>/>{{ pair.name }}_${chrRegion}_${cluster}:/g" {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
+        sed -i "s/^>/>{{ tumor.name }}_${chrRegion}_${cluster}:/g" {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
 
         bwa mem \
           -t 4 \
-          -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/trinbwafile.sam \
+          -o {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/trinbwafile.sam \
           {{ constants.phoenix.bwa_index }} \
-          {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
+          {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
 
         samtools view \
           -@ 4 \
-          -b {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/trinbwafile.sam |\
+          -b {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/trinbwafile.sam |\
         samtools sort \
-          -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
+          -o {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/{{ tumor.name }}_${chrRegion}_${cluster}_sorted.bam
 
-        samtools index -@ 4 {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam
+        samtools index -@ 4 {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/{{ tumor.name }}_${chrRegion}_${cluster}_sorted.bam
 
-        bwa index {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
+        bwa index {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
         bwa mem \
           -t 4 \
-          -o {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam \
-          {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta \
+          -o {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam \
+          {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta \
           ${leftfq} ${rightfq}
 
-        mkdir -p {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}
-        samtools view -b {{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam |\
-        samtools sort -o {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
-        samtools index {{ results_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/{{ pair.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
+        mkdir -p {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}
+        samtools view -b {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam |\
+        samtools sort -o {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/{{ tumor.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
+        samtools index {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/{{ tumor.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
 
-        assemBam+=("{{ temp_dir }}/{{ pair.name }}_${chrRegion}_${cluster}/trinity/{{ pair.name }}_${chrRegion}_${cluster}_sorted.bam")
+        assemBam+=("{{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/{{ tumor.name }}_${chrRegion}_${cluster}_sorted.bam")
       fi
       i=$(expr $i + 1)
     done
@@ -159,29 +158,29 @@
       echo "Merging assembled bams"
       samtools merge \
         -@ 4 \
-        {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
+        {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam \
         ${assemBam[*]}
 
-      samtools index -@ 4 {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam
+      samtools index -@ 4 {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
 
       cat {{ temp_dir }}/gene_regions.bed {{ temp_dir }}/igs_regions.bed | cut -f1-3 > "{{ temp_dir }}/pairoscopeRegions.bed"
 
       python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
-        --input_bam {{ results_dir }}/{{ pair.name }}_Trinity_All_Clusters_sorted.bam \
+        --input_bam {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam \
         --fastq_dir {{ temp_dir }} \
         --contig 125 \
         --reads 3 \
         --window 25 \
         --pairoscope_bed_file {{ temp_dir }}/pairoscopeRegions.bed \
         --output_path {{ results_dir }} \
-        --specimen {{ pair.name }} \
+        --specimen {{ tumor.name }} \
         --bam_path {{ results_dir }}
 
-      mv {{ results_dir }}/ContigResults.txt {{ results_dir }}/{{ pair.name }}_ContigResults.txt
-      mv {{ results_dir }}/DEX_IgTx_GA_Summary.txt {{ results_dir }}/{{ pair.name }}_DEX_IgTx_GA_Summary.txt
+      mv {{ results_dir }}/ContigResults.txt {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
+      mv {{ results_dir }}/DEX_IgTx_GA_Summary.txt {{ results_dir }}/{{ tumor.name }}_DEX_IgTx_GA_Summary.txt
       if [ -f {{ results_dir }}/FilteredContigResults.txt ]
       then
-        mv {{ results_dir }}/FilteredContigResults.txt {{ results_dir }}/{{ pair.name }}_FilteredContigResults.txt
+        mv {{ results_dir }}/FilteredContigResults.txt {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
       fi
       rm {{ results_dir }}/r1counts.txt || true
     fi

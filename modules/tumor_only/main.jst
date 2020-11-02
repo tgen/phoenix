@@ -113,7 +113,24 @@
     {{- prepare_tumor_only(normal) }}
 {% endfor %}
 
-{# Start of the macro calls that will actually add the tasks to the workflow #}
+{# Tasks that do not require a pair #}
+{% for tumor in samples.values() %}
+    {% if pair.gltype in 'exome' %}
+        {% set taskPrefix = 'Exome' %}
+    {% elif pair.gltype in 'genome' %}
+        {% set taskPrefix = 'Genome' %}
+    {% endif %}
+
+    {%- if tasks[taskPrefix+"_tumor_only_snp_indel_caller_deepvariant"]|default(true) %}
+        {{- deepvariant_tumor_only(tumor, aligner='bwa', taskPrefix=taskPrefix) }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(true) %}
+        {{- assembly(tumor, aligner='bwa') }}
+    {% endif %}
+{% endfor %}
+
+{# Tasks that require a pair #}
 {% for pair in pairs %}
     {% if pair.gltype in 'exome' %}
         {% set taskPrefix = 'Exome' %}
@@ -157,20 +174,12 @@
     {% if tasks[taskPrefix+"_tumor_only_structural_caller_gridss"]|default(false) %}
         {{- gridss_tumor_only(pair, aligner='bwa') }}
     {% endif %}
-
-    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(true) %}
-        {{- assembly(pair, aligner='bwa') }}
-    {% endif %}
     {% endif %}
 
     {% if pair.normal.gatkCnvPon is defined %}
     {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(true) %}
         {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
     {% endif %}
-    {% endif %}
-
-    {%- if tasks[taskPrefix+"_tumor_only_snp_indel_caller_deepvariant"]|default(true) %}
-        {{- deepvariant_tumor_only(pair.tumor, aligner='bwa', taskPrefix=taskPrefix) }}
     {% endif %}
 
 {% endfor %}
