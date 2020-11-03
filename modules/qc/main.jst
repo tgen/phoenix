@@ -72,9 +72,13 @@
       {{- bam_qc_gatk_convertsequencingarrtifacttooxog(sample, taskPrefix=taskPrefix, aligner=aligner) }}
     {% endif %}
 
+    {# Tasks performed on dna bams #}
+    {% if sample.gltype != 'rna' or sample.gltype != 'singlecellrna' %}
+      {{- bam_qc_samtools_markdup(sample, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
+    {% endif %}
+
     {# Tasks performed on all bams #}
     {{- bam_qc_samtools_stats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
-    {{- bam_qc_samtools_markdup(sample, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {{- bam_qc_samtools_flagstat(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {{- bam_qc_samtools_idxstats(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {{- bam_qc_gatk_collectmultiplemetrics(sample, libraryCount, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
