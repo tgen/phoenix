@@ -141,7 +141,7 @@
       --threads 4 \
       --annotations "{{ constants.phoenix.topmed_freeze8 }}" \
       --mark-sites TOPMED \
-      --columns TOPMED_AF:=AF,TOPMED_AN:=AN,TOPMED_AC:=AC,TOPMED_HET:=Het,TOPMED_HOM:=Hom
+      --columns TOPMED_AF:=AF,TOPMED_AN:=AN,TOPMED_AC:=AC,TOPMED_HET:=Het,TOPMED_HOM:=Hom \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
       "{{ output_bcf }}"
