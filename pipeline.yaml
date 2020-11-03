@@ -376,8 +376,8 @@ constants:
     bowtie2_index: GRCh38tgen_decoy
     bowtie2_chip_index: GRCh38tgen_decoy_Ecoli
     dbsnp_v154: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b154/dbSNP_b154_hg38tgen.bcf
-    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
-    gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
+    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_AnnotationReference.bcf
+    gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.reduced.bcf
     gnomad_exome_v2_1_1_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
     gnomad_genome_v3_0_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
     gnomad_exome_v2_1_1_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
