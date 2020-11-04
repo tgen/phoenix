@@ -1,0 +1,55 @@
+
+{% macro lumosvar2(samples, aligner='bwa') %}
+
+{% set bamList = [] %}
+{% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' %}
+  {% set bamPath %}{{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam{% endset %}
+  {% do bamList.append(bamPath) %}
+{% endfor %}
+
+{% set results_dir %}{{ tumor.gltype }}/tumor_only_structural_calls/gammit/{{ tumor.name }}{% endset %}
+{% set temp_dir %}temp/{{ tumor.gltype }}/tumor_only_structural_calls/gammit/{{ tumor.name }}{% endset %}
+
+- name: lumosvar2_{{ tumor.name }}
+  tags:
+  input:
+  output:
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.lumosvar2.module }}
+    lv2_path=$(dirname `which lumosVarMain`)
+
+    {# Creating bamlist for as input in config yaml #}
+    cat <<EOF > "{{ project }}_tumor_bamList.txt"
+    {% for bam in bamList %}
+    {{ bam }}
+    {% endfor %}
+    EOF
+
+    cat <<EOF > "{{ project }}_tumor_lumosVar2_config.yaml"
+    bamList: {{ project }}_tumor_bamList.txt
+    regionsFile: {{ (samples.values()|first).capture_kit.extended_bed }}
+    snpVCFpath: {{ (samples.values()|first).pathToSnpVCF }}
+    snpVCFname: .vcf.gz
+    NormalBase: {{ (samples.values()|first).pathToNormalMetrics }}
+    cosmicVCF: {{ constants.phoenix.cosmic_coding_v92 }}
+    refGenome: {{ constants.phoenix.reference_fasta }}
+
+    outName: {{ results_dir }}
+    outMat: {{ results_dir }}
+    gvmPath: ${lv2_path}
+    workingDirectory: {{ temp_dir }}
+    NormalSample: 0
+    priorF: 0.7
+    numCPU: 4
+    EOF
+
+    lumosVarMain {{ project }}_tumor_lumosVar2_config.yaml
+
+
+{% endmacro %}
