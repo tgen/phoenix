@@ -132,7 +132,7 @@
 {% endfor %}
 
 {# lumosvar takes all tumor bams as input #}
-{% if tasks[taskPrefix+"_tumor_only_lumosvar2"]|default(false) %}
+{% if tasks["Exome_tumor_only_lumosvar2"]|default(false) %}
     {{- lumosvar2(samples, aligner='bwa') }}
 {% endif %}
 
