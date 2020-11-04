@@ -152,6 +152,15 @@ constants:
         Zody MC. Genome-wide somatic variant calling using localized colored de Bruijn graphs.
         Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
         (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
+    lumosvar2:
+      module: LumosVar2/1.1
+      version: "1.1"
+      verbose: LumosVar2 v1.1
+      website: https://github.com/tgen/lumosVar2
+      citation: >
+        Joint analysis of matched tumor samples with varying tumor contents
+        improves somatic variant calling in the absence of a germline sample.
+        bioRxiv 364943; doi: https://doi.org/10.1101/364943
     manta:
       module: manta/1.6
       version: "1.6"
