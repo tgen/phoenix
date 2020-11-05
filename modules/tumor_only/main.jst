@@ -101,7 +101,7 @@
 {% endfor %}
 
 {#
-# Variant caller macros that are used should add their name to the pair.caller list 
+# Variant caller macros that are used should add their name to the pair.caller list
 # and then vcfmerger will merge all variants for callers that were used.
 # For example: {% do pair.callers.append('mutect2') %}
 # This requires that the output vcfs be located and named consitently, more details
@@ -132,8 +132,13 @@
 {% endfor %}
 
 {# lumosvar takes all tumor bams as input #}
+{# building list of exome tumors #}
+{% set tumorSamples = [] %}
+{% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'exome' %}
+  {% do tumorSamples.append(tumor) %}
+{% endfor %}
 {% if tasks["Exome_tumor_only_lumosvar2"]|default(false) %}
-    {{- lumosvar2(samples, aligner='bwa') }}
+    {{- lumosvar2(tumorSamples, normSamples, aligner='bwa') }}
 {% endif %}
 
 {# Tasks that require a pair #}
