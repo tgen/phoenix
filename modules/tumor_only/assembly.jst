@@ -176,12 +176,18 @@
         --specimen {{ tumor.name }} \
         --bam_path {{ results_dir }}
 
-      mv {{ results_dir }}/ContigResults.txt {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
       mv {{ results_dir }}/DEX_IgTx_GA_Summary.txt {{ results_dir }}/{{ tumor.name }}_DEX_IgTx_GA_Summary.txt
+      if [ -f {{ results_dir }}/ContigResults.txt ]
+      then
+        mv {{ results_dir }}/ContigResults.txt {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
+      fi
       if [ -f {{ results_dir }}/FilteredContigResults.txt ]
       then
         mv {{ results_dir }}/FilteredContigResults.txt {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
       fi
+      {# Touching output files to unsure their existence, even if empty #}
+      touch {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
+      touch {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
       rm {{ results_dir }}/r1counts.txt || true
     fi
 

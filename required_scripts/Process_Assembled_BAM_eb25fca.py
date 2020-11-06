@@ -690,6 +690,13 @@ def check_gene_call(table, gene, nreads, min_con_len):
 
   # filter Tx by window and contig overlap
   # Case 1 : Gene_1 is Target gene
+  if table.empty:
+    res_gene = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    emp_list = []
+    for t_elem in res_gene:
+      emp_list.append(t_elem)
+    return emp_list
+  # other cases
   table_by_gene = table[(table.Gene_1 == gene)]
   table_by_gene = table_by_gene[(table_by_gene.IgTxCalled == 1)]
   # print(table_by_gene)
