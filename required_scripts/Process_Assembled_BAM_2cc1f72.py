@@ -1064,6 +1064,7 @@ ig_headers = ['chr', 'start', 'stop', 'name']
 igregions = pd.read_csv(bed_file, sep="\t", header=None, names=ig_headers)
 
 results_full_table = pd.DataFrame()
+filt_table = pd.DataFrame()
 index_sam = 0
 table_hrd = []
 # for assm_sam_file in bam_list:

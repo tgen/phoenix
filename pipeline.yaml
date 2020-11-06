@@ -323,6 +323,10 @@ constants:
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
+    tgen_mutation_burden:
+      module: MutationBurden/1.2.0
+      version: "1.2.0"
+      verbose: TGen Mutation Burden Tool v1.2.0
     trinity:
       module: trinityrnaseq/2.8.6-gcc-8.2.0-2.31.1-perl-5.28.1
       version: "2.8.6"
@@ -410,7 +414,7 @@ constants:
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
     plotSamStats_Rscript: summarize_samstats_8c45d63.R
-    process_assembled_bam: Process_Assembled_BAM_28475e9.py
+    process_assembled_bam: Process_Assembled_BAM_2cc1f72.py
     stats2json: samStats2json_b3854a1.py
     stats2lims: uploadStats2Lims_98319ea.py
     annotSeg_script: annotSeg_8820499.pl
