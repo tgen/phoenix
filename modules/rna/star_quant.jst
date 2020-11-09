@@ -309,7 +309,7 @@ which appears to be working now after some code changes, keeping this here in ca
       {% set task_list = [] %}
       {% set task %}htseq_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
-      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- htseq(sample) }}
@@ -318,7 +318,7 @@ which appears to be working now after some code changes, keeping this here in ca
       {% set task_list = [] %}
       {% set task %}featurecounts_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
-      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- featurecounts(sample) }}
@@ -329,7 +329,7 @@ which appears to be working now after some code changes, keeping this here in ca
       {% do task_list.append(task) %}
       {% set task %}featurecounts_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
-      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- htseq(sample) }}
