@@ -115,7 +115,7 @@
 {% endfor %}
 
 {# Tasks that do not require a pair #}
-{% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' %}
+{% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype in ('exome', 'genome') %}
     {% if tumor.gltype in 'exome' %}
         {% set taskPrefix = 'Exome' %}
     {% elif tumor.gltype in 'genome' %}
