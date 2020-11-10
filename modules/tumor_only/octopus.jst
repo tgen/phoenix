@@ -28,7 +28,8 @@
     set -o pipefail
 
     module load {{ constants.tools.octopus.module }}
-    
+    module load {{ constants.tools.samtools.module }}
+
     mkdir -p "{{ temp_dir }}"
 
     {# Write out the regions in this batch to a bed file #}
@@ -38,7 +39,10 @@
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
-    
+
+    {# Grabbing the normal rgsm from the bam #}
+    normal_rgsm=$(samtools view -H {{ normal_bam }} | grep '^@RG' | sed "s/.*SM:\([^\t]*\).*/\1/g" | uniq)
+
     {# somatic calling with octopus #}
     octopus \
       --caller cancer \
@@ -56,7 +60,7 @@
       --regions-file "{{ loop.index }}.bed" \
       --skip-regions-file {{ constants.phoenix.black_list }} \
       --reads "{{ normal_bam }}" "{{ tumor_bam }}" \
-      --normal-sample "{{ pair.normal.rgsm }}" \
+      --normal-sample "${normal_rgsm}" \
       --temp-directory-prefix "{{ loop.index }}" \
       --bamout "{{ loop.index }}.realigned.bam" \
       --output "{{ loop.index }}.octopus.vcf"
