@@ -62,12 +62,15 @@
     PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
     WORKDIR=`pwd`
 
+    {# Grabbing the normal rgsm from the bam #}
+    normal_rgsm=$(samtools view -H {{ normal_bam }} | grep '^@RG' | sed "s/.*SM:\([^\t]*\).*/\1/g" | uniq)
+
     ${PREPVCF} \
       --ref-genome "{{ constants.phoenix.reference_fasta }}" \
       --dir-work "{{ temp_dir }}" \
       --bam ${WORKDIR}/{{ bam }} \
       --toolname "{{ caller }}" \
-      --normal-sname "{{ pair.normal.rgsm }}" \
+      --normal-sname "${normal_rgsm}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
       --vcf "{{ unzipped_path }}" \
       -o "{{ prepped_path }}"
