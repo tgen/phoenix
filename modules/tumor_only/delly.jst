@@ -32,9 +32,13 @@
     set -o pipefail
 
     module load {{ constants.tools.delly.module }}
+    module load {{ constants.tools.samtools.module }}
 
     rm -r "{{ temp_dir }}/{{ svtype }}" || true
     mkdir -p "{{ temp_dir }}/{{ svtype }}"
+
+    {# Grabbing the normal rgsm from the bam #}
+    normal_rgsm=$(samtools view -H {{ normal_bam }} | grep '^@RG' | sed "s/.*SM:\([^\t]*\).*/\1/g" | uniq)
 
     delly call \
       --type {{ svtype }} \
@@ -46,7 +50,7 @@
       {{ tumor_bam }} {{ normal_bam }}
 
     {# Creating a sample file for filter step #}
-    echo -e "$(echo -e {{ pair.tumor.rgsm }} |  sed 's/\..*//')\ttumor\n$(echo -e {{ pair.normal.rgsm }} |  sed 's/\..*//')\tcontrol" > {{ sample_file }}
+    echo -e "$(echo -e {{ pair.tumor.rgsm }} |  sed 's/\..*//')\ttumor\n$(echo -e ${normal_rgsm} |  sed 's/\..*//')\tcontrol" > {{ sample_file }}
 
     delly filter \
       --type {{ svtype }} \

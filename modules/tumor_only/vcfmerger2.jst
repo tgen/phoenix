@@ -130,6 +130,9 @@
 
     mkdir -p "{{ results_dir }}"
 
+    {# Grabbing the normal rgsm from the bam #}
+    normal_rgsm=$(samtools view -H {{ normal_bam }} | grep '^@RG' | sed "s/.*SM:\([^\t]*\).*/\1/g" | uniq)
+
     vcfMerger2.py \
       --skip-prep-vcfs \
       --do-venn \
@@ -138,7 +141,7 @@
       --vcfs "{{ vcfs_to_merge|map(attribute='filtered_path')|join('|') }}" \
       -g "{{ constants.phoenix.reference_fasta }}" \
       --dict "{{ constants.phoenix.reference_dict }}" \
-      --normal-sname "{{ pair.normal.rgsm }}" \
+      --normal-sname "${normal_rgsm}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
       -d "{{ temp_dir }}" \
       -o "{{ merged_vcf }}"

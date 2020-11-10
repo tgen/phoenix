@@ -27,11 +27,15 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.samtools.module }}
     module load {{ constants.tools.R.module }}
     module load {{ constants.tools.vardict.module }}
     module load {{ constants.tools.bedtools.module }}
     
     mkdir -p "{{ temp_dir }}"
+
+    {# Grabbing the normal rgsm from the bam #}
+    normal_rgsm=$(samtools view -H {{ normal_bam }} | grep '^@RG' | sed "s/.*SM:\([^\t]*\).*/\1/g" | uniq)
 
     {#
     # Write out the regions in this batch to a file
@@ -168,7 +172,7 @@
       "{{ temp_dir }}/{{ loop.index }}.bed" \
     | testsomatic.R \
     | var2vcf_paired.pl \
-      -N "{{ pair.tumor.rgsm }}|{{ pair.normal.rgsm }}" \
+      -N "{{ pair.tumor.rgsm }}|${normal_rgsm}" \
       -c 0 \
       -I 12 \
       -m 5.25 \
