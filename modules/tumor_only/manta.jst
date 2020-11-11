@@ -172,10 +172,18 @@
     chr22${TAB}21995603${TAB}23057822${TAB}IgL
     EOF
 
+    bcftools filter \
+      -i "TRA==1 && ( PR[1:1]>=5 || SR[1:1]>=5 || (PR[1:1]+SR[1:1])>=5 ) && (RCDIS1[1:0]>3 && RCDIS2[1:0]>3 ) "
+      -O z \
+      -o {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz \
+      {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
+
+    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/translocations.pass.flag.vcf
+
     bash transParser.sh \
       --bed-genes {{ temp_dir }}/gene_regions.bed \
       --bed-igs {{ temp_dir }}/igs_regions.bed \
-      --vcf {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
+      --vcf {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz \
       --samplename {{ pair.tumor.rgsm }} \
       --threads 2 \
       --dirtemp {{ temp_dir }} \
