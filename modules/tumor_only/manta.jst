@@ -178,7 +178,7 @@
       -o {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz \
       {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
 
-    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/translocations.pass.flag.vcf
+    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz
 
     bash transParser.sh \
       --bed-genes {{ temp_dir }}/gene_regions.bed \
