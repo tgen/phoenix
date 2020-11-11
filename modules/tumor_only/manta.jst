@@ -173,7 +173,7 @@
     EOF
 
     bcftools filter \
-      -i "TRA==1 && ( PR[1:1]>=5 || SR[1:1]>=5 || (PR[1:1]+SR[1:1])>=5 ) && (RCDIS1[1:0]>3 && RCDIS2[1:0]>3 ) "
+      -i "TRA==1 && ( PR[1:1]>=5 || SR[1:1]>=5 || (PR[1:1]+SR[1:1])>=5 ) && (RCDIS1[1:0]>3 && RCDIS2[1:0]>3 )" \
       -O z \
       -o {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz \
       {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
