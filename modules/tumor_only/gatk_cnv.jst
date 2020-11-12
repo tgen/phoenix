@@ -5,11 +5,23 @@
 {% macro gatk_cnv_tumor_only(pair, aligner='bwa') %}
 {% set tumor_only_temp %}temp/tumor_only/{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
 {% set cnvIntervals %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPonIntervals | basename }}{% endset %}
-{% set cnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvSnps | basename }}{% endset %}
 {% set cnvPon %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPon | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set cnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvSnps | basename }}{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.tumor.name }}_{{ aligner }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.tumor.name }}{% endset %}
+
+{% if wesAssayToPair is defined and pair.normal.gatkExomeCnvSnps is defined %}
+  {% set exomeCnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkExomeCnvSnps | basename }}{% endset %}
+
+  {% set exome_test %}{{ (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first) }}{% endset %}
+
+  {% if exome_test.sampleMergeKey is defined %}
+    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome_test.sampleMergeKey }}/{{ exome_test.sampleMergeKey }}.{{ aligner }}.bam{% endset %}
+  {% elif exome_test.sampleName is defined %}
+    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome_test.sampleName }}/{{ exome_test.sampleName }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+{% endif %}
 
 {# Step 1 #}
 - name: tumor_only_gatk_call_cnv_step1_{{ pair.tumor.name }}_{{ aligner }}
@@ -17,9 +29,14 @@
   reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ tumor_bam }}
-    - {{ tumor_only_temp }}/{{ pair.normal.gatkCnvPon | basename }}
-    - {{ tumor_only_temp }}/{{ pair.normal.gatkCnvSnps | basename }}
-    - {{ tumor_only_temp }}/{{ pair.normal.gatkCnvPonIntervals | basename }}
+    - {{ cnvPon }}
+    - {{ cnvIntervals }}
+    {% if tumor_exome_bam is defined %}
+    - {{ tumor_exome_bam }}
+    - {{ exomeCnvSnps }}
+    {% else %}
+    - {{ cnvSnps }}
+    {% endif %}
   output:
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv
@@ -37,6 +54,9 @@
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.af.igv.seg
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.called.seg
     - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.called.igv.seg
+    {% if tumor_exome_bam is defined %}
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts_filt.tsv
+    {% endif %}
   cpus: 1
   mem: 16G
   walltime: "24:00:00"
@@ -64,10 +84,25 @@
     {# CollectAllelicCounts for the tumor using the snps provided to the config #}
     gatk --java-options "-Xmx12g" CollectAllelicCounts \
       --tmp-dir {{ temp_dir }}/temp/ \
+      {% if tumor_exome_bam is defined %}
+      --input {{ tumor_exome_bam }} \
+      --intervals {{ exomeCnvSnps }} \
+      {% else %}
       --input {{ tumor_bam }} \
       --intervals {{ cnvSnps }} \
+      {% endif %}
       --reference {{ constants.phoenix.reference_fasta }} \
       --output {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+
+    {% if tumor_exome_bam is defined %}
+    awk -F'\t' '$1 ~ /^@/ { print $0 ; next } ;
+      $1 == "CONTIG" { print $0 ; next } ;
+      $3 != 0 && $4 != 0 {
+        DP = $3+$4 ;
+        RATIO = $4/DP ;
+        if ( DP > 99 && RATIO >= 0.4643519 && RATIO <= 0.5043519) { print $0 }
+      }' {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv > {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts_filt.tsv
+    {% endif %}
 
     {# Denoise the tumor using the panel of normals provided to in the configuration #}
     gatk --java-options "-Xmx12g" DenoiseReadCounts \
@@ -93,7 +128,11 @@
       --window-size 128 \
       --window-size 256 \
       --denoised-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
+      {% if tumor_exome_bam is defined %}
+      --allelic-counts {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts_filt.tsv \
+      {% else %}
       --allelic-counts {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
+      {% endif %}
       --output {{ results_dir }} \
       --output-prefix {{ pair.tumor.name }}.{{ aligner }}
 
@@ -263,6 +302,7 @@
     python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.cna_seg_extend }} {{ constants.phoenix.centromere }} {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
 
     Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotCNVplus_Rscript }} \
+      --point_size 2 \
       --hetDPfilter 1 \
       --hetAFlow 0.45 \
       --hetAFhigh 0.55 \
