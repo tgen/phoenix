@@ -14,14 +14,21 @@
 {% if wesAssayToPair is defined and pair.normal.gatkExomeCnvSnps is defined %}
   {% set exomeCnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkExomeCnvSnps | basename }}{% endset %}
 
-  {% set exome_test %}{{ (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|default(none)) }}{% endset %}
+  {% set exome_test %}{{ (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|split(',')|default(none)) }}{% endset %}
 
-  {{ exome_test.sampleMergeKey }}
+  {% if exome_test is not none %}
+    {% set exome = {} %}
+    {% for key, value in exome_test %}
+      {% do exome.update({key: value}) %}
+    {% endfor %}
+  {% endif %}
 
-  {% if exome_test.sampleMergeKey is defined %}
-    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome_test.sampleMergeKey }}/{{ exome_test.sampleMergeKey }}.{{ aligner }}.bam{% endset %}
-  {% elif exome_test.sampleName is defined %}
-    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome_test.sampleName }}/{{ exome_test.sampleName }}.{{ aligner }}.bam{% endset %}
+  {{ exome.sampleMergeKey }}
+
+  {% if exome.sampleMergeKey is defined %}
+    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome.sampleMergeKey }}/{{ exome.sampleMergeKey }}.{{ aligner }}.bam{% endset %}
+  {% elif exome.sampleName is defined %}
+    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome.sampleName }}/{{ exome.sampleName }}.{{ aligner }}.bam{% endset %}
   {% endif %}
 {% endif %}
 
