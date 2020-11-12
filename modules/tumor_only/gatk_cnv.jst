@@ -14,16 +14,8 @@
 {% if wesAssayToPair is defined and pair.normal.gatkExomeCnvSnps is defined %}
   {% set exomeCnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkExomeCnvSnps | basename }}{% endset %}
 
-  {% set exome_test %}{{ (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|default(none)).split(',') }}{% endset %}
-
-  {% if exome_test is not none %}
-    {% set exome = {} %}
-    {% for key, value in exome_test %}
-      {% do exome.update({key: value}) %}
-    {% endfor %}
-  {% endif %}
-
-  {{ exome.sampleMergeKey }}
+  {% set exome = {} %}
+  {% do exome.update( (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|default({'no': 'exome'}))) %}
 
   {% if exome.sampleMergeKey is defined %}
     {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome.sampleMergeKey }}/{{ exome.sampleMergeKey }}.{{ aligner }}.bam{% endset %}
