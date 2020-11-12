@@ -14,7 +14,7 @@
 {% if wesAssayToPair is defined and pair.normal.gatkExomeCnvSnps is defined %}
   {% set exomeCnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkExomeCnvSnps | basename }}{% endset %}
 
-  {% set exome_test %}{{ (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|split(',')|default(none)) }}{% endset %}
+  {% set exome_test %}{{ (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|default(none)).split(',') }}{% endset %}
 
   {% if exome_test is not none %}
     {% set exome = {} %}
