@@ -16,6 +16,8 @@
 
   {% set exome_test %}{{ (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|default(none)) }}{% endset %}
 
+  {{ exome_test }}
+
   {% if exome_test.sampleMergeKey is defined %}
     {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome_test.sampleMergeKey }}/{{ exome_test.sampleMergeKey }}.{{ aligner }}.bam{% endset %}
   {% elif exome_test.sampleName is defined %}
