@@ -37,7 +37,9 @@
 
 - name: tumor_only_vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
-  input: {{ gzipped_path }}
+  input:
+    - {{ gzipped_path }}
+    - {{ normal_bam }}
   output: {{ prepped_path }}
   cpus: 4
   mem: 8G
