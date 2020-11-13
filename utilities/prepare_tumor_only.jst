@@ -9,10 +9,11 @@
     - {{ tumor_only_temp }}/{{ normal.pathToBam | basename }}
     - {{ tumor_only_temp }}/{{ normal.pathToBai | basename }}
     {% endif %}
-    {% if normal.gatkCnvPon is defined and normal.gatkCnvSnps is defined and normal.gatkCnvPonIntervals is defined %}
+    {% if normal.gatkCnvPon is defined and normal.gatkCnvSnps is defined and normal.gatkCnvPonIntervals is defined and normal.gatkExomeCnvSnps is defined %}
     - {{ tumor_only_temp }}/{{ normal.gatkCnvPon | basename }}
     - {{ tumor_only_temp }}/{{ normal.gatkCnvSnps | basename }}
     - {{ tumor_only_temp }}/{{ normal.gatkCnvPonIntervals | basename }}
+    - {{ tumor_only_temp }}/{{ normal.gatkExomeCnvSnps | basename }}
     {% endif %}
   walltime: "8:00:00"
   cpus: 4
@@ -32,6 +33,7 @@
     rsync {{ normal.gatkCnvPon }} {{ tumor_only_temp }}
     rsync {{ normal.gatkCnvSnps }} {{ tumor_only_temp }}
     rsync {{ normal.gatkCnvPonIntervals }} {{ tumor_only_temp }}
+    rsync {{ normal.gatkExomeCnvSnps }} {{ tumor_only_temp }}
     {% endif %}
 
 {% endmacro %}
