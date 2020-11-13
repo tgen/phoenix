@@ -5,18 +5,11 @@
 - name: prepare_tumor_only_{{ normal.name }}
   tags: [rsync,]
   output:
-    {% if normal.pathToBam is defined and normal.pathToBam is defined %}
-    - {{ tumor_only_temp }}/{{ normal.pathToBam | basename }}
-    - {{ tumor_only_temp }}/{{ normal.pathToBai | basename }}
+    {% for key, value in normal.items() %}
+    {% if key not in ['assayCode','name'] %}
+    - {{ tumor_only_temp }}/{{ value | basename }}
     {% endif %}
-    {% if normal.gatkCnvPon is defined and normal.gatkCnvSnps is defined and normal.gatkCnvPonIntervals is defined %}
-    - {{ tumor_only_temp }}/{{ normal.gatkCnvPon | basename }}
-    - {{ tumor_only_temp }}/{{ normal.gatkCnvSnps | basename }}
-    - {{ tumor_only_temp }}/{{ normal.gatkCnvPonIntervals | basename }}
-    {% endif %}
-    {% if normal.gatkExomeCnvSnps is defined %}
-    - {{ tumor_only_temp }}/{{ normal.gatkExomeCnvSnps | basename }}
-    {% endif %}
+    {% endfor %}
   walltime: "8:00:00"
   cpus: 4
   mem: 8G
@@ -26,19 +19,10 @@
 
     mkdir -p {{ tumor_only_temp }}
 
-    {% if normal.pathToBam is defined and normal.pathToBai is defined %}
-    rsync {{ normal.pathToBam }} {{ tumor_only_temp }}
-    rsync {{ normal.pathToBai }} {{ tumor_only_temp }}
+    {% for key, value in normal.items() %}
+    {% if key not in ['assayCode','name'] %}
+    rsync {{ value }} {{ tumor_only_temp }}
     {% endif %}
-
-    {% if normal.gatkCnvPon is defined and normal.gatkCnvSnps is defined and normal.gatkCnvPonIntervals is defined %}
-    rsync {{ normal.gatkCnvPon }} {{ tumor_only_temp }}
-    rsync {{ normal.gatkCnvSnps }} {{ tumor_only_temp }}
-    rsync {{ normal.gatkCnvPonIntervals }} {{ tumor_only_temp }}
-    {% endif %}
-
-    {% if normal.gatkExomeCnvSnps is defined %}
-    rsync {{ normal.gatkExomeCnvSnps }} {{ tumor_only_temp }}
-    {% endif %}
+    {% endfor %}
 
 {% endmacro %}
