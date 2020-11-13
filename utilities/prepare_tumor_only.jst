@@ -6,7 +6,7 @@
   tags: [rsync,]
   output:
     {% for key, value in normal.items() %}
-    {% if key not in ['assayCode','name'] %}
+    {% if key not in ['assayCode','name','rgsm'] %}
     - {{ tumor_only_temp }}/{{ value | basename }}
     {% endif %}
     {% endfor %}
@@ -20,7 +20,7 @@
     mkdir -p {{ tumor_only_temp }}
 
     {% for key, value in normal.items() %}
-    {% if key not in ['assayCode','name'] %}
+    {% if key not in ['assayCode','name','rgsm'] %}
     rsync {{ value }} {{ tumor_only_temp }}
     {% endif %}
     {% endfor %}
