@@ -101,7 +101,7 @@
 
 - name: tumor_only_manta_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, {{ pair.name }}]
-  reset: prepare_tumor_only_{{ pair.normal.name }}_{{ pair.normal.assayCode }}
+  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi

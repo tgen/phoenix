@@ -19,15 +19,8 @@
 
 {% for file in controlDataFiles %}
 
-    {% if file.pathToBam is defined %}
-    {% set name = file.pathToBam | basename | replace("bwa", "") | replace("bam", "") | replace(".", "_") | replace("_", " ") | trim | replace(" ", "_") %}
-    {% set rgsm = name | replace(file.assayCode, "") | replace("_", " ") | trim | replace(" ", "_") %}
-    {% do file.update({'name': name}) %}
-    {% do file.update({'rgsm': rgsm}) %}
-    {% elif file.gatkCnvPon is defined %}
     {% set name %}{{ study }}_{{ file.assayCode }}{% endset %}
     {% do file.update({'name': name}) %}
-    {% endif %}
 
     {% if name not in normSamples %}
         {% do normSamples.update({name: {}}) %}
@@ -73,11 +66,7 @@
 
     {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
         {% set pair_name = tumor.name %}
-        {% if normal.rgsm is not defined %}
         {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
-        {% elif normal.rgsm != tumor.rgsm %}
-        {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
-        {% endif %}
     {% endfor %}
 {% endfor %}
 {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'genome' %}
@@ -92,11 +81,7 @@
 
     {% for normal in normSamples.values() if normal.assayCode == tumor.assayCode %}
         {% set pair_name = tumor.name %}
-        {% if normal.rgsm is not defined %}
         {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
-        {% elif normal.rgsm != tumor.rgsm %}
-        {% do pairs.append({'name': pair_name, 'gltype': tumor.gltype, 'normal': normal, 'tumor': tumor}) %}
-        {% endif %}
     {% endfor %}
 {% endfor %}
 

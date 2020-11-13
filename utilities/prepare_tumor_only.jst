@@ -2,7 +2,7 @@
 
 {% set tumor_only_temp %}temp/tumor_only/control_data_files{% endset %}
 
-- name: prepare_tumor_only_{{ normal.name }}_{{ normal.assayCode }}
+- name: prepare_tumor_only_{{ normal.name }}
   tags: [rsync,]
   output:
     {% for key, value in normal.items() %}
