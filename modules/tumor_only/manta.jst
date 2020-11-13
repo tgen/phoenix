@@ -1,7 +1,7 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {% macro manta_tumor_only(pair, aligner='bwa') %}
-{% set tumor_only_temp %}temp/tumor_only//{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files{% endset %}
 {% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
@@ -101,7 +101,7 @@
 
 - name: tumor_only_manta_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, {{ pair.name }}]
-  reset: prepare_tumor_only_{{ pair.normal.name }}
+  reset: prepare_tumor_only_{{ normal.name }}_{{ normal.assayCode }}
   input:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi

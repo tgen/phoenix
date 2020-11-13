@@ -1,8 +1,8 @@
 {% macro prepare_tumor_only(normal) %}
 
-{% set tumor_only_temp %}temp/tumor_only//{{ normal.assayCode }}/{{ normal.name }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files{% endset %}
 
-- name: prepare_tumor_only_{{ normal.name }}
+- name: prepare_tumor_only_{{ normal.name }}_{{ normal.assayCode }}
   tags: [rsync,]
   output:
     {% for key, value in normal.items() %}
@@ -19,9 +19,14 @@
 
     mkdir -p {{ tumor_only_temp }}
 
+    {#
+    --update will only copy if the source file is newer than the
+    file that exists in the destination, new files are also copied
+    so we end up saving time if the files exist already
+    #}
     {% for key, value in normal.items() %}
     {% if key not in ['assayCode','name','rgsm'] %}
-    rsync {{ value }} {{ tumor_only_temp }}
+    rsync --update {{ value }} {{ tumor_only_temp }}
     {% endif %}
     {% endfor %}
 

@@ -2,7 +2,7 @@
 
 {% macro lancet_tumor_only(pair, aligner='bwa') %}
 {% do pair.callers.append('lancet') %}
-{% set tumor_only_temp %}temp/tumor_only//{{ pair.normal.assayCode }}/{{ pair.normal.name }}{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files{% endset %}
 {% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/lancet/{{ pair.name }}_{{ aligner }}{% endset %}
