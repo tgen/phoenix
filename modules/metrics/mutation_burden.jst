@@ -1,5 +1,9 @@
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
 {% macro mutation_burden(pair, normal_bam, tumor_bam, temp_dir, input_vcf, results_dir, variant_caller, aligner, annotate_flag) %}
+
+{% set mutation_burden_output %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.txt{% endset %}
+{% set mutation_burden_json %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.json{% endset %}
 
 - name: tgen_mutation_burden_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}_{{ annotate_flag }}
   tags:
@@ -28,6 +32,7 @@
       --include 'INFO/ANN ~ "{{ effect }}"' \
       {% else %}
       --include 'INFO/CSQ ~ "{{ effect }}"' \
+      {% endif %}
       {% endfor %}
       --output {{ temp_dir }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --output-type z \
@@ -41,8 +46,10 @@
       --outprefix {{ temp_dir }} \
       --sample {{ pair.tumor.rgsm }} \
       --library {{ pair.tumor.rglb }} \
+      --outfile {{ mutation_burden_output }} \
       --pipeline \
-      --outfile {{ results_dir }}/{{ pair.name }}.mutation_burden.txt \
       --verbose
+
+    {{- stats2json(pair.gltype, pair.name, task, mutation_burden_output , mutation_burden_json, "picard_mutation_burden") }}
 
 {% endmacro %}
