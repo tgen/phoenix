@@ -1,14 +1,14 @@
 {%- from 'modules/metrics/mutation_burden.jst' import mutation_burden with context %}
 
-{%- macro collect_somatic_metrics(pair, normal_bam, tumor_bam, temp_dir, results_dir, input_vcf, taskPrefix, aligner, variant_caller, analysis_type) %} %}
+{%- macro collect_somatic_metrics(pair, normal_bam, tumor_bam, temp_dir, results_dir, input_vcf, taskPrefix, aligner, variant_caller) %} %}
 
 {%- set flags = namespace({ 'snpeff': none, 'vep': none }) %}
 
 {%- if tasks %}
-  {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_snpEff_ann"]|default(true) %}
+  {% if tasks[taskPrefix+"_somatic_annotate_vcfs_snpEff_ann"]|default(true) %}
     {% set flags.snpeff = true %}
   {% endif %}
-  {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_vep"]|default(true) %}
+  {% if tasks[taskPrefix+"_somatic_annotate_vcfs_vep"]|default(true) %}
     {% set flags.vep = true %}
   {% endif %}
 {% else %}
