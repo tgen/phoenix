@@ -1,11 +1,12 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'modules/metrics/main.jst' import collect_somatic_metrics with context %}
 {% from 'modules/tumor_only/rna_variant_check.jst' import add_rna_header_to_vcf with context %}
 {% from 'modules/tumor_only/rna_variant_check.jst' import add_matched_rna with context %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {% macro vcfmerger2_tumor_only(pair, aligner='bwa', taskPrefix='Genome') %}
 
-{% set tumor_only_temp %}temp/tumor_only/control_data_files{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
 {% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
@@ -163,4 +164,5 @@
   {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
 {% endif %}
   {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
+  {{- collect_somatic_metrics(pair, normal_bam, tumor_bam, temp_dir, results_dir, input_vcf, taskPrefix, aligner, variant_caller, analysis_type) }}
 {% endmacro %}

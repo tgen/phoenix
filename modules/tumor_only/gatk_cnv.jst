@@ -3,7 +3,7 @@
 # The macros found in this template are used to generate the gatk4 tumor_only cnv workflow.
 
 {% macro gatk_cnv_tumor_only(pair, aligner='bwa') %}
-{% set tumor_only_temp %}temp/tumor_only/control_data_files{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
 {% set cnvIntervals %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPonIntervals | basename }}{% endset %}
 {% set cnvPon %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPon | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}

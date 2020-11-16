@@ -1,6 +1,6 @@
 {% macro prepare_tumor_only(normal) %}
 
-{% set tumor_only_temp %}temp/tumor_only/control_data_files{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ normal.assayCode }}{% endset %}
 
 - name: prepare_tumor_only_{{ normal.name }}
   tags: [rsync,]
