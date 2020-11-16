@@ -1,0 +1,48 @@
+
+{% macro mutation_burden(pair, normal_bam, tumor_bam, temp_dir, input_vcf, results_dir, variant_caller, aligner, annotate_flag) %}
+
+- name: tgen_mutation_burden_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}_{{ annotate_flag }}
+  tags:
+  input:
+    - {{ input_vcf }}
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output:
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.tgen_mutation_burden.module }}
+    module load {{ constants.tools.bcftools.module }}
+
+    rm -r {{ temp_dir }} || true
+    mkdir -p {{ temp_dir }}
+
+    bcftools filter \
+      --include 'INFO/CC>=3' \
+      {% for effect in constants.phoenix.ns_effects %}
+      {% if annotate_flag == 'snpeff' %}
+      --include 'INFO/ANN ~ "{{ effect }}"' \
+      {% else %}
+      --include 'INFO/CSQ ~ "{{ effect }}"' \
+      {% endfor %}
+      --output {{ temp_dir }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --output-type z \
+      {{ input_vcf }}
+
+    tgen_mutation_burden.sh \
+      --bed {{ constants.phoenix.cds_intervals }} \
+      --vcf {{ pair.name }}.{{ variant_caller }}.{{ analysis_type }}.vcf.gz \
+      --tbam {{ tumor_bam }} \
+      --nbam {{ normal_bam }} \
+      --outprefix {{ temp_dir }} \
+      --sample {{ pair.tumor.rgsm }} \
+      --library {{ pair.tumor.rglb }} \
+      --pipeline \
+      --outfile {{ results_dir }}/{{ pair.name }}.mutation_burden.txt \
+      --verbose
+
+{% endmacro %}
