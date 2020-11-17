@@ -55,7 +55,14 @@
       --force \
       --verbose
 
+    {# Manual interventions for compatibility with stats2json #}
+    {# Moving `## Started on...` to be after the command #}
+    printf '%s\n' '1m4' 'wq' | ed -s {{ mutation_burden_output }}
+    sed 's/## Started/# Started/g' < {{ mutation_burden_output }}
+    sed 's/## \/packages/# \/packages/g' < {{ mutation_burden_output }}
+    echo -e "\n" >> {{ mutation_burden_output }}
+
     {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}{% endset %}
-    {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "picard_mutation_burden") }}
+    {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "tgen_mutation_burden") }}
 
 {% endmacro %}
