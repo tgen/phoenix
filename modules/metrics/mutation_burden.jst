@@ -20,7 +20,11 @@
     set -o pipefail
 
     module load {{ constants.tools.tgen_mutation_burden.module }}
+    module load {{ constants.tools.samtools.module }}
     module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.htslib.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.bedtools.module }}
 
     rm -r {{ temp_dir }} || true
     mkdir -p {{ temp_dir }}
