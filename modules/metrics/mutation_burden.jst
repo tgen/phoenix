@@ -40,7 +40,7 @@
 
     tgen_mutation_burden.sh \
       --bed {{ constants.phoenix.cds_intervals }} \
-      --vcf {{ pair.name }}.{{ variant_caller }}.{{ analysis_type }}.vcf.gz \
+      --vcf {{ temp_dir }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --tbam {{ tumor_bam }} \
       --nbam {{ normal_bam }} \
       --outprefix {{ temp_dir }} \
@@ -50,6 +50,7 @@
       --pipeline \
       --verbose
 
-    {{- stats2json(pair.gltype, pair.name, task, mutation_burden_output , mutation_burden_json, "picard_mutation_burden") }}
+    {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}{% endset %}
+    {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "picard_mutation_burden") }}
 
 {% endmacro %}

@@ -493,20 +493,20 @@ constants:
     snpSniffer_database: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpSniffer/databaseV5_hg38_ucsc.ini
     vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
     ns_effects:
-      - ['splice_acceptor_variant']
-      - ['splice_donor_variant']
-      - ['start_lost']
-      - ['exon_loss_variant']
-      - ['frameshift_variant']
-      - ['stop_gained']
-      - ['stop_lost']
-      - ['start_lost']
-      - ['rare_amino_acid_variant']
-      - ['missense_variant']
-      - ['inframe_insertion']
-      - ['disruptive_inframe_insertion']
-      - ['inframe_deletion']
-      - ['disruptive_inframe_deletion']
+      - 'splice_acceptor_variant'
+      - 'splice_donor_variant'
+      - 'start_lost'
+      - 'exon_loss_variant'
+      - 'frameshift_variant'
+      - 'stop_gained'
+      - 'stop_lost'
+      - 'start_lost'
+      - 'rare_amino_acid_variant'
+      - 'missense_variant'
+      - 'inframe_insertion'
+      - 'disruptive_inframe_insertion'
+      - 'inframe_deletion'
+      - 'disruptive_inframe_deletion'
     deepvariant_models:
       exome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.10.0/DeepVariant-inception_v3-0.10.0+data-wes_standard/model.ckpt
       genome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.10.0/DeepVariant-inception_v3-0.10.0+data-wgs_standard/model.ckpt

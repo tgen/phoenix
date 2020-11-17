@@ -161,10 +161,10 @@
 {% if 'rna_samples' in pair.tumor %}
   {{- add_matched_rna(merged_vcf_gz, output_vcf, pair, aligner, temp_dir) }}
 {% else %}
-  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
+  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir) }}
 {% endif %}
   {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
   {#
-  {{- collect_somatic_metrics(pair, normal_bam, tumor_bam, temp_dir, results_dir, merged_vcf, taskPrefix, aligner, 'vcfmerger2') }}
+  {{- collect_somatic_metrics(pair, normal_bam, tumor_bam, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged') }}
   #}
 {% endmacro %}
