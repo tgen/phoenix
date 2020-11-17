@@ -3,9 +3,9 @@
 {%- macro collect_somatic_metrics(pair, normal_bam, tumor_bam, temp_dir, results_dir, input_vcf, taskPrefix, aligner, variant_caller) %}
 
 {% if variant_caller == 'merged' %}
-  {%- set vcf_prefix %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}{% endset %}
+  {%- set vcf_prefix %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.{{ variant_caller }}{% endset %}
 {% else %}
-  {%- set vcf_prefix %}{{ results_dir }}/{{ sample_or_pair.name }}.{{ aligner }}.{{ variant_caller }}.pass{% endset %}
+  {%- set vcf_prefix %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.{{ variant_caller }}.pass{% endset %}
 {% endif %}
 
 {%- set flags = namespace({ 'bcftools': none, 'snpeff': none, 'vep': none }) %}
