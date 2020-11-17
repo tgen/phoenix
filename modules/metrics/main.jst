@@ -8,6 +8,7 @@
   {%- set vcf_prefix %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.{{ variant_caller }}.pass{% endset %}
 {% endif %}
 
+{%- set annotate_task_prefix = taskPrefix+'_'+analysis_type+'_annotate_vcfs_bcftools_' %}
 {%- set flags = namespace({ 'bcftools': none, 'snpeff': none, 'vep': none }) %}
 
 {%- if tasks %}
