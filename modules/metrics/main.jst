@@ -26,11 +26,11 @@
     {% set flags.bcftools = true %}
   {% endif %}
 
-  {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_snpEff_ann"]|default(true) %}
+  {% if tasks[taskPrefix+"_somatic_annotate_vcfs_snpEff_ann"]|default(true) %}
     {% set flags.snpeff = true %}
   {% endif %}
 
-  {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_vep"]|default(true) %}
+  {% if tasks[taskPrefix+"_somatic_annotate_vcfs_vep"]|default(true) %}
     {% set flags.vep = true %}
   {% endif %}
 {% else %}
