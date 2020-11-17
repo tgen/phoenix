@@ -52,6 +52,7 @@
       --library {{ pair.tumor.rglb }} \
       --outfile {{ mutation_burden_output }} \
       --pipeline \
+      --force \
       --verbose
 
     {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}{% endset %}
