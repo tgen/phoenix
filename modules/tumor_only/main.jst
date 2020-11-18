@@ -1,5 +1,4 @@
 {% from 'utilities/prepare_tumor_only.jst' import prepare_tumor_only with context %}
-{% from 'modules/tumor_only/manta.jst' import manta_tumor_only with context %}
 {% from 'modules/tumor_only/strelka2.jst' import strelka2_tumor_only with context %}
 {% from 'modules/tumor_only/mutect2.jst' import mutect2_tumor_only with context %}
 {% from 'modules/tumor_only/lancet.jst' import lancet_tumor_only with context %}
@@ -9,6 +8,7 @@
 {% from 'modules/tumor_only/delly.jst' import delly_tumor_only with context %}
 {% from 'modules/tumor_only/gridss.jst' import gridss_tumor_only with context %}
 {% from 'modules/tumor_only/gatk_cnv.jst' import gatk_cnv_tumor_only with context %}
+{% from 'modules/tumor_only/manta_mm_igtx.jst' import manta_mm_igtx with context %}
 {% from 'modules/tumor_only/deepvariant.jst' import deepvariant_tumor_only with context %}
 {% from 'modules/tumor_only/assembly.jst' import assembly with context %}
 {% from 'modules/tumor_only/lumosvar2.jst' import lumosvar2 with context %}
@@ -140,7 +140,7 @@
     {% endif %}
 
     {% if tasks[taskPrefix+"_tumor_structural_caller_manta"]|default(true) %}
-        {{- manta_tumor_only(pair, aligner='bwa') }}
+        {{- manta_mm_igtx(pair, aligner='bwa') }}
     {% endif %}
 
     {% if tasks[taskPrefix+"_tumor_snp_indel_caller_strelka2"]|default(true) %}

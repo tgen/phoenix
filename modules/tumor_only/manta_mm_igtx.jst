@@ -1,6 +1,6 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
-{% macro manta_tumor_only(pair, aligner='bwa') %}
+{% macro manta_mm_igtx(pair, aligner='bwa') %}
 {% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
 {% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
@@ -8,7 +8,7 @@
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
 {% set summary_samtools_stats %}{{ pair.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ pair.tumor.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
 
-- name: tumor_only_manta_{{ pair.name }}_{{ aligner }}
+- name: manta_mm_igtx_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, structural_caller, manta, {{ pair.name }}]
   methods: > 
     somatic structural variants and indels for {{ pair.name }} ({{ aligner }})
@@ -99,7 +99,7 @@
     mv "{{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
 
 
-- name: tumor_only_manta_flag_{{ pair.name }}_{{ aligner }}
+- name: manta_mm_igtx_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, {{ pair.name }}]
   reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
@@ -196,7 +196,7 @@
     bcftools index --threads 4 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
 
 
-- name: tumor_only_manta_annotate_{{ pair.name }}_{{ aligner }}
+- name: manta_mm_igtx_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, gene, annotation, {{ pair.name }}]
   reset: predecessors
   input:
@@ -233,7 +233,7 @@
     mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi"
 
     {# Remove the remaining files #}
-    {% set task %}tumor_only_manta_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}manta_mm_igtx_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 
