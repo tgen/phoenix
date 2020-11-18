@@ -17,6 +17,7 @@
 
 {% set normSamples = {} %}
 
+{% if controlDataFiles is defined %}
 {% for file in controlDataFiles %}
 
     {% set name %}{{ study }}_{{ file.assayCode }}{% endset %}
@@ -27,6 +28,7 @@
         {% do normSamples[name].update(file) %}
     {% endif %}
 {% endfor %}
+{% endif %}
 
 {# Setup calculated props for samples #}
 {% for sample in samples.values() if sample.gltype == 'exome' %}
