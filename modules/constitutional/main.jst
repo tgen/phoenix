@@ -52,7 +52,7 @@
             {{- octopus_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
     {% elif sample.subGroup|lower == 'tumor' %}
-        {%- if tasks[taskPrefix+"_tumor_mm_igtx_pairoscope"]|default(true) %}
+        {%- if tasks[taskPrefix+"_disease_specific_multiple_myeloma"]|default(true) %}
             {{- mm_igtx_pairoscope(sample, aligner='bwa') }}
         {% endif %}
     {% endif %}
