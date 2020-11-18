@@ -150,35 +150,18 @@
 {{- finalize() }}
 
 {# Start of module calls #}
-{# These if statements are kind of dead right now because they aren't passed by LIMS, but everything runs because of default(true) #}
-{% if tasks.dna_alignment|default(true) %}
-    {{- dna_alignment(samples) }}
-{% endif %}
+{{- dna_alignment(samples) }}
 
-{% if tasks.constitutional_variant_calling|default(true) %}
-    {{- constitutional_variant_calling(samples) }}
-{% endif %}
+{{- constitutional_variant_calling(samples) }}
 
-{% if tasks.somatic_variant_calling|default(true) %}
-    {{- somatic_variant_calling(samples) }}
-{% endif %}
+{{- somatic_variant_calling(samples) }}
 
-{%- if tasks.rna_quant|default(true) %}
-    {{- rna_quant(samples) }}
-{% endif -%}
+{{- rna_quant(samples) }}
 
-{%- if tasks.rna_fusion_detection|default(true) %}
-    {{- rna_fusion_detection(samples) }}
-{% endif -%}
+{{- rna_fusion_detection(samples) }}
 
-{%- if tasks.single_cell_rna|default(true) %}
-    {{- single_cell_rna(dataFiles) }}
-{% endif -%}
+{{- single_cell_rna(dataFiles) }}
 
-{%- if tasks.chip_workflow|default(true) %}
-    {{- chip_workflow(samples) }}
-{% endif -%}
+{{- chip_workflow(samples) }}
 
-{%- if tasks.tumor_only_variant_calling|default(true) and controlDataFiles is defined %}
-    {{- tumor_only_variant_calling(samples, controlDataFiles) }}
-{% endif -%}
+{{- tumor_only_variant_calling(samples) }}
