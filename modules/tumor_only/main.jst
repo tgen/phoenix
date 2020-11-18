@@ -107,11 +107,11 @@
         {% set taskPrefix = 'Genome' %}
     {% endif %}
 
-    {%- if tasks[taskPrefix+"_tumor_only_snp_indel_caller_deepvariant"]|default(true) %}
+    {%- if tasks[taskPrefix+"_tumor_snp_indel_caller_deepvariant"]|default(true) %}
         {{- deepvariant_tumor_only(tumor, aligner='bwa', taskPrefix=taskPrefix) }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_assembly"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_assembly"]|default(true) %}
         {{- assembly(tumor, aligner='bwa') }}
     {% endif %}
 {% endfor %}
@@ -135,45 +135,45 @@
     {% endif %}
 
     {% if pair.normal.pathToBam is defined %}
-    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_gatk_mutect2"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_snp_indel_caller_gatk_mutect2"]|default(true) %}
         {{- mutect2_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_structural_caller_manta"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_structural_caller_manta"]|default(true) %}
         {{- manta_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_strelka2"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_snp_indel_caller_strelka2"]|default(true) %}
         {{- strelka2_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_lancet"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_snp_indel_caller_lancet"]|default(true) %}
         {{- lancet_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_VarDict"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_snp_indel_caller_VarDict"]|default(true) %}
         {{- vardict_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_snp_indel_caller_octopus"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_snp_indel_caller_octopus"]|default(true) %}
         {{- octopus_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_merge_vcfs_vcfMerger2"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_merge_vcfs_vcfMerger2"]|default(true) %}
         {{- vcfmerger2_tumor_only(pair, aligner='bwa', taskPrefix=taskPrefix) }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_structural_caller_delly"]|default(false) %}
+    {% if tasks[taskPrefix+"_tumor_structural_caller_delly"]|default(false) %}
         {{- delly_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_only_structural_caller_gridss"]|default(false) %}
+    {% if tasks[taskPrefix+"_tumor_structural_caller_gridss"]|default(false) %}
         {{- gridss_tumor_only(pair, aligner='bwa') }}
     {% endif %}
     {% endif %}
 
     {% if pair.normal.gatkCnvPon is defined %}
-    {% if tasks[taskPrefix+"_tumor_only_cna_caller_gatk"]|default(true) %}
+    {% if tasks[taskPrefix+"_tumor_cna_caller_gatk"]|default(true) %}
         {{- gatk_cnv_tumor_only(pair, aligner='bwa') }}
     {% endif %}
     {% endif %}
