@@ -111,7 +111,7 @@
         {{- deepvariant_tumor_only(tumor, aligner='bwa', taskPrefix=taskPrefix) }}
     {% endif %}
 
-    {% if tasks[taskPrefix+"_tumor_assembly"]|default(true) %}
+    {% if tasks[taskPrefix+"_disease_specific_multiple_myeloma"]|default(true) %}
         {{- assembly(tumor, aligner='bwa') }}
     {% endif %}
 {% endfor %}
@@ -122,7 +122,7 @@
 {% for tumor in samples.values() if tumor.subGroup|lower == 'tumor' and tumor.gltype == 'exome' %}
   {% do tumorSamples.append(tumor) %}
 {% endfor %}
-{% if tasks["Exome_tumor_only_lumosvar2"]|default(false) %}
+{% if tasks["Exome_tumor_structural_caller_lumosvar2"]|default(false) %}
     {{- lumosvar2(tumorSamples, normSamples, aligner='bwa') }}
 {% endif %}
 
