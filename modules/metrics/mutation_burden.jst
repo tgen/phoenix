@@ -58,8 +58,8 @@
     {# Manual interventions for compatibility with stats2json #}
     {# Moving `## Started on...` to be after the command #}
     printf '%s\n' '1m4' 'wq' | ed -s {{ mutation_burden_output }}
-    sed 's/## Started/# Started/g' < {{ mutation_burden_output }}
-    sed 's/## \/packages/# \/packages/g' < {{ mutation_burden_output }}
+    sed -i 's/##Started/# Started/g' {{ mutation_burden_output }}
+    sed -i 's/##\/packages/# \/packages/g' {{ mutation_burden_output }}
     echo -e "\n" >> {{ mutation_burden_output }}
 
     {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}{% endset %}
