@@ -27,8 +27,8 @@
     module load {{ constants.tools.R.module }}
     module load {{ constants.tools.bedtools.module }}
 
-    rm -r {{ temp_dir }} || true
-    mkdir -p {{ temp_dir }}
+    rm -r {{ temp_dir }}/mutation_burden || true
+    mkdir -p {{ temp_dir }}/mutation_burden
 
     bcftools filter \
       --include 'INFO/CC>=3' \
@@ -39,13 +39,13 @@
       --include 'INFO/CSQ ~ "{{ effect }}"' \
       {% endif %}
       {% endfor %}
-      --output {{ temp_dir }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --output {{ temp_dir }}/mutation_burden/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --output-type z \
       {{ input_vcf }}
 
     tgen_mutation_burden.sh \
       --bed {{ constants.phoenix.cds_intervals }} \
-      --vcf {{ temp_dir }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --vcf {{ temp_dir }}/mutation_burden/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --tbam {{ tumor_bam }} \
       --nbam {{ normal_bam }} \
       --outprefix {{ temp_dir }} \
