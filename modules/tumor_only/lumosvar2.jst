@@ -23,11 +23,11 @@
     {% do bamList.append(bamPath) %}
   {% endfor %}
 
-  {% set results_dir %}{{ (tumor_samples|first).gltype }}/tumor_only_structural_calls/lumosvar2/{{ (tumor_samples|first).name }}{% endset %}
-  {% set temp_dir %}temp/{{ (tumor_samples|first).gltype }}/tumor_only_structural_calls/lumosvar2/{{ (tumor_samples|first).name }}{% endset %}
+  {% set results_dir %}{{ (tumor_samples|first).gltype }}/tumor_only_variant_calls/lumosvar2/{{ (tumor_samples|first).name }}{% endset %}
+  {% set temp_dir %}temp/{{ (tumor_samples|first).gltype }}/tumor_only_variant_calls/lumosvar2/{{ (tumor_samples|first).name }}{% endset %}
 
 - name: lumosvar2_{{ (tumor_samples|first).name }}
-  tags: [lumosvar2, tumor_only, exome]
+  tags: [lumosvar2, tumor_only, exome, snp_indel_caller]
   input:
     {% for tumor in tumor_samples %}
     - {{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam
@@ -113,7 +113,7 @@
     defaultMQ: 40                             ### mapping quality for indels
     mpileupC: 50                              ### C parameter for mpileup
     minHetPopFreq: 0.05                       ### minimum population frequency for heterozygous for initial iteration
-    maxSomPopFreq: 2E-5                     ### maximum population frequency for somatic for initial iteration
+    maxSomPopFreq: 2E-5                       ### maximum population frequency for somatic for initial iteration
     minHetAF: 0.45                            ### minimum AF to select hets for centering
     maxW: 500
     minW: 50                                  ### mimimum value of W parameter (effects sharpness of allele frequency distribution)
@@ -130,7 +130,7 @@
     minPercentStrand: 0.01                    ### minimum percent of reads supporting either allele from each strand
     minMeanMQ: 35                             ### minimum average mapping quality of reads supporting either allele
     minMeanBQ: 25                             ### minimum average base quality of bases supporting either allele
-    maxPMM: 0.025                              ### maxium percent mismatches in reads suppporting either allele
+    maxPMM: 0.025                             ### maxium percent mismatches in reads suppporting either allele
     minSeqEndDist: 30                         ### minimum average distances variant position from either end of the sequence
     maxStrandDiff: 0.1                        ### maximum difference in percent of reads from each strand supporting A and B allele
     maxBQdiff: 5                              ### maximum difference in mean BQ between A and B allele
