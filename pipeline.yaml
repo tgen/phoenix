@@ -415,7 +415,7 @@ constants:
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
     plotSamStats_Rscript: summarize_samstats_8c45d63.R
-    summarize_mm_igtx_Rscript: summarize_Ig_2f0f872.R
+    summarize_mm_igtx_Rscript: summarize_Ig_f2e43e0.R
     process_assembled_bam: Process_Assembled_BAM_eb25fca.py
     stats2json: samStats2json_b3854a1.py
     stats2lims: uploadStats2Lims_98319ea.py

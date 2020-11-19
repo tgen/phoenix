@@ -51,18 +51,18 @@ if(is.null(opt$pairoscope_file) || !file.exists(as.character(opt$pairoscope_file
   #read from from  file
   pairoscope= read.table(file=opt$pairoscope_file, header = TRUE,sep = '\t')
   pair_calls=pairoscope %>% select(ends_with("Call"))
-  pair_calls=rename_with(pair_calls, ~ gsub("CALL", "CALL_Pairoscope", .x, fixed = TRUE))
+  pair_calls <- pair_calls %>% rename_all(list(~ str_replace(., "CALL", "CALL_Pairoscope")))
 
   specimen = tibble(Specimen=opt$specimen)
   #manta
   manta=read.table(file=opt$manta_file,header = TRUE,sep = '\t')
   manta_calls = manta %>% select(ends_with("Called"))
-  manta_calls = rename_with(manta_calls, ~ gsub("Target_Called", "CALL_Manta", .x, fixed = TRUE))
+  manta_calls <- manta_calls %>% rename_all(list(~ str_replace(.,"Target_Called", "CALL_Manta")))
 
   #gammit
   gammit = read.table(file=opt$gammit_file,header = TRUE,sep = '\t')
   gammit_calls = gammit %>% select(ends_with("Call"))
-  gammit_calls = rename_with(gammit_calls, ~ gsub("Call", "CALL_Gammit", .x, fixed = TRUE))
+  gammit_calls <- gammit_calls %>% rename_all(list(~ str_replace(.,"Call", "CALL_Gammit")))
 
   #merge
 
@@ -88,8 +88,8 @@ if(is.null(opt$pairoscope_file) || !file.exists(as.character(opt$pairoscope_file
         )
   combined_calls=combined_calls[,order(colnames(combined_calls), decreasing = TRUE)]
 
-  combined_calls=combined_calls %>% relocate(Specimen)
+  # combined_calls=combined_calls %>% relocate(Specimen)
   write("Save results...\n", stderr())
-  write_tsv(combined_calls, file=opt$outfile, append = FALSE,na="NA")
+  write_tsv(combined_calls, opt$outfile, append = FALSE,na="NA")
   write("Done.\n", stderr())
   }
