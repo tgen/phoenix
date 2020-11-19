@@ -7,7 +7,6 @@
 {% from 'modules/constitutional/deepvariant.jst' import deepvariant with context %}
 {% from 'modules/constitutional/octopus.jst' import octopus_constitutional with context %}
 {% from 'modules/constitutional/ichorcna.jst' import ichorcna with context %}
-{% from 'modules/constitutional/mm_igtx_calling.jst' import mm_igtx_pairoscope with context %}
 
 # Constitutional tools generally operate on a single DNA samples and should not run
 # on "tumor" samples with the exception of ichor that cna be run on tumor or constitutional.
@@ -50,10 +49,6 @@
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_octopus"]|default(false) %}
             {{- octopus_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
-        {% endif %}
-    {% elif sample.subGroup|lower == 'tumor' %}
-        {%- if tasks[taskPrefix+"_disease_specific_multiple_myeloma"]|default(true) %}
-            {{- mm_igtx_pairoscope(sample, aligner='bwa') }}
         {% endif %}
     {% endif %}
 
