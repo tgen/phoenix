@@ -2,6 +2,7 @@
 
 {% macro mutation_burden(pair, normal_bam, tumor_bam, temp_dir, input_vcf, results_dir, variant_caller, aligner, annotate_flag) %}
 
+{% set mutation_burden_temp %}{{ temp_dir }}/mutation_burden_{{ annotate_flag }}{% endset %}
 {% set mutation_burden_output %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.txt{% endset %}
 {% set mutation_burden_json %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.json{% endset %}
 
@@ -27,8 +28,8 @@
     module load {{ constants.tools.R.module }}
     module load {{ constants.tools.bedtools.module }}
 
-    rm -r {{ temp_dir }}/mutation_burden || true
-    mkdir -p {{ temp_dir }}/mutation_burden
+    rm -r {{ mutation_burden_temp }} || true
+    mkdir -p {{ mutation_burden_temp }}
 
     bcftools filter \
       --include 'INFO/CC>=3' \
@@ -39,13 +40,13 @@
       --include 'INFO/CSQ ~ "{{ effect }}"' \
       {% endif %}
       {% endfor %}
-      --output {{ temp_dir }}/mutation_burden/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --output {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --output-type z \
       {{ input_vcf }}
 
     tgen_mutation_burden.sh \
       --bed {{ constants.phoenix.cds_intervals }} \
-      --vcf {{ temp_dir }}/mutation_burden/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --vcf {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --tbam {{ tumor_bam }} \
       --nbam {{ normal_bam }} \
       --outprefix {{ temp_dir }} \
@@ -63,7 +64,7 @@
     sed -i 's/##\/packages/# \/packages/g' {{ mutation_burden_output }}
     echo -e "\n" >> {{ mutation_burden_output }}
 
-    {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}{% endset %}
+    {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}_{{ annotate_flag }}{% endset %}
     {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "tgen_mutation_burden") }}
 
 {% endmacro %}
