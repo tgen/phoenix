@@ -8,7 +8,10 @@
 - name: discordant_loci_extraction_{{ tumor.name }}
   tags: [assembly,]
   input: {{ tumor_bam }}
-  output: {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+  output:
+    - {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+    - {{ temp_dir }}/gene_regions.bed
+    - {{ temp_dir }}/igs_regions.bed
   walltime: "12:00:00"
   cpus: 4
   mem: 8G
@@ -61,9 +64,15 @@
 - name: trinity_assembly_{{ tumor.name }}
   tags: [assembly,]
   reset: predecessors
-  input: {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+  input:
+    - {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+    - {{ temp_dir }}/gene_regions.bed
+    - {{ temp_dir }}/igs_regions.bed
   output:
     - {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
+    - {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
+    - {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
+    - {{ results_dir }}/{{ tumor.name }}_DEX_IgTx_GA_Summary.txt
   walltime: "24:00:00"
   cpus: 4
   mem: 10G
