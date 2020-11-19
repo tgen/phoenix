@@ -1,6 +1,6 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
-{% macro manta_mm_igtx(pair, aligner='bwa') %}
+{% macro manta_tumor_only(pair, aligner='bwa') %}
 {% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
 {% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
@@ -8,15 +8,15 @@
 {% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}{% endset %}
 {% set summary_samtools_stats %}{{ pair.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ pair.tumor.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
 
-- name: manta_mm_igtx_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_manta_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, structural_caller, manta, {{ pair.name }}]
-  methods: > 
+  methods: >
     somatic structural variants and indels for {{ pair.name }} ({{ aligner }})
     were called with {{ constants.tools.manta.verbose }}.
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
-  output: 
+  output:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz.tbi
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.candidateSV.vcf.gz
@@ -32,7 +32,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.manta_tgen.module }}
+    module load {{ constants.tools.manta.module }}
     module load {{ constants.tools.htslib.module }}
     module load {{ constants.tools.python_2_7_15.module }}
 
@@ -65,8 +65,6 @@
     cat <<EOF > "${MANTA_CONFIG}"
     [manta]
     enableRemoteReadRetrievalForInsertionsInCancerCallingModes = 1
-    minMapq = 0
-    maxDepthFactor = 12
     EOF
 
     {# Build the Manta run file #}
@@ -76,8 +74,6 @@
       {% endif %}
       --callRegions "${MANTA_BED}.gz" \
       --config "${MANTA_CONFIG}" \
-      --scanSizeMb 5 \
-      --callMemMb 50 \
       --normalBam "{{ normal_bam }}" \
       --tumorBam "{{ tumor_bam }}" \
       --referenceFasta "{{ constants.phoenix.reference_fasta }}" \
@@ -99,9 +95,8 @@
     mv "{{ temp_dir }}/results/variants/somaticSV.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi"
 
 
-- name: manta_mm_igtx_flag_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_manta_flag_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, {{ pair.name }}]
-  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz
     - {{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.vcf.gz.tbi
@@ -113,7 +108,6 @@
     - {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz.tbi
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
     - {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz.tbi
-    - {{ results_dir }}/{{ pair.name }}.{{ aligner }}_mantaTxCalls.txt
   cpus: 4
   mem: 4G
   walltime: "12:00:00"
@@ -124,7 +118,6 @@
     module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.bedtools.module }}
-    module load {{ constants.tools.transparser.module }}
 
     {# Ensuring that the output dir exists for bcftools filter #}
     mkdir -p {{ temp_dir }}/results/variants
@@ -140,8 +133,9 @@
     echo ${INSERT_SIZE}
     echo ${STD_IS}
     echo -e "----------------"
-
     {# adding fields and flags to pass.vcf.gz file #}
+    {% set temp_dir_pass_vcf %}{{ temp_dir }}/results/variants/somaticSV.pass.vcf{% endset %}
+
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.manta_prepare_sv_vcf }} \
       -p 4 \
       -i {{ temp_dir }}/results/variants/somaticSV.pass.vcf.gz \
@@ -150,53 +144,16 @@
       --tumor-name {{ pair.tumor.rgsm }} \
       --insert-size ${INSERT_SIZE} \
       --sigma ${STD_IS} \
-      --minmapq 0 \
+      --minmapq 15 \
       --output {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
       --logfile {{ temp_dir }}/results/variants/log_prepare_sv_vcf.txt
-
-    TAB=$'\t'
-    cat <<EOF > "{{ temp_dir }}/gene_regions.bed"
-    chr4${TAB}1798273${TAB}1998273${TAB}NSD2
-    chr6${TAB}41632262${TAB}42332262${TAB}CCND3
-    chr8${TAB}124987758${TAB}129487754${TAB}MYC
-    chr8${TAB}142918584${TAB}143925832${TAB}MAFA
-    chr11${TAB}68732532${TAB}69685232${TAB}CCND1
-    chr12${TAB}3690834${TAB}4690834${TAB}CCND2
-    chr16${TAB}78096103${TAB}79950000${TAB}MAF
-    chr20${TAB}39671358${TAB}40971360${TAB}MAFB
-    EOF
-
-    cat <<EOF > "{{ temp_dir }}/igs_regions.bed"
-    chr2${TAB}88750483${TAB}90261139${TAB}IgK
-    chr14${TAB}105533663${TAB}106881350${TAB}IgH
-    chr22${TAB}21995603${TAB}23057822${TAB}IgL
-    EOF
-
-    bcftools filter \
-      -i "TRA==1 && ( PR[1:1]>=5 || SR[1:1]>=5 || (PR[1:1]+SR[1:1])>=5 ) && (RCDIS1[1:0]>3 && RCDIS2[1:0]>3 )" \
-      -O z \
-      -o {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz \
-      {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
-
-    bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz
-
-    bash transParser.sh \
-      --bed-genes {{ temp_dir }}/gene_regions.bed \
-      --bed-igs {{ temp_dir }}/igs_regions.bed \
-      --vcf {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz \
-      --samplename {{ pair.tumor.rgsm }} \
-      --threads 2 \
-      --dirtemp {{ temp_dir }} \
-      --dirout {{ results_dir }} \
-      --tabfilename {{ pair.name }}.{{ aligner }}_mantaTxCalls.txt \
-      --min-reads 5
 
     {# compress vcf to vcf.gz #}
     bcftools view --threads 4 -O z -o {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf
     bcftools index --threads 4 --tbi --force {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf.gz
 
 
-- name: manta_mm_igtx_annotate_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_manta_annotate_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, manta, flag, gene, annotation, {{ pair.name }}]
   reset: predecessors
   input:
@@ -233,7 +190,7 @@
     mv "{{ temp_dir }}/results/variants/somaticSV.pass.flag.anno.vcf.gz.tbi" "{{ results_dir }}/{{ pair.name }}.{{ aligner }}.manta.somaticSV.pass.vcf.gz.tbi"
 
     {# Remove the remaining files #}
-    {% set task %}manta_mm_igtx_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_manta_annotate_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 
