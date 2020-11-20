@@ -67,6 +67,9 @@
       --pipeline \
       --verbose
 
+    {# Adding two new lines to end of output file #}
+    printf "\n\n" >> {{ mutation_burden_output }}
+
     {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}_{{ annotate_flag }}{% endset %}
     {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "tgen_mutation_burden") }}
 
