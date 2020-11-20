@@ -91,13 +91,6 @@ constants:
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
-    gcc:
-      module: GCC/8.3.0
-      version: "8.3.0"
-      verbose: gcc
-      website: gcc.com
-      citation: >
-        Todo
     gridss:
       module: gridss/2.6.3
       version: "2.6.3"
@@ -241,6 +234,14 @@ constants:
       citation: >
         R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
         Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+    salmon:
+      module: Salmon/1.2.1-gompi-2019a
+      version: "1.2.1"
+      verbose: Salmon v1.2.1
+      website: https://combine-lab.github.io/salmon/
+      citation: >
+        Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
+        fast and bias-aware quantification of transcript expression. Nature Methods.
     sambamba:
       module: sambamba/0.7.0
       version: 0.7.0
@@ -258,14 +259,6 @@ constants:
         Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
-    salmon:
-      module: Salmon/1.2.1-gompi-2019a
-      version: "1.2.1"
-      verbose: Salmon v1.2.1
-      website: https://combine-lab.github.io/salmon/
-      citation: >
-        Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
-        fast and bias-aware quantification of transcript expression. Nature Methods.
     singularity:
       module: singularity/3.5.2-phoenix
       version: "3.5.2"
@@ -327,15 +320,15 @@ constants:
       module: MutationBurden/1.2.1
       version: "1.2.1"
       verbose: TGen Mutation Burden Tool v1.2.1
-    trinity:
-      module: trinityrnaseq/2.8.6-gcc-8.2.0-2.31.1-perl-5.28.1
-      version: "2.8.6"
-      verbose: Trinity-v2.8.6
     transparser:
       module: transParser/1.0.0
       version: "1.0.0"
       verbose: transParser v1.0.0
       website: https://github.com/tgen/transParser
+    trinity:
+      module: trinityrnaseq/2.8.6-gcc-8.2.0-2.31.1-perl-5.28.1
+      version: "2.8.6"
+      verbose: Trinity-v2.8.6
     vardict:
       module: vardict/1.7.0-java-1.8
       version: "1.7.0"
@@ -350,14 +343,6 @@ constants:
       version: "0.8.7"
       verbose: vcfMerger2 v0.8.7
       website: https://github.com/tgen/vcfMerger2
-    verifybamid2:
-      module: verifyBamID/1.0.6-foss-2019a
-      version: 1.0.6
-      website: https://github.com/Griffan/VerifyBamID
-      citation: >
-        Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
-        Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
-        sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
     vep:
       module: VEP/98.0-foss-2019a-Perl-5.28.1
       version: "98.3"
@@ -368,6 +353,14 @@ constants:
         The Ensembl Variant Effect Predictor.
         Genome Biology Jun 6;17(1):122. (2016)
         doi:10.1186/s13059-016-0974-4
+    verifybamid2:
+      module: verifyBamID/1.0.6-foss-2019a
+      version: 1.0.6
+      website: https://github.com/Griffan/VerifyBamID
+      citation: >
+        Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
+        Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
+        sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
     vt:
       module: vt/0.57721-foss-2019a
       version: "0.57721"
