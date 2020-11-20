@@ -44,8 +44,19 @@
       --output-type z \
       {{ input_vcf }}
 
+    {% if pair.gltype == 'exome' %}
+    bedtools intersect \
+      -a {{ constants.phoenix.cds_intervals }} \
+      -b {{ pair.tumor.capture_kit.extended_bed }} \
+      > {{ mutation_burden_temp }}/{{ pair.name }}_isec_cds_capture_kit.bed
+    {% endif %}
+
     tgen_mutation_burden.sh \
+      {% if pair.gltype == 'exome' %}
+      --bed {{ mutation_burden_temp }}/{{ pair.name }}_isec_cds_capture_kit.bed \
+      {% else %}
       --bed {{ constants.phoenix.cds_intervals }} \
+      {% endif %}
       --vcf {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --tbam {{ tumor_bam }} \
       --nbam {{ normal_bam }} \
@@ -54,15 +65,7 @@
       --library {{ pair.tumor.rglb }} \
       --outfile {{ mutation_burden_output }} \
       --pipeline \
-      --force \
       --verbose
-
-    {# Manual interventions for compatibility with stats2json #}
-    {# Moving `## Started on...` to be after the command #}
-    printf '%s\n' '1m4' 'wq' | ed -s {{ mutation_burden_output }}
-    sed -i 's/##Started/# Started/g' {{ mutation_burden_output }}
-    sed -i 's/##\/packages/# \/packages/g' {{ mutation_burden_output }}
-    echo -e "\n" >> {{ mutation_burden_output }}
 
     {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}_{{ annotate_flag }}{% endset %}
     {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "tgen_mutation_burden") }}
