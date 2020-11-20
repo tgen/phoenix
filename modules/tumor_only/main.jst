@@ -10,7 +10,7 @@
 {% from 'modules/tumor_only/gatk_cnv.jst' import gatk_cnv_tumor_only with context %}
 {% from 'modules/tumor_only/manta.jst' import manta_tumor_only with context %}
 {% from 'modules/tumor_only/deepvariant.jst' import deepvariant_tumor_only with context %}
-{% from 'modules/tumor_only/lumosvar2.jst' import lumosvar2 with context %}
+{% from 'modules/tumor_only/lumosvar2.jst' import lumosvar2_tumor_only with context %}
 {% from 'modules/tumor_only/mm_igtx_calling.jst' import mm_igtx_pairoscope with context %}
 {% from 'modules/tumor_only/mm_igtx_calling.jst' import mm_igtx_manta with context %}
 {% from 'modules/tumor_only/mm_igtx_calling.jst' import mm_igtx_gammit with context %}
@@ -150,6 +150,10 @@
     {% if pair.normal.pathToBam is defined %}
     {% if tasks[taskPrefix+"_tumor_snp_indel_caller_gatk_mutect2"]|default(true) %}
         {{- mutect2_tumor_only(pair, aligner='bwa') }}
+    {% endif %}
+
+    {% if tasks[taskPrefix+"_tumor_only_structural_caller_manta"]|default(true) %}
+        {{- manta_tumor_only(pair, aligner='bwa') }}
     {% endif %}
 
     {% if tasks[taskPrefix+"_disease_specific_multiple_myeloma"]|default(true) %}
