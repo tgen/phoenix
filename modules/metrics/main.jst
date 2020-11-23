@@ -39,25 +39,27 @@
   {% set flags.vep = true %}
 {% endif %}
 
-{% if flags.bcftools %}
-  {% set final_vcf_prefix %}{{ vcf_prefix }}.db{% endset %}
-  {% if flags.snpeff %}
-    {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.can.vcf.gz{% endset %}
-    {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'snpeff') }}
-  {% endif %}
-  {% if flags.vep %}
-    {% set final_vcf %}{{ final_vcf_prefix }}.vep.pick.vcf.gz{% endset %}
-    {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'vep') }}
-  {% endif %}
-{% else %}
-  {% set final_vcf_prefix %}{{ vcf_prefix }}{% endset %}
-  {% if flags.snpeff %}
-    {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.can.vcf.gz{% endset %}
-    {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'snpeff') }}
-  {% endif %}
-  {% if flags.vep %}
-    {% set final_vcf %}{{ final_vcf_prefix }}.vep.pick.vcf.gz{% endset %}
-    {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'vep') }}
+{% if tasks[taskPrefix+"_somatic_mutation_burden"]|default(false) %}
+  {% if flags.bcftools %}
+    {% set final_vcf_prefix %}{{ vcf_prefix }}.db{% endset %}
+    {% if flags.snpeff %}
+      {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.can.vcf.gz{% endset %}
+      {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'snpeff') }}
+    {% endif %}
+    {% if flags.vep %}
+      {% set final_vcf %}{{ final_vcf_prefix }}.vep.pick.vcf.gz{% endset %}
+      {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'vep') }}
+    {% endif %}
+  {% else %}
+    {% set final_vcf_prefix %}{{ vcf_prefix }}{% endset %}
+    {% if flags.snpeff %}
+      {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.can.vcf.gz{% endset %}
+      {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'snpeff') }}
+    {% endif %}
+    {% if flags.vep %}
+      {% set final_vcf %}{{ final_vcf_prefix }}.vep.pick.vcf.gz{% endset %}
+      {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'vep') }}
+    {% endif %}
   {% endif %}
 {% endif %}
 
