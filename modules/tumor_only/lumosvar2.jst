@@ -62,14 +62,14 @@
     cat <<EOF > "{{ temp_dir }}/{{ project }}_tumor_lumosVar2_config.yaml"
     bamList: ${PROJECT_ROOT}/{{ temp_dir }}/{{ project }}_tumor_bamList.txt
     regionsFile: {{ (tumor_samples|first).capture_kit.extended_bed }}
-    snpVCFpath: {{ constants.phoenix.gnomad_genome_v3_0_per_chr }}
+    snpVCFpath: {{ constants.phoenix.gnomad_genome_per_chr }}
     snpVCFname: .vcf.gz
     {% for normal in normSamples.values() %}
     {% if normal.pathToNormalMetrics is defined and normal.assayCode == (tumor_samples|first).assayCode %}
     NormalBase: {{ normal.pathToNormalMetrics }}.
     {% endif %}
     {% endfor %}
-    cosmicVCF: {{ constants.phoenix.cosmic_coding_v92 }}
+    cosmicVCF: {{ constants.phoenix.cosmic_coding }}
     refGenome: {{ constants.phoenix.reference_fasta }}
 
     outName: ${PROJECT_ROOT}/{{ results_dir }}/{{ project }}.out

@@ -48,7 +48,7 @@
       --java-options "-Xmx14G" \
       --tmp-dir {{ temp_dir }}/temp_mutect2_{{ loop.index }}/ \
       --reference {{ constants.phoenix.reference_fasta }} \
-      --germline-resource {{ constants.phoenix.gnomad_genome_v3_0_mutect_germlinereference }} \
+      --germline-resource {{ constants.phoenix.gnomad_genome_mutect_germlinereference }} \
       --input "{{ normal_bam }}" \
       --normal-sample "{{ pair.normal.rgsm }}" \
       --input "{{ tumor_bam }}" \
@@ -91,7 +91,7 @@
       {% for interval in batch %}
       -L "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
+      --variant {{ constants.phoenix.gnomad_genome_mutect_contamination }} \
       --output {{ temp_dir }}/{{ loop.index }}.tumor-pileups.table
 
     {# Normal pileups #}
@@ -103,7 +103,7 @@
       {% for interval in batch %}
       --intervals "{{ interval.contig }}:{{ interval.start }}-{{ interval.stop }}" \
       {% endfor %}
-      --variant {{ constants.phoenix.gnomad_genome_v3_0_mutect_contamination }} \
+      --variant {{ constants.phoenix.gnomad_genome_mutect_contamination }} \
       --output {{ temp_dir }}/{{ loop.index }}.normal-pileups.table
 
 {% endfor %}
