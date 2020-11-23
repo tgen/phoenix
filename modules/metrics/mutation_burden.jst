@@ -31,6 +31,8 @@
     rm -r {{ mutation_burden_temp }} || true
     mkdir -p {{ mutation_burden_temp }}
 
+    PROJECT_ROOT=$PWD
+
     bcftools filter \
       --include 'INFO/CC>=3' \
       {% for effect in constants.phoenix.ns_effects %}
@@ -51,24 +53,25 @@
       > {{ mutation_burden_temp }}/{{ pair.name }}_isec_cds_capture_kit.bed
     {% endif %}
 
+    cd {{ mutation_burden_temp }}
+
     tgen_mutation_burden.sh \
       {% if pair.gltype == 'exome' %}
-      --bed {{ mutation_burden_temp }}/{{ pair.name }}_isec_cds_capture_kit.bed \
+      --bed {{ pair.name }}_isec_cds_capture_kit.bed \
       {% else %}
       --bed {{ constants.phoenix.cds_intervals }} \
       {% endif %}
-      --vcf {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
-      --tbam {{ tumor_bam }} \
-      --nbam {{ normal_bam }} \
-      --outprefix {{ temp_dir }} \
+      --vcf {{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --tbam ${PROJECT_ROOT}/{{ tumor_bam }} \
+      --nbam ${PROJECT_ROOT}/{{ normal_bam }} \
       --sample {{ pair.tumor.rgsm }} \
       --library {{ pair.tumor.rglb }} \
-      --outfile {{ mutation_burden_output }} \
+      --outfile ${PROJECT_ROOT}/{{ mutation_burden_output }} \
       --pipeline \
       --verbose
 
     {# Adding two new lines to end of output file #}
-    printf "\n\n" >> {{ mutation_burden_output }}
+    printf "\n\n" >> ${PROJECT_ROOT}/{{ mutation_burden_output }}
 
     {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}_{{ annotate_flag }}{% endset %}
     {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "tgen_mutation_burden") }}
