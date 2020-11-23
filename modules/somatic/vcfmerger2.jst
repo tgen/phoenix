@@ -1,4 +1,5 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+{% from 'modules/metrics/main.jst' import collect_somatic_metrics with context %}
 {% from 'modules/somatic/rna_variant_check.jst' import add_rna_header_to_vcf with context %}
 {% from 'modules/somatic/rna_variant_check.jst' import add_matched_rna with context %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
