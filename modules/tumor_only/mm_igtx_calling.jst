@@ -225,14 +225,15 @@
 
         samtools index -@ 4 {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/{{ tumor.name }}_${chrRegion}_${cluster}_sorted.bam
 
-        bwa index {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
+        mkdir -p {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}
+        mv {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/Trinity.fasta
+        bwa index {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/Trinity.fasta
         bwa mem \
           -t 4 \
           -o {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam \
-          {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta \
+          {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/Trinity.fasta \
           ${leftfq} ${rightfq}
 
-        mkdir -p {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}
         samtools view -b {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam |\
         samtools sort -o {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/{{ tumor.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
         samtools index {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/{{ tumor.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
