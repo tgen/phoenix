@@ -167,7 +167,7 @@ constants:
       version: "1.6"
       verbose: Manta v1.6 tgen_fork
       website: https://github.com/tgen/manta
-    msisensor_pro:
+    msisensor:
       module: MSIsensor/1.1.a-GCCcore-8.2.0
       version: "1.1.a"
       verbose: MSIsensor v1.1.a
