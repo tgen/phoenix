@@ -1,4 +1,5 @@
 {%- from 'modules/metrics/mutation_burden.jst' import mutation_burden with context %}
+{%- from 'modules/metrics/msisensor_pro.jst' import msisensor_pro with context %}
 
 {%- macro collect_somatic_metrics(pair, normal_bam, tumor_bam, temp_dir, results_dir, input_vcf, taskPrefix, aligner, variant_caller) %}
 
@@ -61,6 +62,10 @@
       {{- mutation_burden(pair, normal_bam, tumor_bam, temp_dir, final_vcf, results_dir, variant_caller, aligner, 'vep') }}
     {% endif %}
   {% endif %}
+{% endif %}
+
+{% if tasks[taskPrefix+"_somatic_sample_metric_msisensor_pro"]|default(true) %}
+  {{- msisensor_pro(pair, normal_bam, tumor_bam, aligner) }}
 {% endif %}
 
 {% endmacro %}

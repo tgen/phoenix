@@ -167,6 +167,11 @@ constants:
       version: "1.6"
       verbose: Manta v1.6 tgen_fork
       website: https://github.com/tgen/manta
+    msisensor_pro:
+      module: MSIsensor/1.1.a-GCCcore-8.2.0
+      version: "1.1.a"
+      verbose: MSIsensor v1.1.a
+      website: https://github.com/xjtu-omics/msisensor-pro
     multiqc:
       module: Python/3.7.2-foss-2019a
       version: "1.9"
@@ -397,6 +402,7 @@ constants:
     bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
     black_list: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz
     chip_black_list: /home/tgenref/homo_sapiens/grch38_hg38/hs38dh/tool_specific_resources/ChIP_blacklist/hg38_blacklist.bed
+    reference_msisensor_pro: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/msisensor_pro_v1.1.a/GRCh38tgen_decoy_alts_hla.microsatellites.list
     delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
     delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF_f4d178e.py
@@ -410,7 +416,7 @@ constants:
     plotSamStats_Rscript: summarize_samstats_8c45d63.R
     summarize_mm_igtx_Rscript: summarize_Ig_f2e43e0.R
     process_assembled_bam: Process_Assembled_BAM_eb25fca.py
-    stats2json: samStats2json_b3854a1.py
+    stats2json: samStats2json_3a90a2f.py
     stats2lims: uploadStats2Lims_98319ea.py
     annotSeg_script: annotSeg_8820499.pl
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/hg38tgen_ensembl_v98
