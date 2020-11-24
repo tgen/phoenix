@@ -39,7 +39,7 @@
   {% set flags.vep = true %}
 {% endif %}
 
-{% if tasks[taskPrefix+"_somatic_mutation_burden"]|default(false) %}
+{% if tasks[taskPrefix+"_somatic_sample_metric_tgen_mutation_burden"]|default(true) %}
   {% if flags.bcftools %}
     {% set final_vcf_prefix %}{{ vcf_prefix }}.db{% endset %}
     {% if flags.snpeff %}
