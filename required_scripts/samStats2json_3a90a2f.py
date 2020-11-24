@@ -150,6 +150,14 @@ fileTypes = {
         "hist_col_per_level": 1,
         "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
     },
+    "tgen_mutation_burden": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "help": "\"bam_name.annotate_flag.mutation_burden\" file generated from tgen_mutation_burden in a Picard style output."
+    },
     "quality_yield_metrics": {
         "picard": True,
         "picard_metrics": True,
