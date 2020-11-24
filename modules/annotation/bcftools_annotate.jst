@@ -39,7 +39,7 @@
     bcftools annotate \
       --threads 4 \
       --annotations "{{ constants.phoenix.dbsnp }}" \
-      --mark-sites DBSNP \
+      --mark-sites DB \
       --columns ID \
       --output-type b \
       --output "{{ temp_dir }}/tempout.bcf" \
