@@ -1,9 +1,9 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
 {% macro mm_igtx_pairoscope(tumor, aligner='bwa') %}
-{% set temp_dir %}temp/{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx/pairoscope/{{ tumor.name }}{% endset %}
+{% set temp_dir %}temp/{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx_pairoscope/{{ tumor.name }}{% endset %}
 {% set tumor_bam %}{{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx/pairoscope/{{ tumor.name }}{% endset %}
+{% set results_dir %}{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx_pairoscope/{{ tumor.name }}{% endset %}
 
 {% if controlDataFiles is defined %}
 {% set toAssayCodes = [] %}
@@ -84,8 +84,8 @@
 
 {% macro mm_igtx_gammit(tumor, aligner='bwa') %}
 {% set tumor_bam %}{{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx/gammit/{{ tumor.name }}{% endset %}
-{% set temp_dir %}temp/{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx/gammit/{{ tumor.name }}{% endset %}
+{% set results_dir %}{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx_gammit/{{ tumor.name }}{% endset %}
+{% set temp_dir %}temp/{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx_gammit/{{ tumor.name }}{% endset %}
 
 - name: discordant_loci_extraction_{{ tumor.name }}
   tags: [assembly,]
@@ -290,8 +290,8 @@
 {% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
 {% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ pair.gltype }}/tumor_only_structural_calls/mm_igtx/manta/{{ pair.name }}{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/mm_igtx/manta/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_structural_calls/mm_igtx_manta/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_structural_calls/mm_igtx_manta/{{ pair.name }}{% endset %}
 {% set summary_samtools_stats %}{{ pair.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/stats/{{ pair.tumor.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
 
 - name: mm_igtx_manta_{{ pair.name }}_{{ aligner }}
@@ -528,10 +528,10 @@
 
 
 {% macro mm_igtx_summarize(sample, aligner='bwa') %}
-{% set results_dir %}{{ sample.gltype }}/tumor_only_structural_calls{% endset %}
-{% set manta_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx/manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}_mantaTxCalls.txt{% endset %}
-{% set gammit_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx/gammit/{{ sample.name }}/{{ sample.name }}_DEX_IgTx_GA_Summary.txt{% endset %}
-{% set pairoscope_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx/pairoscope/{{ sample.name }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_calls.txt{% endset %}
+{% set results_dir %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_summary/{{ sample.name }}{% endset %}
+{% set manta_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}_mantaTxCalls.txt{% endset %}
+{% set gammit_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_gammit/{{ sample.name }}/{{ sample.name }}_DEX_IgTx_GA_Summary.txt{% endset %}
+{% set pairoscope_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_pairoscope/{{ sample.name }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_calls.txt{% endset %}
 
 - name: summarize_mm_igtx_{{ sample.name }}
   tags: [{{ sample.gltype }}, {{ sample.name }}, mm_igtx]
@@ -548,6 +548,8 @@
     set -o pipefail
 
     module load {{ constants.tools.R.module }}
+
+    mkdir -p {{ results_dir }}
 
     Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.summarize_mm_igtx_Rscript }} \
         -p {{ pairoscope_path }} \
