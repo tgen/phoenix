@@ -1,7 +1,9 @@
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
-{% macro mutation_burden(pair, normal_bam, tumor_bam, temp_dir, input_vcf, results_dir, variant_caller, aligner, annotate_flag) %}
+{% macro mutation_burden(pair, normal_bam, tumor_bam, input_vcf, variant_caller, aligner, annotate_flag) %}
 
+{% set temp_dir %}temp/{{ pair.gltype }}/metrics/mutation_burden/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/metrics/mutation_burden/{{ pair.name }}{% endset %}
 {% set mutation_burden_temp %}{{ temp_dir }}/mutation_burden_{{ annotate_flag }}{% endset %}
 {% set mutation_burden_output %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.txt{% endset %}
 {% set mutation_burden_json %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.json{% endset %}
@@ -30,6 +32,7 @@
 
     rm -r {{ mutation_burden_temp }} || true
     mkdir -p {{ mutation_burden_temp }}
+    mkdir -p {{ results_dir }}
 
     PROJECT_ROOT=$PWD
 
