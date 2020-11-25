@@ -111,6 +111,10 @@ fileTypes = {
     "samtools_markdup_summary": {
         "prefix": "samStats_markdup_",
         "help": "\"bam_name.bam_samtools_markdup_summary.tsv\" file generated from summarize_samstats.R in the phoenix pipeline. "
+    },
+    "tgen_mutation_burden": {
+        "prefix": "tgenMutationBurden_",
+        "help": "\"bam_name.annotate_flag.mutation_burden\" file generated from tgen_mutation_burden in a Picard style output."
     }
 }
 
