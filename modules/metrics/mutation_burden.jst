@@ -36,15 +36,18 @@
 
     PROJECT_ROOT=$PWD
 
-    bcftools filter \
-      --include 'INFO/CC>=3' \
-      {% for effect in constants.phoenix.ns_effects %}
+    {% set ns_list = [] %}
+    {% for effect in constants.phoenix.ns_effects %}
       {% if annotate_flag == 'snpeff' %}
-      --include 'INFO/ANN ~ "{{ effect }}"' \
+        {% set ns_effect %}INFO/ANN ~ "{{ effect }}"{% endset %}
       {% else %}
-      --include 'INFO/CSQ ~ "{{ effect }}"' \
+        {% set ns_effect %}INFO/CSQ ~ "{{ effect }}"{% endset %}
       {% endif %}
-      {% endfor %}
+      {% do ns_list.append(ns_effect) %}
+    {% endfor %}
+
+    bcftools filter \
+      --include 'INFO/CC>=3 && ({{ ns_list|join('||') }})' \
       --output {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --output-type z \
       {{ input_vcf }}
