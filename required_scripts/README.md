@@ -37,6 +37,6 @@ $ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 [samStats2json_3a90a2f.py](https://github.com/tgen/samStats2json/commit/3a90a2fefd8fc60a5ebd391dca6702fae419f32f)  
 [seg_extend_229b8c7.py](https://github.com/tgen/jetstream_resources/commit/229b8c7641dd505789664aab88c1662d1f97e429)  
 [summarize_samstats_8c45d63.R](https://github.com/tgen/plot_samstats/commit/8c45d63dbd7f5037d7bb658ac91647898bf7509f)  
-[summarize_Ig_f2e43e0.R](https://github.com/tgen/jetstream_resources/commit/f2e43e05456a2db51cce5af458ebb8aa2efffddf)  
+[summarize_Ig_2fe83ec.R](https://github.com/tgen/jetstream_resources/commit/2fe83ecd7666678219377f73e3b400e205044a65)  
 [svtop.delly.sv_annotation.parallel_8820499.py](https://github.com/tgen/jetstream_resources/commit/8820499e113a387fee98044112951fa534ad6f8e)  
 [uploadStats2Lims_b4ff278.py](https://github.com/bryce-turner/uploadStats2Lims/commit/b4ff2786a9289471db84145f7cfb4208eab3f4f0)  
