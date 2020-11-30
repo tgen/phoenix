@@ -47,7 +47,7 @@
     {% endfor %}
 
     bcftools filter \
-      --include 'INFO/CC>=3 && ({{ ns_list|join('||') }})' \
+      --include 'INFO/CC>=3 && ({{ ns_list|join(' || ') }})' \
       --output {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
       --output-type z \
       {{ input_vcf }}
