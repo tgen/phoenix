@@ -103,7 +103,9 @@
 
     {# Purge any existing run files prior to starting #}
     rm -r "{{ temp_dir }}" || true
+    rm -r "{{ results_dir }}" || true
     mkdir -p "{{ temp_dir }}"
+    mkdir -p "{{ results_dir }}"
 
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.dle.module }}
@@ -167,9 +169,6 @@
     {# star_fusion loads Trinity and it's dependencies in the background, ensuring compatibility #}
     module load {{ constants.tools.star_fusion.module }}
     trin_path=$(dirname `which Trinity`)
-
-    rm -r {{ results_dir }} || true
-    mkdir -p {{ results_dir }}
 
     {# Build a list of fastqs to iterate through #}
     fqr1arr=()
