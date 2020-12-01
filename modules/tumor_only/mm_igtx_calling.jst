@@ -90,10 +90,7 @@
 - name: discordant_loci_extraction_{{ tumor.name }}
   tags: [assembly,]
   input: {{ tumor_bam }}
-  output:
-    - {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
-    - {{ temp_dir }}/gene_regions.bed
-    - {{ temp_dir }}/igs_regions.bed
+  output: {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
   walltime: "12:00:00"
   cpus: 4
   mem: 8G
@@ -110,29 +107,11 @@
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.dle.module }}
 
-    TAB=$'\t'
-    cat <<EOF > "{{ temp_dir }}/gene_regions.bed"
-    chr4${TAB}1798273${TAB}1998273${TAB}NSD2
-    chr6${TAB}41632262${TAB}42332262${TAB}CCND3
-    chr8${TAB}124987758${TAB}129487754${TAB}MYC
-    chr8${TAB}142918584${TAB}143925832${TAB}MAFA
-    chr11${TAB}68732532${TAB}69685232${TAB}CCND1
-    chr12${TAB}3690834${TAB}4690834${TAB}CCND2
-    chr16${TAB}78096103${TAB}79950000${TAB}MAF
-    chr20${TAB}39671358${TAB}40971360${TAB}MAFB
-    EOF
-
-    cat <<EOF > "{{ temp_dir }}/igs_regions.bed"
-    chr2${TAB}88750483${TAB}90261139${TAB}IgK
-    chr14${TAB}105533663${TAB}106881350${TAB}IgH
-    chr22${TAB}21995603${TAB}23057822${TAB}IgL
-    EOF
-
     dle.py \
       --alignment-file {{ tumor_bam }} \
       --reference-genome {{ constants.phoenix.reference_fasta }} \
-      --regions-bed-file {{ temp_dir }}/gene_regions.bed \
-      --igs-regions-bed-file {{ temp_dir }}/igs_regions.bed \
+      --regions-bed-file {{ constants.phoenix.igtx_gene_regions }} \
+      --igs-regions-bed-file {{ constants.phoenix.igtx_regions }} \
       --dir-out-fq {{ results_dir }} \
       --prefix-fq {{ tumor.name }} \
       --min-mapq 0 \
@@ -143,15 +122,12 @@
       --clustering-distance 600
 
     {# Concatenating the list of fastqs to reduce downstream processing #}
-    cat {{ temp_dir }}/*_list_fastq_files.txt > {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+    cat {{ results_dir }}/*_list_fastq_files.txt > {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+    find {{ results_dir }}/ -name '*_list_fastq_files.txt' \! -name '{{ tumor.name }}_list_of_fastqs.txt' -delete
 
 - name: trinity_assembly_{{ tumor.name }}
   tags: [assembly,]
-  reset: predecessors
-  input:
-    - {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt
-    - {{ temp_dir }}/gene_regions.bed
-    - {{ temp_dir }}/igs_regions.bed
+  input: {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
   output:
     - {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
     - {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
@@ -254,15 +230,13 @@
 
       samtools index -@ 4 {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
 
-      cat {{ temp_dir }}/gene_regions.bed {{ temp_dir }}/igs_regions.bed | cut -f1-3 > "{{ temp_dir }}/pairoscopeRegions.bed"
-
       python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
         --input_bam {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam \
         --fastq_dir {{ temp_dir }} \
         --contig 125 \
         --reads 3 \
         --window 25 \
-        --pairoscope_bed_file {{ temp_dir }}/pairoscopeRegions.bed \
+        --pairoscope_bed_file {{ constants.phoenix.igtx_pairoscope_regions }} \
         --output_path {{ results_dir }} \
         --specimen {{ tumor.name }} \
         --bam_path {{ results_dir }}
@@ -439,24 +413,6 @@
       --output {{ temp_dir }}/results/variants/somaticSV.pass.flag.vcf \
       --logfile {{ temp_dir }}/results/variants/log_prepare_sv_vcf.txt
 
-    TAB=$'\t'
-    cat <<EOF > "{{ temp_dir }}/gene_regions.bed"
-    chr4${TAB}1798273${TAB}1998273${TAB}NSD2
-    chr6${TAB}41632262${TAB}42332262${TAB}CCND3
-    chr8${TAB}124987758${TAB}129487754${TAB}MYC
-    chr8${TAB}142918584${TAB}143925832${TAB}MAFA
-    chr11${TAB}68732532${TAB}69685232${TAB}CCND1
-    chr12${TAB}3690834${TAB}4690834${TAB}CCND2
-    chr16${TAB}78096103${TAB}79950000${TAB}MAF
-    chr20${TAB}39671358${TAB}40971360${TAB}MAFB
-    EOF
-
-    cat <<EOF > "{{ temp_dir }}/igs_regions.bed"
-    chr2${TAB}88750483${TAB}90261139${TAB}IgK
-    chr14${TAB}105533663${TAB}106881350${TAB}IgH
-    chr22${TAB}21995603${TAB}23057822${TAB}IgL
-    EOF
-
     bcftools filter \
       -i "TRA==1 && ( PR[1:1]>=5 || SR[1:1]>=5 || (PR[1:1]+SR[1:1])>=5 ) && (RCDIS1[1:0]>3 && RCDIS2[1:0]>3 )" \
       -O z \
@@ -466,8 +422,8 @@
     bcftools index --threads 2 --tbi --force {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz
 
     bash transParser.sh \
-      --bed-genes {{ temp_dir }}/gene_regions.bed \
-      --bed-igs {{ temp_dir }}/igs_regions.bed \
+      --bed-genes {{ constants.phoenix.igtx_gene_regions }} \
+      --bed-igs {{ constants.phoenix.igtx_regions }} \
       --vcf {{ temp_dir }}/results/variants/translocations.pass.flag.vcf.gz \
       --samplename {{ pair.tumor.rgsm }} \
       --threads 2 \

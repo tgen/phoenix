@@ -453,7 +453,10 @@ constants:
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
     ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
-    ig_ENST_filter: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_sepcific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_ig_ENST_to_filter_out.tsv
+    ig_ENST_filter: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_ig_ENST_to_filter_out.tsv
+    igtx_regions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_igtx_regions.bed
+    igtx_gene_regions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_igtx_gene_regions.bed
+    igtx_pairoscope_regions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_igtx_pairoscope_regions.bed
     ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
     gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
     gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
