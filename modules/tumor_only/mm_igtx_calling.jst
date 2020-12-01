@@ -131,7 +131,7 @@
       --reference-genome {{ constants.phoenix.reference_fasta }} \
       --regions-bed-file {{ temp_dir }}/gene_regions.bed \
       --igs-regions-bed-file {{ temp_dir }}/igs_regions.bed \
-      --dir-out-fq {{ temp_dir }} \
+      --dir-out-fq {{ results_dir }} \
       --prefix-fq {{ tumor.name }} \
       --min-mapq 0 \
       --threads 4 \
@@ -190,8 +190,8 @@
     do
       leftfq=${fqr1arr[i]}
       rightfq=${fqr2arr[i]}
-      chrRegion=$(echo ${leftfq#{{ temp_dir }}/{{ tumor.name }}_} | cut -d'_' -f1-3)
-      cluster=$(echo ${leftfq#{{ temp_dir }}/{{ tumor.name }}_} | cut -d'_' -f4-6)
+      chrRegion=$(echo ${leftfq#{{ results_dir }}/{{ tumor.name }}_} | cut -d'_' -f1-3)
+      cluster=$(echo ${leftfq#{{ results_dir }}/{{ tumor.name }}_} | cut -d'_' -f4-6)
       Trinity \
         --seqType fq \
         --left $leftfq \
