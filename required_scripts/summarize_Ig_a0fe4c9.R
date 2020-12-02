@@ -74,21 +74,21 @@ if(!is.null(opt$gammit_file) && file.exists(as.character(opt$gammit_file)))
 combined_calls=vctrs::vec_cbind(!!!call_list)
 
 combined_calls= combined_calls %>%
-  mutate (NSD2_CALLER_COUNT = combined_calls %>% select(starts_with("NSD2"))  %>% sum(),
+  mutate (NSD2_CALLER_COUNT = combined_calls %>% select(starts_with("NSD2_"))  %>% sum(),
     NSD2_Summary_CALL = if_else(NSD2_CALLER_COUNT >= opt$count, 1, 0),
-    MAF_CALLER_COUNT = combined_calls %>% select(starts_with("MAF"))  %>% sum(),
+    MAF_CALLER_COUNT = combined_calls %>% select(starts_with("MAF_"))  %>% sum(),
     MAF_Summary_CALL = if_else(MAF_CALLER_COUNT >= opt$count, 1, 0),
-    MAFA_CALLER_COUNT = combined_calls %>% select(starts_with("MAFA"))  %>% sum(),
+    MAFA_CALLER_COUNT = combined_calls %>% select(starts_with("MAFA_"))  %>% sum(),
     MAFA_Summary_CALL = if_else(MAFA_CALLER_COUNT >= opt$count, 1, 0),
-    MAFB_CALLER_COUNT = combined_calls %>% select(starts_with("MAFB"))  %>% sum(),
+    MAFB_CALLER_COUNT = combined_calls %>% select(starts_with("MAFB_"))  %>% sum(),
     MAFB_Summary_CALL = if_else(MAFB_CALLER_COUNT >= opt$count, 1, 0),
-    MYC_CALLER_COUNT = combined_calls %>% select(starts_with("MYC"))  %>% sum(),
+    MYC_CALLER_COUNT = combined_calls %>% select(starts_with("MYC_"))  %>% sum(),
     MYC_Summary_CALL = if_else(MYC_CALLER_COUNT >= opt$count, 1, 0),
-    CCND1_CALLER_COUNT = combined_calls %>% select(starts_with("CCND1"))  %>% sum(),
+    CCND1_CALLER_COUNT = combined_calls %>% select(starts_with("CCND1_"))  %>% sum(),
     CCND1_Summary_CALL = if_else(CCND1_CALLER_COUNT >= opt$count, 1, 0),
-    CCND2_CALLER_COUNT = combined_calls %>% select(starts_with("CCND2"))  %>% sum(),
+    CCND2_CALLER_COUNT = combined_calls %>% select(starts_with("CCND2_"))  %>% sum(),
     CCND2_Summary_CALL = if_else(CCND2_CALLER_COUNT >= opt$count, 1, 0),
-    CCND3_CALLER_COUNT = combined_calls %>% select(starts_with("CCND3"))  %>% sum(),
+    CCND3_CALLER_COUNT = combined_calls %>% select(starts_with("CCND3_"))  %>% sum(),
     CCND3_Summary_CALL = if_else(CCND3_CALLER_COUNT >= opt$count, 1, 0)
       )
 combined_calls=combined_calls[,order(colnames(combined_calls), decreasing = TRUE)]
