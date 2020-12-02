@@ -125,8 +125,8 @@
       {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_CNA_all_chrs.pdf
 
     {# Creating json for stats2lims #}
-    tumor_frac=$(grep "Tumor Fraction:" | awk '{ print $3 }')
-    ploidy=$(grep "Ploidy:" | awk '{ print $2 }')
+    tumor_frac=$(grep "Tumor Fraction:" {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt | awk '{ print $3 }')
+    ploidy=$(grep "Ploidy:" {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt | awk '{ print $2 }')
 
     cat <<EOF > {{ ichor_json }}
     {"SAMPLES": [{"LIBRARIES": [{"READGROUPS": [{}]}], "SM": "{{ sample.name }}", "tumorFraction": "${tumor_frac}", "ploidy": "${ploidy}"]}
