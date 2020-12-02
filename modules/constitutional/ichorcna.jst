@@ -104,7 +104,7 @@
       --ploidy "c(2,3)" \
       --normal "c(0.25,0.5,0.6,0.7,0.8,0.9)" \
       {% if control.ichorPon is defined %}
-      --normalPanel temp/tumor_only/control_data_files/{{ control.assayCode }}/{{ control.ichorPon | basename }}
+      --normalPanel temp/tumor_only/control_data_files/{{ control.assayCode }}/{{ control.ichorPon | basename }} \
       {% endif %}
       --maxCN 7 \
       --gcWig ${EXTDATA}/gc_hg38_1000kb.wig \
