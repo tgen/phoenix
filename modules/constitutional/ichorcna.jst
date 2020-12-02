@@ -43,7 +43,11 @@
 
 - name: ichor_cna_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
-  input: {{ wig }}
+  input:
+    - {{ wig }}
+    {% if ichor_normal_panel is defined %}
+    - {{ ichor_normal_panel }}
+    {% endif %}
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.cna.seg
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg
