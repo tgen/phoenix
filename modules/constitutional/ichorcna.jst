@@ -11,6 +11,7 @@
 {% for file in controlDataFiles %}
     {% if file.ichorPon is defined and file.assayCode == sample.assayCode %}
     {% set ichor_normal_panel = file.ichorPon %}
+    {% endif %}
 {% endfor %}
 {% endif %}
 
