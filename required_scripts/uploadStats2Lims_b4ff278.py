@@ -115,6 +115,10 @@ fileTypes = {
     "tgen_mutation_burden": {
         "prefix": "tgenMutationBurden_",
         "help": "\"bam_name.annotate_flag.mutation_burden\" file generated from tgen_mutation_burden in a Picard style output."
+    },
+    "ichor_cna": {
+        "prefix": "ichorCNA_",
+        "help": "\"bam_name.ichorCNA\" file manually generated in ichorCNA workflow of the phoenix pipeline. "
     }
 }
 
