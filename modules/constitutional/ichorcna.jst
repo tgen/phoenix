@@ -5,6 +5,7 @@
 {% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
 {% set wig %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
+{% set ichor_json %}{{ results_dir }}/{{ sample.name}}.{{ aligner }}.ichorCNA.json{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
 
 {% if controlDataFiles is defined %}
@@ -56,6 +57,7 @@
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide_all_sols.pdf
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide.pdf
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_tpdf.pdf
+    - {{ ichor_json }}
   walltime: "24:00:00"
   cpus: 1
   mem: 2G
@@ -121,7 +123,7 @@
     {# Creating json for stats2lims #}
     tumor_frac=$(grep "Tumor Fraction:" | awk '{ print $3 }')
     ploidy=$(grep "Ploidy:" | awk '{ print $2 }')
-    {% set ichor_json %}{{ results_dir }}/{{ sample.name}}.{{ aligner }}.ichorCNA.json{% endset %}
+
     cat <<EOF > {{ ichor_json }}
     {"SAMPLES": [{"LIBRARIES": [{"READGROUPS": [{}]}], "SM": "{{ sample.name }}", "tumorFraction": "${tumor_frac}", "ploidy": "${ploidy}"]}
     EOF
