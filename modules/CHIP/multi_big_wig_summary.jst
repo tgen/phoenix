@@ -9,7 +9,7 @@
 
 {% if chip_bws|length > 0 %}
 - name: multi_big_wig_summary
-  tags: [ cutnrun, chip ]
+  tags: [ cutrun, chip ]
   input:
   {% for sample in samples.values() if sample.gltype == 'chip' %}
     - {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/stats/{{ sample.name }}.bowtie2.bam.bw
