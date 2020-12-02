@@ -11,7 +11,7 @@
 {% if controlDataFiles is defined %}
 {% for file in controlDataFiles %}
     {% if file.ichorPon is defined and file.assayCode == sample.assayCode %}
-    {% set ichor_normal_panel = file.ichorPon %}
+    {% set ichor_normal_panel %}temp/tumor_only/control_data_files/{{ sample.assayCode }}/{{ file.ichorPon | basename }} %}{% endset %}
     {% endif %}
 {% endfor %}
 {% endif %}
