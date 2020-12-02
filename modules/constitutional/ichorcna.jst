@@ -129,7 +129,7 @@
     ploidy=$(grep "Ploidy:" {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt | awk '{ print $2 }')
 
     cat <<EOF > {{ ichor_json }}
-    {"SAMPLES": [{"LIBRARIES": [{"READGROUPS": [{}]}], "SM": "{{ sample.name }}", "tumorFraction": "${tumor_frac}", "ploidy": "${ploidy}"}]}
+    {"SAMPLES": [{"LIBRARIES": [{"READGROUPS": [{}], "tumorFraction": "${tumor_frac}", "ploidy": "${ploidy}", "LB": "{{ sample.rglb }}" }], "SM": "{{ sample.name }}"}]}
     EOF
     {#
     # Move the output files to the final location
