@@ -225,7 +225,7 @@
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_markdup, {{ sample.name }}]
   methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
     generated with {{ constants.tools.samtools.verbose }} stats.
-  input: {{ results_dir }}/{{ sample.name }}.bwa.bam.samtools.markdup.txt
+  input: {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samtools.markdup.txt
   output: {{ output }}
   walltime: "4:00:00"
   cpus: 1
