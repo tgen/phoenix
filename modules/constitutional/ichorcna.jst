@@ -8,8 +8,8 @@
 {% set ichor_json %}{{ results_dir }}/{{ sample.name}}.{{ aligner }}.ichorCNA.json{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
 
+{% set control = {} %}
 {% if controlDataFiles is defined %}
-  {% set control = {} %}
   {% do control.update(controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first) %}
 {% endif %}
 
