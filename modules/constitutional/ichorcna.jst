@@ -9,8 +9,10 @@
 {% set temp_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
 
 {% set control = {} %}
-{% if controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first is defined %}
-  {% do control.update(controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first) %}
+{% if controlDataFiles is defined %}
+  {% if controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first is defined %}
+    {% do control.update(controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first) %}
+  {% endif %}
 {% endif %}
 
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
