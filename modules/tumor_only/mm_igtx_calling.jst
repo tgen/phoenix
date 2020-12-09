@@ -483,15 +483,28 @@
 
 
 {% macro mm_igtx_summarize(sample, aligner='bwa') %}
+
+{% set control = {} %}
+{% if controlDataFiles is defined %}
+  {% if controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first is defined %}
+    {% do control.update(controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first) %}
+  {% endif %}
+{% endif %}
+
 {% set results_dir %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_summary/{{ sample.name }}{% endset %}
-{% set manta_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}_mantaTxCalls.txt{% endset %}
 {% set gammit_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_gammit/{{ sample.name }}/{{ sample.name }}_DEX_IgTx_GA_Summary.txt{% endset %}
 {% set pairoscope_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_pairoscope/{{ sample.name }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_calls.txt{% endset %}
+
+{% if control.pathToBam is defined %}
+  {% set manta_path %}{{ sample.gltype }}/tumor_only_structural_calls/mm_igtx_manta/{{ sample.name }}/{{ sample.name }}.{{ aligner }}_mantaTxCalls.txt{% endset %}
+{% endif %}
 
 - name: summarize_mm_igtx_{{ sample.name }}
   tags: [{{ sample.gltype }}, {{ sample.name }}, mm_igtx]
   input:
+    {% if control.pathToBam is defined %}
     - {{ manta_path }}
+    {% endif %}
     - {{ gammit_path }}
     - {{ pairoscope_path }}
   output: {{ results_dir }}/{{ sample.name }}_mm_igtx_summary.txt
@@ -508,7 +521,9 @@
 
     Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.summarize_mm_igtx_Rscript }} \
         -p {{ pairoscope_path }} \
+        {% if control.pathToBam is defined %}
         -m {{ manta_path }} \
+        {% endif %}
         -g {{ gammit_path }} \
         -o {{ results_dir }}/{{ sample.name }}_mm_igtx_summary.txt \
         -c 2 \
