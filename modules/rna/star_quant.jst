@@ -47,7 +47,11 @@
     {% for fq in r2fqlist %}
     - {{ fq.path }}
     {% endfor %}
-  output: {{ star_bam_unsort }}
+  output:
+    - {{ star_bam_unsort }}
+    - {{ star_finalcountsdir }}/{{ sample.name }}.ReadsPerGene.out.tab
+    - {{ star_finalcountsdir }}/{{ sample.name }}.star.junctions
+    - {{ star_finalcountsdir }}/{{ sample.name }}_star.Log.final.out
   cpus: 20
   mem: 80G
   walltime: "48:00:00"
@@ -173,6 +177,7 @@
 
     mv {{ temp_dir }}/{{ sample.name }}.ReadsPerGene.out.tab {{ star_finalcountsdir }}/
     mv {{ temp_dir }}/{{ sample.name }}.SJ.out.tab {{ star_finalcountsdir }}/{{ sample.name }}.star.junctions
+    mv {{ temp_dir }}/{{ sample.name }}.Log.final.out {{ star_finalcountsdir }}/{{ sample.name }}_star.Log.final.out
 
 
 - name: fixmate_sort_star_{{ sample.name }}
