@@ -27,15 +27,15 @@ option_list <- list(
 opt <- parse_args(OptionParser(option_list=option_list))
 
 write("Check input files...\n", stderr())
-if(!file.exists(as.character(opt$pairoscope_file)))
+if(!is.null(opt$pairoscope_file) && !file.exists(as.character(opt$pairoscope_file)))
 {
   write("Pairoscope Ig Tx file not found...\n", stderr())
 }
-if (!file.exists(as.character(opt$manta_file)))
+if (!is.null(opt$manta_file) && !file.exists(as.character(opt$manta_file)))
 {
   write("Manta Ig Tx file not found...\n", stderr())
 }
-if (!file.exists(as.character(opt$gammit_file)))
+if (!is.null(opt$gammit_file) && !file.exists(as.character(opt$gammit_file)))
 {
   write("Gammit Ig Tx file not found...\n", stderr())
 }
