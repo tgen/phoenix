@@ -149,11 +149,11 @@
     {# Build a list of fastqs to iterate through #}
     fqr1arr=()
     fqr2arr=()
-    for fq in `cut -f1 {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt`
+    for fq in `cut -f1 {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt`
     do
       fqr1arr+=("${fq}")
     done
-    for fq in `cut -f2 {{ temp_dir }}/{{ tumor.name }}_list_of_fastqs.txt`
+    for fq in `cut -f2 {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt`
     do
       fqr2arr+=("${fq}")
     done
