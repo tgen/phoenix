@@ -117,7 +117,7 @@
     {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
     {% if sample.gltype == 'exome' %}
     bedtools intersect \
-      -a {{ constants.phoenix.reference_non_N_bed }} \
+      -a {{ constants.phoenix.reference_non_N_interval_list }} \
       -b {{ sample.capture_kit.no_header_targets_interval_list }} \
       | \
     sort -k1,1 -k2,2n \
@@ -152,15 +152,15 @@
       --coverage 1,2500,1 \
       {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
-      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
+      --target-regions "{{ constants.phoenix.reference_non_N_interval_list }}" \
       {% elif sample.gltype == 'chip' %}
       --reference "{{ constants.phoenix.chip_fasta }}" \
-      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
+      --target-regions "{{ constants.phoenix.reference_non_N_interval_list }}" \
       {% else %}
         {% if sample.gltype == 'exome' %}
       --target-regions "{{ regions }}" \
         {% else %}
-      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
+      --target-regions "{{ constants.phoenix.reference_non_N_interval_list }}" \
         {% endif %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
