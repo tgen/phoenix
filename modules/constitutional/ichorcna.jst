@@ -42,6 +42,9 @@
 
 - name: ichor_cna_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
+  {% if control.ichorPon is defined %}
+  reset: prepare_tumor_only_{{ study }}_{{ control.assayCode }}
+  {% endif %}
   input:
     - {{ wig }}
     {% if control.ichorPon is defined %}
