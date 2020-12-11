@@ -131,7 +131,9 @@
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
-  input: {{ all_vcf }}
+  input:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi

@@ -81,7 +81,9 @@
 
 - name: freebayes_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, freebayes, {{ sample.name }}]
-  input: {{ all_vcf }}
+  input:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
