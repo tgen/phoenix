@@ -72,6 +72,8 @@
     module load {{ constants.tools.bedtools.module }}
     module load {{ constants.tools.freebayes.module }}
 
+    mkdir -p {{ temp_dir }}
+
     cut -f2,3 "{{ constants.phoenix.reference_dict }}" | \
       gawk 'NR>1' | \
       sed 's/SN://g' | \
