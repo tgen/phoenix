@@ -54,6 +54,7 @@
 
 - name: add_matched_rna_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  reset: vcfmerger2_{{ pair.name }}_{{ aligner }}
   input:
     - {{ input_vcf }}
     - {{ star_bam_final }}
@@ -71,8 +72,6 @@
     module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.bedtools.module }}
     module load {{ constants.tools.freebayes.module }}
-
-    mkdir -p {{ temp_dir }}
 
     cut -f2,3 "{{ constants.phoenix.reference_dict }}" | \
       gawk 'NR>1' | \
