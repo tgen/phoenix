@@ -225,10 +225,11 @@
       echo "Merging assembled bams"
       samtools merge \
         -@ 4 \
+        --force \
         {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam \
         ${assemBam[*]}
 
-      samtools index -@ 4 {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
+      samtools index -@ 4 --force {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
 
       python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
         --input_bam {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam \
