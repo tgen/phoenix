@@ -529,40 +529,20 @@
   {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
   {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
-{% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
-- name: gatk_collectsequencingartifactmetrics_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
-  input: {{ bam }}
-  output: {{ results_dir }}/{{ bam|basename }}.oxog_metrics
-  walltime: "24:00:00"
-  cpus: 4
-  mem: 8G
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.gatk.module }}
-
-    mkdir -p {{ results_dir }}
-
-    gatk CollectSequencingArtifactMetrics \
-    --java-options "-Xmx7G" \
-    --INPUT {{ bam }} \
-    --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
-    {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
-    --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
-    {% elif sample.gltype == 'chip' %}
-    --REFERENCE_SEQUENCE "{{ constants.phoenix.chip_fasta }}" \
-    {% else %}
-    --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
-    {% endif %}
-
-{% endif %}
+  {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
+    {% set input_base %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+  {% else %}
+    {% set input_base %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+  {% endif %}
 
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
-  input: {{ results_dir }}/{{ bam|basename }}.oxog_metrics
+  input: {{ bam }}
+  {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"]|default(true) %}
+  after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
+  {% endif %}
   output:
+    - {{ results_dir }}/{{ bam|basename }}.oxog_metrics
     {% if sample.gltype == 'singlecellrna' %}
     - {{ results_dir }}/{{ bam|basename }}.oxog_metrics_summary.tsv
     {% else %}
@@ -579,6 +559,22 @@
 
     module load {{ constants.tools.gatk.module }}
 
+    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
+      mkdir -p {{ input_base }}
+
+      gatk CollectSequencingArtifactMetrics \
+        --java-options "-Xmx7G" \
+        --INPUT {{ bam }} \
+        --OUTPUT "{{ input_base }}/{{ bam|basename }}" \
+        {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
+        --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
+        {% elif sample.gltype == 'chip' %}
+        --REFERENCE_SEQUENCE "{{ constants.phoenix.chip_fasta }}" \
+        {% else %}
+        --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
+        {% endif %}
+    {% endif %}
+
     gatk ConvertSequencingArtifactToOxoG \
       {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
@@ -587,23 +583,23 @@
       {% else %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      --INPUT_BASE "{{ results_dir }}/{{ bam|basename }}"
+      --INPUT_BASE "{{ input_base }}/{{ bam|basename }}"
 
-    for library in `tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | cut -f2 | sort | uniq | gawk 'NR > 1'`
+    for library in `tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | cut -f2 | sort | uniq | gawk 'NR > 1'`
     do
-      OXIDATION_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
+      OXIDATION_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f12 | \
         sort -n | \
         gawk 'NR == 3')
 
-      C_REF_OXO_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
+      C_REF_OXO_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f18 | \
         sort -n | \
         gawk 'NR == 3')
 
-      G_REF_OXO_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
+      G_REF_OXO_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f20 | \
         sort -n | \
@@ -617,6 +613,10 @@
       echo -e "${OXIDATION_Q_MIN}\t${C_REF_OXO_Q_MIN}\t${G_REF_OXO_Q_MIN}" >> {{ results_dir }}/{{ sample.name }}_${library}.{{ aligner }}.bam.oxog_metrics_summary.tsv
       {% endif %}
     done
+
+    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
+    mv {{ input_base }}/{{ bam|basename }}.oxog_metrics {{ results_dir }}/
+    {% endif %}
 
     {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
       {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
