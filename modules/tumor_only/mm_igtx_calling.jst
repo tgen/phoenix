@@ -232,7 +232,7 @@
 
       python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.process_assembled_bam }} \
         --input_bam {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam \
-        --fastq_dir {{ temp_dir }} \
+        --fastq_dir {{ results_dir }} \
         --contig 125 \
         --reads 3 \
         --window 25 \
