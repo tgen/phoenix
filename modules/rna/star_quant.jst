@@ -1,5 +1,6 @@
 {% from 'utilities/read_group_line.jst' import read_group_line %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample, opt_dup_distance) %}
@@ -262,6 +263,9 @@
 This task works, and was tested with MMRF_1499, but it was made as a backup for samtools markdups
 which appears to be working now after some code changes, keeping this here in case we need a backup
 #}
+{% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
+{% set rna_md_metrics %}{{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics{% endset %}
+{% set rna_md_metrics_json %}{{ rna_md_metrics }}.json{% endset %}
 - name: markduplicates_star_gatk_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   reset: predecessors
@@ -269,7 +273,7 @@ which appears to be working now after some code changes, keeping this here in ca
   output:
     - {{ star_bam_final }}
     - {{ star_bam_final }}.bai
-    - {{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics
+    - {{ rna_md_metrics }}
   cpus: 10
   mem: 40G
   cmd: |
@@ -305,6 +309,7 @@ which appears to be working now after some code changes, keeping this here in ca
 
     samtools index -@ 10 "{{ star_bam_final }}"
 
+    {{- stats2json(sample.gltype, sample.name, task, rna_md_metrics, rna_md_metrics_json, "mark_duplicates_metrics") }}
     {% if not tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
       {# Remove the remaining files #}
       {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
