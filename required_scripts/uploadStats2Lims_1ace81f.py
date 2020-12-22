@@ -43,6 +43,10 @@ fileTypes = {
         "prefix": "picardTools_errorMetrics_",
         "help": "\"bam_name.bam.error_summary_metrics\" file generated from Picard."
         },
+    "picard_mark_duplicates_metrics": {
+        "prefix": "picardTools_markDups_",
+        "help": "\"bam_name.bam.md_metrics\" file generated from Picard."
+        },
     "samtools_idxstats": {
         "prefix": "idxStatsChrCount_",
         "help": "\"bam_name.bam.flagstats.txt\" file generated from Samtools."

@@ -39,4 +39,4 @@ $ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 [summarize_samstats_8c45d63.R](https://github.com/tgen/plot_samstats/commit/8c45d63dbd7f5037d7bb658ac91647898bf7509f)  
 [summarize_Ig_8707c16.R](https://github.com/tgen/jetstream_resources/commit/79c0d8c4086cd551121623f38f80f289625f16ab)  
 [svtop.delly.sv_annotation.parallel_8820499.py](https://github.com/tgen/jetstream_resources/commit/8820499e113a387fee98044112951fa534ad6f8e)  
-[uploadStats2Lims_93f2ba7.py](https://github.com/tgen/uploadStats2Lims/pull/2/commits/93f2ba7bfb2e4bb0cad55e7cccad336f04c2a6c4)  
+[uploadStats2Lims_1ace81f.py](https://github.com/tgen/uploadStats2Lims/pull/2/commits/1ace81faaea5f894b9f618d86b1d2d9b8149cdc6)  
