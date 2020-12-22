@@ -309,7 +309,7 @@ which appears to be working now after some code changes, keeping this here in ca
 
     samtools index -@ 10 "{{ star_bam_final }}"
 
-    {{- stats2json(sample.gltype, sample.name, task, rna_md_metrics, rna_md_metrics_json, "mark_duplicates_metrics") }}
+    {{- stats2json(sample.gltype, sample.name, task, rna_md_metrics, rna_md_metrics_json, sample_name=sample.name, "picard_mark_duplicates_metrics") }}
     {% if not tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
       {# Remove the remaining files #}
       {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
