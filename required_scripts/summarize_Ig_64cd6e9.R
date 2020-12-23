@@ -85,7 +85,8 @@ if(!is.null(opt$gammit_file) && file.exists(as.character(opt$gammit_file)))
   gammit_source = gammit %>% select(ends_with("Ig_Loci"))
   gammit_source <- gammit_source %>% rename_all(list(~ str_replace(.,"Ig_Loci", "IgSource")))
   call_list <- append(call_list, gammit_calls)
-  }
+}
+
 #merge
 combined_calls=vctrs::vec_cbind(!!!call_list)
 
@@ -108,14 +109,39 @@ combined_calls= combined_calls %>%
           CCND3_Summary_CALL = if_else(CCND3_CALLER_COUNT >= opt$count, 1, 0)
   )
 #Add IG source if matches across all caller
-combined_calls$NSD2_IgSource = ifelse(gammit_source$NSD2_IgSource==manta_source$NSD2_IgSource, ifelse(manta_source$NSD2_IgSource==pair_source$NSD2_IgSource, manta_source$NSD2_IgSource,0),0)
-combined_calls$CCND1_IgSource = ifelse(gammit_source$CCND1_IgSource==manta_source$CCND1_IgSource, ifelse(manta_source$CCND1_IgSource==pair_source$CCND1_IgSource, manta_source$CCND1_IgSource,0),0)
-combined_calls$CCND2_IgSource = ifelse(gammit_source$CCND2_IgSource==manta_source$CCND2_IgSource, ifelse(manta_source$CCND2_IgSource==pair_source$CCND2_IgSource, manta_source$CCND2_IgSource,0),0)
-combined_calls$CCND3_IgSource = ifelse(gammit_source$CCND3_IgSource==manta_source$CCND3_IgSource, ifelse(manta_source$CCND3_IgSource==pair_source$CCND3_IgSource, manta_source$CCND3_IgSource,0),0)
-combined_calls$MYC_IgSource = ifelse(gammit_source$MYC_IgSource==manta_source$MYC_IgSource, ifelse(manta_source$MYC_IgSource==pair_source$MYC_IgSource, manta_source$MYC_IgSource,0),0)
-combined_calls$MAF_IgSource = ifelse(gammit_source$MAF_IgSource==manta_source$MAF_IgSource, ifelse(manta_source$MAF_IgSource==pair_source$MAF_IgSource, manta_source$MAF_IgSource,0),0)
-combined_calls$MAFA_IgSource = ifelse(gammit_source$MAFA_IgSource==manta_source$MAFA_IgSource, ifelse(manta_source$MAFA_IgSource==pair_source$MAFA_IgSource, manta_source$MAFA_IgSource,0),0)
-combined_calls$MAFB_IgSource = ifelse(gammit_source$MAFB_IgSource==manta_source$MAFB_IgSource, ifelse(manta_source$MAFB_IgSource==pair_source$MAFB_IgSource, manta_source$MAFB_IgSource,0),0)
+NSD2_IgSource <- c(if(exists("gammit_source")){ gammit_source$NSD2_IgSource },
+                    if(exists("manta_source")){ manta_source$NSD2_IgSource },
+                    if(exists("pair_source")){ pair_source$NSD2_IgSource })
+CCND1_IgSource <- c(if(exists("gammit_source")){ gammit_source$CCND1_IgSource },
+                    if(exists("manta_source")){ manta_source$CCND1_IgSource },
+                    if(exists("pair_source")){ pair_source$CCND1_IgSource })
+CCND2_IgSource <- c(if(exists("gammit_source")){ gammit_source$CCND2_IgSource },
+                    if(exists("manta_source")){ manta_source$CCND2_IgSource },
+                    if(exists("pair_source")){ pair_source$CCND2_IgSource })
+CCND3_IgSource <- c(if(exists("gammit_source")){ gammit_source$CCND3_IgSource },
+                    if(exists("manta_source")){ manta_source$CCND3_IgSource },
+                    if(exists("pair_source")){ pair_source$CCND3_IgSource })
+MYC_IgSource <- c(if(exists("gammit_source")){ gammit_source$MYC_IgSource },
+                    if(exists("manta_source")){ manta_source$MYC_IgSource },
+                    if(exists("pair_source")){ pair_source$MYC_IgSource })
+MAF_IgSource <- c(if(exists("gammit_source")){ gammit_source$MAF_IgSource },
+                    if(exists("manta_source")){ manta_source$MAF_IgSource },
+                    if(exists("pair_source")){ pair_source$MAF_IgSource })
+MAFA_IgSource <- c(if(exists("gammit_source")){ gammit_source$MAFA_IgSource },
+                    if(exists("manta_source")){ manta_source$MAFA_IgSource },
+                    if(exists("pair_source")){ pair_source$MAFA_IgSource })
+MAFB_IgSource <- c(if(exists("gammit_source")){ gammit_source$MAFB_IgSource },
+                    if(exists("manta_source")){ manta_source$MAFB_IgSource },
+                    if(exists("pair_source")){ pair_source$MAFB_IgSource })
+
+combined_calls$NSD2_IgSource = ifelse((length(unique(NSD2_IgSource))==1 && unique(NSD2_IgSource)==1),1,0)
+combined_calls$CCND1_IgSource = ifelse((length(unique(CCND1_IgSource))==1 && unique(CCND1_IgSource)==1),1,0)
+combined_calls$CCND2_IgSource = ifelse((length(unique(CCND2_IgSource))==1 && unique(CCND2_IgSource)==1),1,0)
+combined_calls$CCND3_IgSource = ifelse((length(unique(CCND3_IgSource))==1 && unique(CCND3_IgSource)==1),1,0)
+combined_calls$MYC_IgSource = ifelse((length(unique(MYC_IgSource))==1 && unique(MYC_IgSource)==1),1,0)
+combined_calls$MAF_IgSource = ifelse((length(unique(MAF_IgSource))==1 && unique(MAF_IgSource)==1),1,0)
+combined_calls$MAFA_IgSource = ifelse((length(unique(MAFA_IgSource))==1 && unique(MAFA_IgSource)==1),1,0)
+combined_calls$MAFB_IgSource = ifelse((length(unique(MAFB_IgSource))==1 && unique(MAFB_IgSource)==1),1,0)
 
 combined_calls=combined_calls[,order(colnames(combined_calls), decreasing = TRUE)]
 
