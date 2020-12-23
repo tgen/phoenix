@@ -251,11 +251,18 @@
       then
         mv {{ results_dir }}/FilteredContigResults.txt {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
       fi
-      {# Touching output files to unsure their existence, even if empty #}
-      touch {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
-      touch {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
-      rm {{ results_dir }}/r1counts.txt || true
     fi
+
+    if [ ! -f {{ results_dir }}/{{ tumor.name }}_DEX_IgTx_GA_Summary.txt ]
+    then
+      echo "Specimen" > {{ results_dir }}/{{ tumor.name }}_DEX_IgTx_GA_Summary.txt
+      echo "{{ tumor.name }}" >> {{ results_dir }}/{{ tumor.name }}_DEX_IgTx_GA_Summary.txt
+    fi
+    {# Touching output files to ensure their existence, even if empty #}
+    touch {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
+    touch {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
+    touch {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
+    rm {{ results_dir }}/r1counts.txt || true
 
 {% endmacro %}
 
