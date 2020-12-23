@@ -372,13 +372,13 @@ def fetch_mate_variant_record(vcfhandle, chr_mate, pos_mate, mateid, count=0, sl
     :return: a Unique VariantRecord (it must be one and one only) otherwise None or raise Error
     """
 
-    res_fetch = vcfhandle.fetch(contig=str(chr_mate), start=(int(pos_mate) - slop) - 1, end=int(pos_mate) + slop)
+    res_fetch = vcfhandle.fetch(contig=str(chr_mate), start=(max(((int(pos_mate) - slop) - 1), 0)), end=int(pos_mate) + slop)
     total_items_found = sum(1 for v in res_fetch)
-    logger.debug("search region:  {}:{}-{}".format(str(chr_mate), str((int(pos_mate) - slop) - 1), str(int(pos_mate) + slop)))
+    logger.debug("search region:  {}:{}-{}".format(str(chr_mate), str((max(((int(pos_mate) - slop) - 1), 0))), str(int(pos_mate) + slop)))
     logger.debug("res_fetch ==> " + str(res_fetch))
     logger.debug("total_items_found ==> " + str(total_items_found))
     if count < 3:
-        res_fetch = vcfhandle.fetch(contig=str(chr_mate), start=(int(pos_mate) - slop) - 1, end=int(pos_mate) + slop)
+        res_fetch = vcfhandle.fetch(contig=str(chr_mate), start=(max(((int(pos_mate) - slop) - 1), 0)), end=int(pos_mate) + slop)
     else:
         res_fetch = vcfhandle.fetch(contig=str(chr_mate))
     try:
