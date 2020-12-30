@@ -13,6 +13,7 @@
 {% for batch in constants.phoenix.primary_contig_calling_intervals %}
 - name: tumor_only_octopus_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
+  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}

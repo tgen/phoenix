@@ -13,6 +13,7 @@
 {% for batch in constants.phoenix.calling_intervals %}
 - name: tumor_only_mutect2_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -71,6 +72,7 @@
 {% for batch in constants.phoenix.calling_intervals %}
 - name: tumor_only_mutect2_GetPileupSummaries_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
