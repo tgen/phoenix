@@ -134,14 +134,14 @@ MAFB_IgSource <- c(if(exists("gammit_source")){ gammit_source$MAFB_IgSource },
                     if(exists("manta_source")){ manta_source$MAFB_IgSource },
                     if(exists("pair_source")){ pair_source$MAFB_IgSource })
 
-combined_calls$NSD2_IgSource = ifelse((length(unique(NSD2_IgSource))==1 && unique(NSD2_IgSource)==1),1,0)
-combined_calls$CCND1_IgSource = ifelse((length(unique(CCND1_IgSource))==1 && unique(CCND1_IgSource)==1),1,0)
-combined_calls$CCND2_IgSource = ifelse((length(unique(CCND2_IgSource))==1 && unique(CCND2_IgSource)==1),1,0)
-combined_calls$CCND3_IgSource = ifelse((length(unique(CCND3_IgSource))==1 && unique(CCND3_IgSource)==1),1,0)
-combined_calls$MYC_IgSource = ifelse((length(unique(MYC_IgSource))==1 && unique(MYC_IgSource)==1),1,0)
-combined_calls$MAF_IgSource = ifelse((length(unique(MAF_IgSource))==1 && unique(MAF_IgSource)==1),1,0)
-combined_calls$MAFA_IgSource = ifelse((length(unique(MAFA_IgSource))==1 && unique(MAFA_IgSource)==1),1,0)
-combined_calls$MAFB_IgSource = ifelse((length(unique(MAFB_IgSource))==1 && unique(MAFB_IgSource)==1),1,0)
+combined_calls$NSD2_IgSource = ifelse(length(unique(NSD2_IgSource))==1, unique(NSD2_IgSource),0)
+combined_calls$CCND1_IgSource = ifelse(length(unique(CCND1_IgSource))==1, unique(CCND1_IgSource),0)
+combined_calls$CCND2_IgSource = ifelse(length(unique(CCND2_IgSource))==1, unique(CCND2_IgSource),0)
+combined_calls$CCND3_IgSource = ifelse(length(unique(CCND3_IgSource))==1, unique(CCND3_IgSource),0)
+combined_calls$MYC_IgSource = ifelse(length(unique(MYC_IgSource))==1, unique(MYC_IgSource),0)
+combined_calls$MAF_IgSource = ifelse(length(unique(MAF_IgSource))==1, unique(MAF_IgSource),0)
+combined_calls$MAFA_IgSource = ifelse(length(unique(MAFA_IgSource))==1, unique(MAFA_IgSource),0)
+combined_calls$MAFB_IgSource = ifelse(length(unique(MAFB_IgSource))==1, unique(MAFB_IgSource),0)
 
 combined_calls=combined_calls[,order(colnames(combined_calls), decreasing = TRUE)]
 
