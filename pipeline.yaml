@@ -326,9 +326,9 @@ constants:
       version: "1.2.1"
       verbose: TGen Mutation Burden Tool v1.2.1
     transparser:
-      module: transParser/1.0.0
-      version: "1.0.0"
-      verbose: transParser v1.0.0
+      module: transParser/1.0.1
+      version: "1.0.1"
+      verbose: transParser v1.0.1
       website: https://github.com/tgen/transParser
     trinity:
       module: trinityrnaseq/2.8.6-gcc-8.2.0-2.31.1-perl-5.28.1
