@@ -44,7 +44,8 @@ write("Processing Data...\n", stderr())
 specimen = tibble(Specimen=opt$specimen)
 combined_calls<-NULL
 call_list <- list(specimen)
-#read from from  file
+
+#pairoscope
 if(!is.null(opt$pairoscope_file) && file.exists(as.character(opt$pairoscope_file)))
 {
   pairoscope= read.table(file=opt$pairoscope_file, header = TRUE,sep = '\t')
@@ -60,7 +61,7 @@ if(!is.null(opt$pairoscope_file) && file.exists(as.character(opt$pairoscope_file
   pair_source$MAF_IgSource = ifelse(pair_calls$MAF_CALL_Pairoscope==1, pair_source$MAF_IgSource,0)
   pair_source$MAFA_IgSource = ifelse(pair_calls$MAFA_CALL_Pairoscope==1, pair_source$MAFA_IgSource,0)
   pair_source$MAFB_IgSource = ifelse(pair_calls$MAFB_CALL_Pairoscope==1, pair_source$MAFB_IgSource,0)
-  
+
   call_list <- append(call_list, pair_calls)
 }
 
@@ -110,8 +111,8 @@ combined_calls= combined_calls %>%
   )
 #Add IG source if matches across all caller
 NSD2_IgSource <- c(if(exists("gammit_source")){ gammit_source$NSD2_IgSource },
-                    if(exists("manta_source")){ manta_source$NSD2_IgSource },
-                    if(exists("pair_source")){ pair_source$NSD2_IgSource })
+                   if(exists("manta_source")){ manta_source$NSD2_IgSource },
+                   if(exists("pair_source")){ pair_source$NSD2_IgSource })
 CCND1_IgSource <- c(if(exists("gammit_source")){ gammit_source$CCND1_IgSource },
                     if(exists("manta_source")){ manta_source$CCND1_IgSource },
                     if(exists("pair_source")){ pair_source$CCND1_IgSource })
@@ -122,17 +123,26 @@ CCND3_IgSource <- c(if(exists("gammit_source")){ gammit_source$CCND3_IgSource },
                     if(exists("manta_source")){ manta_source$CCND3_IgSource },
                     if(exists("pair_source")){ pair_source$CCND3_IgSource })
 MYC_IgSource <- c(if(exists("gammit_source")){ gammit_source$MYC_IgSource },
-                    if(exists("manta_source")){ manta_source$MYC_IgSource },
-                    if(exists("pair_source")){ pair_source$MYC_IgSource })
+                  if(exists("manta_source")){ manta_source$MYC_IgSource },
+                  if(exists("pair_source")){ pair_source$MYC_IgSource })
 MAF_IgSource <- c(if(exists("gammit_source")){ gammit_source$MAF_IgSource },
-                    if(exists("manta_source")){ manta_source$MAF_IgSource },
-                    if(exists("pair_source")){ pair_source$MAF_IgSource })
+                  if(exists("manta_source")){ manta_source$MAF_IgSource },
+                  if(exists("pair_source")){ pair_source$MAF_IgSource })
 MAFA_IgSource <- c(if(exists("gammit_source")){ gammit_source$MAFA_IgSource },
-                    if(exists("manta_source")){ manta_source$MAFA_IgSource },
-                    if(exists("pair_source")){ pair_source$MAFA_IgSource })
+                   if(exists("manta_source")){ manta_source$MAFA_IgSource },
+                   if(exists("pair_source")){ pair_source$MAFA_IgSource })
 MAFB_IgSource <- c(if(exists("gammit_source")){ gammit_source$MAFB_IgSource },
-                    if(exists("manta_source")){ manta_source$MAFB_IgSource },
-                    if(exists("pair_source")){ pair_source$MAFB_IgSource })
+                   if(exists("manta_source")){ manta_source$MAFB_IgSource },
+                   if(exists("pair_source")){ pair_source$MAFB_IgSource })
+
+NSD2_IgSource <- NSD2_IgSource[NSD2_IgSource != 0]
+CCND1_IgSource <- CCND1_IgSource[CCND1_IgSource != 0]
+CCND2_IgSource <- CCND2_IgSource[CCND2_IgSource != 0]
+CCND3_IgSource <- CCND3_IgSource[CCND3_IgSource != 0]
+MYC_IgSource <- MYC_IgSource[MYC_IgSource != 0]
+MAF_IgSource <- MAF_IgSource[MAF_IgSource != 0]
+MAFA_IgSource <- MAFA_IgSource[MAFA_IgSource != 0]
+MAFB_IgSource <- MAFB_IgSource[MAFB_IgSource != 0]
 
 combined_calls$NSD2_IgSource = ifelse(length(unique(NSD2_IgSource))==1, unique(NSD2_IgSource),0)
 combined_calls$CCND1_IgSource = ifelse(length(unique(CCND1_IgSource))==1, unique(CCND1_IgSource),0)
