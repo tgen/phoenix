@@ -4,17 +4,25 @@
 
 {% macro snpsniffer_summary(samples) %}
 
-{% set taskPrefix %}Exome,Genome,RNA,SingleCellRNA,CHIP{% endset %}
-
-{% for prefix in taskPrefix %}
-    {% if prefix+"_quality_control_genotype_concordance_snpSniffer" in tasks %}
-        {% set snifferFound %}true{% endset %}
-    {% endif %}
+{% set snpsniffer_list = [] %}
+{% for sample in samples.values() %}
+  {% if not sample.glprep == 'singlecellenrichment' %}
+    {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+      {% if sample.gltype == 'singlecellrna' %}
+        {% set snpsniffer_result %}{{ sample.gltype }}/alignment/.*/{{ sample.name }}_{{ sample_lb }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf{% endset %}
+      {% else %}
+        {% set snpsniffer_result %}{{ sample.gltype }}/alignment/.*/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf{% endset %}
+      {% endif %}
+      {% do snpsniffer_list.append(snpsniffer_result) %}
+    {% endfor %}
+  {% endif %}
 {% endfor %}
 
-{% if snifferFound is defined %}
 - name: snpsniffer_summary
-  after-re: snpsniffer_geno_.*
+  input-re:
+    {% for result in snpsniffer_list %}
+    - {{ result }}
+    {% endfor %}
   output:
     - qc/snpSniffer/{{ project }}_SnpSniffer_AllPairs_Summary.tsv
     - qc/snpSniffer/{{ project }}_SnpSniffer_PossibleMatchErrors_Summary.tsv
@@ -47,16 +55,8 @@
     rsync {{ constants.phoenix.snpSniffer_database }} temp/snpsniffer/SnpSniffer_DB.ini
 
     {# Collect all of the library level snpSniffer vcf results into the temp directory #}
-    {% for sample in samples.values() %}
-      {% if not sample.glprep == 'singlecellenrichment' %}
-        {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
-          {% if sample.gltype == 'singlecellrna' %}
-            rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}_{{ sample_lb }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
-          {% else %}
-            rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
-          {% endif %}
-        {% endfor %}
-      {% endif %}
+    {% for result in snpsniffer_list %}
+      rsync {{ result | replace('.*','*') }} temp/snpsniffer
     {% endfor %}
 
     cd temp/snpsniffer
@@ -183,5 +183,4 @@
 
   {{ stats2json("all libraries", project, project, output, json, "snpsniffer_summary") }}
 
-{% endif %}
 {% endmacro %}
