@@ -16,7 +16,7 @@
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx.png
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_calls.txt
-  cpus: 2
+  cpus: 1
   mem: 4G
   walltime: "4:00:00"
   cmd: |
@@ -46,24 +46,21 @@
       {{ tumor_bam }} chr20 39671358 40971360 \
       {{ tumor_bam }} chr22 21995603 23057822 2> {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt
 
-    numLines=$(grep -v "Non-matching mate orientation." {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt | wc -l)
+    numLines=$(grep -v "Non-matching mate orientation." -c {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt || :)
     if [[ $numLines -gt 0 ]]; then
       grep -v "Non-matching mate orientation." {{ temp_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantReads.txt |\
-      awk -v var1="{{ sample.rgsm }}" 'BEGIN{OFS="\t" ; print "Specimen", "ChrA", "PositionA", "ChrB", "PositionB"}{print var1, $1, $2, $3, $4}' > \
+      gawk -v var1="{{ sample.rgsm }}" 'BEGIN{OFS="\t" ; print "Specimen", "ChrA", "PositionA", "ChrB", "PositionB"}{print var1, $1, $2, $3, $4}' > \
       {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt
     else
       echo $'Specimen\tChrA\tPositionA\tChrB\tPositionB' > {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt
     fi
 
-    python ${PATH_TO_PHOENIX_REPO}/required_scripts/{{ constants.phoenix.pairoscope_mm_igtx_calling_script }} \
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.pairoscope_mm_igtx_calling_script }} \
       --input_file {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt \
       --specimen {{ sample.rgsm }} \
       --output_file {{ results_dir }}/{{ sample.name }}.{{ aligner }}_pairoscope_igtx_calls.txt \
       --window 2000 \
       --window_min 100 \
-      --call_requirement 3
-
-
-
+      --call_requirement 4
 
 {% endmacro %}

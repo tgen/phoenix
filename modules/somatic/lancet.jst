@@ -15,8 +15,9 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
+  output: {{ temp_dir }}/{{ loop.index }}.lancet.vcf
   cpus: 4
-  mem: 16G
+  mem: 8G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -37,6 +38,8 @@
 
     lancet \
       --num-threads 4 \
+      --max-vaf-normal 0.05 \
+      --max-alt-count-normal 50 \
       --bed "{{ temp_dir }}/{{ loop.index }}.bed" \
       --ref "{{ constants.phoenix.reference_fasta }}" \
       --normal "{{ normal_bam }}" \
@@ -46,35 +49,28 @@
     {#
     # Lancet sorts output in lexicographical order and this does not
     # match the reference fasta order. Here we resort to match the reference
-    # 
-    # bcftools requires gz or bcf files and we tabix them as a workaround for the improper header given by lancet
     #}
 
-    bcftools view \
-      --output-type z \
-      --output-file "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz" \
-      "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf"
-
-    bcftools index --tbi --force "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
-
-    bcftools sort \
-      --max-mem 768M \
-      --temp-dir {{ temp_dir }}/temp_{{ loop.index }}/ \
-      --output-type v \
-      --output-file "{{ temp_dir }}/{{ loop.index }}.lancet.vcf" \
-      "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf.gz"
+    bcftools reheader \
+      -f "{{ constants.phoenix.reference_fai }}" \
+      "{{ temp_dir }}/{{ loop.index }}.lancet-uns.vcf" \
+    | bcftools sort > "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
 
 {% endfor %}
 
 
 - name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
-  after-re: lancet_{{ pair.name }}_{{ aligner }}_.*
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.lancet.vcf
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -86,7 +82,7 @@
 
     bcftools concat \
       --output-type z \
-      --output "{{ all_vcf }}" \
+      --output "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.lancet.all.uns.vcf.gz" \
       {% for b in constants.phoenix.calling_intervals %}
       {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.lancet.vcf" \
@@ -94,6 +90,11 @@
       "{{ temp_dir }}/{{ loop.index }}.lancet.vcf"
       {% endif %}
       {% endfor %}
+
+    bcftools sort \
+      --output-type z \
+      --output-file "{{ all_vcf }}" \
+      "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.lancet.all.uns.vcf.gz"
 
     bcftools index --tbi --force "{{ all_vcf }}"
 
@@ -111,10 +112,12 @@
 
 - name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
-  after: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  cpus: 1
+  mem: 2G
   cmd: |
     set -eu
     set -o pipefail

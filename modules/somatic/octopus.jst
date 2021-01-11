@@ -15,7 +15,11 @@
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
-  cpus: 8
+  output:
+    - {{ temp_dir }}/{{ loop.index }}.realigned.bam
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    - {{ temp_dir }}/{{ loop.index }}.octopus.vcf
+  cpus: 4
   mem: 16G
   walltime: "48:00:00"
   cmd: |
@@ -37,7 +41,7 @@
     {# Somatic calling with octopus #}
     octopus \
       --caller cancer \
-      --threads 8 \
+      --threads 4 \
       --max-reference-cache-footprint 4GB \
       --target-read-buffer-footprint 6GB \
       --ignore-unmapped-contigs \
@@ -45,7 +49,7 @@
       --phasing-level minimal \
       --legacy \
       --annotations AD ADP AF SB \
-      --somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SD > 0.9 | BQ < 20 | DP < 3 | MF > 0.2 | NC > 1 | FRF > 0.5 | AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
+      --somatic-filter-expression "QUAL < 2 | GQ < 20 | MQ < 30 | SMQ < 40 | SD > 0.9 | BQ < 20 | DP < 3 | MF > 0.2 | NC > 5 | FRF > 0.5 | AD < -1 | AF < -1 | ADP > 100000000 | SB < -1 " \
       --working-directory {{ temp_dir }} \
       --reference "{{ constants.phoenix.reference_fasta }}" \
       --regions-file "{{ loop.index }}.bed" \
@@ -61,12 +65,16 @@
 
 - name: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
-  after-re: octopus_{{ pair.name }}_{{ aligner }}_.*
+  reset: predecessors
+  input:
+    {% for b in constants.phoenix.primary_contig_calling_intervals %}
+    - {{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf
+    {% endfor %}
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
-  cpus: 4
-  mem: 16G
+  cpus: 1
+  mem: 4G
   walltime: "24:00:00"
   cmd: |
     set -eu
@@ -80,7 +88,7 @@
     {# Vcf merge #}
     bcftools concat \
       --output-type z \
-      --output "{{ all_vcf }}" \
+      --output "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz" \
       {% for b in constants.phoenix.primary_contig_calling_intervals %}
       {% if not loop.last %}
       "{{ temp_dir }}/{{ loop.index }}.octopus.legacy.vcf" \
@@ -89,7 +97,12 @@
       {% endif %}
       {% endfor %}
 
-    bcftools index --tbi "{{ all_vcf }}"
+    bcftools sort \
+      --output-type z \
+      --output-file "{{ all_vcf }}" \
+      "{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.octopus.legacy.all.uns.vcf.gz"
+
+    bcftools index --tbi --force "{{ all_vcf }}"
     {# No long options available for the following:
 {#      -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]#}
 {#      -f           Overwrite the output BAM if exist#}
@@ -118,10 +131,13 @@
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
-  after: octopus_merge_chunks_{{ pair.name }}_{{ aligner }}
+  input: {{ all_vcf }}
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
+  walltime: "24:00:00"
+  cpus: 1
+  mem: 4G
   cmd: |
     set -eu
     set -o pipefail

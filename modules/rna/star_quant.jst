@@ -177,9 +177,11 @@
 
 - name: fixmate_sort_star_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
-  after: star_quant_{{ sample.name }}
+  reset: predecessors
+  input: {{ star_bam_unsort }}
   output: {{ star_bam_sorted }}
   cpus: 8
+  mem: 16G
   cmd: |
     set -eu
     set -o pipefail
@@ -194,14 +196,14 @@
     mkdir -p "{{ temp_dir }}/sort"
 
     samtools fixmate \
-      --threads 4 \
+      --threads 8 \
       -m \
       "{{ star_bam_unsort }}" \
       - |\
     samtools sort \
       -l 5 \
       -m 1G \
-      --threads 4 \
+      --threads 8 \
       -T "{{ temp_dir }}/sort" \
       - \
       -o "{{ star_bam_sorted }}"
@@ -257,13 +259,14 @@ which appears to be working now after some code changes, keeping this here in ca
 #}
 - name: markduplicates_star_gatk_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
+  reset: predecessors
   input: {{ star_bam_sorted }}
   output:
     - {{ star_bam_final }}
     - {{ star_bam_final }}.bai
     - {{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics
   cpus: 10
-  mem: 80G
+  mem: 40G
   cmd: |
     set -eu
     set -o pipefail
@@ -297,17 +300,54 @@ which appears to be working now after some code changes, keeping this here in ca
 
     samtools index -@ 10 "{{ star_bam_final }}"
 
-    {# Remove the remaining files #}
-    {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
+    {% if not tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
+      {# Remove the remaining files #}
+      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
+      {% set directory %}{{ temp_dir }}{% endset %}
+      {{- remove_files(directory,none,task) }}
+    {% elif tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
+      {% set task_list = [] %}
+      {% set task %}htseq_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {% set directory %}{{ temp_dir }}{% endset %}
+      {{- htseq(sample) }}
+      {{- remove_files(directory,none,task_list) }}
+    {% elif tasks.RNA_transcriptome_quantify_expression_subread_featureCounts and not tasks.RNA_transcriptome_quantify_expression_HTseq %}
+      {% set task_list = [] %}
+      {% set task %}featurecounts_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {% set directory %}{{ temp_dir }}{% endset %}
+      {{- featurecounts(sample) }}
+      {{- remove_files(directory,none,task_list) }}
+    {% else %}
+      {% set task_list = [] %}
+      {% set task %}htseq_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {% set task %}featurecounts_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {% set directory %}{{ temp_dir }}{% endset %}
+      {{- htseq(sample) }}
+      {{- featurecounts(sample) }}
+      {{- remove_files(directory,none,task_list) }}
+    {% endif %}
+{% endmacro %}
 
-{% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
+{% macro htseq(sample) %}
+{% set temp_dir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
+{% set star_bam_unsort %}{{ temp_dir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
+
 - name: htseq_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, HTseq, {{ sample.name }}]
+  reset: predecessors
   input: {{ star_bam_unsort }}
   output: {{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt
-  cpus: 1
+  cpus: 2
   mem: 4G
   walltime: "48:00:00"
   cmd: |
@@ -319,6 +359,7 @@ which appears to be working now after some code changes, keeping this here in ca
 
     {#
     # Notes about command options:
+    # --nprocesses ; default=1 ; number of threads based on number of input files
     # -r --order=pos ; default=name ; GDC=name (bam unsorted)
     # -s --stranded=<yes/no/reverse> ; default=yes ; GDC=no (Dumb)
     # -a --a=<minaqual> ; default=10 ; skip all reads with alignment quality lower than the given minimum value
@@ -331,6 +372,7 @@ which appears to be working now after some code changes, keeping this here in ca
     # --supplementary-alignments=<score/ignore> ; default=score
     #}
     htseq-count \
+      --nprocesses 2 \
       --quiet \
       --format=bam \
       --order=name \
@@ -344,16 +386,21 @@ which appears to be working now after some code changes, keeping this here in ca
       "{{ star_bam_unsort }}" \
       "{{ constants.phoenix.gtf }}" \
       > "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/{{ sample.name }}.htseq_counts.txt"
-{% endif %}
+{% endmacro %}
 
-{% if tasks.RNA_transcriptome_quantify_expression_subread_featureCounts|default(true) %}
+{% macro featurecounts(sample) %}
+{% set temp_dir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
+{% set star_bam_unsort %}{{ temp_dir }}/{{ sample.name }}.Aligned.out.bam{% endset %}
+
 - name: featurecounts_{{ sample.name }}
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, subread_featureCounts, {{ sample.name }}]
+  reset: predecessors
   input: {{ star_bam_unsort }}
   output: 
     - {{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
     - {{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
   cpus: 8
+  mem: 8G
   walltime: "8:00:00"
   cmd: |
     set -eu
@@ -384,6 +431,4 @@ which appears to be working now after some code changes, keeping this here in ca
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
       "{{ star_bam_unsort }}"
-{% endif %}
-
 {% endmacro %}

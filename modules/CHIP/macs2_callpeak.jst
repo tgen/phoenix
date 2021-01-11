@@ -1,0 +1,33 @@
+
+{% macro macs2_callpeak(sample) %}
+
+- name: macs2_callpeak_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, cutnrun, chip, {{ sample.name }}]
+  input: {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam
+  output: {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}_peaksfilter.narrowPeak
+  walltime: "48:00:00"
+  cpus: 16
+  mem: 40G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.python_3_7_2.module }}
+    module load {{ constants.tools.bedtools.module }}
+
+    macs2 callpeak \
+      -t {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam \
+      -f BAM \
+      -n {{ sample.name }} \
+      --outdir temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/ \
+      -B \
+      -q 0.01 \
+      --keep-dup all
+
+    bedtools intersect \
+      -v \
+      -a temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}_peaks.narrowPeak \
+      -b {{ constants.phoenix.chip_black_list }} \
+      > {{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}_peaksfilter.narrowPeak
+
+{% endmacro %}
