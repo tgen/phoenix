@@ -112,6 +112,7 @@
       --normalPanel temp/tumor_only/control_data_files/{{ control.assayCode }}/{{ control.ichorPon | basename }} \
       {% endif %}
       --maxCN 7 \
+      --normalizeMaleX FALSE \
       --gcWig ${EXTDATA}/gc_hg38_1000kb.wig \
       --mapWig ${EXTDATA}/map_hg38_1000kb.wig \
       --centromere ${EXTDATA}/GRCh38.GCA_000001405.2_centromere_acen.txt
