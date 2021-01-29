@@ -3,7 +3,6 @@
 
 {% set output_vcf %}{{ final_vcf_prefix }}.flt.vcf.gz{% endset %}
 {% set temp_vcf_prefix %}{{ temp_dir }}/{{ final_vcf_prefix | basename }}{% endset %}
-{% set CC_filter %}INFO/CC>=1{% endset %}
 {% if variant_caller == 'merged' and pair.callers is defined %}
   {% if pair.callers | length > 3 %}
     {% set CC_filter %}INFO/CC>=3{% endset %}
@@ -14,6 +13,9 @@
 
 - name: tumor_only_variant_filtering_{{ pair.name }}_{{ variant_caller }}
   tags: [tumor_only, variant_filter. {{ variant_caller }}]
+  {% if temp_dir in input_vcf %}
+  reset: predecessors
+  {% endif %}
   input: {{ input_vcf }}
   output: {{ output_vcf }}
   cpus: 1
@@ -29,9 +31,11 @@
 
     {# We need to do tiered filtering since we can't use -i and -e at the same time #}
     bcftools view \
-      -i "{{ CC_filter }} &
-      (INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1) &
-      (INFO/COSMIC_CNT>=1 | INFO/COSMIC_NC_CNT>=1)" \
+      {% if variant_caller == 'merged' %}
+      -i "{{ CC_filter }} & (INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1) & (INFO/COSMIC_CNT>=1 | INFO/COSMIC_NC_CNT>=1)" \
+      {% else %}
+      -i "(INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1) & (INFO/COSMIC_CNT>=1 | INFO/COSMIC_NC_CNT>=1)" \
+      {% endif %}
       {{ input_vcf }} |\
       bcftools view \
         -e "(INFO/TOPMED_AC>5 | INFO/GNOMAD_GENOME_AC>5 | INFO/GNOMAD_EXOME_AC>5)" \
@@ -41,7 +45,9 @@
 
     {# Creating a vcf of variants that do not exist in gnomad/topmed #}
     bcftools view \
+      {% if variant_caller == 'merged' %}
       -i "{{ CC_filter }}" \
+      {% endif %}
       {{ input_vcf }} |\
       bcftools view \
         -e "(INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1)" \
