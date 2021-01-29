@@ -3,14 +3,16 @@
 
 {% set output_vcf %}{{ final_vcf_prefix }}.flt.vcf.gz{% endset %}
 {% set temp_vcf_prefix %}{{ temp_dir }}/{{ final_vcf_prefix | basename }}{% endset %}
+{% set CC_filter %}INFO/CC>=1{% endset %}
 {% if variant_caller == 'merged' and pair.callers is defined %}
   {% if pair.callers | length > 3 %}
     {% set CC_filter %}INFO/CC>=3{% endset %}
   {% else %}
     {% set CC_filter %}INFO/CC>={{ pair.callers | length - 1 }}{% endset %}
+  {% endif %}
 {% endif %}
 
-- name: tumor_only_variant_filtering_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_variant_filtering_{{ pair.name }}_{{ variant_caller }}
   tags: [tumor_only, variant_filter. {{ variant_caller }}]
   input: {{ input_vcf }}
   output: {{ output_vcf }}
@@ -30,23 +32,32 @@
       -i "{{ CC_filter }} &
       (INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1) &
       (INFO/COSMIC_CNT>=1 | INFO/COSMIC_NC_CNT>=1)" \
-      {{ output_vcf }} |\
+      {{ input_vcf }} |\
       bcftools view \
         -e "(INFO/TOPMED_AC>5 | INFO/GNOMAD_GENOME_AC>5 | INFO/GNOMAD_EXOME_AC>5)" \
         -o {{ temp_vcf_prefix}}.filtered_db.vcf.gz -O z -
 
+    bcftools index --force {{ temp_vcf_prefix}}.filtered_db.vcf.gz
+
     {# Creating a vcf of variants that do not exist in gnomad/topmed #}
     bcftools view \
       -i "{{ CC_filter }}" \
-      {{ output_vcf }} |\
+      {{ input_vcf }} |\
       bcftools view \
         -e "(INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1)" \
         -o {{ temp_vcf_prefix}}.not_in_db.vcf.gz -O z -
 
+    bcftools index --force {{ temp_vcf_prefix}}.not_in_db.vcf.gz
+
     {# Merging the vcf containing filtered variants annotated by gnomad/topmed and those that did not exist in the db #}
-    bcftools merge \
-      -o {{ output_vcf }}.filtered.vcf.gz -O z \
+    bcftools concat \
+      --allow-overlaps \
       {{ temp_vcf_prefix}}.filtered_db.vcf.gz \
-      {{ temp_vcf_prefix}}.not_in_db.vcf.gz
+      {{ temp_vcf_prefix}}.not_in_db.vcf.gz |\
+    bcftools sort \
+      -o {{ output_vcf }}.flt.vcf.gz -O z -
+
+    bcftools index --threads 4 --tbi --force {{ output_vcf }}.flt.vcf.gz
+    bcftools index --threads 4 --force {{ output_vcf }}.flt.vcf.gz
 
 {% endmacro %}

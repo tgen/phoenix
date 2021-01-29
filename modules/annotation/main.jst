@@ -1,7 +1,7 @@
 {%- from 'modules/annotation/snpeff.jst' import snpeff with context %}
 {%- from 'modules/annotation/bcftools_annotate.jst' import bcftools_annotate with context %}
 {%- from 'modules/annotation/vep.jst' import vep with context %}
-{%- from 'utilities/variant_filtering.jst' import tumor_only_variant_filtering with context %}
+{%- from 'utilities/variant_filtering.jst' import tumor_only_variant_filter with context %}
 
 {%- macro annotate_vcfs(sample_or_pair, temp_dir, results_dir, input_vcf, taskPrefix, aligner, variant_caller, analysis_type, task_type) %}
 
@@ -52,8 +52,13 @@
 
   {{- bcftools_annotate(sample_or_pair, temp_dir, input_vcf, taskPrefix, variant_caller, analysis_type, output_vcf, temp_vcf, aligner, flags.snpeff, flags.vep, task_type ) }}
 
-  {%- if "tumor_only" in taskPrefix %}
-    {{- tumor_only_variant_filtering(sample_or_pair, output_vcf, final_vcf_prefix+'.db', temp_dir, variant_caller) }}
+  {%- if 'tumor_only' in taskPrefix %}
+    {% if flags.snpeff or flags.vep %}
+      {{- tumor_only_variant_filter(sample_or_pair, temp_vcf, final_vcf_prefix+'.db', temp_dir, variant_caller) }}
+    {% else %}
+      {{- tumor_only_variant_filter(sample_or_pair, output_vcf, final_vcf_prefix+'.db', temp_dir, variant_caller) }}
+    {% endif %}
+
     {%- if flags.snpeff %}
       {{- snpeff(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
     {% endif %}
@@ -62,12 +67,21 @@
       {{- vep(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
     {% endif %}
   {% else %}
+    {% if flags.snpeff or flags.vep %}
+      {{- tumor_only_variant_filter(sample_or_pair, temp_vcf, final_vcf_prefix+'.db', temp_dir, variant_caller) }}
+    {% else %}
+      {{- tumor_only_variant_filter(sample_or_pair, output_vcf, final_vcf_prefix+'.db', temp_dir, variant_caller) }}
+    {% endif %}
+
     {%- if flags.snpeff %}
-      {{- snpeff(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner, task_type, analysis_type) }}
+      {{- snpeff(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
+    {% endif %}
+    {%- if flags.snpeff %}
+      {{- snpeff(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
     {% endif %}
 
     {%- if flags.vep %}
-      {{- vep(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db', aligner, task_type, analysis_type) }}
+      {{- vep(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
     {% endif %}
   {% endif %}
 
