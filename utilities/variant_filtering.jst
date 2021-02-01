@@ -3,6 +3,9 @@
 
 {% set output_vcf %}{{ final_vcf_prefix }}.flt.vcf.gz{% endset %}
 {% set temp_vcf_prefix %}{{ temp_dir }}/{{ final_vcf_prefix | basename }}{% endset %}
+{% set DB_member %}(INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1){% endset %}
+{% set DB_exclude %}(INFO/TOPMED_AC>5 | INFO/GNOMAD_GENOME_AC>5 | INFO/GNOMAD_EXOME_AC>5){% endset %}
+{% set COSMIC_filter %}(INFO/COSMIC_CNT>=1 | INFO/COSMIC_NC_CNT>=1){% endset %}
 {% if variant_caller == 'merged' and pair.callers is defined %}
   {% if pair.callers | length > 3 %}
     {% set CC_filter %}INFO/CC>=3{% endset %}
@@ -32,26 +35,26 @@
     {# We need to do tiered filtering since we can't use -i and -e at the same time #}
     bcftools view \
       {% if variant_caller == 'merged' %}
-      -i "{{ CC_filter }} & (INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1) & (INFO/COSMIC_CNT>=1 | INFO/COSMIC_NC_CNT>=1)" \
+      --include "{{ CC_filter }} & {{ DB_member }} & {{ COSMIC_filter }}" \
       {% else %}
-      -i "(INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1) & (INFO/COSMIC_CNT>=1 | INFO/COSMIC_NC_CNT>=1)" \
+      --include "{{ DB_member }} & {{ COSMIC_filter }}" \
       {% endif %}
       {{ input_vcf }} |\
       bcftools view \
-        -e "(INFO/TOPMED_AC>5 | INFO/GNOMAD_GENOME_AC>5 | INFO/GNOMAD_EXOME_AC>5)" \
-        -o {{ temp_vcf_prefix}}.filtered_db.vcf.gz -O z -
+        --exclude "{{ DB_exclude }}" \
+        --output-file {{ temp_vcf_prefix }}.filtered_db.vcf.gz --output-type z -
 
     bcftools index --force {{ temp_vcf_prefix}}.filtered_db.vcf.gz
 
     {# Creating a vcf of variants that do not exist in gnomad/topmed #}
     bcftools view \
       {% if variant_caller == 'merged' %}
-      -i "{{ CC_filter }}" \
+      --include "{{ CC_filter }}" \
       {% endif %}
       {{ input_vcf }} |\
       bcftools view \
-        -e "(INFO/GNOMAD_EXOME=1 | INFO/GNOMAD_GENOME=1 | INFO/TOPMED=1)" \
-        -o {{ temp_vcf_prefix}}.not_in_db.vcf.gz -O z -
+        --exclude "{{ DB_member }}" \
+        --output-file {{ temp_vcf_prefix }}.not_in_db.vcf.gz --output-type z -
 
     bcftools index --force {{ temp_vcf_prefix}}.not_in_db.vcf.gz
 
@@ -61,9 +64,9 @@
       {{ temp_vcf_prefix}}.filtered_db.vcf.gz \
       {{ temp_vcf_prefix}}.not_in_db.vcf.gz |\
     bcftools sort \
-      -o {{ output_vcf }}.flt.vcf.gz -O z -
+      --output-file {{ output_vcf }} --output-type z -
 
-    bcftools index --threads 4 --tbi --force {{ output_vcf }}.flt.vcf.gz
-    bcftools index --threads 4 --force {{ output_vcf }}.flt.vcf.gz
+    bcftools index --threads 4 --tbi --force {{ output_vcf }}
+    bcftools index --threads 4 --force {{ output_vcf }}
 
 {% endmacro %}

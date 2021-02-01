@@ -60,11 +60,11 @@
     {% endif %}
 
     {%- if flags.snpeff %}
-      {{- snpeff(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
+      {{- snpeff(sample_or_pair, results_dir, final_vcf_prefix+'.db.flt.vcf.gz', variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
     {% endif %}
 
     {%- if flags.vep %}
-      {{- vep(sample_or_pair, results_dir, temp_vcf, variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
+      {{- vep(sample_or_pair, results_dir, final_vcf_prefix+'.db.flt.vcf.gz', variant_caller, final_vcf_prefix+'.db.flt', aligner, task_type, analysis_type) }}
     {% endif %}
   {% else %}
     {%- if flags.snpeff %}
