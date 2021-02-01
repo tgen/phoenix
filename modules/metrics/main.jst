@@ -1,0 +1,63 @@
+{%- from 'modules/metrics/mutation_burden.jst' import mutation_burden with context %}
+{%- from 'modules/metrics/msisensor_pro.jst' import msisensor_pro with context %}
+
+{%- macro collect_somatic_metrics(pair, normal_bam, tumor_bam, results_dir, taskPrefix, aligner, variant_caller) %}
+
+{% if variant_caller == 'merged' %}
+  {%- set vcf_prefix %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.{{ variant_caller }}{% endset %}
+{% else %}
+  {%- set vcf_prefix %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.{{ variant_caller }}.pass{% endset %}
+{% endif %}
+
+{%- set annotate_task_prefix = taskPrefix+'_somatic_annotate_vcfs_bcftools_' %}
+{%- set flags = namespace({ 'bcftools': none, 'snpeff': none, 'vep': none }) %}
+
+{%- if tasks %}
+  {% for annotate_task in tasks %}
+    {% if annotate_task_prefix in annotate_task and tasks[annotate_task] %}
+      {% set flags.bcftools = true %}
+    {% elif annotate_task_prefix in annotate_task and tasks[annotate_task] is sameas false %}
+      {% if flags.bcftools is not sameas true %}
+        {% set flags.bcftools = false %}
+      {% endif %}
+    {% endif %}
+  {% endfor %}
+
+  {% if flags.bcftools is none %}
+    {% set flags.bcftools = true %}
+  {% endif %}
+
+  {% if tasks[taskPrefix+"_somatic_annotate_vcfs_snpEff_ann"]|default(true) %}
+    {% set flags.snpeff = true %}
+  {% endif %}
+
+  {% if tasks[taskPrefix+"_somatic_annotate_vcfs_vep"]|default(true) %}
+    {% set flags.vep = true %}
+  {% endif %}
+{% else %}
+  {% set flags.bcftools = true %}
+  {% set flags.snpeff = true %}
+  {% set flags.vep = true %}
+{% endif %}
+
+{% if tasks[taskPrefix+"_somatic_sample_metric_tgen_mutation_burden"]|default(true) %}
+  {% if flags.bcftools %}
+    {% set final_vcf_prefix %}{{ vcf_prefix }}.db{% endset %}
+  {% else %}
+    {% set final_vcf_prefix %}{{ vcf_prefix }}{% endset %}
+  {% endif %}
+  {% if flags.vep %}
+    {% set final_vcf %}{{ final_vcf_prefix }}.vep.pick.vcf.gz{% endset %}
+    {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'vep') }}
+  {% endif %}
+  {% if flags.snpeff %}
+    {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.can.vcf.gz{% endset %}
+    {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'snpeff') }}
+  {% endif %}
+{% endif %}
+
+{% if tasks[taskPrefix+"_somatic_sample_metric_msisensor_pro"]|default(true) %}
+  {{- msisensor_pro(pair, normal_bam, tumor_bam, aligner) }}
+{% endif %}
+
+{% endmacro %}

@@ -38,6 +38,19 @@
   {% set summaryNumbers_output %}{{ results_dir }}/{{ sample_name_string }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.tsv{% endset %}
   {% set summaryNumbers_output_json %}{{ results_dir }}/{{ sample_name_string }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.json{% endset %}
 
+{% if bam_level is sameas true %}
+  {% set bam_level_baseQuality_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_baseQualityYield_summary.tsv{% endset %}
+  {% set bam_level_baseQuality_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_baseQualityYield_summary.json{% endset %}
+
+  {% set bam_level_coverage_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_coverage_summary.tsv{% endset %}
+  {% set bam_level_coverage_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_coverage_summary.json{% endset %}
+
+  {% set bam_level_insertSize_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_insertSize_summary.tsv{% endset %}
+  {% set bam_level_insertSize_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_insertSize_summary.json{% endset %}
+
+  {% set bam_level_summaryNumbers_output %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.tsv{% endset %}
+  {% set bam_level_summaryNumbers_output_json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam_samtools_summaryNumbers_summary.json{% endset %}
+{% endif %}
 
 - name: samtools_stats_{{ task }}
   tags: [{{ sample.gltype }}, quality_control, stats, samtools_stats, {{ sample.name }}]
@@ -104,7 +117,7 @@
     {# If the sample.gltype == 'exome' then intersect the capture space with the Non-N genomic space #}
     {% if sample.gltype == 'exome' %}
     bedtools intersect \
-      -a {{ constants.phoenix.reference_non_N_bed }} \
+      -a {{ constants.phoenix.reference_non_N_interval_list }} \
       -b {{ sample.capture_kit.no_header_targets_interval_list }} \
       | \
     sort -k1,1 -k2,2n \
@@ -139,15 +152,15 @@
       --coverage 1,2500,1 \
       {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
       --reference "{{ constants.phoenix.star_fasta }}" \
-      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
+      --target-regions "{{ constants.phoenix.reference_non_N_interval_list }}" \
       {% elif sample.gltype == 'chip' %}
       --reference "{{ constants.phoenix.chip_fasta }}" \
-      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
+      --target-regions "{{ constants.phoenix.reference_non_N_interval_list }}" \
       {% else %}
         {% if sample.gltype == 'exome' %}
       --target-regions "{{ regions }}" \
         {% else %}
-      --target-regions "{{ constants.phoenix.reference_non_N_bed }}" \
+      --target-regions "{{ constants.phoenix.reference_non_N_interval_list }}" \
         {% endif %}
       --reference "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
@@ -176,6 +189,13 @@
         --library={{ sample_lb }}
     {% endif %}
 
+    {% if bam_level is sameas true and sample.gltype != 'singlecellrna' %}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_baseQuality_output, bam_level_baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_coverage_output, bam_level_coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_insertSize_output, bam_level_insertSize_output_json, "samtools_insertSize_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_summaryNumbers_output, bam_level_summaryNumbers_output_json, "samtools_summaryNumbers_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+    {% endif %}
+
     {% if libraryCount == 1 or bam_level is sameas false %}
       {{ stats2json(sample.gltype, sample.name, task, baseQuality_output, baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, coverage_output, coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb) }}
@@ -186,6 +206,45 @@
       {{ stats2json(sample.gltype, sample.name, task, coverage_output, coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, summaryNumbers_output, summaryNumbers_output_json, "samtools_summaryNumbers_summary", sample_name=sample.name, library_name=sample_lb) }}
     {% endif %}
+
+{% endif %}
+{% endmacro %}
+
+{% macro bam_qc_samtools_markdup(sample, sample_lb, taskPrefix=taskPrefix, aligner=aligner) %}
+{% if tasks[taskPrefix+"_quality_control_stats_samtools_markdup_stats"]|default(true) %}
+
+  {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
+  {% set task %}{{ sample.name }}_{{ aligner }}{% endset %}
+  {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+
+  {% set output %}{{ results_dir }}/{{ bam|basename }}_samtools_markdup_summary.tsv{% endset %}
+  {% set json %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samtools.markdup.json{% endset %}
+
+
+- name: samtools_markdup_stats_{{ task }}
+  tags: [{{ sample.gltype }}, quality_control, stats, samtools_markdup, {{ sample.name }}]
+  methods: Quality control metrics for {{ sample.name }} ({{ aligner }}) were
+    generated with {{ constants.tools.samtools.verbose }} stats.
+  input: {{ results_dir }}/{{ sample.name }}.{{ aligner }}.bam.samtools.markdup.txt
+  output: {{ output }}
+  walltime: "4:00:00"
+  cpus: 1
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.R.module }}
+
+    cd {{ results_dir }}
+
+    Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotSamStats_Rscript }} \
+        --samtoolsDuplicatesFile={{ sample.name }}.{{ aligner }}.bam.samtools.markdup.txt \
+        --bam={{ bam|basename }} \
+        --sample={{ sample.name }} \
+        --library={{ sample_lb }}
+
+    {{ stats2json(sample.gltype, sample.name, task, output, json, "samtools_markdup_summary", sample_name=sample.name, library_name=sample_lb) }}
 
 {% endif %}
 {% endmacro %}
@@ -470,18 +529,9 @@
   {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
   {% set results_dir %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
 
-  {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
-    {% set input_base %}temp/{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-  {% else %}
-    {% set input_base %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats{% endset %}
-  {% endif %}
-
 - name: gatk_convertsequencingarrtifacttooxog_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, quality_control, stats, gatk_ConvertSequencingArtifactToOxoG, {{ sample.name }}]
   input: {{ bam }}
-  {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"]|default(true) %}
-  after: gatk_collectmultiplemetrics_{{ sample.name }}_{{ aligner }}
-  {% endif %}
   output:
     - {{ results_dir }}/{{ bam|basename }}.oxog_metrics
     {% if sample.gltype == 'singlecellrna' %}
@@ -500,20 +550,18 @@
 
     module load {{ constants.tools.gatk.module }}
 
-    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
-      mkdir -p {{ input_base }}
+    mkdir -p {{ results_dir }}
 
-      gatk CollectSequencingArtifactMetrics \
-        --java-options "-Xmx7G" \
-        --INPUT {{ bam }} \
-        --OUTPUT "{{ input_base }}/{{ bam|basename }}" \
-        {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
-        --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
-        {% elif sample.gltype == 'chip' %}
-        --REFERENCE_SEQUENCE "{{ constants.phoenix.chip_fasta }}" \
-        {% else %}
-        --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
-        {% endif %}
+    gatk CollectSequencingArtifactMetrics \
+    --java-options "-Xmx7G" \
+    --INPUT {{ bam }} \
+    --OUTPUT "{{ results_dir }}/{{ bam|basename }}" \
+    {% if sample.gltype == 'rna' or sample.gltype == 'singlecellrna' %}
+    --REFERENCE_SEQUENCE "{{ constants.phoenix.star_fasta }}" \
+    {% elif sample.gltype == 'chip' %}
+    --REFERENCE_SEQUENCE "{{ constants.phoenix.chip_fasta }}" \
+    {% else %}
+    --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
     {% endif %}
 
     gatk ConvertSequencingArtifactToOxoG \
@@ -524,23 +572,23 @@
       {% else %}
       --REFERENCE_SEQUENCE "{{ constants.phoenix.reference_fasta }}" \
       {% endif %}
-      --INPUT_BASE "{{ input_base }}/{{ bam|basename }}"
+      --INPUT_BASE "{{ results_dir }}/{{ bam|basename }}"
 
-    for library in `tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | cut -f2 | sort | uniq | gawk 'NR > 1'`
+    for library in `tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | cut -f2 | sort | uniq | gawk 'NR > 1'`
     do
-      OXIDATION_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
+      OXIDATION_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f12 | \
         sort -n | \
         gawk 'NR == 3')
 
-      C_REF_OXO_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
+      C_REF_OXO_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f18 | \
         sort -n | \
         gawk 'NR == 3')
 
-      G_REF_OXO_Q_MIN=$(tail -n +8 {{ input_base }}/{{ bam|basename }}.oxog_metrics | \
+      G_REF_OXO_Q_MIN=$(tail -n +8 {{ results_dir }}/{{ bam|basename }}.oxog_metrics | \
         grep ${library} | \
         cut -f20 | \
         sort -n | \
@@ -554,10 +602,6 @@
       echo -e "${OXIDATION_Q_MIN}\t${C_REF_OXO_Q_MIN}\t${G_REF_OXO_Q_MIN}" >> {{ results_dir }}/{{ sample.name }}_${library}.{{ aligner }}.bam.oxog_metrics_summary.tsv
       {% endif %}
     done
-
-    {% if tasks[taskPrefix+"_quality_control_stats_gatk_CollectMultipleMetrics"] is sameas false|default(false) %}
-    mv {{ input_base }}/{{ bam|basename }}.oxog_metrics {{ results_dir }}/
-    {% endif %}
 
     {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
       {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}

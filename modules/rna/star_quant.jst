@@ -1,5 +1,6 @@
 {% from 'utilities/read_group_line.jst' import read_group_line %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample, opt_dup_distance) %}
@@ -47,7 +48,11 @@
     {% for fq in r2fqlist %}
     - {{ fq.path }}
     {% endfor %}
-  output: {{ star_bam_unsort }}
+  output:
+    - {{ star_bam_unsort }}
+    - {{ star_finalcountsdir }}/{{ sample.name }}.ReadsPerGene.out.tab
+    - {{ star_finalcountsdir }}/{{ sample.name }}.star.junctions
+    - {{ star_finalcountsdir }}/{{ sample.name }}_star.Log.final.out
   cpus: 20
   mem: 80G
   walltime: "48:00:00"
@@ -173,6 +178,7 @@
 
     mv {{ temp_dir }}/{{ sample.name }}.ReadsPerGene.out.tab {{ star_finalcountsdir }}/
     mv {{ temp_dir }}/{{ sample.name }}.SJ.out.tab {{ star_finalcountsdir }}/{{ sample.name }}.star.junctions
+    mv {{ temp_dir }}/{{ sample.name }}.Log.final.out {{ star_finalcountsdir }}/{{ sample.name }}_star.Log.final.out
 
 
 - name: fixmate_sort_star_{{ sample.name }}
@@ -257,6 +263,9 @@
 This task works, and was tested with MMRF_1499, but it was made as a backup for samtools markdups
 which appears to be working now after some code changes, keeping this here in case we need a backup
 #}
+{% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
+{% set rna_md_metrics %}{{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics{% endset %}
+{% set rna_md_metrics_json %}{{ rna_md_metrics }}.json{% endset %}
 - name: markduplicates_star_gatk_{{ sample.name }}
   tags: [{{ sample.gltype }}, alignment, rna_alignment, STAR, {{ sample.name }}]
   reset: predecessors
@@ -264,7 +273,7 @@ which appears to be working now after some code changes, keeping this here in ca
   output:
     - {{ star_bam_final }}
     - {{ star_bam_final }}.bai
-    - {{ results_dir }}/stats/{{ sample.name }}.star.bam.md_metrics
+    - {{ rna_md_metrics }}
   cpus: 10
   mem: 40G
   cmd: |
@@ -300,6 +309,7 @@ which appears to be working now after some code changes, keeping this here in ca
 
     samtools index -@ 10 "{{ star_bam_final }}"
 
+    {{- stats2json(sample.gltype, sample.name, task, rna_md_metrics, rna_md_metrics_json, "picard_mark_duplicates_metrics", sample_name=sample.name) }}
     {% if not tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
       {# Remove the remaining files #}
       {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
@@ -309,7 +319,7 @@ which appears to be working now after some code changes, keeping this here in ca
       {% set task_list = [] %}
       {% set task %}htseq_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
-      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- htseq(sample) }}
@@ -318,7 +328,7 @@ which appears to be working now after some code changes, keeping this here in ca
       {% set task_list = [] %}
       {% set task %}featurecounts_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
-      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- featurecounts(sample) }}
@@ -329,7 +339,7 @@ which appears to be working now after some code changes, keeping this here in ca
       {% do task_list.append(task) %}
       {% set task %}featurecounts_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
-      {% set task %}fixmate_sort_star_{{ sample.name }}{% endset %}
+      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
       {% set directory %}{{ temp_dir }}{% endset %}
       {{- htseq(sample) }}

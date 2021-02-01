@@ -1,20 +1,22 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
-{% macro strelka2_somatic(pair, aligner='bwa') %}
+{% macro strelka2_tumor_only(pair, aligner='bwa') %}
 {% do pair.callers.append('strelka2') %}
-{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set indel_candidates %}{{ pair.gltype }}/somatic_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
-{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set indel_candidates %}{{ pair.gltype }}/tumor_only_structural_calls/manta/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.manta.candidateSmallIndels.vcf.gz{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/strelka2/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/strelka2/{{ pair.name }}_{{ aligner }}{% endset %}
 {% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.strelka2.pass.vcf.gz{% endset %}
 
-- name: strelka2_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
+- name: tumor_only_strelka2_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, strelka2, {{ pair.name }}]
   methods: > 
-    Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
+    tumor_only variants for {{ pair.name }} ({{ aligner }}) were called with
     {{ constants.tools.strelka.verbose }}.
+  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -120,8 +122,8 @@
     {% endif %}
 
 
-- name: strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
+- name: tumor_only_strelka2_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, strelka2, {{ pair.name }}]
   reset: predecessors
   input:
     - {{ temp_dir }}/results/variants/somatic.indels.vcf.gz
@@ -163,7 +165,7 @@
     bcftools index --tbi --force "{{ pass_vcf }}"
 
     {# Finally remove the run dir #}
-    {% set task %}strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 

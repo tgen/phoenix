@@ -1,0 +1,167 @@
+
+{% macro lumosvar2_tumor_only(samples, normSamples, aligner='bwa') %}
+
+{% if controlDataFiles is defined %}
+{% set toAssayCodes = [] %}
+{% for file in controlDataFiles %}
+  {% do toAssayCodes.append(file.assayCode) %}
+{% endfor %}
+{% endif %}
+
+{% for assay_code, tumor_samples in samples | groupby('assayCode') %}
+  {% if controlDataFiles is defined and assay_code in toAssayCodes %}
+
+  {% for normal in normSamples.values() %}
+    {% if normal.pathToNormalMetrics is defined and normal.assayCode == (tumor_samples|first).assayCode %}
+    {% set pathToNormalMetrics %}{{ normal.pathToNormalMetrics }}{% endset %}
+    {% endif %}
+  {% endfor %}
+
+  {% set bamList = [] %}
+  {% for tumor in tumor_samples %}
+    {% set bamPath %}{{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam{% endset %}
+    {% do bamList.append(bamPath) %}
+  {% endfor %}
+
+  {% set results_dir %}{{ (tumor_samples|first).gltype }}/tumor_only_variant_calls/lumosvar2/{{ (tumor_samples|first).name }}{% endset %}
+  {% set temp_dir %}temp/{{ (tumor_samples|first).gltype }}/tumor_only_variant_calls/lumosvar2/{{ (tumor_samples|first).name }}{% endset %}
+
+- name: lumosvar2_{{ (tumor_samples|first).name }}
+  tags: [lumosvar2, tumor_only, exome, snp_indel_caller]
+  input:
+    {% for tumor in tumor_samples %}
+    - {{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam
+    {% endfor %}
+  output:
+  walltime: "24:00:00"
+  cpus: 16
+  mem: 32G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.lumosvar2.module }}
+    lv2_path=$(dirname `which lumosVarMain`)
+    lv2_work=$(dirname ${lv2_path})/work
+
+    rm -r {{ temp_dir }} || true
+    mkdir -p {{ temp_dir }}
+
+    rm -r {{ results_dir }} || true
+    mkdir -p {{ results_dir }}
+
+    PROJECT_ROOT=$PWD
+
+    {# Creating bamlist for as input in config yaml #}
+    cat <<EOF > "{{ temp_dir }}/{{ project }}_tumor_bamList.txt"
+    {% for bam in bamList %}
+    ${PROJECT_ROOT}/{{ bam }}
+    {% endfor %}
+    EOF
+
+    cat <<EOF > "{{ temp_dir }}/{{ project }}_tumor_lumosVar2_config.yaml"
+    bamList: ${PROJECT_ROOT}/{{ temp_dir }}/{{ project }}_tumor_bamList.txt
+    regionsFile: {{ (tumor_samples|first).capture_kit.extended_bed }}
+    snpVCFpath: {{ constants.phoenix.gnomad_genome_per_chr }}
+    snpVCFname: .vcf.gz
+    {% for normal in normSamples.values() %}
+    {% if normal.pathToNormalMetrics is defined and normal.assayCode == (tumor_samples|first).assayCode %}
+    NormalBase: {{ normal.pathToNormalMetrics }}.
+    {% endif %}
+    {% endfor %}
+    cosmicVCF: {{ constants.phoenix.cosmic_coding }}
+    refGenome: {{ constants.phoenix.reference_fasta }}
+
+    outName: ${PROJECT_ROOT}/{{ results_dir }}/{{ project }}.out
+    outMat: ${PROJECT_ROOT}/{{ results_dir }}/{{ project }}.mat
+    gvmPath: ${lv2_path}/gvm
+    workingDirectory: ${lv2_work}
+    NormalSample: 0
+    priorF: [0.7]
+    numCPU: 16            ### number of parallel processors
+    contigPrefix: chr
+
+    ###organism specific parameters
+    ###values below are set for human
+    autosomes: 1:22
+    sexChr: X,Y             #### comma separated list of sex chromosomes
+    F: 2,0                  #### number of copies of sex chr for individuals of sex F
+    M: 1,1                  #### number of copies of sex chr for individuals of sex M
+
+    ###advanced parameters - most users should keep default belows below
+    minStartDiff: 0.1                         ### determines number of clonal fraction starting points tested, lower favors more starting points
+    addCloneWeight: 5                         ### determines size of change in nll to add a clone, higher favors more clones
+    iterNoImp: 3
+    alphaF: 1.5                               ### effects shape of prior distribution of clonal fraction
+    minBCount: 5                              ### minimum bases supporting alternate allele to examine position
+    blockSize: 1000                           ### size of region to parse at a time
+    maxIter: 20                               ### maximum iterations to run
+    numCPU: 16                                ### number of parallel processors
+    cnaAlpha: 1E-5                            ### segmentation significance cutoff
+    cnaPrior: [0.1;0.15;0.5;0.15;0.1]         ### copy number priors for [0;1;...;>=N] copies
+    minAllelePrior: [0.25;0.5;0.25]           ### minor allele priors for [0;1;...;>=N] copies
+    priorSomaticSNV: 1E-5                     ### somatic SNV prior
+    priorSomaticIndel: 1E-6                   ### somatic indel prior
+    pvFreq: 1E-5                              ### frequency of private SNVs
+    pvFreqIndel: 1E-6                         ### frequency of private indels
+    priorGermCNV: 0.0030                      ### prior probability of germline CNV
+    pSomaticThresh: 0.8                       ### minimum probability variant is somatic to call SomaticPASS
+    pGermlineThresh: 0.8                      ### minimum probability variant is somatic to call GermlineHetPASS
+    pGoodThresh: 0.99                         ### minimum probability variant belongs to PASS group to call PASS
+    ReadLength: 101                           ### length of reads
+    defaultBQ: 30                             ### base quality for indels
+    defaultMQ: 40                             ### mapping quality for indels
+    mpileupC: 50                              ### C parameter for mpileup
+    minHetPopFreq: 0.05                       ### minimum population frequency for heterozygous for initial iteration
+    maxSomPopFreq: 2E-5                       ### maximum population frequency for somatic for initial iteration
+    minHetAF: 0.45                            ### minimum AF to select hets for centering
+    maxW: 500
+    minW: 50                                  ### mimimum value of W parameter (effects sharpness of allele frequency distribution)
+    minLik: 1E-10                             ### added to likelihoods to avoid taking log of zero
+    minBQ: 10                                 ### minimum base quality to count base
+    minMQ: 10                                 ### minimum mapping quality to count read
+    maxBQ: 40                                 ### base quality greater than maxBQ are set to maxBQ
+    BQoffset: 33                              ### subtracted from ascii value to get base quality
+    MQoffset: 33                              ### subtracted from ascii value to get mapping quality
+
+    #### Criteria for PASS.  Variants meeting all of the below inluded in PASS training set.
+    minPerReadPASS: 0.8                       ### minimum percent of reads above minBQ and minMQ
+    minABFrac: 0.95                           ### minimum fraction of reads supporting A or B allele
+    minPercentStrand: 0.01                    ### minimum percent of reads supporting either allele from each strand
+    minMeanMQ: 35                             ### minimum average mapping quality of reads supporting either allele
+    minMeanBQ: 25                             ### minimum average base quality of bases supporting either allele
+    maxPMM: 0.025                             ### maxium percent mismatches in reads suppporting either allele
+    minSeqEndDist: 30                         ### minimum average distances variant position from either end of the sequence
+    maxStrandDiff: 0.1                        ### maximum difference in percent of reads from each strand supporting A and B allele
+    maxBQdiff: 5                              ### maximum difference in mean BQ between A and B allele
+    maxMQdiff: 10                             ### maximum difference in mean MQ between A and B allele
+    maxPMMdiff: 0.01                          ### maximum difference in percent mismatches between reads supporting A and B allele
+    maxReadPosDiff: 10                        ### maximum difference in mean variant position between A and B allele
+    minPosQual: 30                            ### minimum position quality score from analysis of unmatched controls
+    minExonQual: 20                           ### minimum exon quality score from analyis of unmatched controls
+
+    #### Criteria for REJECT.  Variants meeting any of the below included in REJECT training set.
+    perPassReadReject: 0.7
+    ABfracReject: 0.90
+    perStrandReject: 0.001
+    meanBQReject: 20
+    meanMQReject: 30
+    PMMReject: 0.05
+    seqEndDistReject: 10
+    strandDiffReject: 0.2
+    BQdiffReject: 10
+    MQdiffReject: 15
+    PMMdiffReject: 0.02
+    ReadPosDiffReject: 20
+    posQualReject: 10
+    exonQualReject: 10
+    EOF
+
+    lumosVarMain ${PROJECT_ROOT}/{{ temp_dir }}/{{ project }}_tumor_lumosVar2_config.yaml
+
+
+{% endif %}
+
+{% endfor %}
+
+{% endmacro %}

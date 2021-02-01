@@ -1,15 +1,16 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
 {% from 'modules/metrics/main.jst' import collect_somatic_metrics with context %}
-{% from 'modules/somatic/rna_variant_check.jst' import add_rna_header_to_vcf with context %}
-{% from 'modules/somatic/rna_variant_check.jst' import add_matched_rna with context %}
+{% from 'modules/tumor_only/rna_variant_check.jst' import add_rna_header_to_vcf with context %}
+{% from 'modules/tumor_only/rna_variant_check.jst' import add_matched_rna with context %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
-{% macro vcfmerger2(pair, aligner='bwa', taskPrefix='Genome') %}
+{% macro vcfmerger2_tumor_only(pair, aligner='bwa', taskPrefix='Genome') %}
 
-{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
-{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/vcfmerger2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/vcfmerger2/{{ pair.name }}{% endset %}
 {% set merged_vcf %}{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.merged.vcf{% endset %}
 {% set merged_vcf_gz %}{{ temp_dir }}/{{ pair.name }}.{{ aligner }}.merged.vcf.gz{% endset %}
 {% set output_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.merged.vcf.gz{% endset %}
@@ -22,7 +23,7 @@
 #}
 {% for caller in pair.callers %}
 {% set bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set gzipped_path %}{{ pair.gltype }}/somatic_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
+{% set gzipped_path %}{{ pair.gltype }}/tumor_only_variant_calls/{{ caller }}/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.{{ caller }}.pass.vcf.gz{% endset %}
 {% set unzipped_path %}{{ temp_dir }}/{{ caller }}.vcf{% endset %}
 {% set prepped_path %}{{ temp_dir }}/{{ caller }}.prepz.vcf{% endset %}
 {% set filtered_path %}{{ temp_dir }}/{{ caller }}.filt.vcf{% endset %}
@@ -35,9 +36,12 @@
   'filtered_path': filtered_path
 }) %}
 
-- name: vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
-  input: {{ gzipped_path }}
+- name: tumor_only_vcfmerger2_prep_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
+  reset: prepare_tumor_only_{{ pair.normal.name }}
+  input:
+    - {{ gzipped_path }}
+    - {{ normal_bam }}
   output: {{ prepped_path }}
   cpus: 4
   mem: 8G
@@ -62,19 +66,22 @@
     PREPVCF="$(dirname $(dirname $(which vcfMerger2.py)))"/prep_vcfs_somatic/prep_vcf_somatic.sh
     WORKDIR=`pwd`
 
+    {# Grabbing the normal rgsm from the bam #}
+    normal_rgsm=$(samtools view -H {{ normal_bam }} | grep '^@RG' | sed "s/.*SM:\([^\t]*\).*/\1/g" | uniq)
+
     ${PREPVCF} \
       --ref-genome "{{ constants.phoenix.reference_fasta }}" \
       --dir-work "{{ temp_dir }}" \
       --bam ${WORKDIR}/{{ bam }} \
       --toolname "{{ caller }}" \
-      --normal-sname "{{ pair.normal.rgsm }}" \
+      --normal-sname "${normal_rgsm}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
       --vcf "{{ unzipped_path }}" \
       -o "{{ prepped_path }}"
 
 
-- name: vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
+- name: tumor_only_vcfmerger2_filter_{{ caller }}_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
   input: {{ prepped_path }}
   output: {{ filtered_path }}
@@ -96,8 +103,8 @@
 {% endfor %}
 
 
-- name: vcfmerger2_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
+- name: tumor_only_vcfmerger2_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
   reset: predecessors
   input:
     {% for caller in pair.callers %}
@@ -127,6 +134,9 @@
 
     mkdir -p "{{ results_dir }}"
 
+    {# Grabbing the normal rgsm from the bam #}
+    normal_rgsm=$(samtools view -H {{ normal_bam }} | grep '^@RG' | sed "s/.*SM:\([^\t]*\).*/\1/g" | uniq)
+
     vcfMerger2.py \
       --skip-prep-vcfs \
       --do-venn \
@@ -135,7 +145,7 @@
       --vcfs "{{ vcfs_to_merge|map(attribute='filtered_path')|join('|') }}" \
       -g "{{ constants.phoenix.reference_fasta }}" \
       --dict "{{ constants.phoenix.reference_dict }}" \
-      --normal-sname "{{ pair.normal.rgsm }}" \
+      --normal-sname "${normal_rgsm}" \
       --tumor-sname "{{ pair.tumor.rgsm }}" \
       -d "{{ temp_dir }}" \
       -o "{{ merged_vcf }}"
@@ -152,8 +162,8 @@
 {% if 'rna_samples' in pair.tumor %}
   {{- add_matched_rna(merged_vcf_gz, output_vcf, pair, aligner, temp_dir) }}
 {% else %}
-  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
+  {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir) }}
 {% endif %}
-  {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
+  {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'tumor_only', 'snp_indel_caller') }}
   {{- collect_somatic_metrics(pair, normal_bam, tumor_bam, results_dir, taskPrefix, aligner, 'merged') }}
 {% endmacro %}

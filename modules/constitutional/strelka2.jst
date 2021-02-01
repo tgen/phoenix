@@ -18,6 +18,7 @@
   input:
     - {{ bam }}
     - {{ indel_candidates }}
+    - {{ indel_candidates }}.tbi
   output:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -109,7 +110,9 @@
 
 - name: strelka2_filter_variants_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, strelka2, {{ sample.name }}]
-  input: {{ all_vcf }}
+  input:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
   output:
     - {{ pass_vcf }}
     - {{ pass_vcf }}.tbi
