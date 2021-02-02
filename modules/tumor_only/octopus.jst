@@ -163,7 +163,7 @@
     
     bcftools index --tbi --force "{{ pass_vcf }}"
 
-    {% set task %}tumor_only_octopus_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_octopus_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 
