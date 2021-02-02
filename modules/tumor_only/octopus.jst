@@ -89,6 +89,7 @@
     module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.samtools.module }}
 
+
     mkdir -p "{{ results_dir }}"
 
     {# Vcf merge #}
@@ -134,9 +135,6 @@
 {#      {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.octopus.bam \#}
 {#      {{ temp_dir }}/*.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam#}
 
-    {% set task %}tumor_only_octopus_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
 
 - name: tumor_only_octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, octopus, {{ pair.name }}]
@@ -165,5 +163,10 @@
       > "{{ pass_vcf }}"
     
     bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {% set task %}tumor_only_octopus_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 
 {% endmacro %}

@@ -83,6 +83,7 @@
     module load {{ constants.tools.bcftools.module }}
     module load {{ constants.tools.samtools.module }}
 
+
     mkdir -p "{{ results_dir }}"
 
     {# Vcf merge #}
@@ -128,9 +129,6 @@
 {#      {{ results_dir }}/{{ pair.normal.name }}.{{ aligner }}.octopus.bam \#}
 {#      {{ temp_dir }}/*.realigned.bam/{{ pair.normal.name }}.{{ aligner }}.bam#}
 
-    {% set task %}octopus_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
 
 - name: octopus_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, octopus, {{ pair.name }}]
@@ -159,5 +157,10 @@
       > "{{ pass_vcf }}"
     
     bcftools index --tbi --force "{{ pass_vcf }}"
+
+    {% set task %}octopus_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 
 {% endmacro %}
