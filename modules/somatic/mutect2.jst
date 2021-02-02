@@ -312,6 +312,10 @@
       --filtering-stats "{{ temp_dir }}/filtering.stats" \
       --output "{{ all_vcf }}"
 
+    {% set task %}mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 - name: mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
@@ -338,9 +342,5 @@
       > "{{ pass_vcf }}"
     
     bcftools index --tbi --force "{{ pass_vcf }}"
-
-    {% set task %}mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}

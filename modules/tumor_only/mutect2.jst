@@ -320,6 +320,10 @@
       --filtering-stats "{{ temp_dir }}/filtering.stats" \
       --output "{{ all_vcf }}"
 
+    {% set task %}tumor_only_mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
 - name: tumor_only_mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
@@ -346,9 +350,5 @@
       > "{{ pass_vcf }}"
     
     bcftools index --tbi --force "{{ pass_vcf }}"
-
-    {% set task %}tumor_only_mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
-    {{- remove_files(directory,none,task) }}
 
 {% endmacro %}
