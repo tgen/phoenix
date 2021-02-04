@@ -1,20 +1,47 @@
-# SnpSniffer summary is performed on all samples within the project
+{# SnpSniffer summary is performed on all samples within the project #}
 
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
 {% macro snpsniffer_summary(samples) %}
 
-{% set taskPrefix %}Exome,Genome,RNA,SingleCellRNA,CHIP{% endset %}
-
-{% for prefix in taskPrefix %}
-    {% if prefix+"_quality_control_genotype_concordance_snpSniffer" in tasks %}
-        {% set snifferFound %}true{% endset %}
-    {% endif %}
+{% set snpsniffer_list = [] %}
+{% for sample in samples.values() %}
+  {% if not sample.glprep == 'singlecellenrichment' %}
+    {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
+      {% if sample.gltype == 'singlecellrna' %}
+        {# singlecellrna has can have multiple alignments, so we check which aligners are enabled #}
+        {% if tasks["SingleCellRNA_transcriptome_quantify_expression_STARsolo"]|default(true) %}
+          {% set aligner = 'starSOLO' %}
+          {% set snpsniffer_result %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}/stats/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.snpSniffer.vcf{% endset %}
+          {% do snpsniffer_list.append(snpsniffer_result) %}
+        {% endif %}
+        {% if tasks["SingleCellRNA_transcriptome_quantify_expression_cellranger_count"]|default(true) %}
+          {% set aligner = 'cellranger_count' %}
+          {% set snpsniffer_result %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}_{{ sample_lb }}/stats/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.snpSniffer.vcf{% endset %}
+          {% do snpsniffer_list.append(snpsniffer_result) %}
+        {% endif %}
+      {% else %}
+        {# Currently, all other gltypes only use one aligner respective to their type, so we can assume the aligner here #}
+        {% if sample.gltype == 'rna' %}
+          {% set aligner = 'star' %}
+        {% elif sample.gltype == 'chip' %}
+          {% set aligner = 'bowtie2' %}
+        {# The remaining gltypes are genome and exome which use the same aligner #}
+        {% else %}
+          {% set aligner = 'bwa' %}
+        {% endif %}
+        {% set snpsniffer_result %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.snpSniffer.vcf{% endset %}
+        {% do snpsniffer_list.append(snpsniffer_result) %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
 {% endfor %}
 
-{% if snifferFound is defined %}
 - name: snpsniffer_summary
-  after-re: snpsniffer_geno_.*
+  input:
+    {% for result in snpsniffer_list %}
+    - {{ result }}
+    {% endfor %}
   output:
     - qc/snpSniffer/{{ project }}_SnpSniffer_AllPairs_Summary.tsv
     - qc/snpSniffer/{{ project }}_SnpSniffer_PossibleMatchErrors_Summary.tsv
@@ -47,16 +74,8 @@
     rsync {{ constants.phoenix.snpSniffer_database }} temp/snpsniffer/SnpSniffer_DB.ini
 
     {# Collect all of the library level snpSniffer vcf results into the temp directory #}
-    {% for sample in samples.values() %}
-      {% if not sample.glprep == 'singlecellenrichment' %}
-        {% for sample_lb, sample_rgs in sample.read_groups.values()|groupby('rglb') %}
-          {% if sample.gltype == 'singlecellrna' %}
-            rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}_{{ sample_lb }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
-          {% else %}
-            rsync {{ sample.gltype }}/alignment/*/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.*.bam.snpSniffer.vcf temp/snpsniffer/
-          {% endif %}
-        {% endfor %}
-      {% endif %}
+    {% for result in snpsniffer_list %}
+      rsync {{ result }} temp/snpsniffer
     {% endfor %}
 
     cd temp/snpsniffer
@@ -183,5 +202,4 @@
 
   {{ stats2json("all libraries", project, project, output, json, "snpsniffer_summary") }}
 
-{% endif %}
 {% endmacro %}

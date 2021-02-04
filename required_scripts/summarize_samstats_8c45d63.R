@@ -346,24 +346,24 @@ coverage_summary <- function(input, bam, rgsm, rglb, rgid) {
               SD_lineNumerator = sum(SD_lineNumerator))
 
   # Get position information for coverge percentiles
-  median_position <- summary %>% pull(var = Bases_Tested) * 0.5
-  median_value <- coverage %>% filter(First_Ordered_Base <= median_position) %>% filter(Last_Ordered_Base > median_position) %>% pull(var = Depth)
-  percentile1_position <- summary %>% pull(var = Bases_Tested) * 0.01
-  percentile1_value <- coverage %>% filter(First_Ordered_Base <= percentile1_position) %>% filter(Last_Ordered_Base > percentile1_position) %>% pull(var = Depth)
-  percentile5_position <- summary %>% pull(var = Bases_Tested) * 0.05
-  percentile5_value <- coverage %>% filter(First_Ordered_Base <= percentile5_position) %>% filter(Last_Ordered_Base > percentile5_position) %>% pull(var = Depth)
-  percentile10_position <- summary %>% pull(var = Bases_Tested) * 0.10
-  percentile10_value <- coverage %>% filter(First_Ordered_Base <= percentile10_position) %>% filter(Last_Ordered_Base > percentile10_position) %>% pull(var = Depth)
-  percentile25_position <- summary %>% pull(var = Bases_Tested) * 0.25
-  percentile25_value <- coverage %>% filter(First_Ordered_Base <= percentile25_position) %>% filter(Last_Ordered_Base > percentile25_position) %>% pull(var = Depth)
-  percentile75_position <- summary %>% pull(var = Bases_Tested) * 0.75
-  percentile75_value <- coverage %>% filter(First_Ordered_Base <= percentile75_position) %>% filter(Last_Ordered_Base > percentile75_position) %>% pull(var = Depth)
-  percentile90_position <- summary %>% pull(var = Bases_Tested) * 0.90
-  percentile90_value <- coverage %>% filter(First_Ordered_Base <= percentile90_position) %>% filter(Last_Ordered_Base > percentile90_position) %>% pull(var = Depth)
-  percentile95_position <- summary %>% pull(var = Bases_Tested) * 0.95
-  percentile95_value <- coverage %>% filter(First_Ordered_Base <= percentile95_position) %>% filter(Last_Ordered_Base > percentile95_position) %>% pull(var = Depth)
-  percentile99_position <- summary %>% pull(var = Bases_Tested) * 0.99
-  percentile99_value <- coverage %>% filter(First_Ordered_Base <= percentile99_position) %>% filter(Last_Ordered_Base > percentile99_position) %>% pull(var = Depth)
+  median_position <- round(summary %>% pull(var = Bases_Tested) * 0.5)
+  median_value <- coverage %>% filter(First_Ordered_Base <= median_position) %>% filter(Last_Ordered_Base >= median_position) %>% pull(var = Depth)
+  percentile1_position <- round(summary %>% pull(var = Bases_Tested) * 0.01)
+  percentile1_value <- coverage %>% filter(First_Ordered_Base <= percentile1_position) %>% filter(Last_Ordered_Base >= percentile1_position) %>% pull(var = Depth)
+  percentile5_position <- round(summary %>% pull(var = Bases_Tested) * 0.05)
+  percentile5_value <- coverage %>% filter(First_Ordered_Base <= percentile5_position) %>% filter(Last_Ordered_Base >= percentile5_position) %>% pull(var = Depth)
+  percentile10_position <- round(summary %>% pull(var = Bases_Tested) * 0.10)
+  percentile10_value <- coverage %>% filter(First_Ordered_Base <= percentile10_position) %>% filter(Last_Ordered_Base >= percentile10_position) %>% pull(var = Depth)
+  percentile25_position <- round(summary %>% pull(var = Bases_Tested) * 0.25)
+  percentile25_value <- coverage %>% filter(First_Ordered_Base <= percentile25_position) %>% filter(Last_Ordered_Base >= percentile25_position) %>% pull(var = Depth)
+  percentile75_position <- round(summary %>% pull(var = Bases_Tested) * 0.75)
+  percentile75_value <- coverage %>% filter(First_Ordered_Base <= percentile75_position) %>% filter(Last_Ordered_Base >= percentile75_position) %>% pull(var = Depth)
+  percentile90_position <- round(summary %>% pull(var = Bases_Tested) * 0.90)
+  percentile90_value <- coverage %>% filter(First_Ordered_Base <= percentile90_position) %>% filter(Last_Ordered_Base >= percentile90_position) %>% pull(var = Depth)
+  percentile95_position <- round(summary %>% pull(var = Bases_Tested) * 0.95)
+  percentile95_value <- coverage %>% filter(First_Ordered_Base <= percentile95_position) %>% filter(Last_Ordered_Base >= percentile95_position) %>% pull(var = Depth)
+  percentile99_position <- round(summary %>% pull(var = Bases_Tested) * 0.99)
+  percentile99_value <- coverage %>% filter(First_Ordered_Base <= percentile99_position) %>% filter(Last_Ordered_Base >= percentile99_position) %>% pull(var = Depth)
 
   # Determine the MAD
   mad_cov <- coverage %>%
@@ -373,7 +373,7 @@ coverage_summary <- function(input, bam, rgsm, rglb, rgid) {
     mutate(Last_Ordered_Base = cumsum(Bases)) %>%
     mutate(First_Ordered_Base = Last_Ordered_Base - Bases + 1) %>%
     filter(First_Ordered_Base <= median_position) %>%
-    filter(Last_Ordered_Base > median_position) %>%
+    filter(Last_Ordered_Base >= median_position) %>%
     pull(var = Abs_Deviation)
 
   # Add Summary Calculations
@@ -682,7 +682,7 @@ insertSize_summary <- function(input, bam, rgsm, rglb, rgid) {
     mutate(Last_Ordered_Pair = cumsum(Total_Pairs)) %>%
     mutate(First_Ordered_Pair = Last_Ordered_Pair - Total_Pairs + 1) %>%
     filter(First_Ordered_Pair <= median_position) %>%
-    filter(Last_Ordered_Pair > median_position) %>%
+    filter(Last_Ordered_Pair >= median_position) %>%
     pull(var = Abs_Deviation)
 
   # Add Summary Calculations
@@ -852,12 +852,6 @@ argv <- commandArgs(trailingOnly = FALSE)
 # base_dir <- dirname(substring(argv[grep("--file=", argv)], 8))
 
 ####################################
-## Read in the samtools stats output file
-####################################
-
-stats_file <- read_lines(opt$samtoolsStatsFile)
-
-####################################
 ## Call Functions
 ####################################
 
@@ -865,6 +859,8 @@ stats_file <- read_lines(opt$samtoolsStatsFile)
 
 # Execute summaries of samtools stats output
 if (!is.null(opt$samtoolsStatsFile)) {
+
+  stats_file <- read_lines(opt$samtoolsStatsFile)
 
   # Extract summary stats
   print("Summarizing Samtools stats Summary Numbers Statistics:")
@@ -887,12 +883,12 @@ if (!is.null(opt$samtoolsStatsFile)) {
   print("Summarizing Samtools stats Base Quality Statistics:")
   # Call the base quality function
   baseQuality_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup, opt$readformat)
-  
+
   # Plot Base distribution by Cycle
   print("Summarizing Samtools stats Base Distribution per Cycle:")
   # Call the base distribution function
   baseDistribution_summary(stats_file, opt$bam, opt$sample, opt$library, opt$readgroup)
-  
+
   # Summarize GC data
   print("Summarizing Samtools stats GC Effect on Coverage:")
   # Call the base distribution function (mean_cov is returned from the coverage function)
@@ -906,8 +902,11 @@ if (!is.null(opt$samtoolsStatsFile)) {
 
 # Execute summaries of samtools markduplicates output
 if (!is.null(opt$samtoolsDuplicatesFile)) {
+
+  dup_file <- read_lines(opt$samtoolsDuplicatesFile)
+
   print("Summarizing Samtools markdups Statistics:")
   # Call Coverage Summary
-  markdup_summary(opt$samtoolsDuplicatesFile, opt$bam, opt$sample, opt$library, opt$readgroup)
+  markdup_summary(dup_file, opt$bam, opt$sample, opt$library, opt$readgroup)
 }
 

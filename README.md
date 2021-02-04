@@ -98,6 +98,30 @@ _Click to show details_
 </details>
 
 <details>
+  <summary><b>Tumor Only Analysis</b></summary>
+  
+  This module will run several variant callers using a tumor sample and user defined normal 
+  data pairs:
+  
+  <img src="/images/TumorOnly_Analysis_Options.png" width="768" height="512" title="TumorOnly Analysis">
+
+  - Variant Discovery (SNV/INDEL)
+    - Strelka2 (Somatic mode)
+    - Mutect2
+    - Lancet
+      - Currently NOT enabled for genomes by default 
+    - VarDictJava
+    - Octopus (Only calls on primary contigs 1-22, X, Y)
+  - Structural Variant Detection
+    - Manta
+    - Delly
+  - Copy Number Analysis
+    - GATK CNV
+    - iCHOR (operates on genomes only)
+
+</details>
+
+<details>
   <summary><b>RNA Analysis</b></summary>
   
   <img src="/images/RNA_Alignment_Quantitation_Options.png" width="768" height="512" title="RNA Analysis">
@@ -259,51 +283,59 @@ _Click to show details_
 <summary><b>Public Tools Used by the Workflow</b></summary>  
 
 All tools build with public easybuild configuration files, available [here](https://github.com/easybuilders/easybuild).<br/>
-*Last Updated July 8th, 2020*  
+*Last Updated Jan 29th, 2021*  
 
 | Tool | Version Implemented | Current Version | Dependency and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
-| [bcftools](https://github.com/samtools/bcftools/releases) | 1.10.2 | 1.10.2 | | Yes |
-| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | **2.29.2** | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
-| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.1** | star-fusion | Yes |
+| [bcftools](https://github.com/samtools/bcftools/releases) | 1.10.2 | **1.11** | | Yes |
+| [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | **2.30.0** | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
+| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.2** | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
-| [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | 3.1.0 | | Yes |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.10.0 | 0.10.0 | singularity container | Yes |
-| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.3** | staying with 0.7.6 for compatibility reasons | Yes |
-| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.2** | 1.3.2 ensures python3 compatibility | Yes |
-| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.8.0 | 4.1.8.0 |  | Yes |
-| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | **2020-06-04** | star-fusion | Yes |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.9.3** |  | |
+| [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | **5.0** | | Yes |
+| [cuda-toolkit](https://developer.nvidia.com/cuda-downloads) | 10.1.243 | **11.2** | | No |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.10.0 | **1.1.0** | singularity container | Yes |
+| [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.7** | staying with 0.7.6 for compatibility reasons | Yes |
+| [dle](https://github.com/tgen/Discordant_Loci_Extractor/releases) | 0.1.5 | 0.1.5 | private repo | No |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.4** | 1.3.2 ensures python3 compatibility | Yes |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.8.0 | **4.1.9.0** |  | Yes |
+| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | **2020-12-17** | star-fusion | Yes |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.10.2** |  | |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | Yes |
-| [htseq](https://github.com/htseq/htseq/releases) | 0.12.3 | 0.12.3 | | |
-| [htslib](https://github.com/samtools/htslib/releases) | 1.10.2 | 1.10.2 | star-fusion(bgzip) | Yes |
+| [htseq](https://github.com/htseq/htseq/releases) | 0.12.3 | **0.13.5** | | |
+| [htslib](https://github.com/samtools/htslib/releases) | 1.10.2 | **1.11** | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
 | [lancet](https://github.com/nygenome/lancet/releases) | 1.1.0 | 1.1.0 | | Yes |
+| [lumosVar2](https://github.com/tgen/lumosVar2/releases) | 1.1 | 1.1 | | Yes |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | Yes |
+| [manta_tgen](https://github.com/tgen/manta/releases) | 1.6.0 | 1.6.0 | modified for internal use | No |
 | [multiQC](https://github.com/ewels/MultiQC/releases) | 1.9 | 1.9 | python3 pip | Yes |
-| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | 0.6.3-beta | | Yes |
+| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | **0.7.0** | | Yes |
+| [openmpi](https://github.com/open-mpi/ompi/releases) | 3.1.3 | **4.1.0** | delly | No |
 | [pairoscope](https://github.com/genome/pairoscope/releases) | 0.4.2 | 0.4.2 | | Yes |
-| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.32.0-RC1** | star-fusion | Yes |
+| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.33.6** | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
 | [python2](https://www.python.org/downloads/) | 2.7.15 | **2.7.18** | | Yes |
-| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.8.3** | star-fusion, vcfmerger2 | Yes |
-| [R](https://www.r-project.org/) | 3.6.1 | **4.0.1** | gatk cnv, varDict, vcfmerger2 | Yes |
-| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | **0.7.1** | | |
+| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.9.1** | star-fusion, vcfmerger2 | Yes |
+| [R](https://www.r-project.org/) | 3.6.1 | **4.0.3** | gatk cnv, varDict, vcfmerger2 | Yes |
+| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 1.2.1 | **1.4.0** | self, star-fusion | Yes |
+| [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | **0.8.0** | | |
 | [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | **0.1.26** | | |
-| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 1.2.1 | 1.2.1 | self, star-fusion | Yes |
-| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | 1.10 | | Yes |
-| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | **3.6.0** | deepvariant | Yes, release-candidate |
+| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | **1.11** | | Yes |
+| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | **3.7.1** | deepvariant | Yes, release-candidate |
 | [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | **4.5covid19** | covid related release? | Yes |
-| [star](https://github.com/alexdobin/STAR/releases) | 2.7.5a | 2.7.5a | self, star-fusion | Yes |
-| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | **1.9.0** | | Yes |
+| [snpSniffer](https://github.com/tgen/snpSniffer/releases) | 7.0.0 | 7.0.0 | | No |
+| [star](https://github.com/alexdobin/STAR/releases) | 2.7.5a | **2.7.7a** | self, star-fusion | Yes |
+| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | **1.9.1** | | Yes |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | | Yes |
 | [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | **2.0.1** | part of subread package | Yes |
-| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.10.0** | star-fusion | Yes |
-| [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | 1.7.0 | | Yes |
+| [tgen_mutation_burden](https://github.com/tgen/tgen_mutation_burden/releases) | 1.2.1 | 1.2.1 | | No |
+| [transParser](https://github.com/tgen/transParser/releases) | 1.0.1 | 1.0.1 | | No |
+| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.11.0** | star-fusion | Yes |
+| [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | **1.8.2** | | Yes |
 | [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.7 | 0.8.7 | | Yes |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | **100.2** | | Yes |
-| [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | 1.0.6 | | Yes |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | **102.0** | | Yes |
+| [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | **2.0.1** | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
 
 </details>
@@ -780,120 +812,189 @@ Here is a larger example with actual data for running the phoenix pipeline on a 
     "submitter": "user",
     "submitterEmail": "examplet@tgen.org",
     "tasks": {
-        "Exome_alignment_base_recalibration_gatk": false,
-        "Exome_alignment_mark_duplicates_gatk": false,
-        "Exome_alignment_mark_duplicates_samblaster": false,
-        "Exome_alignment_mark_duplicates_samtools": true,
-        "Exome_constitutional_annotate_vcfs_bcftools_clinvar_20190715": true,
-        "Exome_constitutional_annotate_vcfs_bcftools_cosmic_coding_v89": true,
-        "Exome_constitutional_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
-        "Exome_constitutional_annotate_vcfs_bcftools_dbsnp_v152": true,
-        "Exome_constitutional_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
-        "Exome_constitutional_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
-        "Exome_constitutional_annotate_vcfs_snpEff_ann": true,
-        "Exome_constitutional_annotate_vcfs_vep": true,
-        "Exome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs": false,
-        "Exome_constitutional_snp_indel_caller_deepvariant": true,
-        "Exome_constitutional_snp_indel_caller_freebayes": false,
-        "Exome_constitutional_snp_indel_caller_gatk_HaplotypeCaller": true,
-        "Exome_constitutional_snp_indel_caller_octopus": false,
-        "Exome_constitutional_snp_indel_caller_strelka2": false,
-        "Exome_constitutional_structural_caller_manta": true,
-        "Exome_quality_control_constitutional_contamination_check_VerifyBamID": true,
-        "Exome_quality_control_constitutional_sex_check_freebayes": true,
-        "Exome_quality_control_genotype_concordance_snpSniffer": true,
-        "Exome_quality_control_stats_gatk_CollectHsMetrics": true,
-        "Exome_quality_control_stats_gatk_CollectMultipleMetrics": true,
-        "Exome_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG": true,
-        "Exome_quality_control_stats_samtools_flagstat": true,
-        "Exome_quality_control_stats_samtools_idxstats": true,
-        "Exome_quality_control_stats_samtools_stats": true,
-        "Exome_somatic_annotate_vcfs_bcftools_clinvar_20190715": true,
-        "Exome_somatic_annotate_vcfs_bcftools_cosmic_coding_v89": true,
-        "Exome_somatic_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
-        "Exome_somatic_annotate_vcfs_bcftools_dbsnp_v152": true,
-        "Exome_somatic_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
-        "Exome_somatic_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
+        "CHIP_quality_control_stats_bam_coverage" : true,
+        "CHIP_quality_control_stats_compute_GCBias" : true,
+        "CHIP_quality_control_stats_macs2_callpeak" : true,
+        "CHIP_quality_control_stats_multi_big_wig_summary" : true,
+        "CHIP_quality_control_stats_plot_coverage" : true,
+        "CHIP_quality_control_stats_plot_fingerprint" : true,
+        "Exome_alignment_base_recalibration_gatk" : false,
+        "Exome_alignment_mark_duplicates_gatk" : false,
+        "Exome_alignment_mark_duplicates_samblaster" : false,
+        "Exome_alignment_mark_duplicates_samtools" : true,
+        "Exome_constitutional_annotate_vcfs_bcftools_clinvar" : true,
+        "Exome_constitutional_annotate_vcfs_bcftools_cosmic_coding" : true,
+        "Exome_constitutional_annotate_vcfs_bcftools_cosmic_noncoding" : true,
+        "Exome_constitutional_annotate_vcfs_bcftools_dbsnp" : true,
+        "Exome_constitutional_annotate_vcfs_bcftools_gnomad_exome" : true,
+        "Exome_constitutional_annotate_vcfs_bcftools_gnomad_genome" : true,
+        "Exome_constitutional_annotate_vcfs_bcftools_topmed" : true,
+        "Exome_constitutional_annotate_vcfs_snpEff_ann" : true,
+        "Exome_constitutional_annotate_vcfs_vep" : true,
+        "Exome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs" : false,
+        "Exome_constitutional_snp_indel_caller_deepvariant" : true,
+        "Exome_constitutional_snp_indel_caller_freebayes" : false,
+        "Exome_constitutional_snp_indel_caller_gatk_HaplotypeCaller" : true,
+        "Exome_constitutional_snp_indel_caller_octopus" : false,
+        "Exome_constitutional_snp_indel_caller_strelka2" : false,
+        "Exome_constitutional_structural_caller_gridss" : false,
+        "Exome_constitutional_structural_caller_manta" : true,
+        "Exome_disease_specific_multiple_myeloma" : true,
+        "Exome_quality_control_constitutional_contamination_check_VerifyBamID" : true,
+        "Exome_quality_control_constitutional_sex_check_freebayes" : true,
+        "Exome_quality_control_genotype_concordance_snpSniffer" : true,
+        "Exome_quality_control_stats_gatk_CollectHsMetrics" : true,
+        "Exome_quality_control_stats_gatk_CollectMultipleMetrics" : true,
+        "Exome_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG" : true,
+        "Exome_quality_control_stats_samtools_flagstat" : false,
+        "Exome_quality_control_stats_samtools_idxstats" : true,
+        "Exome_quality_control_stats_samtools_markdup_stats" : true,
+        "Exome_quality_control_stats_samtools_stats" : true,
+        "Exome_somatic_annotate_vcfs_bcftools_clinvar": true,
+        "Exome_somatic_annotate_vcfs_bcftools_cosmic_coding": true,
+        "Exome_somatic_annotate_vcfs_bcftools_cosmic_noncoding": true,
+        "Exome_somatic_annotate_vcfs_bcftools_dbsnp": true,
+        "Exome_somatic_annotate_vcfs_bcftools_gnomad_exome": true,
+        "Exome_somatic_annotate_vcfs_bcftools_gnomad_genome": true,
+        "Exome_somatic_annotate_vcfs_bcftools_topmed": true,
         "Exome_somatic_annotate_vcfs_snpEff_ann": true,
         "Exome_somatic_annotate_vcfs_vep": true,
         "Exome_somatic_cna_caller_gatk": true,
         "Exome_somatic_merge_vcfs_vcfMerger2": true,
+        "Exome_somatic_sample_metric_msisensor_pro": true,
+        "Exome_somatic_sample_metric_tgen_mutation_burden": true,
         "Exome_somatic_snp_indel_caller_VarDict": true,
         "Exome_somatic_snp_indel_caller_gatk_mutect2": true,
         "Exome_somatic_snp_indel_caller_lancet": true,
         "Exome_somatic_snp_indel_caller_octopus": true,
         "Exome_somatic_snp_indel_caller_strelka2": true,
         "Exome_somatic_structural_caller_delly": false,
+        "Exome_somatic_structural_caller_gridss": false,
         "Exome_somatic_structural_caller_manta": true,
-        "Exome_tumor_mm_igtx_pairoscope": true,
-        "Genome_alignment_base_recalibration_gatk": false,
-        "Genome_alignment_mark_duplicates_gatk": false,
-        "Genome_alignment_mark_duplicates_samblaster": false,
-        "Genome_alignment_mark_duplicates_samtools": true,
-        "Genome_constitutional_annotate_vcfs_bcftools_clinvar_20190715": true,
-        "Genome_constitutional_annotate_vcfs_bcftools_cosmic_coding_v89": true,
-        "Genome_constitutional_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
-        "Genome_constitutional_annotate_vcfs_bcftools_dbsnp_v152": true,
-        "Genome_constitutional_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
-        "Genome_constitutional_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
-        "Genome_constitutional_annotate_vcfs_snpEff_ann": true,
-        "Genome_constitutional_annotate_vcfs_vep": true,
-        "Genome_constitutional_cna_caller_ichor": true,
-        "Genome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs": false,
-        "Genome_constitutional_snp_indel_caller_deepvariant": true,
-        "Genome_constitutional_snp_indel_caller_freebayes": false,
-        "Genome_constitutional_snp_indel_caller_gatk_HaplotypeCaller": true,
-        "Genome_constitutional_snp_indel_caller_octopus": false,
-        "Genome_constitutional_snp_indel_caller_strelka2": false,
-        "Genome_constitutional_structural_caller_manta": true,
-        "Genome_quality_control_constitutional_contamination_check_VerifyBamID": true,
-        "Genome_quality_control_constitutional_sex_check_freebayes": true,
-        "Genome_quality_control_genotype_concordance_snpSniffer": true,
-        "Genome_quality_control_stats_gatk_CollectMultipleMetrics": true,
-        "Genome_quality_control_stats_gatk_CollectRawWgsMetrics": true,
-        "Genome_quality_control_stats_gatk_CollectWgsMetrics": true,
-        "Genome_quality_control_stats_gatk_CollectWgsMetricsWithNonZeroCoverage": true,
-        "Genome_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG": true,
-        "Genome_quality_control_stats_samtools_flagstat": true,
-        "Genome_quality_control_stats_samtools_idxstats": true,
-        "Genome_quality_control_stats_samtools_stats": true,
-        "Genome_somatic_annotate_vcfs_bcftools_clinvar_20190715": true,
-        "Genome_somatic_annotate_vcfs_bcftools_cosmic_coding_v89": true,
-        "Genome_somatic_annotate_vcfs_bcftools_cosmic_noncoding_v89": true,
-        "Genome_somatic_annotate_vcfs_bcftools_dbsnp_v152": true,
-        "Genome_somatic_annotate_vcfs_bcftools_gnomad_exome_v2_1_1_liftover": true,
-        "Genome_somatic_annotate_vcfs_bcftools_gnomad_genome_v3_0": true,
-        "Genome_somatic_annotate_vcfs_snpEff_ann": true,
-        "Genome_somatic_annotate_vcfs_vep": true,
-        "Genome_somatic_cna_caller_gatk": true,
-        "Genome_somatic_merge_vcfs_vcfMerger2": true,
-        "Genome_somatic_snp_indel_caller_VarDict": true,
-        "Genome_somatic_snp_indel_caller_gatk_mutect2": true,
-        "Genome_somatic_snp_indel_caller_lancet": false,
-        "Genome_somatic_snp_indel_caller_octopus": true,
-        "Genome_somatic_snp_indel_caller_strelka2": true,
-        "Genome_somatic_structural_caller_delly": true,
-        "Genome_somatic_structural_caller_manta": true,
-        "Genome_tumor_mm_igtx_pairoscope": true,
-        "RNA_alignment_rna_alignment_STAR": true,
-        "RNA_quality_control_genotype_concordance_snpSniffer": true,
-        "RNA_quality_control_stats_gatk_CollectMultipleMetrics": true,
-        "RNA_quality_control_stats_gatk_CollectRnaSeqMetrics": true,
-        "RNA_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG": true,
-        "RNA_quality_control_stats_samtools_bedcov": true,
-        "RNA_quality_control_stats_samtools_flagstat": true,
-        "RNA_quality_control_stats_samtools_idxstats": true,
-        "RNA_quality_control_stats_samtools_stats": true,
-        "RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM": false,
-        "RNA_transcriptome_fusion_caller_STAR_Fusion": true,
-        "RNA_transcriptome_quantify_expression_HTseq": false,
-        "RNA_transcriptome_quantify_expression_RSEM": false,
-        "RNA_transcriptome_quantify_expression_salmon_bam": false,
-        "RNA_transcriptome_quantify_expression_salmon_fastqs": true,
-        "RNA_transcriptome_quantify_expression_subread_featureCounts": false,
-        "SingleCellRNA_VDJ_Assembly_cellranger_vdj": true,
-        "SingleCellRNA_transcriptome_quantify_expression_STARsolo": true,
-        "SingleCellRNA_transcriptome_quantify_expression_cellranger_count": true
+        "Exome_tumor_only_annotate_vcfs_bcftools_clinvar": true,
+        "Exome_tumor_only_annotate_vcfs_bcftools_cosmic_coding": true,
+        "Exome_tumor_only_annotate_vcfs_bcftools_cosmic_noncoding": true,
+        "Exome_tumor_only_annotate_vcfs_bcftools_dbsnp": true,
+        "Exome_tumor_only_annotate_vcfs_bcftools_gnomad_exome": true,
+        "Exome_tumor_only_annotate_vcfs_bcftools_gnomad_genome": true,
+        "Exome_tumor_only_annotate_vcfs_bcftools_topmed": true,
+        "Exome_tumor_only_annotate_vcfs_snpEff_ann": true,
+        "Exome_tumor_only_annotate_vcfs_vep": true,
+        "Exome_tumor_only_cna_caller_gatk": true,
+        "Exome_tumor_only_merge_vcfs_vcfMerger2": true,
+        "Exome_tumor_only_snp_indel_caller_VarDict": true,
+        "Exome_tumor_only_snp_indel_caller_deepvariant": true,
+        "Exome_tumor_only_snp_indel_caller_gatk_mutect2": true,
+        "Exome_tumor_only_snp_indel_caller_lancet": true,
+        "Exome_tumor_only_snp_indel_caller_lumosvar2": false,
+        "Exome_tumor_only_snp_indel_caller_octopus": true,
+        "Exome_tumor_only_snp_indel_caller_strelka2": true,
+        "Exome_tumor_only_structural_caller_delly": false,
+        "Exome_tumor_only_structural_caller_gridss": false,
+        "Exome_tumor_only_structural_caller_manta": true,
+        "Genome_alignment_base_recalibration_gatk" : false,
+        "Genome_alignment_mark_duplicates_gatk" : false,
+        "Genome_alignment_mark_duplicates_samblaster" : false,
+        "Genome_alignment_mark_duplicates_samtools" : true,
+        "Genome_constitutional_annotate_vcfs_bcftools_clinvar" : true,
+        "Genome_constitutional_annotate_vcfs_bcftools_cosmic_coding" : true,
+        "Genome_constitutional_annotate_vcfs_bcftools_cosmic_noncoding" : true,
+        "Genome_constitutional_annotate_vcfs_bcftools_dbsnp" : true,
+        "Genome_constitutional_annotate_vcfs_bcftools_gnomad_exome" : true,
+        "Genome_constitutional_annotate_vcfs_bcftools_gnomad_genome" : true,
+        "Genome_constitutional_annotate_vcfs_bcftools_topmed" : true,
+        "Genome_constitutional_annotate_vcfs_snpEff_ann" : true,
+        "Genome_constitutional_annotate_vcfs_vep" : true,
+        "Genome_constitutional_cna_caller_ichor" : true,
+        "Genome_constitutional_genotype_hc_gvcf_gatk_GenotypeGVCFs" : false,
+        "Genome_constitutional_snp_indel_caller_deepvariant" : true,
+        "Genome_constitutional_snp_indel_caller_freebayes" : false,
+        "Genome_constitutional_snp_indel_caller_gatk_HaplotypeCaller" : true,
+        "Genome_constitutional_snp_indel_caller_octopus" : false,
+        "Genome_constitutional_snp_indel_caller_strelka2" : false,
+        "Genome_constitutional_structural_caller_gridss" : false,
+        "Genome_constitutional_structural_caller_manta" : true,
+        "Genome_disease_specific_multiple_myeloma" : true,
+        "Genome_quality_control_constitutional_contamination_check_VerifyBamID" : true,
+        "Genome_quality_control_constitutional_sex_check_freebayes" : true,
+        "Genome_quality_control_genotype_concordance_snpSniffer" : true,
+        "Genome_quality_control_stats_gatk_CollectMultipleMetrics" : true,
+        "Genome_quality_control_stats_gatk_CollectRawWgsMetrics" : true,
+        "Genome_quality_control_stats_gatk_CollectWgsMetrics" : true,
+        "Genome_quality_control_stats_gatk_CollectWgsMetricsWithNonZeroCoverage" : true,
+        "Genome_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG" : true,
+        "Genome_quality_control_stats_samtools_flagstat" : false,
+        "Genome_quality_control_stats_samtools_idxstats" : true,
+        "Genome_quality_control_stats_samtools_markdup_stats" : true,
+        "Genome_quality_control_stats_samtools_stats" : true,
+        "Genome_somatic_annotate_vcfs_bcftools_clinvar" : true,
+        "Genome_somatic_annotate_vcfs_bcftools_cosmic_coding" : true,
+        "Genome_somatic_annotate_vcfs_bcftools_cosmic_noncoding" : true,
+        "Genome_somatic_annotate_vcfs_bcftools_dbsnp" : true,
+        "Genome_somatic_annotate_vcfs_bcftools_gnomad_exome" : true,
+        "Genome_somatic_annotate_vcfs_bcftools_gnomad_genome" : true,
+        "Genome_somatic_annotate_vcfs_bcftools_topmed" : true,
+        "Genome_somatic_annotate_vcfs_snpEff_ann" : true,
+        "Genome_somatic_annotate_vcfs_vep" : true,
+        "Genome_somatic_cna_caller_gatk" : true,
+        "Genome_somatic_merge_vcfs_vcfMerger2" : true,
+        "Genome_somatic_sample_metric_msisensor_pro" : true,
+        "Genome_somatic_sample_metric_tgen_mutation_burden" : true,
+        "Genome_somatic_snp_indel_caller_VarDict" : true,
+        "Genome_somatic_snp_indel_caller_gatk_mutect2" : true,
+        "Genome_somatic_snp_indel_caller_lancet" : false,
+        "Genome_somatic_snp_indel_caller_octopus" : true,
+        "Genome_somatic_snp_indel_caller_strelka2" : true,
+        "Genome_somatic_structural_caller_delly" : false,
+        "Genome_somatic_structural_caller_gridss" : false,
+        "Genome_somatic_structural_caller_manta" : true,
+        "Genome_tumor_only_annotate_vcfs_bcftools_clinvar" : true,
+        "Genome_tumor_only_annotate_vcfs_bcftools_cosmic_coding" : true,
+        "Genome_tumor_only_annotate_vcfs_bcftools_cosmic_noncoding" : true,
+        "Genome_tumor_only_annotate_vcfs_bcftools_dbsnp" : true,
+        "Genome_tumor_only_annotate_vcfs_bcftools_gnomad_exome" : true,
+        "Genome_tumor_only_annotate_vcfs_bcftools_gnomad_genome" : true,
+        "Genome_tumor_only_annotate_vcfs_bcftools_topmed" : true,
+        "Genome_tumor_only_annotate_vcfs_snpEff_ann" : true,
+        "Genome_tumor_only_annotate_vcfs_vep" : true,
+        "Genome_tumor_only_cna_caller_gatk" : true,
+        "Genome_tumor_only_merge_vcfs_vcfMerger2" : false,
+        "Genome_tumor_only_snp_indel_caller_VarDict" : false,
+        "Genome_tumor_only_snp_indel_caller_deepvariant" : true,
+        "Genome_tumor_only_snp_indel_caller_gatk_mutect2" : false,
+        "Genome_tumor_only_snp_indel_caller_lancet" : false,
+        "Genome_tumor_only_snp_indel_caller_octopus" : false,
+        "Genome_tumor_only_snp_indel_caller_strelka2" : false,
+        "Genome_tumor_only_structural_caller_delly" : false,
+        "Genome_tumor_only_structural_caller_gridss" : false,
+        "Genome_tumor_only_structural_caller_manta" : true,
+        "RNA_alignment_rna_alignment_STAR" : true,
+        "RNA_quality_control_genotype_concordance_snpSniffer" : true,
+        "RNA_quality_control_stats_gatk_CollectMultipleMetrics" : true,
+        "RNA_quality_control_stats_gatk_CollectRnaSeqMetrics" : true,
+        "RNA_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG" : false,
+        "RNA_quality_control_stats_samtools_flagstat" : false,
+        "RNA_quality_control_stats_samtools_idxstats" : true,
+        "RNA_quality_control_stats_samtools_stats" : true,
+        "RNA_sample_metric_sample_metric_samtools_bedcov" : true,
+        "RNA_transcriptome_fusion_caller_Keep_STAR_Fusion_BAM" : false,
+        "RNA_transcriptome_fusion_caller_STAR_Fusion" : true,
+        "RNA_transcriptome_quantify_expression_HTseq" : true,
+        "RNA_transcriptome_quantify_expression_RSEM" : false,
+        "RNA_transcriptome_quantify_expression_salmon_bam" : false,
+        "RNA_transcriptome_quantify_expression_salmon_fastqs" : true,
+        "RNA_transcriptome_quantify_expression_subread_featureCounts" : false,
+        "SingleCellRNA_VDJ_Assembly_cellranger_vdj" : true,
+        "SingleCellRNA_quality_control_genotype_concordance_snpSniffer" : true,
+        "SingleCellRNA_quality_control_stats_gatk_CollectMultipleMetrics" : true,
+        "SingleCellRNA_quality_control_stats_gatk_CollectRnaSeqMetrics" : true,
+        "SingleCellRNA_quality_control_stats_gatk_ConvertSequencingArtifactToOxoG" : true,
+        "SingleCellRNA_quality_control_stats_samtools_flagstat" : true,
+        "SingleCellRNA_quality_control_stats_samtools_idxstats" : true,
+        "SingleCellRNA_quality_control_stats_samtools_stats" : true,
+        "SingleCellRNA_sample_metric_sample_metric_samtools_bedcov" : true,
+        "SingleCellRNA_transcriptome_quantify_expression_STARsolo" : true,
+        "SingleCellRNA_transcriptome_quantify_expression_cellranger_count" : true
     },
     "varDB": false
 }

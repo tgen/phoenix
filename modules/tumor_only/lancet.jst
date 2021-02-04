@@ -1,17 +1,19 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
-{% macro lancet(pair, aligner='bwa') %}
+{% macro lancet_tumor_only(pair, aligner='bwa') %}
 {% do pair.callers.append('lancet') %}
-{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
+{% set normal_bam %}{{ tumor_only_temp }}/{{ pair.normal.pathToBam | basename }}{% endset %}
 {% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}_{{ aligner }}{% endset %}
-{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/lancet/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_variant_calls/lancet/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_variant_calls/lancet/{{ pair.name }}{% endset %}
 {% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.lancet.all.vcf.gz{% endset %}
 {% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.lancet.pass.vcf.gz{% endset %}
 
 {% for batch in constants.phoenix.calling_intervals %}
-- name: lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
-  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
+- name: tumor_only_lancet_{{ pair.name }}_{{ aligner }}_{{ loop.index }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, lancet, {{ pair.name }}]
+  reset: prepare_tumor_only_{{ pair.normal.name }}
   input:
     - {{ normal_bam }}
     - {{ tumor_bam }}
@@ -59,8 +61,8 @@
 {% endfor %}
 
 
-- name: lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
+- name: tumor_only_lancet_merge_chunks_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, lancet, {{ pair.name }}]
   reset: predecessors
   input:
     {% for b in constants.phoenix.calling_intervals %}
@@ -105,13 +107,13 @@
     #}
     rm config.txt || true
 
-    {% set task %}lancet_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}tumor_only_lancet_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 
 
-- name: lancet_filter_variants_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, lancet, {{ pair.name }}]
+- name: tumor_only_lancet_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, snp_indel_caller, lancet, {{ pair.name }}]
   input:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi

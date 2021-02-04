@@ -1,0 +1,85 @@
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+
+{% macro mutation_burden(pair, normal_bam, tumor_bam, input_vcf, variant_caller, aligner, annotate_flag) %}
+
+{% set temp_dir %}temp/{{ pair.gltype }}/metrics/mutation_burden/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/metrics/mutation_burden/{{ pair.name }}{% endset %}
+{% set mutation_burden_temp %}{{ temp_dir }}/mutation_burden_{{ annotate_flag }}{% endset %}
+{% set mutation_burden_output %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.txt{% endset %}
+{% set mutation_burden_json %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.json{% endset %}
+
+- name: tgen_mutation_burden_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}_{{ annotate_flag }}
+  tags:
+  input:
+    - {{ input_vcf }}
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output:
+    - {{ mutation_burden_output }}
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.tgen_mutation_burden.module }}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bcftools.module }}
+    module load {{ constants.tools.htslib.module }}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.bedtools.module }}
+
+    rm -r {{ mutation_burden_temp }} || true
+    mkdir -p {{ mutation_burden_temp }}
+    mkdir -p {{ results_dir }}
+
+    PROJECT_ROOT=$PWD
+
+    {% set ns_list = [] %}
+    {% for effect in constants.phoenix.ns_effects %}
+      {% if annotate_flag == 'snpeff' %}
+        {% set ns_effect %}INFO/ANN ~ "{{ effect }}"{% endset %}
+      {% else %}
+        {% set ns_effect %}INFO/CSQ ~ "{{ effect }}"{% endset %}
+      {% endif %}
+      {% do ns_list.append(ns_effect) %}
+    {% endfor %}
+
+    bcftools filter \
+      --include 'INFO/CC>=3 && ({{ ns_list|join(' || ') }})' \
+      --output {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --output-type z \
+      {{ input_vcf }}
+
+    {% if pair.gltype == 'exome' %}
+    bedtools intersect \
+      -a {{ constants.phoenix.cds_intervals }} \
+      -b {{ pair.tumor.capture_kit.extended_bed }} \
+      > {{ mutation_burden_temp }}/{{ pair.name }}_isec_cds_capture_kit.bed
+    {% endif %}
+
+    cd {{ mutation_burden_temp }}
+
+    tgen_mutation_burden.sh \
+      {% if pair.gltype == 'exome' %}
+      --bed {{ pair.name }}_isec_cds_capture_kit.bed \
+      {% else %}
+      --bed {{ constants.phoenix.cds_intervals }} \
+      {% endif %}
+      --vcf {{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --tbam ${PROJECT_ROOT}/{{ tumor_bam }} \
+      --nbam ${PROJECT_ROOT}/{{ normal_bam }} \
+      --sample {{ pair.tumor.rgsm }} \
+      --library {{ pair.tumor.rglb }} \
+      --outfile ${PROJECT_ROOT}/{{ mutation_burden_output }} \
+      --pipeline \
+      --verbose
+
+    {# Adding two new lines to end of output file #}
+    printf "\n\n" >> ${PROJECT_ROOT}/{{ mutation_burden_output }}
+
+    {% set task %}{{ pair.tumor.rgsm }}_{{ aligner }}_{{ annotate_flag }}{% endset %}
+    {{ stats2json(pair.gltype, pair.name, task, mutation_burden_output, mutation_burden_json, "tgen_mutation_burden") }}
+
+{% endmacro %}

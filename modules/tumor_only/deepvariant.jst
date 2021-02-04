@@ -1,10 +1,10 @@
 {% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
 
-{%- macro deepvariant(sample, aligner='bwa', taskPrefix='Genome') %}
+{%- macro deepvariant_tumor_only(sample, aligner='bwa', taskPrefix='Genome') %}
 
 {%- set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{%- set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}_{{ aligner }}{% endset %}
-{%- set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/deepvariant/{{ sample.name }}{% endset %}
+{%- set temp_dir %}temp/{{ sample.gltype }}/tumor_only_variant_calls/deepvariant/{{ sample.name }}_{{ aligner }}{% endset %}
+{%- set results_dir %}{{ sample.gltype }}/tumor_only_variant_calls/deepvariant/{{ sample.name }}{% endset %}
 {%- set all_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.all.vcf.gz{% endset %}
 {%- set pass_vcf %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.deepvariant.pass.vcf.gz{% endset %}
 
@@ -14,8 +14,8 @@
 {% set iteration = ('00000' + i|string)|reverse|truncate(5, True, '', 0)|reverse %}
 {% set stop = ('00000' + nshards|string)|reverse|truncate(5, True, '', 0)|reverse %}
 
-- name: deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
-  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
+- name: tumor_only_deepvariant_make_examples_{{ sample.name }}_{{ aligner }}_shard{{ i }}
+  tags: [{{ sample.gltype}}, tumor_only, snp_indel_caller, deepvariant, {{ sample.name }}]
   input: {{ bam }}
   output:
     - {{ temp_dir }}/{{ sample.name }}.ex.tfrecord-{{ iteration }}-of-{{ stop }}.gz
@@ -51,8 +51,8 @@
       
 {% endfor %}
 
-- name: deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
+- name: tumor_only_deepvariant_call_variants_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, tumor_only, snp_indel_caller, deepvariant, {{ sample.name }}]
   reset: predecessors
   input:
     {% for i in range(nshards) %}
@@ -87,8 +87,8 @@
       --outfile "{{ sample.name }}.cvo.tfrecord.gz"
 
 
-- name: deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
+- name: tumor_only_deepvariant_postprocess_variants_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, tumor_only, snp_indel_caller, deepvariant, {{ sample.name }}]
   reset: predecessors
   input: {{ temp_dir }}/{{ sample.name }}.cvo.tfrecord.gz
   output:
@@ -122,8 +122,8 @@
     bcftools index --tbi --force "${PROJECT_ROOT}/{{ all_vcf }}"
 
 
-- name: deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
-  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
+- name: tumor_only_deepvariant_filter_variants_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, tumor_only, snp_indel_caller, deepvariant, {{ sample.name }}]
   input:
     - {{ all_vcf }}
     - {{ all_vcf }}.tbi
@@ -151,5 +151,7 @@
 
     bcftools index --tbi --force "{{ pass_vcf }}"
 
-{{- annotate_vcfs(sample, temp_dir, results_dir, pass_vcf, taskPrefix, aligner, 'deepvariant', 'constitutional', 'snp_indel_caller') }}
+{# Skipping annotate vcfs step until requested #}
+{# annotate_vcfs(sample, temp_dir, results_dir, pass_vcf, taskPrefix, aligner, 'deepvariant', 'constitutional', 'snp_indel_caller') #}
+
 {% endmacro %}

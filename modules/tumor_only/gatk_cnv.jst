@@ -1,0 +1,341 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/annotation/annot_seg.jst' import annot_seg with context %}
+# The macros found in this template are used to generate the gatk4 tumor_only cnv workflow.
+
+{% macro gatk_cnv_tumor_only(pair, aligner='bwa') %}
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ pair.normal.assayCode }}{% endset %}
+{% set cnvIntervals %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPonIntervals | basename }}{% endset %}
+{% set cnvPon %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvPon | basename }}{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set cnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkCnvSnps | basename }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.tumor.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/tumor_only_copy_number/gatk/{{ pair.tumor.name }}{% endset %}
+
+{% if wesAssayToPair is defined and pair.normal.gatkExomeCnvSnps is defined %}
+  {% set exomeCnvSnps %}{{ tumor_only_temp }}/{{ pair.normal.gatkExomeCnvSnps | basename }}{% endset %}
+
+  {% set exome = {} %}
+  {% do exome.update( (dataFiles|selectattr('assayCode', 'eq', wesAssayToPair)|selectattr('rgsm', 'eq', pair.tumor.rgsm)|first|default({'no': 'exome'}))) %}
+
+  {% if exome.sampleMergeKey is defined %}
+    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome.sampleMergeKey }}/{{ exome.sampleMergeKey }}.{{ aligner }}.bam{% endset %}
+  {% elif exome.sampleName is defined %}
+    {% set tumor_exome_bam %}exome/alignment/{{ aligner }}/{{ exome.sampleName }}/{{ exome.sampleName }}.{{ aligner }}.bam{% endset %}
+  {% endif %}
+{% endif %}
+
+{# Step 1 #}
+- name: tumor_only_gatk_call_cnv_step1_{{ pair.tumor.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.tumor.name }}]
+  reset: prepare_tumor_only_{{ pair.normal.name }}
+  input:
+    - {{ tumor_bam }}
+    - {{ cnvPon }}
+    - {{ cnvIntervals }}
+    {% if tumor_exome_bam is defined %}
+    - {{ tumor_exome_bam }}
+    - {{ exomeCnvSnps }}
+    {% else %}
+    - {{ cnvSnps }}
+    {% endif %}
+  output:
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.hets.normal.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.hets.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelBegin.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelBegin.cr.param
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelBegin.af.param
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.cr.param
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.af.param
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.cr.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.cr.igv.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.af.igv.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.called.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.called.igv.seg
+    {% if tumor_exome_bam is defined %}
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts_filt.tsv
+    {% endif %}
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}/temp"
+    mkdir -p "{{ temp_dir }}/results/plots"
+    mkdir -p "{{ results_dir }}"
+
+    {# CollectReadCounts for the tumor using the intervals provided to the config that matches the PON #}
+    gatk --java-options "-Xmx12g" CollectReadCounts \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ tumor_bam }} \
+      --intervals {{ cnvIntervals }} \
+      --interval-merging-rule OVERLAPPING_ONLY \
+      --read-filter FirstOfPairReadFilter \
+      --output {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5
+
+    {# CollectAllelicCounts for the tumor using the snps provided to the config #}
+    gatk --java-options "-Xmx12g" CollectAllelicCounts \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      {% if tumor_exome_bam is defined %}
+      --input {{ tumor_exome_bam }} \
+      --intervals {{ exomeCnvSnps }} \
+      {% else %}
+      --input {{ tumor_bam }} \
+      --intervals {{ cnvSnps }} \
+      {% endif %}
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --output {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv
+
+    {% if tumor_exome_bam is defined %}
+    awk -F'\t' '$1 ~ /^@/ { print $0 ; next } ;
+      $1 == "CONTIG" { print $0 ; next } ;
+      $3 != 0 && $4 != 0 {
+        DP = $3+$4 ;
+        RATIO = $4/DP ;
+        if ( DP > 99 && RATIO >= 0.4643519 && RATIO <= 0.5043519) { print $0 }
+      }' {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv > {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts_filt.tsv
+    {% endif %}
+
+    {# Denoise the tumor using the panel of normals provided to in the configuration #}
+    gatk --java-options "-Xmx12g" DenoiseReadCounts \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ temp_dir }}/{{ pair.tumor.name }}.{{ aligner }}.counts.hdf5 \
+      --count-panel-of-normals {{ cnvPon }} \
+      --standardized-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.standardizedCR.tsv \
+      --denoised-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
+
+    gatk --java-options "-Xmx12g" ModelSegments \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --number-of-smoothing-iterations-per-fit 1 \
+      --number-of-changepoints-penalty-factor 0.05 \
+      --kernel-variance-allele-fraction 0.0 \
+      --kernel-scaling-allele-fraction 0.0 \
+      --smoothing-credible-interval-threshold-copy-ratio 3.5 \
+      --smoothing-credible-interval-threshold-allele-fraction 3.5 \
+      --window-size 4 \
+      --window-size 8 \
+      --window-size 16 \
+      --window-size 32 \
+      --window-size 64 \
+      --window-size 128 \
+      --window-size 256 \
+      --denoised-copy-ratios {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv \
+      {% if tumor_exome_bam is defined %}
+      --allelic-counts {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts_filt.tsv \
+      {% else %}
+      --allelic-counts {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.allelicCounts.tsv \
+      {% endif %}
+      --output {{ results_dir }} \
+      --output-prefix {{ pair.tumor.name }}.{{ aligner }}
+
+    gatk --java-options "-Xmx12g" CallCopyRatioSegments \
+      --tmp-dir {{ temp_dir }}/temp/ \
+      --input {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.cr.seg \
+      --output {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.called.seg
+
+{# Step 2 #}
+- name: tumor_only_gatk_call_cnv_step2_{{ pair.tumor.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, cna_caller, gatk, {{ pair.tumor.name }}]
+  reset: tumor_only_gatk_call_cnv_step1_{{ pair.tumor.name }}_{{ aligner }}
+  input:
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.hets.tsv
+  output:
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.re_centered.cr.igv.seg
+    - {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.dLRs.tsv
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}.hets.density.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_cna_withhets.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_cna.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_baf.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr1.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr2.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr3.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr4.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr5.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr6.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr7.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr8.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr9.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr10.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr11.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr12.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr13.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr14.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr15.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr16.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr17.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr18.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr19.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr20.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr21.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chr22.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chrX.png
+    - {{ results_dir }}/plots/{{ pair.tumor.name }}.{{ aligner }}_chrY.png
+  cpus: 1
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {# Load modules #}
+    module load {{ constants.tools.R.module }}
+    module load {{ constants.tools.python_3_7_2.module }}
+
+    {# Make working and temp directories #}
+    mkdir -p "{{ temp_dir }}"
+
+    {# Get the sex results of the normal. If undetermined then use the sex from the config if known. else default to female. #}
+    SEX="Female"
+
+    touch {{ temp_dir }}/results/plots/{{ pair.tumor.name }}.{{ aligner }}_chrY.png
+    cp {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.tsv {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv
+    cp {{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.seg {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    contig_names_string="chr1CONTIG_DELIMITERchr2CONTIG_DELIMITERchr3CONTIG_DELIMITERchr4CONTIG_DELIMITERchr5CONTIG_DELIMITERchr6CONTIG_DELIMITERchr7CONTIG_DELIMITERchr8CONTIG_DELIMITERchr9CONTIG_DELIMITERchr10CONTIG_DELIMITERchr11CONTIG_DELIMITERchr12CONTIG_DELIMITERchr13CONTIG_DELIMITERchr14CONTIG_DELIMITERchr15CONTIG_DELIMITERchr16CONTIG_DELIMITERchr17CONTIG_DELIMITERchr18CONTIG_DELIMITERchr19CONTIG_DELIMITERchr20CONTIG_DELIMITERchr21CONTIG_DELIMITERchr22CONTIG_DELIMITERchrX"
+    contig_lengths_string="248956422CONTIG_DELIMITER242193529CONTIG_DELIMITER198295559CONTIG_DELIMITER190214555CONTIG_DELIMITER181538259CONTIG_DELIMITER170805979CONTIG_DELIMITER159345973CONTIG_DELIMITER145138636CONTIG_DELIMITER138394717CONTIG_DELIMITER133797422CONTIG_DELIMITER135086622CONTIG_DELIMITER133275309CONTIG_DELIMITER114364328CONTIG_DELIMITER107043718CONTIG_DELIMITER101991189CONTIG_DELIMITER90338345CONTIG_DELIMITER83257441CONTIG_DELIMITER80373285CONTIG_DELIMITER58617616CONTIG_DELIMITER64444167CONTIG_DELIMITER46709983CONTIG_DELIMITER50818468CONTIG_DELIMITER156040895"
+
+
+    for CHR in {1..24}
+    do
+      if [[ ${CHR} -eq "23" ]]
+      then
+        CHR="chrX"
+      elif [[ ${CHR} -eq "24" ]]
+      then
+        CHR="chrY"
+      else
+        CHR="chr${CHR}"
+      fi
+
+      declare START_${CHR}=$(gawk -F'\t' -v CHROM=${CHR} '$1 == CHROM' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg | sort -k2,2n | awk -F'\t' 'NR == 1 { print $2 }')
+      export START_${CHR}
+      declare STOP_${CHR}=$(gawk -F'\t' -v CHROM=${CHR} '$1 == CHROM' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg | sort -k3,3nr | awk -F'\t' 'NR == 1 { print $3 }')
+      export STOP_${CHR}
+    done
+
+    for CHR in {1..24}
+    do
+      # Get centromere start and stop
+      if [[ $CHR -eq "23" ]]
+      then
+        CHR="chrX"
+      elif [[ $CHR -eq "24" ]]
+      then
+        CHR="chrY"
+      else
+        CHR="chr${CHR}"
+      fi
+
+      eval "START=\${START_${CHR}}"
+      eval "STOP=\${STOP_${CHR}}"
+
+      START_C=$(gawk -v CHR=$CHR '$1==CHR { print $2 }' {{ constants.phoenix.centromere }})
+      STOP_C=$(gawk -v CHR=$CHR '$1==CHR { print $3 }' {{ constants.phoenix.centromere }})
+
+      if [[ ${START} -ge ${START_C} ]]
+      then
+        START=${STOP_C}
+      fi
+
+      export CHR
+      export START
+      export START_C
+      export STOP
+      export STOP_C
+
+      echo -e "${CHR}\t${START}\t${STOP}"
+      echo -e "${CHR}\t${START_C}\t${STOP_C}"
+
+      LINES=$(wc -l < "{{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg")
+      HEADER=$(grep -c "@" "{{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg" || :)
+
+      gawk -F'\t' -v HEADER="${HEADER}" -v CHROM="${CHR}" -v START="${START}" -v STOP="${STOP}" -v LINES="${LINES}" -v STARTC="${START_C}" -v STOPC="${STOP_C}" 'BEGIN { INC=1 } ;
+        # Skip GATK header
+        $0 ~ /^@/ { next } ;
+        # Print the header
+        NR == HEADER + 1 { print $0 ; next } ;
+        # Remove segments that fall within the centromere
+        $2 == CHROM && $3 >= STARTC && $4 <= STOPC { next } ;
+        # Store the second line in the seg file and set the INC to 2 if we are working on the chromosome
+        NR == HEADER + 2 && $1 == CHROM { C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=2 ; next } ;
+        NR == HEADER + 2 && $1 != CHROM { C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        ## Last line of seg file
+        NR == LINES && $1 == CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,START,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 == CHROM && INC == 2 { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 == CHROM && INC == 3 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,STOP,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM && INC == 2 { OFS = "\t" ; print C1,START,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM && INC == 3 { OFS = "\t" ; print C1,C2,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        NR == LINES && $1 != CHROM { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; print $1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11 ; next } ;
+        ### Segment is the current chromosome we are working on
+        ## First segment in the CHROM, print previous segment variables
+        NR != LINES && $1 == CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=2 ; next } ;
+        ## Second segment for CHROM, Tests and print is for the First segment
+        # If the previous segments start is >= the centromere stop
+        NR != LINES && $1 == CHROM && INC == 2 && C2 >= STOPC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C2 < STARTC && C3 < STOPC && $2 > STARTC && $3 > STOPC { OFS = "\t" ; print C1,START,STARTC,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=STOPC ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C2 < STARTC && C3 < STOPC && $2 < STARTC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 2 && C3 > STOPC { OFS = "\t" ; print C1,START,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=3 ; next } ;
+        # Third segment for CHROM
+        NR != LINES && $1 == CHROM && INC == 3 && C2 < STARTC && C3 < STOPC && $2 > STARTC && $3 > STOPC { OFS = "\t" ; print C1,C2,STARTC,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=STOPC ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 3 && C2 < STARTC && C3 < STOPC && $2 < STARTC { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        NR != LINES && $1 == CHROM && INC == 3 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next } ;
+        ## Segment is on a Chromosome that is NOT our current CHROM
+        NR != LINES && $1 != CHROM && INC == 2 { OFS = "\t" ; print C1,START,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=1 ; next } ;
+        NR != LINES && $1 != CHROM && INC == 3 { OFS = "\t" ; print C1,C2,STOP,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; INC=1 ; next } ;
+        NR != LINES && $1 != CHROM && INC == 1 { OFS = "\t" ; print C1,C2,C3,C4,C5,C6,C7,C8,C9,C10,C11 ; C1=$1 ; C2=$2 ; C3=$3 ; C4=$4 ; C5=$5 ; C6=$6 ; C7=$7 ; C8=$8 ; C9=$9 ; C10=$10 ; C11=$11 ; next }' {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg > {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg.temp
+
+      mv {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg.temp {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+    done
+
+    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.cna_seg_extend }} {{ constants.phoenix.centromere }} {{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+    Rscript ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.plotCNVplus_Rscript }} \
+      --point_size 2 \
+      --hetDPfilter 1 \
+      --hetAFlow 0.45 \
+      --hetAFhigh 0.55 \
+      --hetMAFposteriorOffset 0.01 \
+      --lowerCNvalidatePeakOffset 0.125 \
+      --UpperCNvalidatePeakOffset 0.125 \
+      --lowerCNcenteringPeakOffset 0.125 \
+      --UpperCNcenteringPeakOffset 0.125 \
+      --sample_name={{ pair.tumor.name }} \
+      --output_prefix={{ pair.tumor.name }}.{{ aligner }} \
+      --plots_directory={{ temp_dir }}/results/plots \
+      --re_center_CNA=TRUE \
+      --re_centered_seg_directory={{ temp_dir }}/results \
+      --contig_names_string=${contig_names_string} \
+      --contig_lengths_string=${contig_lengths_string} \
+      --denoised_copy_ratios_file={{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.denoisedCR.genderCorrected.tsv \
+      --allelic_counts_file={{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.hets.tsv \
+      --modeled_segments_file={{ temp_dir }}/results/{{ pair.tumor.name }}.{{ aligner }}.modelFinal.genderCorrected.seg
+
+    {# If the task has already been run then we need to remove the plots directory. #}
+    if [ -d {{ results_dir }}/plots ]
+    then
+      rm -rf {{ results_dir }}/plots
+    fi
+
+    mv {{ temp_dir }}/results/* {{ results_dir }}/
+
+    {% set final_seg %}{{ results_dir }}/{{ pair.tumor.name }}.{{ aligner }}.re_centered.cr.igv.seg{% endset %}
+    {{- annot_seg(final_seg, pair.tumor.name) }}
+
+    {% set task %}tumor_only_gatk_call_cnv_step2_{{ pair.tumor.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+{% endmacro %}

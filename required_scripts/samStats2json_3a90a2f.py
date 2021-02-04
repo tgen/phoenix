@@ -150,6 +150,14 @@ fileTypes = {
         "hist_col_per_level": 1,
         "help": "\"bam_name.bam.wgs_metrics\" file generated from GATK CollectMultipleMetrics."
     },
+    "tgen_mutation_burden": {
+        "picard": True,
+        "picard_metrics": True,
+        "picard_histogram": False,
+        "metrics_rows_per_level": 1,
+        "metrics_cols_to_concat": 1,
+        "help": "\"bam_name.annotate_flag.mutation_burden\" file generated from tgen_mutation_burden in a Picard style output."
+    },
     "quality_yield_metrics": {
         "picard": True,
         "picard_metrics": True,
@@ -226,6 +234,11 @@ fileTypes = {
     "samtools_summaryNumbers_summary": {
         "samtool": True,
         "help": "\"bam_name.samtools_summaryNumbers_summary.tsv\" file generated from the samtools_stats task in the "
+                "phoenix pipeline. "
+    },
+    "samtools_markdup_summary": {
+        "samtool": True,
+        "help": "\"bam_name.samtools_markdup_summary.tsv\" file generated from the samtools_stats task in the "
                 "phoenix pipeline. "
     }
 }
@@ -304,6 +317,9 @@ def parse_arguments_and_validate():
     parser.add_argument('-R', '--readgroupname', metavar="<arg>",
                         help='accumulated stats at the readgroup level, requires library and sample arguments')
 
+    parser.add_argument('-C', '--chrname', metavar="<arg>",
+                        help='optional flag to rename chromosomes')
+
     # need to make dynamic still "2.0"
     parser.add_argument('--version', action='version', version='%(prog)s 2.0')
 
@@ -380,7 +396,10 @@ def get_level_name(data_list, row_index, data_head_all):
         samplename = data_list[row_index][data_head_all.index("SAMPLE")]
 
         if samplename == "" and row_index > 0:
-            samplename = data_list[row_index - 1][data_head_all.index("SAMPLE")]
+            for i in range(row_index, -1, -1):
+                samplename = data_list[i][data_head_all.index("SAMPLE")]
+                if len(samplename) > 0:
+                    break
 
     elif "SAMPLE_ALIAS" in data_head_all:
         samplename = data_list[row_index][data_head_all.index("SAMPLE_ALIAS")]
@@ -867,7 +886,8 @@ def samtool_data_extract(file_row_list, samtools_file_type, sample_index, librar
     elif samtools_file_type in ["samtools_baseQualityYield_summary",
                                 "samtools_coverage_summary",
                                 "samtools_insertSize_summary",
-                                "samtools_summaryNumbers_summary"]:
+                                "samtools_summaryNumbers_summary",
+                                "samtools_markdup_summary"]:
 
         keys = file_row_list[0].split("\t")
         values = file_row_list[1].split("\t")
@@ -1074,6 +1094,12 @@ def starsolo_metrics_data_extract(file_row_list, sample_index, library_index, re
     return output_dict
 
 
+def rename_chromosomes(stats_file_string, chr_dictionary):
+    for item in chr_dictionary.keys():
+        stats_file_string = re.sub('^'+item, chr_dictionary[item], stats_file_string, flags=re.MULTILINE)
+    return stats_file_string
+
+
 if __name__ == '__main__':
 
     # Parse and validate arguments
@@ -1089,6 +1115,14 @@ if __name__ == '__main__':
 
     with open(args.statfile, mode="rt") as file:
         stats_file_string = file.read()
+
+    if args.chrname:
+        chr_dict = {}
+        with open(args.chrname, mode="rt") as f:
+            for line in f:
+                key, val = line.strip().split()
+                chr_dict[key] = val.strip()
+        stats_file_string = rename_chromosomes(stats_file_string, chr_dict)
 
     stats_file_row_list, stats_file_col_list = stats_string_to_list(stats_file_string)
 

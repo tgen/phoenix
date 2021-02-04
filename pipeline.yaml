@@ -69,6 +69,10 @@ constants:
         Tobias Rausch, Thomas Zichner, Andreas Schlattl, Adrian M. Stütz, Vladimir Benes, Jan O. Korbel,
         DELLY: structural variant discovery by integrated paired-end and split-read analysis, Bioinformatics,
         Volume 28, Issue 18, 15 September 2012, Pages i333–i339, https://doi.org/10.1093/bioinformatics/bts378
+    dle:
+      module: DLE/0.1.5
+      version: "0.1.5"
+      verbose: Discordant Loci Extractor v0.1.5
     freebayes:
       module: freebayes/1.3.1-foss-2019a
       version: "1.3.1"
@@ -87,13 +91,6 @@ constants:
         next-generation DNA sequencing data McKenna A, Hanna M, Banks E,
         Sivachenko A, Cibulskis K, Kernytsky A, Garimella K, Altshuler D,
         Gabriel S, Daly M, DePristo MA, 2010 GENOME RESEARCH 20:1297-303
-    gcc:
-      module: GCC/8.3.0
-      version: "8.3.0"
-      verbose: gcc
-      website: gcc.com
-      citation: >
-        Todo
     gridss:
       module: gridss/2.6.3
       version: "2.6.3"
@@ -148,6 +145,15 @@ constants:
         Zody MC. Genome-wide somatic variant calling using localized colored de Bruijn graphs.
         Communications Biology, Nature Research publishing, volume 1, Article number: 20, 2018
         (DOI:10.1038/s42003-018-0023-9). Also available at CSHL bioRxiv 196311; 2017 (DOI: 10.1101/196311)
+    lumosvar2:
+      module: LumosVar2/1.1
+      version: "1.1"
+      verbose: LumosVar2 v1.1
+      website: https://github.com/tgen/lumosVar2
+      citation: >
+        Joint analysis of matched tumor samples with varying tumor contents
+        improves somatic variant calling in the absence of a germline sample.
+        bioRxiv 364943; doi: https://doi.org/10.1101/364943
     manta:
       module: manta/1.6
       version: "1.6"
@@ -156,6 +162,16 @@ constants:
       citation: >
         Chen, X. et al. (2016) Manta: rapid detection of structural variants and indels for germline and
         cancer sequencing applications. Bioinformatics, 32, 1220-1222. doi:10.1093/bioinformatics/btv710
+    manta_tgen:
+      module: manta/1.6_tgen
+      version: "1.6"
+      verbose: Manta v1.6 tgen_fork
+      website: https://github.com/tgen/manta
+    msisensor:
+      module: MSIsensor/1.1.a-GCCcore-8.2.0
+      version: "1.1.a"
+      verbose: MSIsensor v1.1.a
+      website: https://github.com/xjtu-omics/msisensor-pro
     multiqc:
       module: Python/3.7.2-foss-2019a
       version: "1.9"
@@ -223,6 +239,14 @@ constants:
       citation: >
         R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
         Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+    salmon:
+      module: Salmon/1.2.1-gompi-2019a
+      version: "1.2.1"
+      verbose: Salmon v1.2.1
+      website: https://combine-lab.github.io/salmon/
+      citation: >
+        Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
+        fast and bias-aware quantification of transcript expression. Nature Methods.
     sambamba:
       module: sambamba/0.7.0
       version: 0.7.0
@@ -240,14 +264,6 @@ constants:
         Li H, Handsaker B, Wysoker A, Fennell T, Ruan J, Homer N, Marth G, Abecasis G, Durbin R, and 1000
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
-    salmon:
-      module: Salmon/1.2.1-gompi-2019a
-      version: "1.2.1"
-      verbose: Salmon v1.2.1
-      website: https://combine-lab.github.io/salmon/
-      citation: >
-        Patro, R., Duggal, G., Love, M. I., Irizarry, R. A., & Kingsford, C. (2017). Salmon provides
-        fast and bias-aware quantification of transcript expression. Nature Methods.
     singularity:
       module: singularity/3.5.2-phoenix
       version: "3.5.2"
@@ -301,10 +317,23 @@ constants:
       module: Subread/2.0.0-foss-2018b
       version: "2.0.0"
       verbose: Subread v2.0.0
-      webiste: http://subread.sourceforge.net
+      website: http://subread.sourceforge.net
       citation: >
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
+    tgen_mutation_burden:
+      module: MutationBurden/1.2.1
+      version: "1.2.1"
+      verbose: TGen Mutation Burden Tool v1.2.1
+    transparser:
+      module: transParser/1.0.1
+      version: "1.0.1"
+      verbose: transParser v1.0.1
+      website: https://github.com/tgen/transParser
+    trinity:
+      module: trinityrnaseq/2.8.6-gcc-8.2.0-2.31.1-perl-5.28.1
+      version: "2.8.6"
+      verbose: Trinity-v2.8.6
     vardict:
       module: vardict/1.7.0-java-1.8
       version: "1.7.0"
@@ -319,14 +348,6 @@ constants:
       version: "0.8.7"
       verbose: vcfMerger2 v0.8.7
       website: https://github.com/tgen/vcfMerger2
-    verifybamid2:
-      module: verifyBamID/1.0.6-foss-2019a
-      version: 1.0.6
-      website: https://github.com/Griffan/VerifyBamID
-      citation: >
-        Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
-        Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
-        sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
     vep:
       module: VEP/98.0-foss-2019a-Perl-5.28.1
       version: "98.3"
@@ -337,6 +358,14 @@ constants:
         The Ensembl Variant Effect Predictor.
         Genome Biology Jun 6;17(1):122. (2016)
         doi:10.1186/s13059-016-0974-4
+    verifybamid2:
+      module: verifyBamID/1.0.6-foss-2019a
+      version: 1.0.6
+      website: https://github.com/Griffan/VerifyBamID
+      citation: >
+        Zhang F., Flickinger M., InPSYght Psychiatric Genetics Consortium, Abecasis G., Boehnke M.,
+        Kang H.M.(8 November 2018)."Ancestry-agnostic estimation of DNA sample contamination from
+        sequence reads".bioRxiv 466268; doi: https://doi.org/10.1101/466268
     vt:
       module: vt/0.57721-foss-2019a
       version: "0.57721"
@@ -347,41 +376,48 @@ constants:
     genome_build: grch38_hg38
     genome_subversion_name: hg38tgen
     gene_model_name: ensembl_v98
+    cds_intervals: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.cds_padded.final.bed
     capture_kit_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_fasta_2bit: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.2bit
     reference_fai: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa.fai
     reference_dict: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.dict
-    reference_non_N_bed: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
+    reference_non_N_interval_list: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/samtools_stats/GRCh38tgen_decoy_alts_hla_samstats_no_N_1based_primary_contigs_no_chrX_chrY.txt
     chip_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bowtie2_2.3.5.1/GRCh38tgen_decoy_Ecoli.fa
     bowtie2_index_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bowtie2_2.3.5.1
     bowtie2_index: GRCh38tgen_decoy
     bowtie2_chip_index: GRCh38tgen_decoy_Ecoli
-    dbsnp_v152: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b152/dbSNP_b152_hg38tgen.bcf
-    gnomad_exome_v2_1_1_liftover: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_NoINFO.bcf
-    gnomad_genome_v3_0: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.bcf
-    gnomad_exome_v2_1_1_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
-    gnomad_genome_v3_0_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
-    gnomad_exome_v2_1_1_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
-    gnomad_genome_v3_0_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
-    cosmic_coding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicCodingMuts_v90_hg38tgen.bcf
-    cosmic_noncoding_v90: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v90/CosmicNonCodingMuts_v90_hg38tgen.bcf
-    clinvar_20190715: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20190715/clinvar_20190715_hg38tgen.bcf
+    dbsnp: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/dbsnp/b154/dbSNP_b154_hg38tgen.bcf
+    gnomad_exome: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_AnnotationReference.bcf
+    gnomad_genome: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.reduced.bcf
+    gnomad_genome_per_chr: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/per_chromosome/gnomad.genomes.r3.0.sites.pass.reduced.
+    gnomad_exome_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutect.vcf.gz
+    gnomad_genome_mutect_germlinereference: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.AnnotationReference.vcf.gz
+    gnomad_exome_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r2.1.1/gnomad.exomes.r2.1.1.sites.liftover_grch38_ForMutectContamination.vcf.gz
+    gnomad_genome_mutect_contamination: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/gnomad/r3.0/gnomad.genomes.r3.0.sites.pass.ForMutectContamination.vcf.gz
+    cosmic_coding: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v92/CosmicCodingMuts_v92_hg38tgen.bcf
+    cosmic_noncoding: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/cosmic/v92/CosmicNonCodingMuts_v92_hg38tgen.bcf
+    clinvar: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/clinvar/20201020/clinvar_20201020_hg38tgen.bcf
+    topmed: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/topmed/merged.BRAVO_TOPMed_Freeze_8.bcf
     bcftools_annotate_contig_update_ucsc2ensembl: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bcftools/GRCh38_PrimaryContigs_UCSC_2_Ensembl_CrossMap.txt
     black_list: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/encode/Blacklist-2.0/lists/hg38-blacklist.v2.bed.gz
     chip_black_list: /home/tgenref/homo_sapiens/grch38_hg38/hs38dh/tool_specific_resources/ChIP_blacklist/hg38_blacklist.bed
+    reference_msisensor_pro: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/msisensor_pro_v1.1.a/GRCh38tgen_decoy_alts_hla.microsatellites.list
     delly_annotation: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/delly_anno_Homo_sapiens.GRCh38.98.ucsc.bed
     delly_exclusions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/delly/hg38.excl
     delly_addRC_to_Delly_VCF_script: addRC_to_Delly_VCF_f4d178e.py
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel_8820499.py
-    manta_prepare_sv_vcf: manta_prepare_sv_vcf_ba6879d.py
+    manta_prepare_sv_vcf: manta_prepare_sv_vcf_f94bcc1.py
     manta_gene_annotation_parallel: manta_sv_annotation_parallel_8820499.py
     pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_f3010c3.py
+    pairoscope_mm_igtx_calling_tumor_only_script: mm_igtx_pairoscope_calling_b38_tumor_only_39d1efa.py
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
-    plotSamStats_Rscript: summarize_samstats_b3ddd38.R
-    stats2json: samStats2json_deb00a0.py
-    stats2lims: uploadStats2Lims_98319ea.py
+    plotSamStats_Rscript: summarize_samstats_8c45d63.R
+    summarize_mm_igtx_Rscript: summarize_Ig_4b93aee.R
+    process_assembled_bam: Process_Assembled_BAM_eb25fca.py
+    stats2json: samStats2json_3a90a2f.py
+    stats2lims: uploadStats2Lims_1ace81f.py
     annotSeg_script: annotSeg_8820499.pl
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_3.1.0/hg38tgen_ensembl_v98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-3.1.0
@@ -417,7 +453,10 @@ constants:
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
     ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
-    ig_ENST_filter: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_sepcific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_ig_ENST_to_filter_out.tsv
+    ig_ENST_filter: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_ig_ENST_to_filter_out.tsv
+    igtx_regions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_igtx_regions.bed
+    igtx_gene_regions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_igtx_gene_regions.bed
+    igtx_pairoscope_regions: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_igtx_pairoscope_regions.bed
     ribo_locations: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.ribo.interval_list
     gatk_cnv_primary_contigs_female: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.female.interval_list
     gatk_cnv_primary_contigs_male: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_cnv/Homo_sapiens.GRCh38.primary.contigs.male.interval_list
@@ -456,6 +495,21 @@ constants:
     snpSniffer_sites: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpSniffer/positions_387_hg38_ucsc.txt
     snpSniffer_database: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpSniffer/databaseV5_hg38_ucsc.ini
     vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
+    ns_effects:
+      - 'splice_acceptor_variant'
+      - 'splice_donor_variant'
+      - 'start_lost'
+      - 'exon_loss_variant'
+      - 'frameshift_variant'
+      - 'stop_gained'
+      - 'stop_lost'
+      - 'start_lost'
+      - 'rare_amino_acid_variant'
+      - 'missense_variant'
+      - 'inframe_insertion'
+      - 'disruptive_inframe_insertion'
+      - 'inframe_deletion'
+      - 'disruptive_inframe_deletion'
     deepvariant_models:
       exome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.10.0/DeepVariant-inception_v3-0.10.0+data-wes_standard/model.ckpt
       genome: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/deepvariant_v0.10.0/DeepVariant-inception_v3-0.10.0+data-wgs_standard/model.ckpt

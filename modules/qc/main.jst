@@ -10,6 +10,7 @@
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_collectmultiplemetrics with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_gatk_convertsequencingarrtifacttooxog with context %}
 {% from 'modules/qc/bam_qc_all.jst' import bam_qc_snpsniffer_geno with context %}
+{% from 'modules/qc/bam_qc_all.jst' import bam_qc_samtools_markdup with context %}
 {% from 'modules/qc/stats2lims.jst' import stats2lims with context %}
 
 # Performed on genomes
@@ -69,6 +70,11 @@
     {# get oxo stats unless it is single cell rna #}
     {% if sample.gltype != 'singlecellrna' %}
       {{- bam_qc_gatk_convertsequencingarrtifacttooxog(sample, taskPrefix=taskPrefix, aligner=aligner) }}
+    {% endif %}
+
+    {# Tasks performed on dna bams #}
+    {% if sample.gltype not in ['rna', 'singlecellrna'] %}
+      {{- bam_qc_samtools_markdup(sample, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {% endif %}
 
     {# Tasks performed on all bams #}

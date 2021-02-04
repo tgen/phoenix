@@ -57,15 +57,17 @@
       --CHART_OUTPUT "{{ rna_metrics }}.pdf" \
       --OUTPUT "{{ rna_metrics }}"
 
-    if [ -f "{{ rna_metrics }}.pdf" ]; then
     {% if libraryCount == 1 %}
+    if [ -f "{{ rna_metrics }}.pdf" ]; then
       pdfseparate -f 3 "{{ rna_metrics }}.pdf" {{ rna_metrics }}%d.pdf
       mv {{ rna_metrics }}3.pdf {{ results_dir }}/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.rna_metrics.pdf
+    fi
     {% elif bam_level is sameas false or sample.gltype == 'singlecellrna' %}
+    if [ -f "{{ rna_metrics }}.pdf" ]; then
       pdfseparate -f 3 "{{ rna_metrics }}.pdf" {{ rna_metrics }}%d.pdf
       mv {{ rna_metrics }}3.pdf {{ rna_metrics }}.pdf
-    {% endif %}
     fi
+    {% endif %}
 
   {% if bam_level is sameas true %}
     {{ stats2json(sample.gltype, sample.name, task, rna_metrics, rna_metrics_json, "picard_rna_metrics") }}

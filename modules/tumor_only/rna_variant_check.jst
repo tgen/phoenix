@@ -2,8 +2,8 @@
 
 {% macro add_rna_header_to_vcf(input_vcf, output_vcf, pair, aligner, temp_dir) %}
 
-- name: add_rna_header_to_vcf_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
+- name: tumor_only_add_rna_header_to_vcf_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input: {{ input_vcf }}
   output:
     - {{ output_vcf }}
@@ -52,9 +52,8 @@
 {% set rna_sample = pair.tumor.rna_samples[0].rna_name %}
 {% set star_bam_final %}rna/alignment/star/{{ rna_sample }}/{{ rna_sample }}.star.bam{% endset %}
 
-- name: add_matched_rna_{{ pair.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, somatic, merge_vcfs, vcfMerger2, {{ pair.name }}]
-  reset: vcfmerger2_{{ pair.name }}_{{ aligner }}
+- name: tumor_only_add_matched_rna_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, tumor_only, merge_vcfs, vcfMerger2, {{ pair.name }}]
   input:
     - {{ input_vcf }}
     - {{ star_bam_final }}

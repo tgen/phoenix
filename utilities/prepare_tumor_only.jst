@@ -1,0 +1,33 @@
+{% macro prepare_tumor_only(normal) %}
+
+{% set tumor_only_temp %}temp/tumor_only/control_data_files/{{ normal.assayCode }}{% endset %}
+
+- name: prepare_tumor_only_{{ normal.name }}
+  tags: [rsync,]
+  output:
+    {% for key, value in normal.items() %}
+    {% if key not in ['assayCode','name','rgsm'] %}
+    - {{ tumor_only_temp }}/{{ value | basename }}
+    {% endif %}
+    {% endfor %}
+  walltime: "8:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    mkdir -p {{ tumor_only_temp }}
+
+    {#
+    --update will only copy if the source file is newer than the
+    file that exists in the destination, new files are also copied
+    so we end up saving time if the files exist already
+    #}
+    {% for key, value in normal.items() %}
+    {% if key not in ['assayCode','name','rgsm'] %}
+    rsync --update {{ value }} {{ tumor_only_temp }}
+    {% endif %}
+    {% endfor %}
+
+{% endmacro %}

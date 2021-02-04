@@ -1,10 +1,19 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/qc/stats2lims.jst' import stats2lims with context %}
 
 {% macro ichorcna(sample, aligner='bwa', taskPrefix='Genome') %}
 {% set bam %}{{ sample.gltype}}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}{% endset %}
 {% set wig %}{{ results_dir }}/{{ sample.name }}.{{ aligner }}.wig{% endset %}
+{% set ichor_json %}{{ results_dir }}/{{ sample.name}}.{{ aligner }}.ichorCNA.json{% endset %}
 {% set temp_dir %}temp/{{ sample.gltype }}/copy_number_analysis/ichorCNA/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.ichor_rundir{% endset %}
+
+{% set control = {} %}
+{% if controlDataFiles is defined %}
+  {% if controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first is defined %}
+    {% do control.update(controlDataFiles|selectattr('assayCode', 'eq', sample.assayCode)|first) %}
+  {% endif %}
+{% endif %}
 
 - name: hmmcopy_make_wig_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
@@ -33,7 +42,14 @@
 
 - name: ichor_cna_{{ aligner }}_{{ sample.name }}
   tags: [{{ sample.gltype}}, constitutional, cna_caller, ichor, {{ sample.name }}]
-  input: {{ wig }}
+  {% if control.ichorPon is defined %}
+  reset: prepare_tumor_only_{{ study }}_{{ control.assayCode }}
+  {% endif %}
+  input:
+    - {{ wig }}
+    {% if control.ichorPon is defined %}
+    - temp/tumor_only/control_data_files/{{ control.assayCode }}/{{ control.ichorPon | basename }}
+    {% endif %}
   output:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.cna.seg
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.seg
@@ -47,6 +63,7 @@
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide_all_sols.pdf
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_genomeWide.pdf
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA_tpdf.pdf
+    - {{ ichor_json }}
   walltime: "24:00:00"
   cpus: 1
   mem: 2G
@@ -91,11 +108,14 @@
       --scStates "c(1,3)" \
       --ploidy "c(2,3)" \
       --normal "c(0.25,0.5,0.6,0.7,0.8,0.9)" \
+      {% if control.ichorPon is defined %}
+      --normalPanel temp/tumor_only/control_data_files/{{ control.assayCode }}/{{ control.ichorPon | basename }} \
+      {% endif %}
       --maxCN 7 \
+      --normalizeMaleX FALSE \
       --gcWig ${EXTDATA}/gc_hg38_1000kb.wig \
       --mapWig ${EXTDATA}/map_hg38_1000kb.wig \
-      --centromere ${EXTDATA}/GRCh38.GCA_000001405.2_centromere_acen.txt \
-      --normalPanel ${EXTDATA}/HD_ULP_PoN_hg38_1Mb_median_normAutosome_median.rds
+      --centromere ${EXTDATA}/GRCh38.GCA_000001405.2_centromere_acen.txt
 
     {# Merging pdfs #}
     pdfunite \
@@ -106,6 +126,14 @@
       {% endif %}
       {% endfor %}
       {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA/{{ sample.name }}.{{ aligner }}.ichorCNA_CNA_all_chrs.pdf
+
+    {# Creating json for stats2lims #}
+    tumor_frac=$(grep "Tumor Fraction:" {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt | awk '{ print $3 }')
+    ploidy=$(grep "Ploidy:" {{ temp_dir }}/{{ sample.name }}.{{ aligner }}.ichorCNA.params.txt | awk '{ print $2 }')
+
+    cat <<EOF > {{ ichor_json }}
+    {"SAMPLES": [{"LIBRARIES": [{"READGROUPS": [{}], "tumorFraction": "${tumor_frac}", "ploidy": "${ploidy}", "LB": "{{ sample.rglb }}" }], "SM": "{{ sample.name }}"}]}
+    EOF
     {#
     # Move the output files to the final location
     #}
@@ -126,5 +154,6 @@
     {% set task %}ichor_cna_{{ aligner }}_{{ sample.name }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
+    {{- stats2lims(sample.gltype, sample.name, task, ichor_json, "ichor_cna") }}
 
 {% endmacro %}
