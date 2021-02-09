@@ -42,7 +42,12 @@
 
 {% if tasks[taskPrefix+"_somatic_sample_metric_tgen_mutation_burden"]|default(true) %}
   {% if flags.bcftools %}
-    {% set final_vcf_prefix %}{{ vcf_prefix }}.db{% endset %}
+    {# If pair.normal.pathToBam is defined then we have a tumor_only pair #}
+    {% if pair.normal.pathToBam is defined %}
+      {% set final_vcf_prefix %}{{ vcf_prefix }}.db.flt{% endset %}
+    {% else %}
+      {% set final_vcf_prefix %}{{ vcf_prefix }}.db{% endset %}
+    {% endif %}
   {% else %}
     {% set final_vcf_prefix %}{{ vcf_prefix }}{% endset %}
   {% endif %}
