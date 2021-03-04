@@ -1,9 +1,6 @@
 {% from 'utilities/read_group_line.jst' import read_group_line %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
-{% from 'modules/rna/star_quant.jst' import rsem_calculate_expression with context %}
-{% from 'modules/rna/star_quant.jst' import htseq with context %}
-{% from 'modules/rna/star_quant.jst' import featurecounts with context %}
 
 # Run STAR RNA Alignment for quantification
 {% macro star_quant(sample, opt_dup_distance) %}
