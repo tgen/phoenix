@@ -315,9 +315,7 @@ which appears to be working now after some code changes, keeping this here in ca
 
     {{- stats2json(sample.gltype, sample.name, task, rna_md_metrics, rna_md_metrics_json, "picard_mark_duplicates_metrics", sample_name=sample.name) }}
 
-    {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
     {% set task_list = [] %}
-    {% do task_list.append(task) %}
 
     {% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
       {% set task %}htseq_{{ sample.name }}{% endset %}
@@ -336,6 +334,9 @@ which appears to be working now after some code changes, keeping this here in ca
       {% do task_list.append(task) %}
       {{- rsem_calculate_expression(sample) }}
     {% endif %}
+
+    {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
+    {% do task_list.append(task) %}
 
     {{- remove_files(temp_dir,none,task_list) }}
 {% endmacro %}
