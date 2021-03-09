@@ -417,8 +417,7 @@ constants:
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel_8820499.py
     manta_prepare_sv_vcf: manta_prepare_sv_vcf_f94bcc1.py
     manta_gene_annotation_parallel: manta_sv_annotation_parallel_8820499.py
-    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_f3010c3.py
-    pairoscope_mm_igtx_calling_tumor_only_script: mm_igtx_pairoscope_calling_b38_tumor_only_b8074e1.py
+    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_356362b.py
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
     plotSamStats_Rscript: summarize_samstats_8c45d63.R

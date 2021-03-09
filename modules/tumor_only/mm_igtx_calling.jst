@@ -5,13 +5,6 @@
 {% set tumor_bam %}{{ tumor.gltype }}/alignment/{{ aligner }}/{{ tumor.name }}/{{ tumor.name }}.{{ aligner }}.bam{% endset %}
 {% set results_dir %}{{ tumor.gltype }}/tumor_only_structural_calls/mm_igtx_pairoscope/{{ tumor.name }}{% endset %}
 
-{% if controlDataFiles is defined %}
-{% set toAssayCodes = [] %}
-{% for file in controlDataFiles %}
-    {% do toAssayCodes.append(file.assayCode) %}
-{% endfor %}
-{% endif %}
-
 - name: mm_igtx_pairoscope_{{ tumor.name }}_{{ aligner }}
   tags: [{{ tumor.gltype }}, structural_caller, pairoscope, {{ tumor.name }}]
   tags: [pairoscope, mm_igtx_calling, {{ tumor.gltype }}]
@@ -63,18 +56,14 @@
       echo $'Specimen\tChrA\tPositionA\tChrB\tPositionB' > {{ results_dir }}/{{ tumor.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt
     fi
 
-    {% if controlDataFiles is defined and tumor.assayCode in toAssayCodes %}
-    python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.pairoscope_mm_igtx_calling_tumor_only_script }} \
-    {% else %}
     python ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.pairoscope_mm_igtx_calling_script }} \
-    {% endif %}
       --input_file {{ results_dir }}/{{ tumor.name }}.{{ aligner }}_pairoscope_igtx_discordantTable.txt \
       --specimen {{ tumor.rgsm }} \
       --output_file {{ results_dir }}/{{ tumor.name }}.{{ aligner }}_pairoscope_igtx_calls.txt \
       --window 2000 \
       --window_min 100 \
-      {% if controlDataFiles is defined and tumor.assayCode in toAssayCodes %}
-      --call_requirement 5
+      {% if pairoscope_call_requirement is defined %}
+      --call_requirement {{ pairoscope_call_requirement }}
       {% else %}
       --call_requirement 4
       {% endif %}
