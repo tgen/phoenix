@@ -69,7 +69,7 @@
       {% if pair.gltype == 'exome' %}
       --bed {{ pair.name }}_isec_cds_capture_kit.bed \
       {% else %}
-      --bed {{ constants.phoenix.cds_intervals }} \
+      --bed {{ constants.phoenix.canonical_cds_intervals }} \
       {% endif %}
       --vcf {{ input_vcf | basename }} \
       --tbam ${PROJECT_ROOT}/{{ tumor_bam }} \
