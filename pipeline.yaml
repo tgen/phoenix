@@ -330,9 +330,9 @@ constants:
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
     tgen_mutation_burden:
-      module: MutationBurden/1.2.1
-      version: "1.2.1"
-      verbose: TGen Mutation Burden Tool v1.2.1
+      module: MutationBurden/1.2.2
+      version: "1.2.2"
+      verbose: TGen Mutation Burden Tool v1.2.2
     transparser:
       module: transParser/1.0.1
       version: "1.0.1"
@@ -384,7 +384,7 @@ constants:
     genome_build: grch38_hg38
     genome_subversion_name: hg38tgen
     gene_model_name: ensembl_v98
-    cds_intervals: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.cds_padded.final.bed
+    canonical_cds_intervals: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.cds_padded.final.bed
     capture_kit_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_fasta_2bit: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.2bit
