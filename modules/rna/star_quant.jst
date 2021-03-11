@@ -338,7 +338,8 @@ which appears to be working now after some code changes, keeping this here in ca
     {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
     {% do task_list.append(task) %}
 
-    {{- remove_files(temp_dir,none,task_list) }}
+    {% set task_name %}{{ sample.name }}_star_quant{% endset %}
+    {{- remove_files(temp_dir, none, task_list, task_name) }}
 {% endmacro %}
 
 {% macro htseq(sample) %}
