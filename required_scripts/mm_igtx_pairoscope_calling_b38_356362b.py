@@ -139,19 +139,22 @@ def call_translocations(sample, gene, gene_chr, order, window_start=0, window_en
             print("dreads.PositionA is: " + str(dreads.PositionA))
             gene_igh = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr14")
                               & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)
-                              & ((dreads.PositionA <= 143844450) | (dreads.PositionA >= 143844745))]
+                              & ((dreads.PositionA <= 143844450) | (dreads.PositionA >= 143844760))
+                              & ((dreads.PositionA <= 143243200) | (dreads.PositionA >= 143244000))]
             print(str(gene_igh.columns))
             print(str(gene_igh))
             count_gene_igh = len(gene_igh.index)
             gene_igk = dreads[(dreads.Specimen == sample) & (dreads.ChrA == "chr2") & (dreads.ChrB == gene_chr)
                               & (dreads.PositionB >= window_start) & (dreads.PositionB <= window_end)
-                              & ((dreads.PositionA <= 143844450) | (dreads.PositionA >= 143844745))]
+                              & ((dreads.PositionA <= 143844450) | (dreads.PositionA >= 143844760))
+                              & ((dreads.PositionA <= 143243200) | (dreads.PositionA >= 143244000))]
             count_gene_igk = len(gene_igk.index)
             print(str(gene_igk.columns))
             print(str(gene_igk))
             gene_igl = dreads[(dreads.Specimen == sample) & (dreads.ChrA == gene_chr) & (dreads.ChrB == "chr22")
                               & (dreads.PositionA >= window_start) & (dreads.PositionA <= window_end)
-                              & ((dreads.PositionA <= 143844450) | (dreads.PositionA >= 143844745))]
+                              & ((dreads.PositionA <= 143844450) | (dreads.PositionA >= 143844760))
+                              & ((dreads.PositionA <= 143243200) | (dreads.PositionA >= 143244000))]
             count_gene_igl = len(gene_igl.index)
             print(str(gene_igl.columns))
             print(str(gene_igl))

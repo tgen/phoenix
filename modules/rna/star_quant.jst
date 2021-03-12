@@ -53,6 +53,11 @@
     - {{ star_finalcountsdir }}/{{ sample.name }}.ReadsPerGene.out.tab
     - {{ star_finalcountsdir }}/{{ sample.name }}.star.junctions
     - {{ star_finalcountsdir }}/{{ sample.name }}_star.Log.final.out
+    {% if tasks.RNA_transcriptome_quantify_expression_salmon_bam or tasks.RNA_transcriptome_quantify_expression_RSEM %}
+    - {{ star_bam_transcript }}
+    {% elif tasks.RNA_transcriptome_quantify_expression_RSEM is not defined %}
+    - {{ star_bam_transcript }}
+    {% endif %}
   cpus: 20
   mem: 80G
   walltime: "48:00:00"
@@ -62,7 +67,7 @@
     module load {{ constants.tools.star.module }}
 
     mkdir -p "{{ temp_dir }}"
-    mkdir -p "{{ results_dir }}"
+    mkdir -p "{{ results_dir }}/stats"
     mkdir -p "{{ star_finalcountsdir }}"
 
     {#
@@ -178,7 +183,7 @@
 
     mv {{ temp_dir }}/{{ sample.name }}.ReadsPerGene.out.tab {{ star_finalcountsdir }}/
     mv {{ temp_dir }}/{{ sample.name }}.SJ.out.tab {{ star_finalcountsdir }}/{{ sample.name }}.star.junctions
-    mv {{ temp_dir }}/{{ sample.name }}.Log.final.out {{ star_finalcountsdir }}/{{ sample.name }}_star.Log.final.out
+    mv {{ temp_dir }}/{{ sample.name }}.Log.final.out {{ results_dir }}/stats/{{ sample.name }}_star.Log.final.out
 
 
 - name: fixmate_sort_star_{{ sample.name }}
@@ -292,7 +297,6 @@ which appears to be working now after some code changes, keeping this here in ca
     fi
 
     mkdir -p "{{ temp_dir }}/markdup"
-    mkdir -p "{{ results_dir }}/stats"
 
     module load {{ constants.tools.gatk.module }}
 
@@ -310,42 +314,32 @@ which appears to be working now after some code changes, keeping this here in ca
     samtools index -@ 10 "{{ star_bam_final }}"
 
     {{- stats2json(sample.gltype, sample.name, task, rna_md_metrics, rna_md_metrics_json, "picard_mark_duplicates_metrics", sample_name=sample.name) }}
-    {% if not tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
-      {# Remove the remaining files #}
-      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
-      {% set directory %}{{ temp_dir }}{% endset %}
-      {{- remove_files(directory,none,task) }}
-    {% elif tasks.RNA_transcriptome_quantify_expression_HTseq and not tasks.RNA_transcriptome_quantify_expression_subread_featureCounts %}
-      {% set task_list = [] %}
+
+    {% set task_list = [] %}
+
+    {% if tasks.RNA_transcriptome_quantify_expression_HTseq|default(true) %}
       {% set task %}htseq_{{ sample.name }}{% endset %}
       {% do task_list.append(task) %}
-      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
-      {% do task_list.append(task) %}
-      {% set directory %}{{ temp_dir }}{% endset %}
       {{- htseq(sample) }}
-      {{- remove_files(directory,none,task_list) }}
-    {% elif tasks.RNA_transcriptome_quantify_expression_subread_featureCounts and not tasks.RNA_transcriptome_quantify_expression_HTseq %}
-      {% set task_list = [] %}
-      {% set task %}featurecounts_{{ sample.name }}{% endset %}
-      {% do task_list.append(task) %}
-      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
-      {% do task_list.append(task) %}
-      {% set directory %}{{ temp_dir }}{% endset %}
-      {{- featurecounts(sample) }}
-      {{- remove_files(directory,none,task_list) }}
-    {% else %}
-      {% set task_list = [] %}
-      {% set task %}htseq_{{ sample.name }}{% endset %}
-      {% do task_list.append(task) %}
-      {% set task %}featurecounts_{{ sample.name }}{% endset %}
-      {% do task_list.append(task) %}
-      {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
-      {% do task_list.append(task) %}
-      {% set directory %}{{ temp_dir }}{% endset %}
-      {{- htseq(sample) }}
-      {{- featurecounts(sample) }}
-      {{- remove_files(directory,none,task_list) }}
     {% endif %}
+
+    {% if tasks.RNA_transcriptome_quantify_expression_subread_featureCounts|default(true) %}
+      {% set task %}featurecounts_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {{- featurecounts(sample) }}
+    {% endif %}
+
+    {% if tasks.RNA_transcriptome_quantify_expression_RSEM|default(true) %}
+      {% set task %}rsem_calculate_expression_{{ sample.name }}{% endset %}
+      {% do task_list.append(task) %}
+      {{- rsem_calculate_expression(sample) }}
+    {% endif %}
+
+    {% set task %}markduplicates_star_gatk_{{ sample.name }}{% endset %}
+    {% do task_list.append(task) %}
+
+    {% set task_name %}{{ sample.name }}_star_quant{% endset %}
+    {{- remove_files(temp_dir, none, task_list, task_name) }}
 {% endmacro %}
 
 {% macro htseq(sample) %}
@@ -364,7 +358,7 @@ which appears to be working now after some code changes, keeping this here in ca
     set -eu
     set -o pipefail
     module load {{ constants.tools.htseq.module }}
-    
+
     mkdir -p "{{ sample.gltype }}/quant/htseq/{{ sample.name }}/"
 
     {#
@@ -373,10 +367,10 @@ which appears to be working now after some code changes, keeping this here in ca
     # -r --order=pos ; default=name ; GDC=name (bam unsorted)
     # -s --stranded=<yes/no/reverse> ; default=yes ; GDC=no (Dumb)
     # -a --a=<minaqual> ; default=10 ; skip all reads with alignment quality lower than the given minimum value
-    # --additional-attr=gene_name ; default=none ; will be printed as an additional column after the primary 
+    # --additional-attr=gene_name ; default=none ; will be printed as an additional column after the primary
     #   attribute column but before the counts column(s)
     # --mode=<union/intersection-strict/intersection-nonempty> ; default=union ; Pegasus=union, GDC=intersection-nonempty
-    # --nonunique=<none/all> ; default=none ; Mode to handle reads that align to or are assigned to more than 
+    # --nonunique=<none/all> ; default=none ; Mode to handle reads that align to or are assigned to more than
     #   one feature in the overlap
     # --secondary-alignments=<score/ignore> ; default=score
     # --supplementary-alignments=<score/ignore> ; default=score
@@ -406,7 +400,7 @@ which appears to be working now after some code changes, keeping this here in ca
   tags: [{{ sample.gltype }}, transcriptome, quantify_expression, subread_featureCounts, {{ sample.name }}]
   reset: predecessors
   input: {{ star_bam_unsort }}
-  output: 
+  output:
     - {{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.exon.counts.tsv
     - {{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv
   cpus: 8
@@ -416,7 +410,7 @@ which appears to be working now after some code changes, keeping this here in ca
     set -eu
     set -o pipefail
     module load {{ constants.tools.subread.module }}
-    
+
     mkdir -p "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/"
 
     {# TODO -p should only be set for paired-end #}
@@ -441,4 +435,38 @@ which appears to be working now after some code changes, keeping this here in ca
       -a "{{ constants.phoenix.gtf }}" \
       -o "{{ sample.gltype }}/quant/featurecounts/{{ sample.name }}/{{ sample.name }}.gene.counts.tsv" \
       "{{ star_bam_unsort }}"
+{% endmacro %}
+
+{% macro rsem_calculate_expression(sample) %}
+{% set temp_dir %}temp/{{ sample.gltype }}/quant/star/{{ sample.name }}{% endset %}
+{% set star_bam_transcript %}{{ temp_dir }}/{{ sample.name }}.Aligned.toTranscriptome.out.bam{% endset %}
+- name: rsem_calculate_expression_{{ sample.name }}
+  tags: [{{ sample.gltype }}, transcriptome, quantify_expression, rsem_star_bam, {{ sample.name }}]
+  reset: predecessors
+  input: {{ star_bam_transcript }}
+  output:
+    - {{ sample.gltype }}/quant/rsem/{{ sample.name }}/{{ sample.name }}.isoforms.results
+    - {{ sample.gltype }}/quant/rsem/{{ sample.name }}/{{ sample.name }}.genes.results
+    - {{ sample.gltype }}/quant/rsem/{{ sample.name }}/{{ sample.name }}.stat/{{ sample.name }}.cnt
+    - {{ sample.gltype }}/quant/rsem/{{ sample.name }}/{{ sample.name }}.stat/{{ sample.name }}.model
+    - {{ sample.gltype }}/quant/rsem/{{ sample.name }}/{{ sample.name }}.stat/{{ sample.name }}.theta
+  cpus: 8
+  mem: 8G
+  walltime: "8:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+    module load {{ constants.tools.rsem.module }}
+
+    mkdir -p "{{ sample.gltype }}/quant/rsem/{{ sample.name }}/"
+
+    rsem-calculate-expression \
+      --num-threads 7 \
+      --alignments \
+      --paired-end \
+      --no-bam-output \
+      --strandedness "{{ constants.phoenix.strandedness_options[sample.strandedness].rsem }}" \
+      {{ star_bam_transcript }} \
+      {{ constants.phoenix.rsem_index }} \
+      "{{ sample.gltype }}/quant/rsem/{{ sample.name }}/{{ sample.name }}"
 {% endmacro %}

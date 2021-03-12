@@ -1,9 +1,13 @@
-{% macro remove_files(directory, before, after) %}
+{% macro remove_files(directory, before, after, name='null') %}
 
-{% if after is string %}
-    {% set task_name %}{{ after }}{% endset %}
+{% if name != 'null' %}
+  {% set task_name %}{{ name }}{% endset %}
 {% else %}
+  {% if after is string %}
+    {% set task_name %}{{ after }}{% endset %}
+  {% else %}
     {% set task_name %}{{ after[0] }}{% endset %}
+  {% endif %}
 {% endif %}
 
 - name: removing_files_{{ task_name }}

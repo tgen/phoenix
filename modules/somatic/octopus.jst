@@ -27,7 +27,7 @@
     set -o pipefail
 
     module load {{ constants.tools.octopus.module }}
-    
+
     mkdir -p "{{ temp_dir }}"
 
     {# Write out the regions in this batch to a bed file #}
@@ -37,7 +37,7 @@
     {{ interval.contig }}${TAB}{{ interval.start - 1 }}${TAB}{{ interval.stop }}
     {% endfor %}
     EOF
-    
+
     {# Somatic calling with octopus #}
     octopus \
       --caller cancer \
@@ -59,7 +59,7 @@
       --temp-directory-prefix "{{ loop.index }}" \
       --bamout "{{ loop.index }}.realigned.bam" \
       --output "{{ loop.index }}.octopus.vcf"
-      
+
 {% endfor %}
 
 
@@ -155,10 +155,10 @@
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
-    
+
     bcftools index --tbi --force "{{ pass_vcf }}"
 
-    {% set task %}octopus_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}octopus_merge_chunks_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 

@@ -48,13 +48,15 @@
 
     bcftools filter \
       --include 'INFO/CC>=3 && ({{ ns_list|join(' || ') }})' \
-      --output {{ mutation_burden_temp }}/{{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --output {{ mutation_burden_temp }}/{{ input_vcf | basename }} \
       --output-type z \
       {{ input_vcf }}
 
+    bcftools index --tbi {{ mutation_burden_temp }}/{{ input_vcf | basename }}
+
     {% if pair.gltype == 'exome' %}
     bedtools intersect \
-      -a {{ constants.phoenix.cds_intervals }} \
+      -a {{ constants.phoenix.canonical_cds_intervals }} \
       -b {{ pair.tumor.capture_kit.extended_bed }} \
       > {{ mutation_burden_temp }}/{{ pair.name }}_isec_cds_capture_kit.bed
     {% endif %}
@@ -62,12 +64,16 @@
     cd {{ mutation_burden_temp }}
 
     tgen_mutation_burden.sh \
+      --mindepth 10 \
+      --min-read-per-strand 1 \
+      --min-base-qual 5 \
+      --min-map-qual 5 \
       {% if pair.gltype == 'exome' %}
       --bed {{ pair.name }}_isec_cds_capture_kit.bed \
       {% else %}
-      --bed {{ constants.phoenix.cds_intervals }} \
+      --bed {{ constants.phoenix.canonical_cds_intervals }} \
       {% endif %}
-      --vcf {{ pair.name }}.{{ variant_caller }}.{{ annotate_flag }}.vcf.gz \
+      --vcf {{ input_vcf | basename }} \
       --tbam ${PROJECT_ROOT}/{{ tumor_bam }} \
       --nbam ${PROJECT_ROOT}/{{ normal_bam }} \
       --sample {{ pair.tumor.rgsm }} \

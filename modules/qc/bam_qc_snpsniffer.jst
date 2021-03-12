@@ -30,13 +30,16 @@
         {% else %}
           {% set aligner = 'bwa' %}
         {% endif %}
-        {% set snpsniffer_result %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.snpSniffer.vcf{% endset %}
-        {% do snpsniffer_list.append(snpsniffer_result) %}
+        {% if not sample.gltype == 'genomephased' %}
+          {% set snpsniffer_result %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/stats/{{ sample.name }}_{{ sample_lb }}.{{ aligner }}.bam.snpSniffer.vcf{% endset %}
+          {% do snpsniffer_list.append(snpsniffer_result) %}
+        {% endif %}
       {% endif %}
     {% endfor %}
   {% endif %}
 {% endfor %}
 
+{% if snpsniffer_list | length > 1 %}
 - name: snpsniffer_summary
   input:
     {% for result in snpsniffer_list %}
@@ -201,5 +204,7 @@
   {% set json %}qc/snpSniffer/{{ project }}_SnpSniffer_Mismatch_Summary.json{% endset %}
 
   {{ stats2json("all libraries", project, project, output, json, "snpsniffer_summary") }}
+
+{% endif %}
 
 {% endmacro %}
