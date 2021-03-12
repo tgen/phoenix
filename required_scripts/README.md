@@ -1,6 +1,6 @@
 # Required Scripts
 This directory contains scripts for at least one of the following reasons
- - From a private source with no intention of being made public 
+ - From a private source with no intention of being made public
  - Scripts where making a module does not make sense.
 
 ### Example 1
@@ -14,7 +14,7 @@ plotCNVplus
  - Clearly update the Documentation section of this README.md with the following information about the script.
     - How was the script acquired (git clone path, wget path)
     - What the Commit id is (git rev-parse --short HEAD)
-    
+
 ## Documentation
 ### plotCNVplus
 ```
@@ -31,7 +31,7 @@ $ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 [Process_Assembled_BAM_eb25fca.py](https://github.com/tgen/GaMMiT/commit/eb25fca1769e56048439efe80479759e164433cf)  
 [manta_prepare_sv_vcf_f94bcc1.py](https://github.com/tgen/jetstream_resources/commit/f94bcc13c826f7d5a4088347e305ffcb49ae6a8e)  
 [manta_sv_annotation_parallel_8820499.py](https://github.com/tgen/jetstream_resources/commit/8820499e113a387fee98044112951fa534ad6f8e)  
-[mm_igtx_pairoscope_calling_b38_f3010c3.py](https://github.com/tgen/mm_IgTx_Calling/commit/f3010c358970f4c25cefddc824636f60a19842e1)  
+[mm_igtx_pairoscope_calling_b38_356362b.py](https://github.com/tgen/mm_IgTx_Calling/commit/356362b03f13181f2762ab468f9b4f222439ea69)  
 [plotCNVplus_4d89cb4.R](https://github.com/tgen/plotCNVplus/commit/4d89cb4d8f35e48b916d660c82c52b8725ade16f)  
 [runIchorCNA_47ce8db.R](https://github.com/broadinstitute/ichorCNA/commit/47ce8db4d81ada2d3ce09280661d1240f3dcd530#diff-79cb887cc56cef135b77c5b7a725975c)  
 [samStats2json_3a90a2f.py](https://github.com/tgen/samStats2json/commit/3a90a2fefd8fc60a5ebd391dca6702fae419f32f)  

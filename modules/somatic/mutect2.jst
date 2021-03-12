@@ -27,7 +27,7 @@
     set -o pipefail
 
     module load {{ constants.tools.gatk.module }}
-    
+
     mkdir -p "{{ temp_dir }}/temp_mutect2_{{ loop.index }}"
 
     {#
@@ -129,7 +129,7 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-    
+
     bcftools concat \
       --output-type z \
       --output "{{ temp_dir }}/{{ pair.name }}_{{ aligner }}.mutect2.raw.vcf.gz" \
@@ -328,7 +328,7 @@
     set -o pipefail
 
     module load {{ constants.tools.bcftools.module }}
-    
+
     bcftools filter \
       --output-type z \
       --include 'FILTER == "PASS"' \
@@ -337,10 +337,10 @@
       {% endif %}
       "{{ all_vcf }}" \
       > "{{ pass_vcf }}"
-    
+
     bcftools index --tbi --force "{{ pass_vcf }}"
 
-    {% set task %}mutect2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set task %}mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
 

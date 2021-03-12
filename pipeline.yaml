@@ -239,6 +239,14 @@ constants:
       citation: >
         R Core Team (2017). R: A language and environment for statistical computing. R Foundation for
         Statistical Computing, Vienna, Austria. URL https://www.R-project.org/.
+    rsem:
+      module: RSEM/1.3.3
+      version: "1.3.3"
+      verbose: rsem v1.3.3
+      website: https://github.com/deweylab/RSEM
+      citation: >
+        Li, B., Dewey, C.N. RSEM: accurate transcript quantification from RNA-Seq data with or without a reference
+        genome. BMC Bioinformatics 12, 323 (2011). https://doi.org/10.1186/1471-2105-12-323
     salmon:
       module: Salmon/1.2.1-gompi-2019a
       version: "1.2.1"
@@ -319,12 +327,12 @@ constants:
       verbose: Subread v2.0.0
       website: http://subread.sourceforge.net
       citation: >
-        Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning 
+        Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
     tgen_mutation_burden:
-      module: MutationBurden/1.2.1
-      version: "1.2.1"
-      verbose: TGen Mutation Burden Tool v1.2.1
+      module: MutationBurden/1.2.3
+      version: "1.2.3"
+      verbose: TGen Mutation Burden Tool v1.2.3
     transparser:
       module: transParser/1.0.1
       version: "1.0.1"
@@ -340,8 +348,8 @@ constants:
       verbose: Vardict Java v1.7.0
       website: https://github.com/AstraZeneca-NGS/VarDictJava
       citation: >
-        Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett 
-        JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in 
+        Lai Z, Markovets A, Ahdesmaki M, Chapman B, Hofmann O, McEwen R, Johnson J, Dougherty B, Barrett
+        JC, and Dry JR. VarDict: a novel and versatile variant caller for next-generation sequencing in
         cancer research. Nucleic Acids Res. 2016, pii: gkw227.
     vcfmerger2:
       module: vcfMerger2/0.8.7-phoenix
@@ -376,7 +384,7 @@ constants:
     genome_build: grch38_hg38
     genome_subversion_name: hg38tgen
     gene_model_name: ensembl_v98
-    cds_intervals: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.cds_padded.final.bed
+    canonical_cds_intervals: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.cds_padded.final.bed
     capture_kit_path: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits
     reference_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
     reference_fasta_2bit: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.2bit
@@ -409,8 +417,7 @@ constants:
     delly_svtop_delly_sv_annotation_parellel_script: svtop.delly.sv_annotation.parallel_8820499.py
     manta_prepare_sv_vcf: manta_prepare_sv_vcf_f94bcc1.py
     manta_gene_annotation_parallel: manta_sv_annotation_parallel_8820499.py
-    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_f3010c3.py
-    pairoscope_mm_igtx_calling_tumor_only_script: mm_igtx_pairoscope_calling_b38_tumor_only_39d1efa.py
+    pairoscope_mm_igtx_calling_script: mm_igtx_pairoscope_calling_b38_356362b.py
     cna_seg_extend: seg_extend_229b8c7.py
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
     plotSamStats_Rscript: summarize_samstats_8c45d63.R
@@ -463,6 +470,7 @@ constants:
     encode_denylist: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/ncbi/Encode_deny_list_with_ncbi_centromere.merged.bed
     centromere: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/ncbi/Modeled_regions_for_GRCh38_centromere_blacklist_merged.bed
     mappability_track: /home/tgenref/homo_sapiens/grch38_hg38/public_databases/bismap/k100.umap.no_header.bed
+    rsem_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/rsem_1.3.3/hg38tgen
     transcriptome_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.transcriptome.fasta
     salmon_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/salmon_1.2.1-gompi-2019a/salmon_puff_75merPlus
     sex_check_targets: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/tgen_gender_check/chrx_common_dbSNPv152_snv_exons.bed
@@ -472,18 +480,21 @@ constants:
     starfusion_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/starFusion_gencode_v32/starFusion_Resources/ctat_genome_lib_build_dir
     strandedness_options:
       inward-unstranded-notapplicable:
+        rsem: "none"
         salmon: "IU"
         htseq: "no"
         featurecounts: "0"
         tophat: "-fr-unstranded"
         collectrnaseqmetrics: "NONE"
       inward-stranded-forward:
+        rsem: "forward"
         salmon: "ISF"
         htseq: "yes"
         featurecounts: "1"
         tophat: "-fr-secondstrand"
         collectrnaseqmetrics: "FIRST_READ_TRANSCRIPTION_STRAND"
       inward-stranded-reverse:
+        rsem: "reverse"
         salmon: "ISR"
         htseq: "reverse"
         featurecounts: "2"
@@ -553,7 +564,7 @@ constants:
       chrUn_JTFH01000697v1_decoy"
     calling_contigs:
       # Contigs in the genome build that should be considered for variant calling
-      # Note that chrM is not included in this list because the mitochrondria 
+      # Note that chrM is not included in this list because the mitochrondria
       # should be analyzed separately.
       - {"contig": chr1, "length": 248956422}
       - {"contig": chr2, "length": 242193529}

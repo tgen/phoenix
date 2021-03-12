@@ -12,13 +12,13 @@
 
 # Somatic tools generally operate on pairs of DNA samples (tumor/normal).
 # WARNING - This pairs together all tumor and constitutional samples (of the same gltype)
-# without comparing any sample identifiers. This means multiple individuals in the same 
+# without comparing any sample identifiers. This means multiple individuals in the same
 # project will be incorrectly paired together for somatic variant calling.
 
 {% macro somatic_variant_calling(samples) %}
 {% if somatic_variant_calling_pairs is defined %}
     {#
-    # Pairs can be a predefined list of objects: 
+    # Pairs can be a predefined list of objects:
     # [{"tumor": <tumor name>, "normal": <normal name>},...]
     #}
     {% set pairs = [] %}
@@ -40,11 +40,11 @@
     {% endfor %}
 {% else %}
     {#
-    # If pairs are not predefined, build up the somatic variant calling 
-    # sample pairs object by pairing every tumor to every normal of the 
-    # same gltype. This will essentially permute every tumor-normal 
+    # If pairs are not predefined, build up the somatic variant calling
+    # sample pairs object by pairing every tumor to every normal of the
+    # same gltype. This will essentially permute every tumor-normal
     # combination in the project. For projects with multiple individuals
-    # this is likely NOT what you want to do, and pairs should be 
+    # this is likely NOT what you want to do, and pairs should be
     # predefined in the config data.
     #}
     {% set pairs = [] %}
@@ -81,7 +81,7 @@
 {% endif %}
 
 {#
-# Variant caller macros that are used should add their name to the pair.caller list 
+# Variant caller macros that are used should add their name to the pair.caller list
 # and then vcfmerger will merge all variants for callers that were used.
 # For example: {% do pair.callers.append('mutect2') %}
 # This requires that the output vcfs be located and named consitently, more details
