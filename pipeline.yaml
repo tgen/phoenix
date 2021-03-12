@@ -330,9 +330,9 @@ constants:
         Liao Y, Smyth GK and Shi W. featureCounts: an efficient general-purpose program for assigning
         sequence reads to genomic features. Bioinformatics, 30(7):923-30, 2014
     tgen_mutation_burden:
-      module: MutationBurden/1.2.2
-      version: "1.2.2"
-      verbose: TGen Mutation Burden Tool v1.2.2
+      module: MutationBurden/1.2.3
+      version: "1.2.3"
+      verbose: TGen Mutation Burden Tool v1.2.3
     transparser:
       module: transParser/1.0.1
       version: "1.0.1"
