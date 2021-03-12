@@ -52,6 +52,8 @@
       --output-type z \
       {{ input_vcf }}
 
+    bcftools index --tbi {{ mutation_burden_temp }}/{{ input_vcf | basename }}
+
     {% if pair.gltype == 'exome' %}
     bedtools intersect \
       -a {{ constants.phoenix.canonical_cds_intervals }} \
