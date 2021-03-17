@@ -253,8 +253,8 @@
 
     {# Extracting ecoli alignments #}
     samtools view \
-      -b
-      -o "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli.bam"
+      -b \
+      -o "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli.bam" \
       "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bam" \
       "U00096.3"
 
@@ -269,23 +269,27 @@
 
     {# Calculating spike and scale for genomecov #}
     SPIKE=$(wc -l < "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli.bed")
-    SCALE=$(echo "10000 / $SPIKE" | bc -l)
+    if [ $SPIKE -gt 0 ]; then
+      SCALE=$(echo "10000 / $SPIKE" | bc -l)
+    else
+      SCALE=$(echo "10000")
+    fi
 
-    TAB=$'\t'
-    cat <<EOF > "temp/{{ sample.gltype }}/alignment/bowtie2/callRegions.bed"
-    {% for contig in constants.phoenix.calling_contigs %}
-    {{ contig.contig }}${TAB}{{ contig.length }}
-    {% endfor %}
-    EOF
+    bedtools_path=$(dirname $(dirname `which bedtools`))
+    genome_path="${bedtools_path}/genomes/human.hg38.genome"
+    cat ${genome_path} > temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/callRegions.bed
+    echo -e "U00096.3\t4641652" >> temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/callRegions.bed
+
+    grep -v "decoy" "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bed" \
+     > "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.no_decoy.bowtie2.bed"
 
     bedtools genomecov \
       -bg \
       -scale $SCALE \
-      -i "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2.bed" \
-      -g "temp/{{ sample.gltype }}/alignment/bowtie2/callRegions.bed" \
+      -i "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.no_decoy.bowtie2.bed" \
+      -g "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/callRegions.bed" \
       > "{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ sample.name }}.bowtie2_ecoli_norm.bedgraph"
 
 {% endif %}
 
 {% endmacro %}
-

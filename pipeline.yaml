@@ -503,9 +503,11 @@ constants:
     snpeff_config: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/snpEff.config
     snpeff_data: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/snpEff_v4_3t/data
     snpeff_db: grch38.98
+    snpeff_canonical_cds_intervals: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.cds_padded.snpeff_canonical.final.bed
     snpSniffer_sites: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpSniffer/positions_387_hg38_ucsc.txt
     snpSniffer_database: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/snpSniffer/databaseV5_hg38_ucsc.ini
     vep_data: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/vep/v98/
+    vep_canonical_cds_intervals: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.cds_padded.vep_canonical.final.bed
     ns_effects:
       - 'splice_acceptor_variant'
       - 'splice_donor_variant'
