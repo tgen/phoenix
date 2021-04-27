@@ -190,13 +190,14 @@
     {% endif %}
 
     {% if bam_level is sameas true and sample.gltype != 'singlecellrna' %}
-      {{ stats2json(sample.gltype, sample.name, task, bam_level_baseQuality_output, bam_level_baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
-      {{ stats2json(sample.gltype, sample.name, task, bam_level_coverage_output, bam_level_coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
-      {{ stats2json(sample.gltype, sample.name, task, bam_level_insertSize_output, bam_level_insertSize_output_json, "samtools_insertSize_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
-      {{ stats2json(sample.gltype, sample.name, task, bam_level_summaryNumbers_output, bam_level_summaryNumbers_output_json, "samtools_summaryNumbers_summary", sample_name=sample.name, library_name=sample_lb, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_baseQuality_output, bam_level_baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_coverage_output, bam_level_coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_insertSize_output, bam_level_insertSize_output_json, "samtools_insertSize_summary", sample_name=sample.name, lims_upload=false) }}
+      {{ stats2json(sample.gltype, sample.name, task, bam_level_summaryNumbers_output, bam_level_summaryNumbers_output_json, "samtools_summaryNumbers_summary", sample_name=sample.name, lims_upload=false) }}
     {% endif %}
 
     {% if libraryCount == 1 or bam_level is sameas false %}
+      {% set task %}{{ sample.name }}_{{ sample_lb }}_{{ aligner }}{% endset %}
       {{ stats2json(sample.gltype, sample.name, task, baseQuality_output, baseQuality_output_json, "samtools_baseQualityYield_summary", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, coverage_output, coverage_output_json, "samtools_coverage_summary", sample_name=sample.name, library_name=sample_lb) }}
       {{ stats2json(sample.gltype, sample.name, task, insertSize_output, insertSize_output_json, "samtools_insertSize_summary", sample_name=sample.name, library_name=sample_lb) }}
