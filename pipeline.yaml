@@ -209,6 +209,10 @@ constants:
       website: https://github.com/genome/pairoscope
       citation: >
         TBD
+    petagene:
+      module: petagene/1.3.0p7
+      version: 1.3.0p7
+      PetaLinkMode: "+fastq"
     phaser:
       module: phASER/1.1.1-python-2.7.13
       version: 1.1.1

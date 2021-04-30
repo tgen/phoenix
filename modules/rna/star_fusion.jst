@@ -40,6 +40,13 @@
     set -eu
     set -o pipefail
 
+    {%+ if r1fqlist[0].petagene is defined -%}
+    {% if r1fqlist[0].petagene == true|default(false) %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+    {% endif %}
+    {%- endif -%}
+
     module load {{ constants.tools.star_fusion.module }}
 
     rm -r {{ temp_dir }} || true
