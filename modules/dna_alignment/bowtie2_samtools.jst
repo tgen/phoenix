@@ -35,13 +35,16 @@
     set -eu
     set -o pipefail
 
-    {%+ if fastq.petagene is defined -%}
+    {% if fastq.petagene is defined %}
     {% if fastq.petagene == true|default(false) %}
       export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
       module load {{ constants.tools.petagene.module }}
-    {% endif %}
-    {%- endif -%}
 
+    {% endif %}
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
     rm -r "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" || true
     mkdir -p "temp/{{ sample.gltype }}/alignment/bowtie2/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
 
