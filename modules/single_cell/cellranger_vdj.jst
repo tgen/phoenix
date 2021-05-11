@@ -67,6 +67,13 @@
     set -o pipefail
 
     module load {{ constants.tools.cellranger.module }}
+    {% for fq in files %}
+      {% if fq.fileType == "fasterq" and petagene not defined %}
+        export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+        module load {{ constants.tools.petagene.module }}
+        {% set petagene=true %}
+      {% endif %}
+    {% endfor %}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"

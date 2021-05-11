@@ -54,12 +54,19 @@
 
     module load {{ constants.tools.cellranger.module }}
     module load {{ constants.tools.samtools.module }}
+    {% for fq in files %}
+      {% if fq.fileType == "fasterq" and petagene not defined %}
+        export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+        module load {{ constants.tools.petagene.module }}
+        {% set petagene=true %}
+      {% endif %}
+    {% endfor %}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ outdir }}"
     mkdir -p "{{ alignment_outdir }}/stats"
-    
+
     {% for fq in files %}
     ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename }}"
     {% endfor %}
@@ -71,6 +78,7 @@
     ( cd {{ temp_dir }} && cellranger count \
       --localcores 20 \
       --localmem 160 \
+      --expect-cells {{ sample.expected_cells }} \
       --chemistry "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name }}" \
       --id "{{ sample.name }}" \
       --fastqs . \
