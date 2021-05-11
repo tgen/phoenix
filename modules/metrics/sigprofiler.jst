@@ -1,0 +1,32 @@
+{% from 'modules/qc/stats2json.jst' import stats2json with context %}
+
+{% macro sigprofiler(pair, input_vcf, output_path, variant_caller, aligner) %}
+
+{% set temp_dir %}temp/{{ pair.gltype }}/metrics/mutation_burden/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/metrics/mutation_burden/{{ pair.name }}{% endset %}
+{% set mutation_burden_temp %}{{ temp_dir }}/mutation_burden_{{ annotate_flag }}{% endset %}
+{% set mutation_burden_output %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.txt{% endset %}
+{% set mutation_burden_json %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.json{% endset %}
+
+- name: sigprofiler_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}
+  tags:
+  input:
+    - {{ input_vcf }}
+  output:
+    - {{ mutation_burden_output }}
+  walltime: "24:00:00"
+  cpus: 4
+  mem: 8G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.sigprofiler.module }}
+
+    python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.sigprofiler }} \
+      --threads 4 \
+      --vcfpath {{ input_vcf }} \
+      --output {{ output_path }} \
+      --project {{ pair.name }}
+
+{% endmacro %}
