@@ -41,12 +41,10 @@
     set -o pipefail
     module load {{ constants.tools.salmon.module }}
 
-    {% if r1fqlist[0].petagene is defined %}
-    {% if r1fqlist[0].petagene == true|default(false) %}
+    {% if r1fqlist[0].fileType == "fasterq" %}
       export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
       module load {{ constants.tools.petagene.module }}
 
-    {% endif %}
     {% endif %}
     {#
       This comment is here for protect render spacing, do not remove.
