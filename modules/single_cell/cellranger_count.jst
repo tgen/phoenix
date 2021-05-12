@@ -54,13 +54,10 @@
 
     module load {{ constants.tools.cellranger.module }}
     module load {{ constants.tools.samtools.module }}
-    {% for fq in files %}
-      {% if fq.fileType == "fasterq" and petagene not defined %}
-        export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
-        module load {{ constants.tools.petagene.module }}
-        {% set petagene=true %}
-      {% endif %}
-    {% endfor %}
+    {% if sample.fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+    {% endif %}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
