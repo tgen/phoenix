@@ -135,7 +135,7 @@
     {% set chunk_suffix = '%02d' % i %}
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
     {% endfor %}
-  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
+  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
   mem: 8G
@@ -156,7 +156,13 @@
       -f \
       -l 6 \
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam" \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"*.bwa.bam
+      {% for i in range(n_chunks) %}
+      {% set chunk_suffix = '%02d' % i %}
+      {% if not loop.last %}
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
+      {% else %}
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+      {% endfor %}
 
     {# Cleanup the tempfiles
     # removes fastq chunks and intermediate chunk bam files
@@ -171,10 +177,10 @@
   reset: predecessors
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools.verbose }} markdup.
-  input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
+  input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam
   output:
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
-    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
+    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 4
   mem: 16G
@@ -217,12 +223,14 @@
   reset: predecessors
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools.verbose }} markdup.
-  input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
+  input:
+    {% for rgid in sample.read_groups %}
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
+    {% endfor %}
   output:
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
-    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
-  cpus: 4
+  cpus: 8
   mem: 16G
   cmd: |
     set -eu
