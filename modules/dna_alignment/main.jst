@@ -42,7 +42,7 @@
     {% endif %}
 
     {% if sample.glprep == "pcrfree" %}
-      {{- bwa_mem2_samtools_chunked }}
+      {{- bwa_mem2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
     {% else %}
       {% if alignment_style == 'tgen' %}
         {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}

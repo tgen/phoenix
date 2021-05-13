@@ -63,6 +63,7 @@
   after:
     - split_fastq_{{ r1fastq.basename | replace(".", "_") }}
     - split_fastq_{{ r2fastq.basename | replace(".", "_") }}
+  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
   walltime: "48:00:00"
   cpus: 10
   mem: 50G
@@ -129,7 +130,11 @@
 - name: chunked_samtools_merge_rgid_bams_{{ sample.name }}_{{ rgid }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
   reset: predecessors
-  after-re: chunked_bwa_mem_samtools_fixmate_{{ sample.name }}_.*
+  input:
+    {% for i in range(n_chunks) %}
+    {% set chunk_suffix = '%02d' % i %}
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
+    {% endfor %}
   output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
