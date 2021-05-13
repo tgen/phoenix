@@ -162,6 +162,7 @@
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
       {% else %}
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+      {% endif %}
       {% endfor %}
 
     {# Cleanup the tempfiles
