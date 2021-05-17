@@ -6,7 +6,7 @@
 {% from 'utilities/read_group_line.jst' import read_group_line with context %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 
-{% macro fq2bam(sample) %}
+{% macro fq2bam(sample, opt_dup_distance) %}
   {% set bam %}{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam{% endset %}
 
 - name: fq2bam_{{sample.name}}
@@ -42,6 +42,7 @@
       --in-fq "temp/fastqs/{{ r1fastq.basename }}" "temp/fastqs/{{ r2fastq.basename }}" "{{ read_group_line(rg, format='bwa') }}" \
     {% endfor %}
     --output-duplicate-metrics {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt \
+    --output-duplicate-pixel-distance {{ opt_dup_distance }} \
     --out-bam "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam"
 
 {% endmacro %}
