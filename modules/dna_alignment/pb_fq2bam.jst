@@ -1,0 +1,47 @@
+# Aligns fastqs from a sample using Parabricks fq2BAM. This aligns all samples
+# in on large run. No need to split or merge. It will also run
+# mark duplicatese and BQSR if needed
+
+# This alignment command prefix is shared by all modules using bwa
+{% from 'utilities/read_group_line.jst' import read_group_line with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+{% macro fq2bam(sample) %}
+  {% set bam %}{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam{% endset %}
+
+- name: fq2bam_{{sample.name}}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, {{ sample.name }}]
+  reset: predecessors
+  input:
+  {% for rgid, rg in sample.read_groups.items() %}
+    {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+    {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+    - temp/fastqs/{{ r1fastq.basename }}
+    - temp/fastqs/{{ r2fastq.basename }}
+  {% endfor %}
+  output: {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
+  walltime: "24:00:00"
+  sbatch_args: ['-p', 'gpu', '--exclusive']
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}"
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}"
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
+
+    module load {{ constants.tools.parabricks.module }}
+
+    pbrun fq2bam \
+    --ref "{{ constants.phoenix.reference_fasta }}" \
+    --bwa-options "-Y -K 100000000" \
+    {% for rgid, rg in sample.read_groups.items() %}
+      {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+      {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+      --in-fq "temp/fastqs/{{ r1fastq.basename }}" "temp/fastqs/{{ r2fastq.basename }}" "{{ read_group_line(rg, format='bwa') }}" \
+    {% endfor %}
+    --output-duplicate-metrics {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt \
+    --out-bam "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam"
+
+{% endmacro %}
