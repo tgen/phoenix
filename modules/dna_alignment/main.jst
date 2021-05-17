@@ -44,7 +44,7 @@
 
     {% if sample.glprep == "pcrfree" %}
       {{- bwa_mem2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
-    {% if sample.glprep == "parabricks" %}
+    {% elif sample.glprep == "parabricks" %}
       {{- fq2bam(sample, opt_dup_distance) }}
     {% else %}
       {% if alignment_style == 'tgen' %}
