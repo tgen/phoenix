@@ -26,13 +26,15 @@
     set -eu
     set -o pipefail
 
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}"
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/"
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}"
+    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     module load {{ constants.tools.parabricks.module }}
 
     pbrun fq2bam \
+    --tmp-dir "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/" \
     --ref "{{ constants.phoenix.bwa_index }}" \
     --bwa-options "-Y -K 100000000" \
     {% for rgid, rg in sample.read_groups.items() %}
@@ -40,55 +42,8 @@
       {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
       --in-fq "temp/fastqs/{{ r1fastq.basename }}" "temp/fastqs/{{ r2fastq.basename }}" "{{ read_group_line(rg, format='bwa') }}" \
     {% endfor %}
-    --out-bam "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam"
-
-- name: samtools_markdup_{{ sample.name }}_bwa
-  tags: [{{ sample.gltype }}, alignment, mark_duplicates, samtools, {{ sample.name }}]
-  reset: predecessors
-  methods: Duplicate reads for {{ sample.name }} were marked with
-    {{ constants.tools.samtools.verbose }} markdup.
-  input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam
-  output:
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
-    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt
-  walltime: "48:00:00"
-  cpus: 4
-  mem: 16G
-  cmd: |
-    set -eu
-    set -o pipefail
-
-    module load {{ constants.tools.samtools.module }}
-
-    {#
-    # If this task was interrupted previously, temp files may exist
-    # that will cause errors with samtools markdup. Here, we purge any
-    # existing temp files before making the directory again.
-    #}
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/"
-    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
-
-    {#
-    # Choose an optical distance based on sequencer
-    #}
-
-    {# No long options available for the following:
-     -d      Optical distance
-     -S      Mark supplemenary alignments of duplicates as duplicates (slower)
-     -f      Write stats to named file. Implies -s (report stats)
-     -T      PREFIX    Write temporary files to PREFIX.samtools.nnnn.nnnn.tmp
-     2>      Stats are output to stderr which is redirected to ".bwa.bam.markdup.txt"
-    #}
-    samtools markdup \
-      -d {{ opt_dup_distance }} \
-      -S \
-      -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools.markdup.txt" \
-      --threads 4 \
-      --write-index \
-      -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}" \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam" \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam"
-
+    --out-duplicate-metrics "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.mdmetrics.txt" \
+    --optical-duplicate-pixel-distance {{ opt_dup_distance }} \
+    --out-bam "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.bam"
 
 {% endmacro %}
