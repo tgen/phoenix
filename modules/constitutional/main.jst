@@ -7,6 +7,7 @@
 {% from 'modules/constitutional/deepvariant.jst' import deepvariant with context %}
 {% from 'modules/constitutional/octopus.jst' import octopus_constitutional with context %}
 {% from 'modules/constitutional/ichorcna.jst' import ichorcna with context %}
+{% from 'modules/constitutional/expansion_hunter.jst' import expansion_hunter with context %}
 
 # Constitutional tools generally operate on a single DNA samples and should not run
 # on "tumor" samples with the exception of ichor that cna be run on tumor or constitutional.
@@ -22,6 +23,9 @@
 
         {% if tasks.Genome_constitutional_cna_caller_ichor|default(true) %}
            {{- ichorcna(sample, aligner='bwa', taskPrefix=taskPrefix) }}
+        {% endif %}
+        {% if tasks[taskPrefix+"_constitutional_structural_caller_expansion_hunter"]|default(true) %}
+           {{- expansion_hunter(sample, aligner='bwa' }}
         {% endif %}
     {% endif %}
 
