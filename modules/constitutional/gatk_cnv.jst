@@ -8,8 +8,8 @@
 {% set cnvPon %}{{ normal_temp }}/{{ normal.gatkCnvPon | basename }}{% endset %}
 {% set sample_bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
 {% set cnvSnps %}{{ normal_temp }}/{{ normal.gatkCnvSnps | basename }}{% endset %}
-{% set temp_dir %}temp/{{ pair.gltype }}/constitutional_copy_number/gatk/{{ sample.name }}_{{ aligner }}{% endset %}
-{% set results_dir %}{{ pair.gltype }}/constitutional_copy_number/gatk/{{ sample.name }}{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_copy_number/gatk/{{ sample.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_copy_number/gatk/{{ sample.name }}{% endset %}
 
 {% if wesAssayToPair is defined and normal.gatkExomeCnvSnps is defined %}
   {% set exomeCnvSnps %}{{ normal_temp }}/{{ normal.gatkExomeCnvSnps | basename }}{% endset %}
@@ -26,7 +26,7 @@
 
 {# Step 1 #}
 - name: constitutional_gatk_call_cnv_step1_{{ sample.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, constitutional, cna_caller, gatk, {{ sample.name }}]
+  tags: [{{ sample.gltype }}, constitutional, cna_caller, gatk, {{ sample.name }}]
   reset: prepare_tumor_only_{{ normal.name }}
   input:
     - {{ sample_bam }}
@@ -144,7 +144,7 @@
 
 {# Step 2 #}
 - name: constitutional_gatk_call_cnv_step2_{{ sample.name }}_{{ aligner }}
-  tags: [{{ pair.gltype }}, constitutional, cna_caller, gatk, {{ sample.name }}]
+  tags: [{{ sample.gltype }}, constitutional, cna_caller, gatk, {{ sample.name }}]
   reset: constitutional_gatk_call_cnv_step1_{{ sample.name }}_{{ aligner }}
   input:
     - {{ results_dir }}/{{ sample.name }}.{{ aligner }}.denoisedCR.tsv
