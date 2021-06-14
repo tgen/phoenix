@@ -19,6 +19,8 @@
 
     module load {{ constants.tools.expansion_hunter.module }}
 
+    mkdir -p {{ results_dir }}
+
     {# The variant catalog is in the install path, we grab the path here #}
     {# ExpansionHunter is in a /bin directory, we want to go one level higher #}
     eh_path=$(dirname $(dirname `which ExpansionHunter`))
