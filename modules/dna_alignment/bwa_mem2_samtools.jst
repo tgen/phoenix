@@ -66,7 +66,7 @@
   output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
   walltime: "48:00:00"
   cpus: 10
-  mem: 50G
+  mem: 32G
   cmd: |
     set -eu
     set -o pipefail
@@ -119,7 +119,7 @@
     samtools sort \
       -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/{{ chunk_suffix }}" \
       -l 2 \
-      -m 3G \
+      -m 768M \
       --threads 9 \
       --output-fmt BAM \
       -o "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
