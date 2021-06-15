@@ -1,7 +1,7 @@
 
 {% macro expansion_hunter(sample, aligner='bwa') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set results_dir %}{{ sample.gltype }}/constitutional_structural_calls/expansion_hunter/{{ sample.name }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/expansion_hunter/{{ sample.name }}{% endset %}
 
 - name: expansion_hunter_{{ aligner }}_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, repeats, expansion, SRT, {{ sample.name }}]
@@ -10,7 +10,7 @@
   output:
     - {{ results_dir }}/{{ sample.name }}.expansion_hunter.json
     - {{ results_dir }}/{{ sample.name }}.expansion_hunter.vcf
-  walltime: "8:00:00"
+  walltime: "12:00:00"
   cpus: 1
   mem: 2G
   cmd: |
