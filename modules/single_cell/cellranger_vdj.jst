@@ -16,10 +16,6 @@
 {% set json %}{{ outdir }}/stats/{{ sample.name }}.cellranger_vdj.bam.metrics_summary.json{% endset %}
 
 {% set samples_list = [] %}
-{% for rgpu, _ in files|groupby('rgpu') %}
-  {% set sample_string %}{{ sample.name }}_{{ rgpu[:-2] }}{% endset %}
-  {% do samples_list.append(sample_string) %}
-{% endfor %}
 
 - name: cellranger_vdj_{{ sample.name }}
   tags: [{{ sample.gltype }}, single_cell, cellranger_vdj, {{ sample.name }}]
@@ -77,7 +73,10 @@
     mkdir -p "{{ outdir }}/stats"
 
     {% for fq in files %}
-    ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename }}"
+      {% set fq_name %}{{ fq.name }}_{{ fq.rgpu[:-2] }}_{{ fq.rgbc }}{% endset %}
+      {% set fq_new %}{{ fq_name }}_S1{% endset %}
+      {% do samples_list.append(fq_name) %}
+      ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename | replace(fq_name, fq_new) }}"
     {% endfor %}
 
     {#
