@@ -43,18 +43,21 @@
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.concat_ref.fasta
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.concat_ref.fasta.fai
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus_annotations.csv
-    - {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus_annotations.json
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.bam
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.bam.bai
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.fasta
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.fasta.fai
-    - {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.fastq
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.filtered_contig_annotations.csv
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.filtered_contig.fasta
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.filtered_contig.fastq
     - {{ metrics_output }}
     - {{ outdir }}/{{ sample.name }}.cellranger_vdj.vloupe
     - {{ outdir }}/stats/{{ sample.name }}.cellranger_vdj.bam.web_summary.html
+    - {{ outdir }}/{{ sample.name }}.cellranger_vdj.airr_rearrangement.tsv
+    - {{ outdir }}/{{ sample.name }}.cellranger_vdj.vdj_contig_info.pb
+    - {{ outdir }}/{{ sample.name }}.cellranger_vdj.donor_regions.fa
+    - {{ outdir }}/{{ sample.name }}.cellranger_vdj.regions.fa
+    - {{ outdir }}/{{ sample.name }}.cellranger_vdj.reference.json
   cpus: 20
   mem: 80G
   walltime: "48:00:00"
@@ -106,18 +109,21 @@
     mv {{ cellranger_out }}/concat_ref.fasta {{ outdir }}/{{ sample.name }}.cellranger_vdj.concat_ref.fasta
     mv {{ cellranger_out }}/concat_ref.fasta.fai {{ outdir }}/{{ sample.name }}.cellranger_vdj.concat_ref.fasta.fai
     mv {{ cellranger_out }}/consensus_annotations.csv {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus_annotations.csv
-    mv {{ cellranger_out }}/consensus_annotations.json {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus_annotations.json
     mv {{ cellranger_out }}/consensus.bam {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.bam
     mv {{ cellranger_out }}/consensus.bam.bai {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.bam.bai
     mv {{ cellranger_out }}/consensus.fasta {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.fasta
     mv {{ cellranger_out }}/consensus.fasta.fai {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.fasta.fai
-    mv {{ cellranger_out }}/consensus.fastq {{ outdir }}/{{ sample.name }}.cellranger_vdj.consensus.fastq
     mv {{ cellranger_out }}/filtered_contig_annotations.csv {{ outdir }}/{{ sample.name }}.cellranger_vdj.filtered_contig_annotations.csv
     mv {{ cellranger_out }}/filtered_contig.fasta {{ outdir }}/{{ sample.name }}.cellranger_vdj.filtered_contig.fasta
     mv {{ cellranger_out }}/filtered_contig.fastq {{ outdir }}/{{ sample.name }}.cellranger_vdj.filtered_contig.fastq
     mv {{ cellranger_out }}/metrics_summary.csv {{ metrics_output }}
     mv {{ cellranger_out }}/vloupe.vloupe {{ outdir }}/{{ sample.name }}.cellranger_vdj.vloupe
     mv {{ cellranger_out }}/web_summary.html {{ outdir }}/stats/{{ sample.name }}.cellranger_vdj.bam.web_summary.html
+    mv {{ cellranger_out }}/airr_rearrangement.tsv {{ outdir }}/{{ sample.name }}.cellranger_vdj.airr_rearrangement.tsv
+    mv {{ cellranger_out }}/vdj_contig_info.pb {{ outdir }}/{{ sample.name }}.cellranger_vdj.vdj_contig_info.pb
+    mv {{ cellranger_out }}/vdj_reference/fasta/donor_regions.fa {{ outdir }}/{{ sample.name }}.cellranger_vdj.donor_regions.fa
+    mv {{ cellranger_out }}/vdj_reference/fasta/regions.fa {{ outdir }}/{{ sample.name }}.cellranger_vdj.regions.fa
+    mv {{ cellranger_out }}/vdj_reference/reference.json {{ outdir }}/{{ sample.name }}.cellranger_vdj.reference.json
 
   {{- stats2json(sample.gltype, sample.name, task, metrics_output, json, "cellranger_vdj_metrics", sample_name=sample.name, library_name=sample.rglb) }}
 
