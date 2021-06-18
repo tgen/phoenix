@@ -42,10 +42,9 @@
       {% set opt_dup_distance = 100 %}
     {% endif %}
 
-    {% if sample.glprep == "pcrfree" %}
+    {# PCRfree will not have any pcr cycles #}
+    {% if sample.number_of_cycles is defined and sample.number_of_cycles == 0 %}
       {{- bwa_mem2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
-    {% elif sample.glprep == "parabricks" %}
-      {{- fq2bam(sample, opt_dup_distance) }}
     {% else %}
       {% if alignment_style == 'tgen' %}
         {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
