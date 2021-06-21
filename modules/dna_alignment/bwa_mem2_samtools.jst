@@ -181,7 +181,7 @@
   input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam
   output:
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
-    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 4
   mem: 16G
@@ -196,8 +196,8 @@
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/"
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}_{{ rgid }}" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}_{{ rgid }}"
     mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
 
     {# No long options available for the following:
@@ -210,7 +210,7 @@
     samtools markdup \
       -d {{ opt_dup_distance }} \
       -S \
-      -f "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt" \
+      -f "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt" \
       --threads 4 \
       --write-index \
       -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}_{{ rgid }}" \
@@ -227,9 +227,11 @@
   input:
     {% for rgid in sample.read_groups %}
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
+    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
     {% endfor %}
   output:
     - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
+    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
   walltime: "48:00:00"
   cpus: 8
   mem: 16G
@@ -257,5 +259,21 @@
       "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam"
       {% endif %}
     {% endfor %}
+
+    {# Merging markdup stat files #}
+    {% set merge_rgid_sample = (sample.read_groups.values()|first).rgid|default('') %}
+    paste \
+      {% for rgid in sample.read_groups %}
+      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools_markdup"
+      {%- endfor %}
+      | tail -n +2 | sed 's/\t[a-zA-Z :_]\+/+/g' | awk '{ print $NF }' | bc \
+      > temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt
+
+    tail -n +2 {{ sample.name }}_{{ merge_rgid_sample }}.bwa.bam.samtools.markdup.txt | cut -d':' -f1 \
+      | paste - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt | sed 's/\t/: /g' \
+      > {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
+
+    header=$(head -n 1 {{ sample.name }}_{{ merge_rgid_sample }}.bwa.bam.samtools.markdup.txt)
+    sed -i "1s/^/${header}/" {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
 
 {% endmacro %}
