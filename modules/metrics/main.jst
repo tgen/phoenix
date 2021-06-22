@@ -1,5 +1,6 @@
 {%- from 'modules/metrics/mutation_burden.jst' import mutation_burden with context %}
 {%- from 'modules/metrics/msisensor_pro.jst' import msisensor_pro with context %}
+{%- from 'modules/metrics/sigprofiler.jst' import sigprofiler with context %}
 
 {%- macro collect_somatic_metrics(pair, normal_bam, tumor_bam, results_dir, taskPrefix, aligner, variant_caller) %}
 
@@ -54,10 +55,12 @@
   {% if flags.vep %}
     {% set final_vcf %}{{ final_vcf_prefix }}.vep.pick.vcf.gz{% endset %}
     {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'vep') }}
+    {{- sigprofiler(pair, final_vcf, variant_caller, aligner) }}
   {% endif %}
   {% if flags.snpeff %}
     {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.can.vcf.gz{% endset %}
     {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'snpeff') }}
+    {{- sigprofiler(pair, final_vcf, variant_caller, aligner) }}
   {% endif %}
 {% endif %}
 
