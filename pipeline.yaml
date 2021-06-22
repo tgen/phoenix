@@ -273,9 +273,9 @@ constants:
         Genome Project Data Processing Subgroup, The Sequence alignment/map (SAM) format and SAMtools,
         Bioinformatics (2009) 25(16) 2078-9 [19505943]
     sigprofiler:
-      module: Sigprofiler/1.1
+      module: SigProfiler/1.1
       version: "1.1"
-      verbose: Sigprofiler v1.1
+      verbose: SigProfiler v1.1
     singularity:
       module: singularity/3.5.2-phoenix
       version: "3.5.2"
