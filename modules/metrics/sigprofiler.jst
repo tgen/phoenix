@@ -26,7 +26,7 @@
     {# sigprofiler does not like vcf.gz, decompress #}
     bcftools view \
     --output-type v \
-    --output-file {{ temp_dir }}/vcfs/{{ input_vcf|basename }}.vcf \
+    --output-file {{ temp_dir }}/vcfs/{{ input_vcf[:-3]|basename }} \
     {{ input_vcf }}
 
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.sigprofiler }} \
