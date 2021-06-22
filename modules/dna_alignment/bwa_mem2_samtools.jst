@@ -13,6 +13,10 @@
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
 {% macro bwa_mem2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) %}
+
+{% set temp_dir %}temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/bwa/{{ sample.name }}{% endset %}
+
 {% for rgid, rg in sample.read_groups.items() %}
 {% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
 {% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
@@ -34,8 +38,8 @@
     set -eu
     set -o pipefail
 
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
+    rm -r "{{ temp_dir }}/{{ rgid }}/{{ fastq.basename }}/" || true
+    mkdir -p "{{ temp_dir }}/{{ rgid }}/{{ fastq.basename }}/"
 
     zcat "temp/fastqs/{{ fastq.basename }}" |\
       split \
@@ -43,9 +47,9 @@
         --suffix-length 2 \
         --lines {{ n_lines }} \
         - \
-        "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
+        "{{ temp_dir }}/{{ rgid }}/{{ fastq.basename }}/"
 
-    N_CREATED=$(ls "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
+    N_CREATED=$(ls "{{ temp_dir }}/{{ rgid }}/{{ fastq.basename }}/" | wc -l)
 
     if [[ ${N_CREATED} -ne {{ n_chunks }} ]]
     then
@@ -63,7 +67,7 @@
   after:
     - split_fastq_{{ r1fastq.basename | replace(".", "_") }}
     - split_fastq_{{ r2fastq.basename | replace(".", "_") }}
-  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
+  output: {{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
   walltime: "48:00:00"
   cpus: 10
   mem: 32G
@@ -79,8 +83,8 @@
     # that will cause errors with samtools sort. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
+    rm -r "{{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/" || true
+    mkdir -p "{{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/"
 
     {# No long options available for the following:
      bwa mem
@@ -109,20 +113,20 @@
       -t 9 \
       -R "{{ read_group_line(rg, format='bwa') }}" \
       "{{ constants.phoenix.bwa_mem2_index }}" \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
+      "{{ temp_dir }}/{{ rgid }}/{{ r1fastq.basename }}/{{ chunk_suffix }}" \
+      "{{ temp_dir }}/{{ rgid }}/{{ r2fastq.basename }}/{{ chunk_suffix }}" |\
     samtools fixmate \
       --threads 1 \
       -m \
       - \
       - |\
     samtools sort \
-      -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/{{ chunk_suffix }}" \
+      -T "{{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}_st_sort_temp/{{ chunk_suffix }}" \
       -l 2 \
       -m 768M \
       --threads 9 \
       --output-fmt BAM \
-      -o "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
+      -o "{{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
       -
 
 {% endfor %}
@@ -133,9 +137,9 @@
   input:
     {% for i in range(n_chunks) %}
     {% set chunk_suffix = '%02d' % i %}
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
+    - {{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam
     {% endfor %}
-  output: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam
+  output: {{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.bam
   walltime: "24:00:00"
   cpus: 8
   mem: 8G
@@ -155,13 +159,13 @@
       -c \
       -f \
       -l 6 \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam" \
+      "{{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.bam" \
       {% for i in range(n_chunks) %}
       {% set chunk_suffix = '%02d' % i %}
       {% if not loop.last %}
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
+      "{{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam" \
       {% else %}
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
+      "{{ temp_dir }}/{{ rgid }}/{{ chunk_suffix }}.bwa.bam"
       {% endif %}
       {% endfor %}
 
@@ -169,7 +173,7 @@
     # removes fastq chunks and intermediate chunk bam files
     #}
     {% if not debug %}
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}/"
+    rm -r "{{ temp_dir }}/{{ rgid }}/"
     {% endif %}
 
 
@@ -178,10 +182,10 @@
   reset: predecessors
   methods: Duplicate reads for {{ sample.name }} were marked with
     {{ constants.tools.samtools.verbose }} markdup.
-  input: temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam
+  input: {{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.bam
   output:
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
+    - {{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
+    - {{ temp_dir }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
   walltime: "48:00:00"
   cpus: 4
   mem: 16G
@@ -196,9 +200,10 @@
     # that will cause errors with samtools markdup. Here, we purge any
     # existing temp files before making the directory again.
     #}
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}_{{ rgid }}" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}_{{ rgid }}"
-    mkdir -p "{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/"
+    rm -r "{{ temp_dir }}/markdup_temp/{{ sample.name }}_{{ rgid }}" || true
+    rm -r "{{ temp_dir }}/stats/" || true
+    mkdir -p "{{ temp_dir }}/markdup_temp/{{ sample.name }}_{{ rgid }}"
+    mkdir -p "{{ temp_dir }}/stats/"
 
     {# No long options available for the following:
      -d      Optical distance
@@ -210,12 +215,12 @@
     samtools markdup \
       -d {{ opt_dup_distance }} \
       -S \
-      -f "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt" \
+      -f "{{ temp_dir }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt" \
       --threads 4 \
       --write-index \
-      -T "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/markdup_temp/{{ sample.name }}_{{ rgid }}" \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam" \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam"
+      -T "{{ temp_dir }}/markdup_temp/{{ sample.name }}_{{ rgid }}" \
+      "{{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.bam" \
+      "{{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam"
 
 {% endfor %}
 
@@ -226,12 +231,12 @@
     {{ constants.tools.samtools.verbose }} markdup.
   input:
     {% for rgid in sample.read_groups %}
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
+    - {{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam
+    - {{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt
     {% endfor %}
   output:
-    - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam
-    - {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
+    - {{ temp_dir }}/{{ sample.name }}.bwa.md.bam
+    - {{ results_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
   walltime: "48:00:00"
   cpus: 8
   mem: 16G
@@ -240,6 +245,8 @@
     set -o pipefail
 
     module load {{ constants.tools.samtools.module }}
+
+    mkdir -p "{{ results_dir }}/stats/"
 
     {# No long options available for the following:
       -c           Combine @RG headers with colliding IDs [alter IDs to be distinct]
@@ -251,29 +258,38 @@
       -c \
       -f \
       -l 6 \
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}.bwa.md.bam" \
+      "{{ temp_dir }}/{{ sample.name }}.bwa.md.bam" \
     {% for rgid in sample.read_groups %}
       {% if not loop.last %}
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam" \
+      "{{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam" \
       {% else %}
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam"
+      "{{ temp_dir }}/{{ sample.name }}_{{ rgid }}.bwa.md.bam"
       {% endif %}
     {% endfor %}
 
     {# Merging markdup stat files #}
-    {% set merge_rgid_sample = (sample.read_groups.values()|first).rgid|default('') %}
+    {% set first_sample_rgid = (sample.read_groups.values()|first).rgid|default('') %}
+
+    {#
+    Pasting the files together and stripping string down to integer values
+    then bc sum them together respectively.
+    #}
     paste \
       {% for rgid in sample.read_groups %}
-      "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools_markdup"
+      "{{ temp_dir }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt"
       {%- endfor %}
       | tail -n +2 | sed 's/\t[a-zA-Z :_]\+/+/g' | awk '{ print $NF }' | bc \
-      > temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt
+      > {{ temp_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt
 
-    tail -n +2 {{ sample.name }}_{{ merge_rgid_sample }}.bwa.bam.samtools.markdup.txt | cut -d':' -f1 \
-      | paste - temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt | sed 's/\t/: /g' \
-      > {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
+    {# Combining the summed values with their naming #}
+    tail -n +2 {{ temp_dir }}/stats/{{ sample.name }}_{{ first_sample_rgid }}.bwa.bam.samtools.markdup.txt |\
+      cut -d':' -f1 |\
+      paste - {{ temp_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt |\
+      sed 's/\t/: /g' \
+      > {{ results_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
 
-    header=$(head -n 1 {{ sample.name }}_{{ merge_rgid_sample }}.bwa.bam.samtools.markdup.txt)
-    sed -i "1s/^/${header}/" {{ sample.gltype }}/alignment/bwa/{{ sample.name }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
+    {# insert COMMAND: into the top of the merged file #}
+    header=$(head -n 1 {{ temp_dir }}/stats/{{ sample.name }}_{{ first_sample_rgid }}.bwa.bam.samtools.markdup.txt)
+    sed -i "1i ${header}" {{ results_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
 
 {% endmacro %}
