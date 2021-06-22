@@ -38,9 +38,9 @@ constants:
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
     cellranger:
-      module: cellranger/6.0.0
-      version: "6.0.0"
-      verbose: 10X CellRanger v6.0.0
+      module: cellranger/6.0.1
+      version: "6.0.1"
+      verbose: 10X CellRanger v6.0.1
       website: https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/what-is-cell-ranger
       citation: >
         TODO
