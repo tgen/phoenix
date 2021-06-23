@@ -201,7 +201,7 @@
     # existing temp files before making the directory again.
     #}
     rm -r "{{ temp_dir }}/markdup_temp/{{ sample.name }}_{{ rgid }}" || true
-    rm -r "{{ temp_dir }}/stats/" || true
+    rm "{{ temp_dir }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt" || true
     mkdir -p "{{ temp_dir }}/markdup_temp/{{ sample.name }}_{{ rgid }}"
     mkdir -p "{{ temp_dir }}/stats/"
 
