@@ -1,15 +1,13 @@
 
 {% macro expansion_hunter(sample, aligner='bwa') %}
 {% set bam %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ sample.gltype }}/constitutional_variant_calls/expansion_hunter/{{ sample.name }}{% endset %}
 {% set results_dir %}{{ sample.gltype }}/constitutional_variant_calls/expansion_hunter/{{ sample.name }}{% endset %}
 
 - name: expansion_hunter_{{ aligner }}_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, repeats, expansion, SRT, {{ sample.name }}]
-  input:
-    - {{ bam }}
-  output:
-    - {{ results_dir }}/{{ sample.name }}.expansion_hunter.json
-    - {{ results_dir }}/{{ sample.name }}.expansion_hunter.vcf
+  input: {{ bam }}
+  output: {{ results_dir }}/{{ sample.name }}.expansion_hunter.all.vcf.gz
   walltime: "12:00:00"
   cpus: 1
   mem: 2G
@@ -18,7 +16,10 @@
     set -o pipefail
 
     module load {{ constants.tools.expansion_hunter.module }}
+    module load {{ constants.tools.bcftools.module }}
 
+    rm -r {{ temp_dir }} || true
+    mkdir -p {{ temp_dir }}
     mkdir -p {{ results_dir }}
 
     {# The variant catalog is in the install path, we grab the path here #}
@@ -29,6 +30,43 @@
       --reads {{ bam }} \
       --reference {{ constants.phoenix.reference_fasta }} \
       --variant-catalog ${eh_path}/variant_catalog/grch38/variant_catalog.json \
-      --output-prefix {{ results_dir }}/{{ sample.name }}.expansion_hunter
+      --output-prefix {{ temp_dir }}/{{ sample.name }}.expansion_hunter
+
+    bcftools view \
+      --output-type z \
+      --output-file {{ results_dir }}/{{ sample.name }}.expansion_hunter.all.vcf.gz \
+      {{ temp_dir }}/{{ sample.name }}.expansion_hunter.vcf
+
+    bcftools index --tbi --force {{ results_dir }}/{{ sample.name }}.expansion_hunter.all.vcf.gz
+
+
+- name: expansion_hunter_filter_variants_{{ sample.name }}_{{ aligner }}
+  tags: [{{ sample.gltype}}, constitutional, snp_indel_caller, deepvariant, {{ sample.name }}]
+  input:
+    - {{ results_dir }}/{{ sample.name }}.expansion_hunter.all.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}.expansion_hunter.all.vcf.gz.tbi
+  output:
+    - {{ results_dir }}/{{ sample.name }}.expansion_hunter.pass.vcf.gz
+    - {{ results_dir }}/{{ sample.name }}.expansion_hunter.pass.vcf.gz.tbi
+  cpus: 1
+  mem: 4G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    {# Then filter out the PASS variants to a separate file #}
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
+      {% if sample.gltype == 'exome' %}
+      --targets-file "{{ sample.capture_kit.extended_bed }}" \
+      {% endif %}
+      "{{ results_dir }}/{{ sample.name }}.expansion_hunter.all.vcf.gz" \
+      > "{{ results_dir }}/{{ sample.name }}.expansion_hunter.pass.vcf.gz"
+
+    bcftools index --tbi --force "{{ results_dir }}/{{ sample.name }}.expansion_hunter.pass.vcf.gz"
 
 {% endmacro %}
