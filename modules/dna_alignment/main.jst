@@ -43,7 +43,7 @@
     {% endif %}
 
     {# PCRfree will not have any pcr cycles #}
-    {% if sample.number_of_cycles is defined and sample.number_of_cycles == 0 %}
+    {% if sample.numberOfAmpCycles is defined and sample.numberOfAmpCycles == 0 %}
       {{- bwa_mem2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
     {% else %}
       {% if alignment_style == 'tgen' %}
