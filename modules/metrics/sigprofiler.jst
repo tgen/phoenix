@@ -1,7 +1,9 @@
 {% from 'modules/qc/stats2json.jst' import stats2json with context %}
 
-{% macro sigprofiler(pair, input_vcf, variant_caller, aligner) %}
+{% macro sigprofiler(pair, vcf_prefix, variant_caller, aligner) %}
 
+{% set all_vcf %}{{ vcf_prefix }}.vcf.gz{% endset %}
+{% set pass_vcf %}{{ vcf_prefix|basename }}.pass.vcf{% endset %}
 {% set temp_dir %}temp/{{ pair.gltype }}/metrics/sigprofiler/{{ pair.name }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/metrics/sigprofiler/{{ pair.name }}{% endset %}
 
@@ -23,11 +25,12 @@
     mkdir -p {{ temp_dir }}/vcfs
     mkdir -p {{ results_dir }}
 
-    {# sigprofiler does not like vcf.gz, decompress #}
-    bcftools view \
-    --output-type v \
-    --output-file {{ temp_dir }}/vcfs/{{ input_vcf[:-3]|basename }} \
-    {{ input_vcf }}
+    {# sigprofiler does not like vcf.gz and we need to filter to CC>=3 #}
+    bcftools filter \
+      --include 'INFO/CC>=3'
+      --output-type v \
+      --output-file {{ temp_dir }}/vcfs/{{ pass_vcf }} \
+      {{ all_vcf }}
 
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.sigprofiler }} \
       --threads 4 \

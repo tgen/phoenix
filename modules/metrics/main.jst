@@ -55,17 +55,19 @@
   {% if flags.vep %}
     {% set final_vcf %}{{ final_vcf_prefix }}.vep.pick.vcf.gz{% endset %}
     {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'vep') }}
-    {{- sigprofiler(pair, final_vcf, variant_caller, aligner) }}
   {% endif %}
   {% if flags.snpeff %}
     {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.can.vcf.gz{% endset %}
     {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'snpeff') }}
-    {{- sigprofiler(pair, final_vcf, variant_caller, aligner) }}
   {% endif %}
 {% endif %}
 
 {% if tasks[taskPrefix+"_somatic_sample_metric_msisensor_pro"]|default(true) %}
   {{- msisensor_pro(pair, normal_bam, tumor_bam, aligner) }}
+{% endif %}
+
+{% if tasks[]|default(true) %}
+  {{- sigprofiler(pair, vcf_prefix, variant_caller, aligner) }}
 {% endif %}
 
 {% endmacro %}
