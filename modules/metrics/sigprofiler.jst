@@ -10,7 +10,7 @@
 - name: sigprofiler_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}
   tags:
   input:
-    - {{ input_vcf }}
+    - {{ all_vcf }}
   walltime: "24:00:00"
   cpus: 4
   mem: 8G
