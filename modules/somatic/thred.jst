@@ -1,14 +1,28 @@
 {% macro thred_somatic(pair, aligner='bwa') %}
 
 {% set input_seg %}{{ pair.gltype }}/somatic_copy_number/gatk/{{ pair.name }}/{{ pair.name }}.{{ aligner }}.re_centered.cr.igv.seg{% endset %}
+{% set results_dir %}{{ pair.gltype }}/metrics/thred/{{ pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/metrics/thred/{{ pair.name }}{% endset %}
 
 - name: thred_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, HRD, {{ pair.name }}]
   input:
     - {{ input_seg }}
-  cpus: 4
-  mem: 8G
-  walltime: "24:00:00"
+  output:
+    - {{ results_dir }}/{{ pair.name }}_hrd_scores.txt
+    - {{ results_dir }}/{{ pair.name }}_hrd_flt_segments.txt
+    - {{ results_dir }}/{{ pair.name }}_hrd_ori_segments.txt
+    - {{ results_dir }}/{{ pair.name }}_excluded90_hrd_excluded_segments.txt
+    - {{ results_dir }}/{{ pair.name }}_hrd_captured_genome_territory.txt
+    - {{ results_dir }}/{{ pair.name }}_original_segments_karyoplot_1.png
+    - {{ results_dir }}/{{ pair.name }}_original_segments_karyoplot_2.png
+    - {{ results_dir }}/{{ pair.name }}_segments_filtered_karyoplot_1.png
+    - {{ results_dir }}/{{ pair.name }}_segments_filtered_karyoplot_2.png
+    - {{ results_dir }}/{{ pair.name }}_segments_excluded_karyoplot_1.png
+    - {{ results_dir }}/{{ pair.name }}_segments_excluded_karyoplot_2.png
+  cpus: 1
+  mem: 2G
+  walltime: "4:00:00"
   cmd: |
     set -eu
     set -o pipefail
@@ -16,18 +30,25 @@
     module load {{ constants.tools.python_3_7_2.module }}
     module load {{ constants.tools.thred.module }}
 
+    mkdir -p {{ results_dir }}
+
     {# Purge any existing run files prior to starting #}
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
 
-    tHRed.py \
-      --genomic-regions {{ constants.phoenix.centromere }} \
+    sed 's/$/\tcentromere/' {{ constants.phoenix.centromere }} \
+      > {{ temp_dir }}/genomic_regions.bed
+
+    tHReD.py \
+      --genomic-regions {{ temp_dir }}/genomic_regions.bed \
       --seg {{ input_seg }} \
       --sample {{ pair.name }} \
-      --outfile {{ results_dir }}/{{ pair.name }}_hrd_scores.txt \
+      --outfile {{ pair.name }} \
       --dir-out {{ results_dir }} \
       --th-log2r -0.1613 \
       --minsize 1000000 \
       --th-pct-overlapping 0.90 \
       --plots \
       --exclude-contigs "chrX,chrY,chrM"
+
+{% endmacro %}
