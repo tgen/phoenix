@@ -278,13 +278,22 @@
       {% for rgid in sample.read_groups %}
       "{{ temp_dir }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt"
       {%- endfor %}
-      | tail -n +2 | sed 's/\t[a-zA-Z :_]\+/+/g' | awk '{ print $NF }' | bc \
-      > {{ temp_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt
+      | head -n -1 | tail -n +2 | sed 's/\t[a-zA-Z :_]\+/+/g' | awk '{ print $NF }' | bc \
+      > {{ temp_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_merge.txt
+
+    paste \
+      {% for rgid in sample.read_groups %}
+      "{{ temp_dir }}/stats/{{ sample.name }}_{{ rgid }}.bwa.bam.samtools.markdup.txt"
+      {%- endfor %}
+      | tail -n1 | sed 's/\t[a-zA-Z :_]\+/\ /g' | cut -d' ' -f2- |\
+      awk '{m=$1;for(i=1;i<=NF;i++)if($i>m)m=$i;print m}' \
+      >> {{ temp_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_merge.txt
+
 
     {# Combining the summed values with their naming #}
     tail -n +2 {{ temp_dir }}/stats/{{ sample.name }}_{{ first_sample_rgid }}.bwa.bam.samtools.markdup.txt |\
       cut -d':' -f1 |\
-      paste - {{ temp_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_sum.txt |\
+      paste - {{ temp_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup_merge.txt |\
       sed 's/\t/: /g' \
       > {{ results_dir }}/stats/{{ sample.name }}.bwa.bam.samtools_markdup.txt
 
