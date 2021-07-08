@@ -8,7 +8,7 @@
   tags: [{{ sample.gltype }}, repeats, expansion, SRT, {{ sample.name }}]
   input: {{ bam }}
   output: {{ results_dir }}/{{ sample.name }}.expansion_hunter.all.vcf.gz
-  walltime: "12:00:00"
+  walltime: "24:00:00"
   cpus: 1
   mem: 2G
   cmd: |
@@ -49,8 +49,8 @@
     - {{ results_dir }}/{{ sample.name }}.expansion_hunter.pass.vcf.gz
     - {{ results_dir }}/{{ sample.name }}.expansion_hunter.pass.vcf.gz.tbi
   cpus: 1
-  mem: 4G
-  walltime: "24:00:00"
+  mem: 2G
+  walltime: "12:00:00"
   cmd: |
     set -eu
     set -o pipefail
