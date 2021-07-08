@@ -78,7 +78,7 @@
 
 {# Checking if CC_filter is already defined, in preparation for allowing user defined filters #}
 {% if CC_filter is not defined %}
-  {% if pair.callers is defined %}
+  {% if pair.callers is defined and pair.callers|length > 1 %}
     {% set num_callers %}{{ pair.callers | length }}{% endset %}
     {% if num_callers > 3 %}
       {% set CC_filter %}INFO/CC>={{ pair.callers | length - 2 }}{% endset %}
@@ -88,6 +88,8 @@
   {% endif %}
 {% endif %}
 
+{# If CC filter is still not defined then we only have one caller and filtering is pointless #}
+{% if CC_filter is defined %}
 - name: somatic_variant_filtering_{{ pair.name }}_{{ variant_caller }}
   tags: [somatic, variant_filter, {{ variant_caller }}]
   {% if temp_dir in input_vcf %}
@@ -115,4 +117,5 @@
 
     bcftools index --force {{ temp_vcf_prefix}}.filtered_db.vcf.gz
 
+{% endif %}
 {% endmacro %}
