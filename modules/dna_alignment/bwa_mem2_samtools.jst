@@ -38,6 +38,14 @@
     set -eu
     set -o pipefail
 
+    {% if fastq.fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
     rm -r "{{ temp_dir }}/{{ rgid }}/{{ fastq.basename }}/" || true
     mkdir -p "{{ temp_dir }}/{{ rgid }}/{{ fastq.basename }}/"
 
