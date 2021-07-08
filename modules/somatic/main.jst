@@ -8,7 +8,6 @@
 {% from 'modules/somatic/delly.jst' import delly_somatic with context %}
 {% from 'modules/somatic/gridss.jst' import gridss_somatic with context %}
 {% from 'modules/somatic/gatk_cnv.jst' import gatk_cnv with context %}
-{% from 'modules/somatic/thred.jst' import thred_somatic with context %}
 
 
 # Somatic tools generally operate on pairs of DNA samples (tumor/normal).
@@ -136,10 +135,6 @@
 
     {% if tasks[taskPrefix+"_somatic_cna_caller_gatk"]|default(true) %}
         {{- gatk_cnv(pair, aligner='bwa') }}
-    {% endif %}
-
-    {% if tasks[taskPrefix+"_somatic_cna_metric_thred"]|default(true) %}
-        {{- thred_somatic(pair, aligner='bwa') }}
     {% endif %}
 
 {% endfor %}
