@@ -74,7 +74,7 @@
     ( cd {{ temp_dir }} && cellranger count \
       --localcores 20 \
       --localmem 160 \
-      --expect-cells {{ sample.expected_cells | default(3000) }} \
+      --expect-cells {{ sample.expectedCells | default(3000) }} \
       --chemistry "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].chemistry_name }}" \
       --id "{{ sample.name }}" \
       --fastqs . \
