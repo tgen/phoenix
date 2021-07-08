@@ -1,4 +1,5 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'utilities/vcf_stats.jst' import vcf_stats with context %}
 
 {% macro mutect2_tumor_only(pair, aligner='bwa') %}
 {% do pair.callers.append('mutect2') %}
@@ -351,5 +352,7 @@
     {% set task %}tumor_only_mutect2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
+    {{- vcf_stats(pass_vcf, results_dir) }}
+    {{- vcf_stats(all_vcf, results_dir) }}
 
 {% endmacro %}
