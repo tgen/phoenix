@@ -9,10 +9,10 @@
 {% set r2fqlist = [] %}
 {% for rgid, rg in sample.read_groups.items() %}
     {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R1') %}
-        {% do r1fqlist.append('"temp/fastqs/' + (fq.basename) + '"') %}
+        {% do r1fqlist.append(fq) %}
     {% endfor %}
     {% for fq in rg.data_files|selectattr('fastqCode', 'eq', 'R2') %}
-        {% do r2fqlist.append('"temp/fastqs/' + (fq.basename) + '"') %}
+        {% do r2fqlist.append(fq) %}
     {% endfor %}
 {% endfor %}
 
@@ -24,10 +24,10 @@
   reset: predecessors
   input:
   {% for fq in r1fqlist %}
-    - {{ fq }}
+    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
   {% for fq in r2fqlist %}
-    - {{ fq }}
+    - temp/fastqs/{{ fq.basename }}
   {% endfor %}
   output:
     - {{ results_dir }}/{{ sample.name }}.transcripts.sf
@@ -41,6 +41,14 @@
     set -o pipefail
     module load {{ constants.tools.salmon.module }}
 
+    {% if r1fqlist[0].fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
     mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ results_dir }}"
 
@@ -52,9 +60,9 @@
       --libType "{{ constants.phoenix.strandedness_options[sample.strandedness].salmon }}" \
       --index "{{ constants.phoenix.salmon_index }}" \
       --geneMap "{{ constants.phoenix.gtf }}" \
-      -1 {{ r1fqlist|join(' ') }} \
+      -1 {% for fq in r1fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%} {% endif %}{% endfor %} \
       {% if r2fqlist %}
-      -2 {{ r2fqlist|join(' ') }} \
+      -2 {% for fq in r2fqlist %}"temp/fastqs/{{ fq.basename }}"{% if not loop.last%} {% endif %}{% endfor %} \
       {% endif %}
       --output "{{ temp_dir }}"
 

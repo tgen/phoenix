@@ -66,6 +66,14 @@
     set -o pipefail
     module load {{ constants.tools.star.module }}
 
+    {% if r1fqlist[0].fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
     mkdir -p "{{ temp_dir }}"
     mkdir -p "{{ results_dir }}/stats"
     mkdir -p "{{ star_finalcountsdir }}"
