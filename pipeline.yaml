@@ -37,6 +37,10 @@ constants:
       citation: >
         Li H. and Durbin R. (2009) Fast and accurate short read alignment with Burrows-Wheeler Transform.
         Bioinformatics, 25:1754-60. [PMID: 19451168]
+    bwa_mem2:
+      module: bwa-mem2/2.2.1
+      version: "2.2.1"
+      verbose: Burrows-Wheeler Aligner v2.2.1
     cellranger:
       module: cellranger/6.0.1
       version: "6.0.1"
@@ -73,6 +77,14 @@ constants:
       module: DLE/0.1.5
       version: "0.1.5"
       verbose: Discordant Loci Extractor v0.1.5
+    expansion_hunter:
+      module: ExpansionHunter/4.0.2
+      version: "4.0.2"
+      verbose: Illumina ExpansionHunter v4.0.2
+      citation: >
+        Egor Dolzhenko, Viraj Deshpande, Felix Schlesinger, Peter Krusche, Roman Petrovski, and others,
+        ExpansionHunter: A sequence-graph based tool to analyze variation in short tandem repeat regions,
+        Bioinformatics 2019
     freebayes:
       module: freebayes/1.3.1-foss-2019a
       version: "1.3.1"
@@ -209,6 +221,10 @@ constants:
       website: https://github.com/genome/pairoscope
       citation: >
         TBD
+    petagene:
+      module: petagene/1.3.0p7
+      version: 1.3.0p7
+      PetaLinkMode: "+fastq"
     phaser:
       module: phASER/1.1.1-python-2.7.13
       version: 1.1.1
@@ -333,6 +349,10 @@ constants:
       module: MutationBurden/1.2.3
       version: "1.2.3"
       verbose: TGen Mutation Burden Tool v1.2.3
+    thred:
+      module: tHReD/1.1.0
+      version: "1.1.0"
+      verbose: tHReD v1.1.0
     transparser:
       module: transParser/1.0.1
       version: "1.0.1"
@@ -425,7 +445,7 @@ constants:
     process_assembled_bam: Process_Assembled_BAM_eb25fca.py
     stats2json: samStats2json_3a90a2f.py
     stats2lims: uploadStats2Lims_1ace81f.py
-    annotSeg_script: annotSeg_8820499.pl
+    annotSeg_script: annotSeg_7102f1c.pl
     cellranger_reference: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/cellranger_6.0.0/hg38tgen_ensembl_v98
     cellranger_vdj_reference: /home/tgenref/homo_sapiens/grch38_hg38/tool_specific_resources/cellranger/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0
     scrna_chemistry_options:
@@ -458,6 +478,7 @@ constants:
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Homo_sapiens_assembly38.known_indels.vcf.gz
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
+    bwa_mem2_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa2_2.2.1/GRCh38tgen_decoy_alts_hla.fa
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
     ref_flat: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.refFlat.txt
     ig_ENST_filter: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/disease_specific_resources/myeloma/Homo_sapiens_GRCh38_98_ucsc_ig_ENST_to_filter_out.tsv

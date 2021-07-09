@@ -40,6 +40,14 @@
     set -eu
     set -o pipefail
 
+    {% if r1fqlist[0].fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
     module load {{ constants.tools.star_fusion.module }}
 
     rm -r {{ temp_dir }} || true
@@ -115,6 +123,14 @@
     mkdir -p {{ temp_dir }}/_starF_checkpoints
     mkdir -p {{ temp_dir }}/star-fusion.preliminary
 
+    {% if r1fqlist[0].fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
     module load {{ constants.tools.samtools.module }}
     module load {{ constants.tools.star_fusion.module }}
     sf_path=$(dirname `which STAR-Fusion`)
