@@ -55,7 +55,7 @@
     bcftools filter \
       --include 'INFO/CC>=3' \
       --output-type v \
-      --output-file {{ temp_dir }}/vcfs/{{ pass_vcf }} \
+      --output {{ temp_dir }}/vcfs/{{ pass_vcf }} \
       {{ all_vcf }}
 
     python3 ${JS_PIPELINE_PATH}/required_scripts/{{ constants.phoenix.sigprofiler }} \
