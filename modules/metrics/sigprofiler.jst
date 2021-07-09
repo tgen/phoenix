@@ -53,7 +53,7 @@
 
     {# sigprofiler does not like vcf.gz and we need to filter to CC>=3 #}
     bcftools filter \
-      --include 'INFO/CC>=3'
+      --include 'INFO/CC>=3' \
       --output-type v \
       --output-file {{ temp_dir }}/vcfs/{{ pass_vcf }} \
       {{ all_vcf }}
