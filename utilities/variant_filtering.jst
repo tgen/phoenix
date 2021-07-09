@@ -71,10 +71,7 @@
 
 {% endmacro %}
 
-{% macro somatic_variant_filter(pair, input_vcf, final_vcf_prefix, temp_dir, variant_caller) %}
-
-{% set output_vcf %}{{ final_vcf_prefix }}.flt.vcf.gz{% endset %}
-{% set temp_vcf_prefix %}{{ temp_dir }}/{{ final_vcf_prefix | basename }}{% endset %}
+{% macro filter_variants(pair, input_vcf, output_vcf, task) %}
 
 {# Checking if CC_filter is already defined, in preparation for allowing user defined filters #}
 {% if CC_filter is not defined %}
@@ -88,10 +85,17 @@
   {% endif %}
 {% endif %}
 
-{# If CC filter is still not defined then we only have one caller and filtering is pointless #}
-{% if CC_filter is defined %}
-- name: somatic_variant_filtering_{{ pair.name }}_{{ variant_caller }}
-  tags: [somatic, variant_filter, {{ variant_caller }}]
+{# Checking for output_vcf type, e.g. vcf.gz, vcf, bcf #}
+{% if output_vcf.endswith('vcf') %}
+  {% set output_type = v %}
+{% elif output_vcf.endswith('bcf') %}
+  {% set output_type = b %}
+{% else %}
+  {% set output_type = z %}
+{% endif %}
+
+- name: variant_filtering_{{ pair.name }}_{{ task }}
+  tags: [variant_filter]
   {% if temp_dir in input_vcf %}
   reset: predecessors
   {% endif %}
@@ -106,16 +110,14 @@
 
     module load {{ constants.tools.bcftools.module }}
 
-    mkdir -p {{ temp_dir }}
-
-    {# We need to do tiered filtering since we can't use -i and -e at the same time #}
     bcftools view \
+      {% if CC_filter is defined %}
       --include "{{ CC_filter }}" \
-      --output-file {{ temp_vcf_prefix }}.filtered_db.vcf.gz \
-      --output-type z \
+      {% endif %}
+      --output-file {{ output_vcf }} \
+      --output-type {{ output_type }} \
       {{ input_vcf }}
 
-    bcftools index --force {{ temp_vcf_prefix}}.filtered_db.vcf.gz
+    bcftools index --force {{ output_vcf }}
 
-{% endif %}
 {% endmacro %}
