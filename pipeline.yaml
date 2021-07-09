@@ -345,6 +345,10 @@ constants:
       module: MutationBurden/1.2.3
       version: "1.2.3"
       verbose: TGen Mutation Burden Tool v1.2.3
+    thred:
+      module: tHReD/1.1.0
+      version: "1.1.0"
+      verbose: tHReD v1.1.0
     transparser:
       module: transParser/1.0.1
       version: "1.0.1"
