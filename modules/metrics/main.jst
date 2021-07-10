@@ -1,5 +1,6 @@
 {%- from 'modules/metrics/mutation_burden.jst' import mutation_burden with context %}
 {%- from 'modules/metrics/msisensor_pro.jst' import msisensor_pro with context %}
+{%- from 'modules/metrics/tucon.jst' import tucon with context %}
 
 {%- macro collect_somatic_metrics(pair, normal_bam, tumor_bam, results_dir, taskPrefix, aligner, variant_caller) %}
 
