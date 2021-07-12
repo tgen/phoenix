@@ -8,7 +8,7 @@
 {% set filtered_vcf %}{{ temp_dir }}/{{ pair.name }}.flt.vcf.gz{% endset %}
 
 {% set task %}tucon_{{ pair.name }}_{{ annotate_flag }}{% endset %}
-{{- filter_variants(pair, input_vcf, filtered_vcf, task) }}
+{{- filter_variants(pair, input_vcf, temp_dir, filtered_vcf, task) }}
 
 - name: tucon_{{ pair.name }}_{{ annotate_flag }}
   tags: [tucon, {{ annotate_flag }}]
@@ -25,11 +25,13 @@
 
     module load {{ constants.tools.bcftools.module }}
 
+    mkdir -p {{ results_dir }}
+
     echo -e "VCF\tMUTATION_COUNT\tTOPMED_COUNT" > {{ tucon_output }}
 
     VCF_BASE=$(basename {{ filtered_vcf }})
-  	MUT_COUNT=$(bcftools view -H {{ filtered_vcf }} | wc -l)
-  	TOPMED_COUNT=$(bcftools view -H -i 'INFO/TOPMED=1 & INFO/TOPMED_AF>0.00001' {{ filtered_vcf }} | wc -l)
-  	echo -e "${VCF_BASE}\t${MUT_COUNT}\t${TOPMED_COUNT}" >> {{ tucon_output }}
+    MUT_COUNT=$(bcftools view -H {{ filtered_vcf }} | wc -l)
+    TOPMED_COUNT=$(bcftools view -H -i 'INFO/TOPMED=1 & INFO/TOPMED_AF>0.00001' {{ filtered_vcf }} | wc -l)
+    echo -e "${VCF_BASE}\t${MUT_COUNT}\t${TOPMED_COUNT}" >> {{ tucon_output }}
 
 {% endmacro %}
