@@ -86,18 +86,15 @@
 
 {# Checking for output_vcf type, e.g. vcf.gz, vcf, bcf #}
 {% if output_vcf.endswith('vcf') %}
-  {% set output_type = v %}
+  {% set output_type = 'v' %}
 {% elif output_vcf.endswith('bcf') %}
-  {% set output_type = b %}
+  {% set output_type = 'b' %}
 {% else %}
-  {% set output_type = z %}
+  {% set output_type = 'z' %}
 {% endif %}
 
 - name: variant_filtering_{{ pair.name }}_{{ task }}
   tags: [variant_filter]
-  {% if temp_dir in input_vcf %}
-  reset: predecessors
-  {% endif %}
   input: {{ input_vcf }}
   output: {{ output_vcf }}
   cpus: 1
