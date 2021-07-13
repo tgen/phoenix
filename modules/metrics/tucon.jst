@@ -4,8 +4,8 @@
 
 {% set temp_dir %}temp/{{ pair.gltype }}/metrics/tucon/{{ pair.name }}{% endset %}
 {% set results_dir %}{{ pair.gltype }}/metrics/tucon/{{ pair.name }}{% endset %}
-{% set tucon_output %}{{ results_dir }}/{{ pair.name }}_tucon.tsv{% endset %}
-{% set filtered_vcf %}{{ temp_dir }}/{{ pair.name }}.{{ annotate_flag }}.flt.vcf.gz{% endset %}
+{% set tucon_output %}{{ results_dir }}/{{ pair.name }}_{{ annotate_flag }}_tucon.tsv{% endset %}
+{% set filtered_vcf %}{{ temp_dir }}/{{ pair.name }}_{{ annotate_flag }}.flt.vcf.gz{% endset %}
 
 {% set task %}tucon_{{ pair.name }}_{{ annotate_flag }}{% endset %}
 {{- filter_variants(pair, input_vcf, temp_dir, filtered_vcf, task) }}

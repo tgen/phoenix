@@ -57,8 +57,10 @@
     {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'vep') }}
   {% endif %}
   {% if tasks[taskPrefix+"_somatic_sample_metric_tucon"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_topmed"]|default(true) %}
     {% set final_vcf %}{{ final_vcf_prefix }}.vep.full.vcf.gz{% endset %}
     {{- tucon(pair, final_vcf, 'vep') }}
+    {% endif %}
   {% endif %}
 {% endif %}
 {% if flags.snpeff %}
@@ -67,8 +69,10 @@
     {{- mutation_burden(pair, normal_bam, tumor_bam, final_vcf, variant_caller, aligner, 'snpeff') }}
   {% endif %}
   {% if tasks[taskPrefix+"_somatic_sample_metric_tucon"]|default(true) %}
+    {% if tasks[taskPrefix+"_"+analysis_type+"_annotate_vcfs_bcftools_topmed"]|default(true) %}
     {% set final_vcf %}{{ final_vcf_prefix }}.snpeff.full.vcf.gz{% endset %}
     {{- tucon(pair, final_vcf, 'snpeff') }}
+    {% endif %}
   {% endif %}
 {% endif %}
 
