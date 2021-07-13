@@ -12,6 +12,10 @@
 
     mkdir -p temp/fastqs/
 
+    {% if fastq.petagene == true %}
+    rsync "{{ fastq.fastqPath|replace(".fastq.gz",".fasterq") }}" "temp/fastqs/"
+    {% else %}
     rsync "{{ fastq.fastqPath }}" "temp/fastqs/"
+    {% endif %}
 
 {% endmacro %}
