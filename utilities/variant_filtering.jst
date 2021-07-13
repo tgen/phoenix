@@ -70,3 +70,55 @@
     bcftools index --threads 4 --force {{ output_vcf }}
 
 {% endmacro %}
+
+{% macro filter_variants(pair, input_vcf, output_dir, output_vcf, task) %}
+
+{# Checking if CC_filter is already defined, in preparation for allowing user defined filters #}
+{% if CC_filter is not defined %}
+  {% if pair.callers is defined and pair.callers|length > 1 %}
+    {% if pair.callers | length > 3 %}
+      {% set CC_filter %}INFO/CC>={{ pair.callers | length - 2 }}{% endset %}
+    {% else %}
+      {% set CC_filter %}INFO/CC>={{ pair.callers | length - 1 }}{% endset %}
+    {% endif %}
+  {% endif %}
+{% endif %}
+
+{# Checking for output_vcf type, e.g. vcf.gz, vcf, bcf #}
+{% if output_vcf.endswith('vcf') %}
+  {% set output_type = 'v' %}
+{% elif output_vcf.endswith('bcf') %}
+  {% set output_type = 'b' %}
+{% else %}
+  {% set output_type = 'z' %}
+{% endif %}
+
+- name: variant_filtering_{{ pair.name }}_{{ task }}
+  tags: [variant_filter]
+  input: {{ input_vcf }}
+  output: {{ output_vcf }}
+  cpus: 1
+  mem: 4G
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    mkdir -p {{ output_dir }}
+
+    bcftools view \
+      {% if CC_filter is defined %}
+      --include "{{ CC_filter }}" \
+      {% endif %}
+      --output-file {{ output_vcf }} \
+      --output-type {{ output_type }} \
+      {{ input_vcf }}
+
+    {# No need to index vcf if it isn't compressed #}
+    {%- if output_type != 'v' %}
+    bcftools index --force {{ output_vcf }}
+    {% endif %}
+
+{% endmacro %}
