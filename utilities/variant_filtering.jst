@@ -116,6 +116,9 @@
       --output-type {{ output_type }} \
       {{ input_vcf }}
 
+    {# No need to index vcf if it isn't compressed #}
+    {%- if output_type != 'v' %}
     bcftools index --force {{ output_vcf }}
+    {% endif %}
 
 {% endmacro %}
