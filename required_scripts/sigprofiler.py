@@ -51,59 +51,59 @@ if __name__ == '__main__':
 
     from SigProfilerExtractor import sigpro as sig
 
-    #
-    # SBS Extraction and decomposition
-    #
-    if args.exome:
-        input_data = args.vcfpath+"/output/SBS/"+args.project+".SBS96.exome"
-    else:
-        input_data = args.vcfpath+"/output/SBS/"+args.project+".SBS96.all"
+    if matrices['96'] is not None:
+        #
+        # SBS Extraction and decomposition
+        #
+        if args.exome:
+            input_data = args.vcfpath+"/output/SBS/"+args.project+".SBS96.exome"
+        else:
+            input_data = args.vcfpath+"/output/SBS/"+args.project+".SBS96.all"
 
-    sig.sigProfilerExtractor("matrix", args.output, input_data, reference_genome=args.genome, opportunity_genome = args.genome, minimum_signatures=1, maximum_signatures=10, cpu=args.threads)
+        sig.sigProfilerExtractor("matrix", args.output, input_data, reference_genome=args.genome, opportunity_genome = args.genome, minimum_signatures=1, maximum_signatures=10, cpu=args.threads)
 
+        from SigProfilerExtractor import decomposition as decomp
+        signatures = args.output+"/SBS96/Suggested_Solution/SBS96_De-Novo_Solution/Signatures/SBS96_De-Novo_Signatures.txt"
+        activities = args.output+"/SBS96/Suggested_Solution/SBS96_De-Novo_Solution/Activities/SBS96_De-Novo_Activities_refit.txt"
+        samples= args.output+"/SBS96/Samples.txt"
 
-    from SigProfilerExtractor import decomposition as decomp
-    signatures = args.output+"/SBS96/Suggested_Solution/SBS96_De-Novo_Solution/Signatures/SBS96_De-Novo_Signatures.txt"
-    activities = args.output+"/SBS96/Suggested_Solution/SBS96_De-Novo_Solution/Activities/SBS96_De-Novo_Activities_refit.txt"
-    samples= args.output+"/SBS96/Samples.txt"
+        #to get all cosmic signatures without filtering
+        decomp.decompose(signatures, activities, samples, args.output, genome_build=args.genome, verbose=False, nnls_add_penalty=0.0, nnls_remove_penalty=0.0, initial_remove_penalty=0.0, de_novo_fit_penalty=0.02)
 
-    #to get all cosmic signatures without filtering
-    decomp.decompose(signatures, activities, samples, args.output, genome_build=args.genome, verbose=False, nnls_add_penalty=0.0, nnls_remove_penalty=0.0, initial_remove_penalty=0.0, de_novo_fit_penalty=0.02)
+    if matrices['DINUC'] is not None:
+        #
+        # DBS Extraction and decomposition
+        #
+        if args.exome:
+            input_data = args.vcfpath+"/output/DBS/"+args.project+".DBS78.exome"
+        else:
+            input_data = args.vcfpath+"/output/DBS/"+args.project+".DBS78.all"
 
-    #
-    # DBS Extraction and decomposition
-    #
-    if args.exome:
-        input_data = args.vcfpath+"/output/DBS/"+args.project+".DBS78.exome"
-    else:
-        input_data = args.vcfpath+"/output/DBS/"+args.project+".DBS78.all"
+        sig.sigProfilerExtractor("matrix", args.output, input_data, reference_genome=args.genome, opportunity_genome = args.genome, context_type = "78", minimum_signatures=1, maximum_signatures=10, cpu=args.threads)
 
-    sig.sigProfilerExtractor("matrix", args.output, input_data, reference_genome=args.genome, opportunity_genome = args.genome, context_type = "78", minimum_signatures=1, maximum_signatures=10, cpu=args.threads)
+        from SigProfilerExtractor import decomposition as decomp
+        signatures = args.output+"/DBS78/Suggested_Solution/DBS78_De-Novo_Solution/Signatures/DBS78_De-Novo_Signatures.txt"
+        activities = args.output+"/DBS78/Suggested_Solution/DBS78_De-Novo_Solution/Activities/DBS78_De-Novo_Activities_refit.txt"
+        samples= args.output+"/DBS78/Samples.txt"
 
+        #to get all cosmic signatures without filtering
+        decomp.decompose(signatures, activities, samples, args.output, genome_build=args.genome, verbose=False, nnls_add_penalty=0.0, nnls_remove_penalty=0.0, initial_remove_penalty=0.0, de_novo_fit_penalty=0.02)
 
-    from SigProfilerExtractor import decomposition as decomp
-    signatures = args.output+"/DBS78/Suggested_Solution/DBS78_De-Novo_Solution/Signatures/DBS78_De-Novo_Signatures.txt"
-    activities = args.output+"/DBS78/Suggested_Solution/DBS78_De-Novo_Solution/Activities/DBS78_De-Novo_Activities_refit.txt"
-    samples= args.output+"/DBS78/Samples.txt"
+    if matrices['INDEL'] is not None:
+        #
+        # ID Extraction and decomposition
+        #
+        if args.exome:
+            input_data = args.vcfpath+"/output/ID/"+args.project+".ID83.exome"
+        else:
+            input_data = args.vcfpath+"/output/ID/"+args.project+".ID83.all"
 
-    #to get all cosmic signatures without filtering
-    decomp.decompose(signatures, activities, samples, args.output, genome_build=args.genome, verbose=False, nnls_add_penalty=0.0, nnls_remove_penalty=0.0, initial_remove_penalty=0.0, de_novo_fit_penalty=0.02)
+        sig.sigProfilerExtractor("matrix", args.output, input_data, reference_genome=args.genome, opportunity_genome = args.genome, context_type = "83", minimum_signatures=1, maximum_signatures=10, cpu=args.threads)
 
-    #
-    # ID Extraction and decomposition
-    #
-    if args.exome:
-        input_data = args.vcfpath+"/output/ID/"+args.project+".ID83.exome"
-    else:
-        input_data = args.vcfpath+"/output/ID/"+args.project+".ID83.all"
+        from SigProfilerExtractor import decomposition as decomp
+        signatures = args.output+"/ID83/Suggested_Solution/ID83_De-Novo_Solution/Signatures/ID83_De-Novo_Signatures.txt"
+        activities = args.output+"/ID83/Suggested_Solution/ID83_De-Novo_Solution/Activities/ID83_De-Novo_Activities_refit.txt"
+        samples= args.output+"/ID83/Samples.txt"
 
-    sig.sigProfilerExtractor("matrix", args.output, input_data, reference_genome=args.genome, opportunity_genome = args.genome, context_type = "83", minimum_signatures=1, maximum_signatures=10, cpu=args.threads)
-
-
-    from SigProfilerExtractor import decomposition as decomp
-    signatures = args.output+"/ID83/Suggested_Solution/ID83_De-Novo_Solution/Signatures/ID83_De-Novo_Signatures.txt"
-    activities = args.output+"/ID83/Suggested_Solution/ID83_De-Novo_Solution/Activities/ID83_De-Novo_Activities_refit.txt"
-    samples= args.output+"/ID83/Samples.txt"
-
-    #to get all cosmic signatures without filtering
-    decomp.decompose(signatures, activities, samples, args.output, genome_build=args.genome, verbose=False, nnls_add_penalty=0.0, nnls_remove_penalty=0.0, initial_remove_penalty=0.0, de_novo_fit_penalty=0.02)
+        #to get all cosmic signatures without filtering
+        decomp.decompose(signatures, activities, samples, args.output, genome_build=args.genome, verbose=False, nnls_add_penalty=0.0, nnls_remove_penalty=0.0, initial_remove_penalty=0.0, de_novo_fit_penalty=0.02)
