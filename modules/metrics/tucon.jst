@@ -1,0 +1,37 @@
+{% from 'utilities/variant_filtering.jst' import filter_variants with context %}
+
+{% macro tucon(pair, input_vcf, annotate_flag) %}
+
+{% set temp_dir %}temp/{{ pair.gltype }}/metrics/tucon/{{ pair.name }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/metrics/tucon/{{ pair.name }}{% endset %}
+{% set tucon_output %}{{ results_dir }}/{{ pair.name }}_{{ annotate_flag }}_tucon.tsv{% endset %}
+{% set filtered_vcf %}{{ temp_dir }}/{{ pair.name }}_{{ annotate_flag }}.flt.vcf.gz{% endset %}
+
+{% set task %}tucon_{{ pair.name }}_{{ annotate_flag }}{% endset %}
+{{- filter_variants(pair, input_vcf, temp_dir, filtered_vcf, task) }}
+
+- name: tucon_{{ pair.name }}_{{ annotate_flag }}
+  tags: [tucon, {{ annotate_flag }}]
+  input:
+    - {{ filtered_vcf }}
+  output:
+    - {{ tucon_output }}
+  walltime: "12:00:00"
+  cpus: 1
+  mem: 2G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    mkdir -p {{ results_dir }}
+
+    echo -e "VCF\tMUTATION_COUNT\tTOPMED_COUNT" > {{ tucon_output }}
+
+    VCF_BASE=$(basename {{ filtered_vcf }})
+    MUT_COUNT=$(bcftools view -H {{ filtered_vcf }} | wc -l)
+    TOPMED_COUNT=$(bcftools view -H -i 'INFO/TOPMED=1 & INFO/TOPMED_AF>0.00001' {{ filtered_vcf }} | wc -l)
+    echo -e "${VCF_BASE}\t${MUT_COUNT}\t${TOPMED_COUNT}" >> {{ tucon_output }}
+
+{% endmacro %}
