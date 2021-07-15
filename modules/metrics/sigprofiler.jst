@@ -3,12 +3,13 @@
 {% macro sigprofiler(pair, vcf_prefix, variant_caller, aligner) %}
 
 {% set temp_dir %}temp/{{ pair.gltype }}/metrics/sigprofiler/{{ pair.name }}{% endset %}
+{% set temp_vcf_dir %}{{ temp_dir }}/vcfs{% endset %}
 {% set results_dir %}{{ pair.gltype }}/metrics/sigprofiler/{{ pair.name }}{% endset %}
 {% set all_vcf %}{{ vcf_prefix }}.vcf.gz{% endset %}
-{% set filt_vcf %}{{ temp_dir }}/vcfs/{{ vcf_prefix|basename }}.pass.vcf{% endset %}
+{% set filt_vcf %}{{ temp_vcf_dir }}/{{ vcf_prefix|basename }}.pass.vcf{% endset %}
 
 {% set task %}sigprofiler_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}{% endset %}
-{{- filter_variants(pair, all_vcf, temp_dir, filt_vcf, task) }}
+{{- filter_variants(pair, all_vcf, temp_vcf_dir, filt_vcf, task) }}
 
 - name: sigprofiler_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}
   tags:
