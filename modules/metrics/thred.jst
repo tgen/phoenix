@@ -1,7 +1,7 @@
 {% macro thred(sample_or_pair, input_seg) %}
 
 {% set results_dir %}{{ sample_or_pair.gltype }}/metrics/thred/{{ sample_or_pair.name }}{% endset %}
-{% set temp_dir %}temp/{{ ample_or_pair.gltype }}/metrics/thred/{{ sample_or_pair.name }}{% endset %}
+{% set temp_dir %}temp/{{ sample_or_pair.gltype }}/metrics/thred/{{ sample_or_pair.name }}{% endset %}
 
 - name: thred_{{ sample_or_pair.name }}
   tags: [{{ sample_or_pair.gltype }}, HRD, {{ sample_or_pair.name }}]

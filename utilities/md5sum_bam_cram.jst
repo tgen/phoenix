@@ -1,24 +1,23 @@
 
 {% macro md5sum_bam_cram(sample, aligner='bwa') %}
 {% if cram|default(true) %}
-{% set bam_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.bam{% endset %}
-{% set cram_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}/{{ sample.name }}.{{ aligner }}.cram{% endset %}
+{% set file_path %}{{ sample.gltype }}/alignment/{{ aligner }}/{{ sample.name }}{% endset %}
 
 - name: md5sum_bam_cram_{{ sample.name }}_{{ aligner }}
   tags: [{{ sample.gltype }}, {{ sample.name }}, md5sum ]
   input:
     {% if cram|default(true) %}
-    - {{ cram_path }}
+    - {{ file_path }}/{{ sample.name }}.{{ aligner }}.cram
     {% else %}
-    - {{ bam_path }}
+    - {{ file_path }}/{{ sample.name }}.{{ aligner }}.bam
     {% endif %}
   output:
     {% if cram|default(true) %}
-    - {{ cram_path }}.md5
-    - {{ cram_path }}.crai.md5
+    - {{ sample.name }}.{{ aligner }}.cram.md5
+    - {{ sample.name }}.{{ aligner }}.crai.md5
     {% else %}
-    - {{ bam_path }}.md5
-    - {{ bam_path }}.bai.md5
+    - {{ sample.name }}.{{ aligner }}.bam.md5
+    - {{ sample.name }}.{{ aligner }}.bam.bai.md5
     {% endif %}
   walltime: "1:00:00"
   cpus: 1
@@ -27,12 +26,15 @@
     set -eu
     set -o pipefail
 
+    {# cd to the directory of the files for proper md5sum generation #}
+    cd {{ file_path }}
+
     {% if cram|default(true) %}
-    md5sum {{ cram_path }} > {{ cram_path }}.md5
-    md5sum {{ cram_path }}.crai > {{ cram_path }}.crai.md5
+    md5sum {{ sample.name }}.{{ aligner }}.cram > {{ sample.name }}.{{ aligner }}.cram.md5
+    md5sum {{ sample.name }}.{{ aligner }}.crai > {{ sample.name }}.{{ aligner }}.crai.md5
     {% else %}
-    md5sum {{ bam_path }} > {{ bam_path }}.md5
-    md5sum {{ bam_path }}.bai > {{ bam_path }}.bai.md5
+    md5sum {{ sample.name }}.{{ aligner }}.bam > {{ sample.name }}.{{ aligner }}.bam.md5
+    md5sum {{ sample.name }}.{{ aligner }}.bam.bai > {{ sample.name }}.{{ aligner }}.bam.bai.md5
     {% endif %}
 
 {% endif %}
