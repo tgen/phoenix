@@ -91,7 +91,7 @@ def main():
         num_tasks = num_tasks + 1
         sig_list.append(('ID', '83'))
 
-    cpus_per_task = int(args.threads/num_tasks)
+    cpus_per_task = max(int(args.threads/num_tasks),1)
     with ThreadPoolExecutor(max_workers=3) as e:
         for sigClass, sigContext in sig_list:
             e.submit(extractSignatures, args.output, args.vcfpath, args.genome, args.project, sigClass, sigContext, args.exome, cpus_per_task)

@@ -35,7 +35,7 @@ $ cp plotCNVplus.R /path/to/phoenix/required_scripts/plotCNVplus_4d89cb4.R
 [plotCNVplus_4d89cb4.R](https://github.com/tgen/plotCNVplus/commit/4d89cb4d8f35e48b916d660c82c52b8725ade16f)  
 [runIchorCNA_47ce8db.R](https://github.com/broadinstitute/ichorCNA/commit/47ce8db4d81ada2d3ce09280661d1240f3dcd530#diff-79cb887cc56cef135b77c5b7a725975c)  
 [samStats2json_3a90a2f.py](https://github.com/tgen/samStats2json/commit/3a90a2fefd8fc60a5ebd391dca6702fae419f32f)  
-[sigprofiler_fdfe4e8.py](https://github.com/tgen/jetstream_resources/commit/fdfe4e8c9243986cd5787782b3074cfb56e9c856)  
+[sigprofiler_13992df.py](https://github.com/tgen/jetstream_resources/commit/13992df986be409f011ddb645ea8089ffc98fbee)  
 [seg_extend_229b8c7.py](https://github.com/tgen/jetstream_resources/commit/229b8c7641dd505789664aab88c1662d1f97e429)  
 [summarize_samstats_8c45d63.R](https://github.com/tgen/plot_samstats/commit/8c45d63dbd7f5037d7bb658ac91647898bf7509f)  
 [summarize_Ig_4b93aee.R](https://github.com/tgen/jetstream_resources/commit/4b93aeea52ebc4721621a58a7520f676b4b97001)  
