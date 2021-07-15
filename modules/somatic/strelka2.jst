@@ -1,4 +1,5 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'utilities/vcf_stats.jst' import vcf_stats with context %}
 
 {% macro strelka2_somatic(pair, aligner='bwa') %}
 {% do pair.callers.append('strelka2') %}
@@ -12,8 +13,8 @@
 
 - name: strelka2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, strelka2, {{ pair.name }}]
-  methods: > 
-    Somatic variants for {{ pair.name }} ({{ aligner }}) were called with 
+  methods: >
+    Somatic variants for {{ pair.name }} ({{ aligner }}) were called with
     {{ constants.tools.strelka.verbose }}.
   input:
     - {{ normal_bam }}
@@ -166,6 +167,7 @@
     {% set task %}strelka2_filter_variants_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
-
+    {{- vcf_stats(pass_vcf, results_dir) }}
+    {{- vcf_stats(all_vcf, results_dir) }}
 
 {% endmacro %}

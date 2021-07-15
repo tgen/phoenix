@@ -1,0 +1,21 @@
+{% macro vcf_stats(input_vcf, results_dir) %}
+
+- name: bcftools_stats_{{ input_vcf | basename | replace(".", "_") }}
+  tags: [bcftools, stats, vcf]
+  input: {{ input_vcf }}
+  output: {{ results_dir }}/stats/{{ input_vcf | basename }}.stats.txt
+  cpus: 1
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    mkdir -p {{ results_dir }}/stats
+
+    bcftools stats \
+      {{ input_vcf }} \
+      > {{ results_dir }}/stats/{{ input_vcf | basename }}.stats.txt
+
+{% endmacro %}

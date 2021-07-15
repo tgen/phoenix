@@ -53,6 +53,10 @@
 
     module load {{ constants.tools.star.module }}
     module load {{ constants.tools.samtools.module }}
+    {% if sample.fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+    {% endif %}
 
     rm -r "{{ temp_dir }}" || true
     mkdir -p "{{ temp_dir }}"
