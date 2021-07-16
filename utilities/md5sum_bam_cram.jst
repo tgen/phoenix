@@ -8,8 +8,10 @@
   input:
     {% if cram|default(true) %}
     - {{ file_path }}/{{ sample.name }}.{{ aligner }}.cram
+    - {{ file_path }}/{{ sample.name }}.{{ aligner }}.crai
     {% else %}
     - {{ file_path }}/{{ sample.name }}.{{ aligner }}.bam
+    - {{ file_path }}/{{ sample.name }}.{{ aligner }}.bam.bai
     {% endif %}
   output:
     {% if cram|default(true) %}
