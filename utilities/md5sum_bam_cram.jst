@@ -8,7 +8,7 @@
   input:
     {% if cram|default(true) %}
     - {{ file_path }}/{{ sample.name }}.{{ aligner }}.cram
-    - {{ file_path }}/{{ sample.name }}.{{ aligner }}.crai
+    - {{ file_path }}/{{ sample.name }}.{{ aligner }}.cram.crai
     {% else %}
     - {{ file_path }}/{{ sample.name }}.{{ aligner }}.bam
     - {{ file_path }}/{{ sample.name }}.{{ aligner }}.bam.bai
@@ -16,7 +16,7 @@
   output:
     {% if cram|default(true) %}
     - {{ sample.name }}.{{ aligner }}.cram.md5
-    - {{ sample.name }}.{{ aligner }}.crai.md5
+    - {{ sample.name }}.{{ aligner }}.cram.crai.md5
     {% else %}
     - {{ sample.name }}.{{ aligner }}.bam.md5
     - {{ sample.name }}.{{ aligner }}.bam.bai.md5
@@ -33,7 +33,7 @@
 
     {% if cram|default(true) %}
     md5sum {{ sample.name }}.{{ aligner }}.cram > {{ sample.name }}.{{ aligner }}.cram.md5
-    md5sum {{ sample.name }}.{{ aligner }}.crai > {{ sample.name }}.{{ aligner }}.crai.md5
+    md5sum {{ sample.name }}.{{ aligner }}.cram.crai > {{ sample.name }}.{{ aligner }}.cram.crai.md5
     {% else %}
     md5sum {{ sample.name }}.{{ aligner }}.bam > {{ sample.name }}.{{ aligner }}.bam.md5
     md5sum {{ sample.name }}.{{ aligner }}.bam.bai > {{ sample.name }}.{{ aligner }}.bam.bai.md5
