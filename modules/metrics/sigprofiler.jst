@@ -82,14 +82,14 @@
       rsync -R --remove-source-files {{ temp_dir }}/./SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/SBS96_Decomposition_Plots.pdf {{ results_dir }}
       fi
       if [ "$(ls -A {{ temp_dir }}/ID83)" ]; then
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_Activities_refit.txt
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_Activity_Plots_refit.pdf
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_TMB_plot_refit.pdf
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/Decomposed_Mutation_Probabilities.txt
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Signatures/COSMIC_ID83_Signatures.txt
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Signatures/ID_83_plots_COSMIC_ID83.pdf
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/De_Novo_map_to_COSMIC_ID83.csv
-      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/ID83_Decomposition_Plots.pdf
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_Activities_refit.txt {{ results_dir }}
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_Activity_Plots_refit.pdf {{ results_dir }}
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_TMB_plot_refit.pdf {{ results_dir }}
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/Decomposed_Mutation_Probabilities.txt {{ results_dir }}
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Signatures/COSMIC_ID83_Signatures.txt {{ results_dir }}
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Signatures/ID_83_plots_COSMIC_ID83.pdf {{ results_dir }}
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/De_Novo_map_to_COSMIC_ID83.csv {{ results_dir }}
+      rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/ID83_Decomposition_Plots.pdf {{ results_dir }}
       fi
       if [ "$(ls -A {{ temp_dir }}/DBS78)" ]; then
       rsync -R --remove-source-files {{ temp_dir }}/./DBS78/Suggested_Solution/COSMIC_DBS78_Decomposed_Solution/Activities/COSMIC_DBS78_Activities_refit.txt {{ results_dir }}

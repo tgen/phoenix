@@ -696,261 +696,157 @@ def check_gene_call(table, gene, nreads, min_con_len):
     for t_elem in res_gene:
       emp_list.append(t_elem)
     return emp_list
-  # other cases
-  table_by_gene = table[(table.Gene_1 == gene)]
+
+  #updated code
+  #start with quey gene
+  gg =  'Gene_'+str(1)
+
+  table_by_gene = table #_c[(table_c.Gene_1 == gene)]
   table_by_gene = table_by_gene[(table_by_gene.IgTxCalled == 1)]
-  # print(table_by_gene)
+  #loop all rows
   for row in table_by_gene.index:
-    print("In Table")
+    print("In Table Gene1 is target")
     print(table_by_gene.at[row, 'name'])
+    print(table_by_gene.at[row, gg])
 
-    if (table_by_gene.at[row, 'fragments_at_junc_1'] >= table_by_gene.at[row, 'fragments_at_junc_2']):
-      count_gene = table_by_gene.at[row, 'fragments_at_junc_1']
-    else:
-      count_gene = table_by_gene.at[row, 'fragments_at_junc_2']
+    total_aligned_length = 0
+    ig_breakpoint = ''
+    ig_aligned_length = 0
+    gene_strand =''
+    all_gene_cigar = ''
+    all_ig_cigar = ''
+    gene_overlap = 0
+    ig_overlap = 0
 
-    contig_length = table_by_gene.at[row, 'Contig_length_1']
+    #get max splits for contigs
+    max_contig_splits = 1
+    for col in table_by_gene.columns:
+      #print(col)
+    #assuming  max 10 splits per contigs which is highly unlikely
+      for tmp_idx in range(1,10):
+        tmp_gene = 'Gene_' + str(tmp_idx)
+        if(tmp_gene == col):
+          if(tmp_idx >= max_contig_splits):
+            max_contig_splits = tmp_idx
+    #for  loop range add 1
+    max_contig_splits = max_contig_splits + 1
 
-    if (table_by_gene.at[row, 'Contig_reversed2']):
-      ig_bp2_tmp = table_by_gene.at[row, 'pos_2_end']
-    else:
-      ig_bp2_tmp = table_by_gene.at[row, 'pos_2_start']
+    print("We have total contig splits "+str(max_contig_splits))
+    #loop through all columns of each row
+    for gindex in range(1,max_contig_splits):
+      gg =  'Gene_'+str(gindex)
 
-    if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
-      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        # if(table_by_gene.at[row,'Contig_reversed3']):
-        #    ig_bp3_tmp = table_by_gene.at[row,'pos_3_end']
-        # else:
-        ig_breakpoint3 = get_genomic_bp(table_by_gene.at[row, 'cigar_3'], table_by_gene.at[row, 'aligned_length_3'],
-                                        table_by_gene.at[row, 'Contig_reversed3'], table_by_gene.at[row, 'pos_3_start'])
-        ig_breakpoint2 = get_genomic_bp(table_by_gene.at[row, 'cigar_2'], table_by_gene.at[row, 'aligned_length_2'],
-                                        table_by_gene.at[row, 'Contig_reversed2'], table_by_gene.at[row, 'pos_2_start'])
-        ig_breakpoint = str(int(ig_breakpoint2)) + ";" + str(int(ig_breakpoint3))
-        # ig_bp3_tmp = table_by_gene.at[row,'pos_3_start']
-        # ig_gene_cigar = table_by_gene.at[row,'cigar_3']
-        # matchlen = table_by_gene.at[row,'aligned_length_3']
-        # ig_breakpoint = get_genomic_bp(ig_gene_cigar, matchlen, table_by_gene.at[row,'Contig_reversed3'],ig_bp3_tmp)
-        # str(int(ig_bp2_tmp))+";"+str(int(ig_bp3_tmp))
-      else:
-        ig_bp2_tmp = table_by_gene.at[row, 'pos_2_start']
-        ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_2'], table_by_gene.at[row, 'aligned_length_2'],
-                                       table_by_gene.at[row, 'Contig_reversed2'], ig_bp2_tmp)
-        # ig_breakpoint = table_by_gene.at[row,'pos_2_start']
-    else:
-      ig_breakpoint = table_by_gene.at[row, 'pos_2_start']
+      print("Gene is "+gg+" "+str(gindex))
+      gindex2 =  gindex
 
-    if (('cigar_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
-      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        ig_cigar = table_by_gene.at[row, 'cigar_2'] + ";" + table_by_gene.at[row, 'cigar_3']
-      else:
-        ig_cigar = table_by_gene.at[row, 'cigar_2']
-    else:
-      ig_cigar = table_by_gene.at[row, 'cigar_2']
+      #set indices
+      pos_col = 'pos_'+str(gindex)+'_start'
+      cigar_col= 'cigar_'+str(gindex)
+      align_col = 'aligned_length_'+str(gindex)
+      contig_flag_col = 'Contig_reversed'+str(gindex)
+      frag_col = 'fragments_at_junc_'+str(gindex)
+      contig_col = 'Contig_length_'+str(gindex)
+      strand_col = 'strand_'+str(gindex)
 
-    pos_start = table_by_gene.at[row, 'pos_1_start']
-    gene_cigar = table_by_gene.at[row, 'cigar_1']
-    matchlen = table_by_gene.at[row, 'aligned_length_1']
-    breakpoint = get_genomic_bp(gene_cigar, matchlen, table_by_gene.at[row, 'Contig_reversed1'], pos_start)
+      if((table_by_gene.at[row,gg]==gene)):
 
-    gene_tmp = table_by_gene.at[row, 'Gene_2']
-    source = ig_dict[gene_tmp]
-    gene_overlap = table_by_gene.at[row, 'aligned_length_1']
-    ig_overlap = table_by_gene.at[row, 'aligned_length_2']
+        #get values for target
+        print(pos_col+cigar_col)
+        pos_start = table_by_gene.at[row, pos_col]
+        gene_cigar = table_by_gene.at[row, cigar_col]
+        if(all_gene_cigar ==''):
+           all_gene_cigar = table_by_gene.at[row, cigar_col]
+        else:
+           all_gene_cigar = all_gene_cigar + table_by_gene.at[row, cigar_col]
+        matchlen = table_by_gene.at[row, align_col]
+        count_gene = table_by_gene.at[row, frag_col]
+        contig_length = table_by_gene.at[row, contig_col]
+        if(matchlen > gene_overlap):
+       	  gene_overlap = matchlen
+        total_aligned_length = total_aligned_length + matchlen
+        breakpoint = get_genomic_bp(gene_cigar, matchlen, table_by_gene.at[row, contig_flag_col], pos_start)
+        gene_strand = table_by_gene.at[row, strand_col]
+        #print(" bb="+str(breakpoint)+" "+str(matchlen)+" "+gene_cigar+" "+str(pos_start))
 
-    if (table_by_gene.at[row, 'aligned_length_1'] >= min_con_len and table_by_gene.at[
-      row, 'aligned_length_2'] >= min_con_len and count_gene >= nreads):
+      #if gg is IG
+      elif('IG' in str(table_by_gene.at[row,gg])):
+        #print("Found IG at "+gg)
+        ig_breakpoint = get_genomic_bp(table_by_gene.at[row, cigar_col], table_by_gene.at[row, align_col],
+                                        table_by_gene.at[row, contig_flag_col], table_by_gene.at[row, pos_col])
+        gene_tmp = table_by_gene.at[row,gg]
+        if(table_by_gene.at[row, align_col] > ig_overlap):
+          ig_overlap = table_by_gene.at[row, align_col]
+        source = ig_dict[gene_tmp]
+        if(table_by_gene.at[row, align_col] > ig_aligned_length):
+          ig_aligned_length = table_by_gene.at[row, align_col]
+
+        ig_cigar = table_by_gene.at[row, cigar_col]
+        if(all_ig_cigar ==''):
+           all_ig_cigar = table_by_gene.at[row, cigar_col]
+        else:
+           all_ig_cigar = all_ig_cigar + table_by_gene.at[row, cigar_col]
+
+     #check all alignments for the contig
+      while(gindex2 < max_contig_splits-1):
+        gindex2=  gindex2 + 1
+        gg2 = 'Gene_'+str(gindex2)
+        #set indices
+        pos_col2 = 'pos_'+str(gindex2)+'_start'
+        cigar_col2 = 'cigar_'+str(gindex2)
+        align_col2 = 'aligned_length_'+str(gindex2)
+        contig_flag_col2 = 'Contig_reversed'+str(gindex2)
+        frag_col2 = 'fragments_at_junc_'+str(gindex2)
+
+        #if gene is same as target gene
+        if((table_by_gene.at[row,gg] == table_by_gene.at[row,gg2]) and (table_by_gene.at[row,gg]==gene)):
+          print("Found double match"+gg2)
+          align_col2 = 'aligned_length_'+str(gindex2)
+          total_aligned_length = total_aligned_length + table_by_gene.at[row, align_col2]
+          gene_cigar = gene_cigar+';'+table_by_gene.at[row, cigar_col2]
+          if(table_by_gene.at[row, frag_col2] > count_gene):
+            count_gene = table_by_gene.at[row, frag_col2]
+          if( table_by_gene.at[row, align_col2] > gene_overlap):
+            gene_overlap =  table_by_gene.at[row, align_col2]
+
+        #multiple alignments of IG
+        if(('IG' in str(table_by_gene.at[row,gg2])) and (table_by_gene.at[row,gg]==table_by_gene.at[row,gg2])):
+          print("Found IG at "+gg2)
+          ig_breakpoint2 = get_genomic_bp(table_by_gene.at[row, cigar_col2], table_by_gene.at[row, align_col2],
+                                        table_by_gene.at[row, contig_flag_col2], table_by_gene.at[row, pos_col2])
+          if(table_by_gene.at[row, align_col2] > ig_aligned_length):
+            ig_aligned_length = table_by_gene.at[row, align_col2]
+          ig_breakpoint = ig_breakpoint+';'+ig_breakpoint2
+          ig_cigar = ig_cigar+';'+table_by_gene.at[row, cigar_col2]
+    #test onky since we are missing fastq
+    print("************************\n"+str(total_aligned_length) + " "+str(ig_aligned_length)+"*****************\n")
+    #gene overlap is max alignment and total is total region aligned
+    #switching total to gene to filer by max.
+    #we keep both in case we would like to  get total length in later revisions
+    total_aligned_length = gene_overlap
+    #ig_overlap = ig_aligned_length
+    if (total_aligned_length >= min_con_len and ig_aligned_length >= min_con_len and count_gene >= nreads):
       call = 1
       print("Tx pass")
-      if (table_by_gene.at[row, 'strand_1'] == 'Pos'):
+      if (gene_strand == 'Pos'):
         print("Found pos")
         pos_strand_der = 1
         pos_strand_list = (
-        pos_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        pos_strand_der, contig_length, gene_overlap, all_gene_cigar, ig_overlap, all_ig_cigar, breakpoint, ig_breakpoint,
         count_gene)
-      elif (table_by_gene.at[row, 'strand_1'] == 'Neg'):
+      elif (gene_strand == 'Neg'):
         neg_strand_der = 1
         print("found neg")
         neg_strand_list = (
-        neg_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
+        neg_strand_der, contig_length, gene_overlap, all_gene_cigar, ig_overlap, all_ig_cigar, breakpoint, ig_breakpoint,
         count_gene)
 
-  # Case:2 Gene 2 is Target Gene
-  # This is the case when IG is Gene 1 and Target Gene is gene2
-  if ('Gene_2' in table):
-    table_by_gene = table[(table.Gene_2 == gene)]
-    table_by_gene = table_by_gene[(table_by_gene.IgTxCalled == 1)]
-  else:
-    table_by_gene = pd.DataFrame()
-
-  # print(table_by_gene)
-  for row in table_by_gene.index:
-    print("In Table")
-    print(table_by_gene.at[row, 'name'])
-
-    if (table_by_gene.at[row, 'fragments_at_junc_2'] >= table_by_gene.at[row, 'fragments_at_junc_1']):
-      count_gene = table_by_gene.at[row, 'fragments_at_junc_2']
-    else:
-      count_gene = table_by_gene.at[row, 'fragments_at_junc_1']
-
-    contig_length = table_by_gene.at[row, 'Contig_length_2']
-
-    if (table_by_gene.at[row, 'Contig_reversed1']):
-      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_start'] + table_by_gene.at[row, 'aligned_length_1']
-    else:
-      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_start'] + table_by_gene.at[row, 'aligned_length_1']
-
-    # this case  is highly unlikely as bam is sorted by posn.
-    if (('Gene_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
-
-      ig_bp3_tmp = table_by_gene.at[row, 'pos_3_start']
-
-      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        ig_bp3_tmp = table_by_gene.at[row, 'pos_3_start']
-        ig_breakpoint1 = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
-                                        table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
-        ig_breakpoint3 = get_genomic_bp(table_by_gene.at[row, 'cigar_3'], table_by_gene.at[row, 'aligned_length_3'],
-                                        table_by_gene.at[row, 'Contig_reversed3'], ig_bp3_tmp)
-        ig_breakpoint = str(int(ig_breakpoint1)) + ";" + str(int(ig_breakpoint3))
-      else:
-        ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
-                                       table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
-    else:
-      ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
-                                     table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
-
-    if (('cigar_3' in table) and (table_by_gene.at[row, 'Gene_3'] != 0)):
-      if ('IG' in str(table_by_gene.at[row, 'Gene_3'])):
-        ig_cigar = table_by_gene.at[row, 'cigar_1'] + ";" + table_by_gene.at[row, 'cigar_3']
-      else:
-        ig_cigar = table_by_gene.at[row, 'cigar_1']
-    else:
-      ig_cigar = table_by_gene.at[row, 'cigar_1']
-
-    # if(table_by_gene.at[row,'Contig_reversed2']):
-    #    breakpoint = table_by_gene.at[row,'pos_2_end'] + table_by_gene.at[row,'aligned_length_2']
-    # else:
-    #    breakpoint = table_by_gene.at[row,'pos_2_start']  + table_by_gene.at[row,'aligned_length_2']
-
-    gene_cigar = table_by_gene.at[row, 'cigar_2']
-    pos_start = table_by_gene.at[row, 'pos_2_start']
-    matchlen = table_by_gene.at[row, 'aligned_length_2']
-    breakpoint = get_genomic_bp(gene_cigar, matchlen, table_by_gene.at[row, 'Contig_reversed2'], pos_start)
-
-    gene_tmp = table_by_gene.at[row, 'Gene_1']
-    source = ig_dict[gene_tmp]
-    gene_overlap = table_by_gene.at[row, 'aligned_length_2']
-    ig_overlap = table_by_gene.at[row, 'aligned_length_1']
-
-    if (table_by_gene.at[row, 'aligned_length_2'] >= min_con_len and table_by_gene.at[
-      row, 'aligned_length_1'] >= min_con_len and count_gene >= nreads):
-      call = 1
-      print("Tx pass")
-      if (table_by_gene.at[row, 'strand_2'] == 'Pos'):
-        print("Found pos")
-        pos_strand_der = 1
-        pos_strand_list = (
-        pos_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
-        count_gene)
-      elif (table_by_gene.at[row, 'strand_2'] == 'Neg'):
-        neg_strand_der = 1
-        print("found neg")
-        neg_strand_list = (
-        neg_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
-        count_gene)
-  ########
-  # Case 3: Gene_3 is target gene  when 1 and 2 match to IG and 3 is the gene. Case of IG multialignment
-  ########
-  if ('Gene_3' in table):
-    table_by_gene = table[(table.Gene_3 == gene)]
-    table_by_gene = table_by_gene[(table_by_gene.IgTxCalled == 1)]
-  else:
-    table_by_gene = pd.DataFrame()
-
-  # print(table_by_gene)
-  for row in table_by_gene.index:
-    print("In Table")
-    print(table_by_gene.at[row, 'name'])
-
-    if (table_by_gene.at[row, 'fragments_at_junc_3'] >= table_by_gene.at[row, 'fragments_at_junc_1']):
-      count_gene = table_by_gene.at[row, 'fragments_at_junc_3']
-    else:
-      count_gene = table_by_gene.at[row, 'fragments_at_junc_1']
-
-    contig_length = table_by_gene.at[row, 'Contig_length_3']
-
-    if (table_by_gene.at[row, 'Contig_reversed1']):
-      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_end']
-    else:
-      ig_bp1_tmp = table_by_gene.at[row, 'pos_1_start']
-
-    if (('Gene_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
-      if (table_by_gene.at[row, 'Contig_reversed2']):
-        ig_bp2_tmp = table_by_gene.at[row, 'pos_2_end']
-      else:
-        ig_bp2_tmp = table_by_gene.at[row, 'pos_2_start']
-
-      if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
-        ig_breakpoint1 = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
-                                        table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
-        ig_breakpoint2 = get_genomic_bp(table_by_gene.at[row, 'cigar_2'], table_by_gene.at[row, 'aligned_length_2'],
-                                        table_by_gene.at[row, 'Contig_reversed2'], table_by_gene.at[row, 'pos_2_start'])
-        ig_breakpoint = str(int(ig_breakpoint1)) + ";" + str(int(ig_breakpoint2))
-
-      # ig_breakpoint = str(int(ig_bp1_tmp))+";"+str(int(ig_bp2_tmp))  # str(int(table_by_gene.at[row,'pos_1_start']))+";"+str(int(table_by_gene.at[row,'pos_2_start']))
-      else:
-        ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
-                                       table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
-        # ig_breakpoint =ig_bp1_tmp  #table_by_gene.at[row,'pos_1_start']
-    else:
-      ig_breakpoint = get_genomic_bp(table_by_gene.at[row, 'cigar_1'], table_by_gene.at[row, 'aligned_length_1'],
-                                     table_by_gene.at[row, 'Contig_reversed1'], table_by_gene.at[row, 'pos_1_start'])
-      # ig_breakpoint = table_by_gene.at[row,'pos_1_start']
-
-    if (('cigar_2' in table) and (table_by_gene.at[row, 'Gene_2'] != 0)):
-      if ('IG' in str(table_by_gene.at[row, 'Gene_2'])):
-        ig_cigar = table_by_gene.at[row, 'cigar_1'] + ";" + table_by_gene.at[row, 'cigar_2']
-      else:
-        ig_cigar = table_by_gene.at[row, 'cigar_1']
-    else:
-      ig_cigar = table_by_gene.at[row, 'cigar_1']
-
-    # if(table_by_gene.at[row,'Contig_reversed3']):
-    #     breakpoint = table_by_gene.at[row,'pos_3_start'] + table_by_gene.at[row,'aligned_length_3']
-    # else:
-    #    breakpoint = table_by_gene.at[row,'pos_3_start'] +table_by_gene.at[row,'aligned_length_3']
-
-    gene_cigar = table_by_gene.at[row, 'cigar_3']
-    pos_start = table_by_gene.at[row, 'pos_3_start']
-    matchlen = table_by_gene.at[row, 'aligned_length_3']
-    breakpoint = get_genomic_bp(gene_cigar, matchlen, table_by_gene.at[row, 'Contig_reversed3'], pos_start)
-
-    gene_tmp = table_by_gene.at[row, 'Gene_1']
-    source = ig_dict[gene_tmp]
-    gene_overlap = table_by_gene.at[row, 'aligned_length_3']
-    ig_overlap = table_by_gene.at[row, 'aligned_length_1']
-
-    if (table_by_gene.at[row, 'aligned_length_3'] >= min_con_len and table_by_gene.at[
-      row, 'aligned_length_1'] >= min_con_len and count_gene >= nreads):
-      call = 1
-      print("Tx pass")
-      if (table_by_gene.at[row, 'strand_3'] == 'Pos'):
-        print("Found pos")
-        pos_strand_der = 1
-        pos_strand_list = (
-        pos_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
-        count_gene)
-      elif (table_by_gene.at[row, 'strand_3'] == 'Neg'):
-        neg_strand_der = 1
-        print("found neg")
-        neg_strand_list = (
-        neg_strand_der, contig_length, gene_overlap, gene_cigar, ig_overlap, ig_cigar, breakpoint, ig_breakpoint,
-        count_gene)
+##end of updated code
 
   print("call = " + str(call))
   # Collapse into one list
   if (call == 1):
-    print(pos_strand_list)
-    print(neg_strand_list)
+    #print(pos_strand_list)
+    #print(neg_strand_list)
     res_gene = [call, source]
     for x in pos_strand_list:
       res_gene.append(x)
@@ -1002,7 +898,7 @@ def gen_summ_table(filt_table, results_table, nreads, min_con_len, sample):
 
   results = ((sample,), nsd2_call, ccnd3_call, myc_call, mafa_call, ccnd1_call, ccnd2_call, maf_call, mafb_call)
 
-  print(mafb_call)
+  #print(mafb_call)
   con_results = []
   con_results.append(sample)
   # con_results=con_results+nsd2_call+ccnd3_call+myc_call+mafa_call+ccnd1_call+ccnd2_call+maf_call+mafb_call
@@ -1024,7 +920,7 @@ def gen_summ_table(filt_table, results_table, nreads, min_con_len, sample):
     con_results.append(x)
 
   print("full list")
-  print(con_results)
+  #print(con_results)
   translocationsTable = pd.DataFrame(columns=column_names)
   translocationsTable.loc[len(translocationsTable)] = con_results
   return translocationsTable
@@ -1101,7 +997,7 @@ if not results_table.empty:
 
 # generate summary table
 summ_table = gen_summ_table(filt_table, results_table, min_reads, window_size, sample_name)
-print(summ_table)
+#print(summ_table)
 out_file_summ = out_path + "/DEX_IgTx_GA_Summary.txt"
 summ_table.to_csv(out_file_summ, sep="\t", index=False, na_rep=0, float_format='%.0f')
 print("Test Done")
