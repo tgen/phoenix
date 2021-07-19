@@ -79,17 +79,50 @@ def main():
     num_tasks = 0
     sig_list = []
 
-    if '96' in matrices:
-        num_tasks = num_tasks + 1
-        sig_list.append(('SBS', '96'))
+    try:
+        if matrices['96'][args.project].sum() > 0:
+            num_tasks = num_tasks + 1
+            sig_list.append(('SBS', '96'))
+        else:
+            if os.path.exists(args.vcfpath+"/output/SBS"):
+                for f in os.listdir(args.vcfpath+"/output/SBS"):
+                    os.remove(os.path.join(args.vcfpath+"/output/SBS", f))
+                os.rmdir(args.vcfpath+"/output/SBS")
+    except:
+        if os.path.exists(args.vcfpath+"/output/SBS"):
+            for f in os.listdir(args.vcfpath+"/output/SBS"):
+                os.remove(os.path.join(args.vcfpath+"/output/SBS", f))
+            os.rmdir(args.vcfpath+"/output/SBS")
 
-    if 'DINUC' in matrices:
-        num_tasks = num_tasks + 1
-        sig_list.append(('DBS', '78'))
+    try:
+        if matrices['DINUC'][args.project].sum() > 0:
+            num_tasks = num_tasks + 1
+            sig_list.append(('DBS', '78'))
+        else:
+            if os.path.exists(args.vcfpath+"/output/DBS"):
+                for f in os.listdir(args.vcfpath+"/output/DBS"):
+                    os.remove(os.path.join(args.vcfpath+"/output/DBS", f))
+                os.rmdir(args.vcfpath+"/output/DBS")
+    except:
+        if os.path.exists(args.vcfpath+"/output/DBS"):
+            for f in os.listdir(args.vcfpath+"/output/DBS"):
+                os.remove(os.path.join(args.vcfpath+"/output/DBS", f))
+            os.rmdir(args.vcfpath+"/output/DBS")
 
-    if 'ID' in matrices:
-        num_tasks = num_tasks + 1
-        sig_list.append(('ID', '83'))
+    try:
+        if matrices['ID'][args.project].sum() > 0:
+            num_tasks = num_tasks + 1
+            sig_list.append(('ID', '83'))
+        else:
+            if os.path.exists(args.vcfpath+"/output/ID"):
+                for f in os.listdir(args.vcfpath+"/output/ID"):
+                    os.remove(os.path.join(args.vcfpath+"/output/ID", f))
+                os.rmdir(args.vcfpath+"/output/ID")
+    except:
+        if os.path.exists(args.vcfpath+"/output/ID"):
+            for f in os.listdir(args.vcfpath+"/output/ID"):
+                os.remove(os.path.join(args.vcfpath+"/output/ID", f))
+            os.rmdir(args.vcfpath+"/output/ID")
 
     cpus_per_task = max(int(args.threads/num_tasks),1)
     with ThreadPoolExecutor(max_workers=3) as e:
