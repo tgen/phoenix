@@ -124,10 +124,11 @@ def main():
                 os.remove(os.path.join(args.vcfpath+"/output/ID", f))
             os.rmdir(args.vcfpath+"/output/ID")
 
-    cpus_per_task = max(int(args.threads/num_tasks),1)
-    with ThreadPoolExecutor(max_workers=3) as e:
-        for sigClass, sigContext in sig_list:
-            e.submit(extractSignatures, args.output, args.vcfpath, args.genome, args.project, sigClass, sigContext, args.exome, cpus_per_task)
+    if num_tasks > 0:
+        cpus_per_task = max(int(args.threads/num_tasks),1)
+        with ThreadPoolExecutor(max_workers=3) as e:
+            for sigClass, sigContext in sig_list:
+                e.submit(extractSignatures, args.output, args.vcfpath, args.genome, args.project, sigClass, sigContext, args.exome, cpus_per_task)
 
 if __name__ == '__main__':
     main()
