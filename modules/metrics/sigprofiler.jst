@@ -71,7 +71,7 @@
 
       {# Prepare the known useful output #}
       {# rsync -R copies the relative path after the /./ section #}
-      if [ "$(ls -A {{ temp_dir }}/SBS96)" ]; then
+      if [ -d "{{ temp_dir }}/SBS96/Suggested_Solution" ]; then
       rsync -R --remove-source-files {{ temp_dir }}/./SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Activities/COSMIC_SBS96_Activities_refit.txt {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Activities/COSMIC_SBS96_Activity_Plots_refit.pdf {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/Activities/COSMIC_SBS96_TMB_plot_refit.pdf {{ results_dir }}
@@ -81,7 +81,7 @@
       rsync -R --remove-source-files {{ temp_dir }}/./SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/De_Novo_map_to_COSMIC_SBS96.csv {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./SBS96/Suggested_Solution/COSMIC_SBS96_Decomposed_Solution/SBS96_Decomposition_Plots.pdf {{ results_dir }}
       fi
-      if [ "$(ls -A {{ temp_dir }}/ID83)" ]; then
+      if [ -d "{{ temp_dir }}/ID83/Suggested_Solution" ]; then
       rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_Activities_refit.txt {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_Activity_Plots_refit.pdf {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/Activities/COSMIC_ID83_TMB_plot_refit.pdf {{ results_dir }}
@@ -91,7 +91,7 @@
       rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/De_Novo_map_to_COSMIC_ID83.csv {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./ID83/Suggested_Solution/COSMIC_ID83_Decomposed_Solution/ID83_Decomposition_Plots.pdf {{ results_dir }}
       fi
-      if [ "$(ls -A {{ temp_dir }}/DBS78)" ]; then
+      if [ -d "{{ temp_dir }}/DBS78/Suggested_Solution" ]; then
       rsync -R --remove-source-files {{ temp_dir }}/./DBS78/Suggested_Solution/COSMIC_DBS78_Decomposed_Solution/Activities/COSMIC_DBS78_Activities_refit.txt {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./DBS78/Suggested_Solution/COSMIC_DBS78_Decomposed_Solution/Activities/COSMIC_DBS78_Activity_Plots_refit.pdf {{ results_dir }}
       rsync -R --remove-source-files {{ temp_dir }}/./DBS78/Suggested_Solution/COSMIC_DBS78_Decomposed_Solution/Activities/COSMIC_DBS78_TMB_plot_refit.pdf {{ results_dir }}
