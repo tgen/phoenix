@@ -26,7 +26,7 @@ option_list <- list(
               help="Minimum caller count [default %default]",
               metavar="number"),
   make_option(c("--genes"), action="store",
-              help="Minimum caller count [default %default]")
+              help="Flat file containing genes of interest (not required)")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
