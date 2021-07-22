@@ -3,7 +3,10 @@ library(tidyverse)
 suppressPackageStartupMessages(library("optparse"))
 suppressPackageStartupMessages(library("stats"))
 
-#Read in the individual flatFiles
+# Initialize list of matrix object
+genes <- c("NSD2", "CCND3", "MYC", "MAFA", "CCND1", "CCND2", "MAF", "MAFB")
+callers <- c()
+header <- c("Specimen")
 
 option_list <- list(
   make_option(c("-v", "--verbose"), action="store_true", default=TRUE,
@@ -21,24 +24,59 @@ option_list <- list(
               help="Flat file containing Ig Calls using Gammit"),
   make_option(c("-c", "--count"), action="store",type="integer", default=2,
               help="Minimum caller count [default %default]",
-              metavar="number")
+              metavar="number"),
+  make_option(c("--genes"), action="store",
+              help="Minimum caller count [default %default]")
 )
 
 opt <- parse_args(OptionParser(option_list=option_list))
 
 write("Check input files...\n", stderr())
-if(!is.null(opt$pairoscope_file) && !file.exists(as.character(opt$pairoscope_file)))
+if(!is.null(opt$pairoscope_file))
 {
-  write("Pairoscope Ig Tx file not found...\n", stderr())
+  callers <- append(callers, "Pairoscope")
+  if(!file.exists(as.character(opt$pairoscope_file)))
+  {
+    write("Pairoscope Ig Tx file not found...\n", stderr())
+  }
 }
-if (!is.null(opt$manta_file) && !file.exists(as.character(opt$manta_file)))
+
+if (!is.null(opt$manta_file))
 {
-  write("Manta Ig Tx file not found...\n", stderr())
+  callers <- append(callers, "Manta")
+  if (!file.exists(as.character(opt$manta_file)))
+  {
+    write("Manta Ig Tx file not found...\n", stderr())
+  }
 }
-if (!is.null(opt$gammit_file) && !file.exists(as.character(opt$gammit_file)))
+
+if (!is.null(opt$gammit_file))
 {
-  write("Gammit Ig Tx file not found...\n", stderr())
+  callers <- append(callers, "Gammit")
+  if (!file.exists(as.character(opt$gammit_file)))
+  {
+    write("Gammit Ig Tx file not found...\n", stderr())
+  }
 }
+
+if (!is.null(opt$genes))
+{
+  genes = read.table(file=opt$genes)
+}
+
+for (gene in genes) {
+  header <- append(header, paste(gene, "Summary_CALL", sep = "_"))
+  header <- append(header, paste(gene, "IgSource", sep = "_"))
+  header <- append(header, paste(gene, "CALLER_COUNT", sep = "_"))
+  for (caller in callers) {
+    header <- append(header, paste(gene, "CALL", caller, sep = "_"))
+  }
+}
+
+init_matrix <- matrix(0, ncol = length(header), nrow = 1)
+colnames(init_matrix) <- header
+init_table <- as_tibble(init_matrix)
+init_table <- init_table %>% mutate_at(1, as.character)
 
 write("Processing Data...\n", stderr())
 specimen = tibble(Specimen=opt$specimen)
@@ -153,9 +191,15 @@ combined_calls$MAF_IgSource = ifelse(length(unique(MAF_IgSource))==1, unique(MAF
 combined_calls$MAFA_IgSource = ifelse(length(unique(MAFA_IgSource))==1, unique(MAFA_IgSource),0)
 combined_calls$MAFB_IgSource = ifelse(length(unique(MAFB_IgSource))==1, unique(MAFB_IgSource),0)
 
-combined_calls=combined_calls[,order(colnames(combined_calls), decreasing = TRUE)]
+#combined_calls=combined_calls[,order(colnames(combined_calls), decreasing = TRUE)]
+
+summary_table <- init_table %>%
+    right_join(combined_calls) %>%
+    replace(is.na(.), 0)
+
+summary_table=summary_table[,order(colnames(summary_table), decreasing = TRUE)]
 
 # combined_calls=combined_calls %>% relocate(Specimen)
 write("Save results...\n", stderr())
-write_tsv(combined_calls, opt$outfile, append = FALSE, na="NA")
+write_tsv(summary_table, opt$outfile, append = FALSE, na="NA")
 write("Done.\n", stderr())
