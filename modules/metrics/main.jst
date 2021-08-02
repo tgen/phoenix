@@ -81,7 +81,7 @@
   {{- msisensor_pro(pair, normal_bam, tumor_bam, aligner) }}
 {% endif %}
 
-{% if tasks[]|default(true) %}
+{% if tasks[taskPrefix+"_somatic_sample_metric_sigprofiler"]|default(true) %}
   {{- sigprofiler(pair, vcf_prefix, variant_caller, aligner) }}
 {% endif %}
 
