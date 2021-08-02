@@ -446,7 +446,7 @@ constants:
     plotCNVplus_Rscript: plotCNVplus_4d89cb4.R
     plotSamStats_Rscript: summarize_samstats_8c45d63.R
     summarize_mm_igtx_Rscript: summarize_Ig_875a823.R
-    process_assembled_bam: Process_Assembled_BAM_a536f1b.py
+    process_assembled_bam: Process_Assembled_BAM_277eed7.py
     stats2json: samStats2json_3a90a2f.py
     stats2lims: uploadStats2Lims_1ace81f.py
     sigprofiler: sigprofiler_7595614.py

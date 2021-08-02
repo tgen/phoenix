@@ -815,7 +815,7 @@ def check_gene_call(table, gene, nreads, min_con_len):
                                         table_by_gene.at[row, contig_flag_col2], table_by_gene.at[row, pos_col2])
           if(table_by_gene.at[row, align_col2] > ig_aligned_length):
             ig_aligned_length = table_by_gene.at[row, align_col2]
-          ig_breakpoint = ig_breakpoint+';'+ig_breakpoint2
+          ig_breakpoint = str(int(ig_breakpoint))+';'+str(int(ig_breakpoint2))
           ig_cigar = ig_cigar+';'+table_by_gene.at[row, cigar_col2]
     #test onky since we are missing fastq
     print("************************\n"+str(total_aligned_length) + " "+str(ig_aligned_length)+"*****************\n")

@@ -177,6 +177,8 @@
 
         bwa mem \
           -t 4 \
+          -Y \
+          -K 100000000 \
           -o {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/trinbwafile.sam \
           {{ constants.phoenix.bwa_index }} \
           {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
@@ -194,6 +196,8 @@
         bwa index {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/Trinity.fasta
         bwa mem \
           -t 4 \
+          -Y \
+          -K 100000000 \
           -o {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/ReadstoContigs.sam \
           {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/Trinity.fasta \
           ${leftfq} ${rightfq}

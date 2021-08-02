@@ -1,17 +1,17 @@
 <img src="/images/TGen_Color_LOGO_medium.png" width="208.3" height="78" title="TGen Logo"> <br/>
 # Phoenix Workflow - A JetStream Workflow
 
-This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome 
-using ensembl version 98 gene models.  The workflow is designed to support project level analysis 
-that can include one or multiple types of data. Though not required the expectation is a project contains 
-data from a single individual thus centralizing all data types in a standardized output structure. The 
-workflow template supports a diverse array of analysis methods required to analyze DNA, RNA, and single cell 
-data.  Based on standardized variables it also supports integrated analysis between data types.  For some 
-processes multiple options are provided that can be individually enabled or disabled by configuration 
-parameters. Like all JetStream (https://github.com/tgen/jetstream) workflows developed at TGen this workflow is designed to facilitate our dynamic and 
-time sensitive analysis needs while ensuring compute and storage resources are used efficiently. The primary 
-input is a JSON record from the TGen LIMS but hand created inputs in the form of a JSON or EXCEL worksheet can 
-also be provided when run manually or by submission to the related JetStream Centro (https://github.com/tgen/jetstream_centro) 
+This workflow supports the analysis of human sequencing samples against the GRCh38 reference genome
+using ensembl version 98 gene models.  The workflow is designed to support project level analysis
+that can include one or multiple types of data. Though not required the expectation is a project contains
+data from a single individual thus centralizing all data types in a standardized output structure. The
+workflow template supports a diverse array of analysis methods required to analyze DNA, RNA, and single cell
+data.  Based on standardized variables it also supports integrated analysis between data types.  For some
+processes multiple options are provided that can be individually enabled or disabled by configuration
+parameters. Like all JetStream (https://github.com/tgen/jetstream) workflows developed at TGen this workflow is designed to facilitate our dynamic and
+time sensitive analysis needs while ensuring compute and storage resources are used efficiently. The primary
+input is a JSON record from the TGen LIMS but hand created inputs in the form of a JSON or EXCEL worksheet can
+also be provided when run manually or by submission to the related JetStream Centro (https://github.com/tgen/jetstream_centro)
 web portal. All required files defined the the `pipeline.yaml` can be created using code provided in the JetStream Resources
 repository (https://github.com/tgen/jetstream_resources).
 
@@ -22,13 +22,13 @@ _Click to show details_
 <details>
   <summary><b>DNA Alignment</b></summary>
 
-  The DNA Alignment module supports the generation of processed BAM or CRAM files from input fastqs files. 
-  The configuration files define one of three different alignment style variables (`dnaAlignmentStyle`) that 
-  all use BWA as the aligner but use different tools for alignment processing. Additionally, baserecalibration 
+  The DNA Alignment module supports the generation of processed BAM or CRAM files from input fastqs files.
+  The configuration files define one of three different alignment style variables (`dnaAlignmentStyle`) that
+  all use BWA as the aligner but use different tools for alignment processing. Additionally, baserecalibration
   and/or conversion to CRAM for archiving can be enabled for any project.
-  
+
   <img src="/images/DNA_Alignment_Options.png" width="768" height="512" title="DNA Alignment Options">
-  
+
   - TGen [`tgen`] (default)
     - Fastq files are chunked to 40M reads
     - Chunks are aligned with BWA, processed with samtools fixmate and samtools sort
@@ -51,10 +51,10 @@ _Click to show details_
 
 <details>
   <summary><b>Constitutional Analysis</b></summary>
-  
-  These modules support the discovery of small variants (SNV/INDELs), structural abnormalities (deletions, 
+
+  These modules support the discovery of small variants (SNV/INDELs), structural abnormalities (deletions,
   duplications, inversions, translocations), and copy number abnormalities on single constitutional samples
-  
+
   <img src="/images/Constitutional_Analysis_Options.png" width="768" height="512" title="Constitutional Analysis">
 
   - Variant Discovery (SNV/INDEL)
@@ -75,17 +75,17 @@ _Click to show details_
 
 <details>
   <summary><b>Somatic Analysis</b></summary>
-  
-  This module will run several somatic variant callers on tumor/normal 
+
+  This module will run several somatic variant callers on tumor/normal
   data pairs:
-  
+
   <img src="/images/Somatic_Analysis_Options.png" width="768" height="512" title="Somatic Analysis">
 
   - Variant Discovery (SNV/INDEL)
     - Strelka2 (Somatic mode)
     - Mutect2
     - Lancet
-      - Currently NOT enabled for genomes by default 
+      - Currently NOT enabled for genomes by default
     - VarDictJava
     - Octopus (Only calls on primary contigs 1-22, X, Y)
   - Structural Variant Detection
@@ -99,17 +99,17 @@ _Click to show details_
 
 <details>
   <summary><b>Tumor Only Analysis</b></summary>
-  
-  This module will run several variant callers using a tumor sample and user defined normal 
+
+  This module will run several variant callers using a tumor sample and user defined normal
   data pairs:
-  
+
   <img src="/images/TumorOnly_Analysis_Options.png" width="768" height="512" title="TumorOnly Analysis">
 
   - Variant Discovery (SNV/INDEL)
     - Strelka2 (Somatic mode)
     - Mutect2
     - Lancet
-      - Currently NOT enabled for genomes by default 
+      - Currently NOT enabled for genomes by default
     - VarDictJava
     - Octopus (Only calls on primary contigs 1-22, X, Y)
   - Structural Variant Detection
@@ -123,9 +123,9 @@ _Click to show details_
 
 <details>
   <summary><b>RNA Analysis</b></summary>
-  
+
   <img src="/images/RNA_Alignment_Quantitation_Options.png" width="768" height="512" title="RNA Analysis">
- 
+
   - RNA Alignment
     - STAR
       - 2-pass mode
@@ -147,17 +147,17 @@ _Click to show details_
 
 <details>
   <summary><b>Single Cell RNA Sequencing</b></summary>
-  
+
   - 10x Genomics Cell Ranger
     - Supports 3' and 5' assays
     - Supports VDJ analysis
   - starSOLO
     - Supports 3' and 5' assays
-    
+
 </details>
 
 ## Output Folder Structure
-All final output files are placed in a standardized folder structure that generally reflects the relationship of files or 
+All final output files are placed in a standardized folder structure that generally reflects the relationship of files or
 the processing order.
 ```
 Project
@@ -173,8 +173,8 @@ Project
 
 <details>
   <summary><b>Project Folder Example</b></summary>
-  
-``` 
+
+```
 # Only Directories are Shown
 MMRF_1499
 ├── exome
@@ -283,58 +283,58 @@ _Click to show details_
 <summary><b>Public Tools Used by the Workflow</b></summary>  
 
 All tools build with public easybuild configuration files, available [here](https://github.com/easybuilders/easybuild).<br/>
-*Last Updated Jan 29th, 2021*  
+*Last Updated July 29th, 2021*  
 
 | Tool | Version Implemented | Current Version | Dependency and Notes | EasyBuild |
 | :---: | :---: | :---: | :--- | :---: |
-| [bcftools](https://github.com/samtools/bcftools/releases) | 1.10.2 | **1.11** | | Yes |
+| [bcftools](https://github.com/samtools/bcftools/releases) | 1.10.2 | **1.13** | | Yes |
 | [bedtools](https://github.com/arq5x/bedtools2/releases) | 2.29.0 | **2.30.0** | delly-filter, addmatchRNA, vardict, vcfmerger2 | Yes |
-| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.2** | star-fusion | Yes |
+| [bowtie2](http://bowtie-bio.sourceforge.net/bowtie2/index.shtml) | 2.3.5.1 | **2.4.4** | star-fusion | Yes |
 | [bwa](https://github.com/lh3/bwa/releases) | 0.7.17 | 0.7.17 | | Yes |
-| [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 3.1.0 | **5.0** | | Yes |
-| [cuda-toolkit](https://developer.nvidia.com/cuda-downloads) | 10.1.243 | **11.2** | | No |
-| [deepvariant](https://github.com/google/deepvariant/releases) | 0.10.0 | **1.1.0** | singularity container | Yes |
+| [cellranger](https://support.10xgenomics.com/single-cell-gene-expression/software/pipelines/latest/using/count) | 6.0 | 6.0 | | Yes |
+| [cuda-toolkit](https://developer.nvidia.com/cuda-downloads) | 10.1.243 | **11.4** | | No |
+| [deepvariant](https://github.com/google/deepvariant/releases) | 0.10.0 | **1.2.0** | singularity container | Yes |
 | [delly](https://github.com/dellytools/delly/releases) | 0.7.6 | **0.8.7** | staying with 0.7.6 for compatibility reasons | Yes |
 | [dle](https://github.com/tgen/Discordant_Loci_Extractor/releases) | 0.1.5 | 0.1.5 | private repo | No |
-| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.4** | 1.3.2 ensures python3 compatibility | Yes |
-| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.8.0 | **4.1.9.0** |  | Yes |
-| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | **2020-12-17** | star-fusion | Yes |
-| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.10.2** |  | |
+| [freebayes](https://github.com/ekg/freebayes/releases) | 1.3.1 | **1.3.4** | | Yes |
+| [gatk](https://github.com/broadinstitute/gatk//releases) | 4.1.8.0 | **4.2.0.0** |  | Yes |
+| [gmap-gsnp](http://research-pub.gene.com/gmap/) | 2019-09-12 | **2021-07-23** | star-fusion | Yes |
+| [gridss](https://github.com/PapenfussLab/gridss/releases) | 2.6.3 | **2.12.0** |  | |
 | [hmmcopyutils](https://github.com/shahcompbio/hmmcopy_utils) | 1.0 | 1.0 | no official release | Yes |
 | [htseq](https://github.com/htseq/htseq/releases) | 0.12.3 | **0.13.5** | | |
-| [htslib](https://github.com/samtools/htslib/releases) | 1.10.2 | **1.11** | star-fusion(bgzip) | Yes |
+| [htslib](https://github.com/samtools/htslib/releases) | 1.10.2 | **1.13** | star-fusion(bgzip) | Yes |
 | [ichor](https://github.com/broadinstitute/ichorCNA/releases) | 0.2.0 | 0.2.0 | package in R/3.6.1-phoenix module | Yes? |
 | [jellyfish](https://github.com/gmarcais/Jellyfish/releases) | 2.3.0 | 2.3.0 | star-fusion | Yes |
 | [lancet](https://github.com/nygenome/lancet/releases) | 1.1.0 | 1.1.0 | | Yes |
 | [lumosVar2](https://github.com/tgen/lumosVar2/releases) | 1.1 | 1.1 | | Yes |
 | [manta](https://github.com/Illumina/manta/releases) | 1.6.0 | 1.6.0 | | Yes |
 | [manta_tgen](https://github.com/tgen/manta/releases) | 1.6.0 | 1.6.0 | modified for internal use | No |
-| [multiQC](https://github.com/ewels/MultiQC/releases) | 1.9 | 1.9 | python3 pip | Yes |
-| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | **0.7.0** | | Yes |
-| [openmpi](https://github.com/open-mpi/ompi/releases) | 3.1.3 | **4.1.0** | delly | No |
+| [multiQC](https://github.com/ewels/MultiQC/releases) | 1.9 | **1.11**| python3 pip | Yes |
+| [octopus](https://github.com/luntergroup/octopus/releases) | 0.6.3-beta | **0.7.4** | | Yes |
+| [openmpi](https://github.com/open-mpi/ompi/releases) | 3.1.3 | **4.1.1** | delly | No |
 | [pairoscope](https://github.com/genome/pairoscope/releases) | 0.4.2 | 0.4.2 | | Yes |
-| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.33.6** | star-fusion | Yes |
+| [perl](https://github.com/Perl/perl5/releases) | 5.28.1 | **5.35.2** | star-fusion | Yes |
 | [phaser](https://github.com/secastel/phaser/tree/master/phaser) | 1.1.1 | 1.1.1 | vcfmerger2 | Yes |
 | [python2](https://www.python.org/downloads/) | 2.7.15 | **2.7.18** | | Yes |
-| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.9.1** | star-fusion, vcfmerger2 | Yes |
-| [R](https://www.r-project.org/) | 3.6.1 | **4.0.3** | gatk cnv, varDict, vcfmerger2 | Yes |
-| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 1.2.1 | **1.4.0** | self, star-fusion | Yes |
+| [python3](https://www.python.org/downloads/) | 3.7.2 | **3.9.6** | star-fusion, vcfmerger2 | Yes |
+| [R](https://www.r-project.org/) | 3.6.1 | **4.1.0** | gatk cnv, varDict, vcfmerger2 | Yes |
+| [salmon](https://github.com/COMBINE-lab/salmon/releases) | 1.2.1 | **1.5.2** | self, star-fusion | Yes |
 | [sambamba](https://github.com/biod/sambamba/releases) | 0.7.0 | **0.8.0** | | |
 | [samblaster](https://github.com/GregoryFaust/samblaster/releases) | 0.1.24 | **0.1.26** | | |
-| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | **1.11** | | Yes |
-| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | **3.7.1** | deepvariant | Yes, release-candidate |
+| [samtools](https://github.com/samtools/samtools/releases) | 1.10 | **1.13** | | Yes |
+| [singularity](https://github.com/sylabs/singularity/releases) | 3.5.2 | **3.8.1** | deepvariant | Yes |
 | [snpEff](https://sourceforge.net/projects/snpeff/files/) | 4.3t | **4.5covid19** | covid related release? | Yes |
 | [snpSniffer](https://github.com/tgen/snpSniffer/releases) | 7.0.0 | 7.0.0 | | No |
-| [star](https://github.com/alexdobin/STAR/releases) | 2.7.5a | **2.7.7a** | self, star-fusion | Yes |
-| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | **1.9.1** | | Yes |
+| [star](https://github.com/alexdobin/STAR/releases) | 2.7.5a | **2.7.9a** | self, star-fusion | Yes |
+| [star-fusion](https://github.com/STAR-Fusion/STAR-Fusion/releases) | 1.8.1 | **1.10.1** | | Yes |
 | [strelka](https://github.com/Illumina/strelka/releases) | 2.9.10 | 2.9.10 | | Yes |
-| [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | **2.0.1** | part of subread package | Yes |
-| [tgen_mutation_burden](https://github.com/tgen/tgen_mutation_burden/releases) | 1.2.1 | 1.2.1 | | No |
+| [subread](https://sourceforge.net/projects/subread/) | 2.0.0 | **2.0.3** | part of subread package | Yes |
+| [tgen_mutation_burden](https://github.com/tgen/tgen_mutation_burden/releases) | 1.2.3 | 1.2.3 | | No |
 | [transParser](https://github.com/tgen/transParser/releases) | 1.0.1 | 1.0.1 | | No |
-| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.11.0** | star-fusion | Yes |
+| [trinityrnaseq](https://github.com/trinityrnaseq/trinityrnaseq/releases) | 2.8.6 | **2.12.0** | star-fusion | Yes |
 | [vardictJava](https://github.com/AstraZeneca-NGS/VarDictJava/releases) | 1.7.0 | **1.8.2** | | Yes |
 | [vcfmerger2](https://github.com/tgen/vcfMerger2/releases) | 0.8.7 | 0.8.7 | | Yes |
-| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | **102.0** | | Yes |
+| [vep](https://github.com/Ensembl/ensembl-vep/releases) | 98.3 | **104.3** | | Yes |
 | [verifybamid2](https://github.com/Griffan/VerifyBamID/releases) | 1.0.6 | **2.0.1** | | Yes |
 | [vt](https://github.com/atks/vt/releases) | 0_57721 | 0_57721 | | Yes |
 
@@ -522,7 +522,7 @@ In order to run from the command line, we need to create a config file for our p
 Here is a larger example with actual data for running the phoenix pipeline on a NA12878 project:
 <details><summary>NA12878 Example</summary>
   <p>
-    
+
   ##### Some of this data has been modified to hide the identity of the original submitter(s)
   ```json
   {
@@ -1059,7 +1059,7 @@ template variables:
                         add a single template variable
   -C PATH, --config-file PATH
                         load template variables from a file
-                        
+
 $ jetstream init GIAB -C GIAB_NA12878_24582bb3f7.json
 ```
 
@@ -1178,7 +1178,7 @@ but we will explain the more unique variables. Here is an example:
 
 ## Data file attributes
 
-There are restrictions on what some of these variables can be assigned to, these will be denoted in the [ ]'s. 
+There are restrictions on what some of these variables can be assigned to, these will be denoted in the [ ]'s.
 If the attribute isn't strictly required then it is not included in this list.
 
   - *assayCode*  
@@ -1190,13 +1190,13 @@ If the attribute isn't strictly required then it is not included in this list.
     the first file encountered for that sample in the config file.
 
   - *dnaRnaMergeKey*  
-    Used during DNA/RNA integrations steps. It defines the pairing of DNA and RNA samples as a project might have 
+    Used during DNA/RNA integrations steps. It defines the pairing of DNA and RNA samples as a project might have
     multiple DNA and RNA pairs, for instance it can be used to ensure the diagnosis exome and RNA are paired together
     and the relapse exome is not paired with the diagnosis RNA.
-    
+
   - *fastqCode* [R1|R2]  
     Assigns the read number of the fastq following standard Illumina paired-end nomenclature.
-    
+
   - *fastqPath*   
     Assigns the path to the fastq.
 
@@ -1217,10 +1217,10 @@ If the attribute isn't strictly required then it is not included in this list.
 
   - *numberOfReads*  
     Used for validating the number of chunks created during alignment.
-    
+
   - *read1Length / read2Length*   
     Used to select the correct STAR indexes.
-    
+
   - *readOrientation* [inward|outward]  
     Used to set the strand orientation of RNA assays. Used in conjunction with rnaStrandDirection and rnaStrandType.
 
@@ -1234,18 +1234,18 @@ If the attribute isn't strictly required then it is not included in this list.
     rgpm - Platform model. Used to configure platform duplicate marking thresholds. Free-form text providing further details of the platform/technology used.  
     rgpu - Platform unit (e.g., flowcell-barcode.lane for Illumina or slide for SOLiD). Unique identifier.  
     rgsm - Sample. Use pool name where a pool is being sequenced.  
-    
+
   - *fraction*  
     Relevant to the TGen naming scheme. See TGen Naming Convention.
 
   - *rnaStrandDirection* [notapplicable|forward|reverse]  
     Used during STAR alignment of RNA.
-    
+
   - *rnaStrandType* [unstranded|stranded]  
     Assigns the strand orientation of an RNA library
-    
+
   - *sampleMergeKey*   
-    This is the expected BAM filename and is used to merge data from multiple sequencing 
+    This is the expected BAM filename and is used to merge data from multiple sequencing
     lanes or flowcells for data from the same specimen (rgsm) tested with the same assay
 
   - *sampleName*  
@@ -1256,8 +1256,8 @@ If the attribute isn't strictly required then it is not included in this list.
     the distinction of files during somatic analysis.
 
 ## TGen Naming Convention
-Many of the naming structures used are defined by the standardize naming structure used at TGen that ensures all files 
-have a unique but descriptive name. It is designed to support serial collection and multiple collections from 
+Many of the naming structures used are defined by the standardize naming structure used at TGen that ensures all files
+have a unique but descriptive name. It is designed to support serial collection and multiple collections from
 difference sources on a single day.  Furthermore, sample processing methods can be encoded.
 
 STUDY_PATIENT_VISIT_SOURCE_FRACTION_SubgroupIncrement_ASSAY_LIBRARY
