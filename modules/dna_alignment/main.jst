@@ -1,6 +1,8 @@
 # DNA Alignment with BWA MEM
 # Take DNA fastq data files to aligned bams with qc data
 {% from 'modules/dna_alignment/bwa_mem_samtools.jst' import bwa_mem_samtools_chunked with context %}
+{% from 'modules/dna_alignment/bwa_mem2_samtools.jst' import bwa_mem2_samtools_chunked with context %}
+{% from 'modules/dna_alignment/pb_fq2bam.jst' import fq2bam with context %}
 {% from 'modules/dna_alignment/bwa_mem_gatk_picard.jst' import bwa_mem_gatk_picard_chunked with context %}
 {% from 'modules/dna_alignment/bwa_mem_samblaster_sambamba.jst' import bwa_mem_blaster_bamba with context %}
 {% from 'modules/dna_alignment/bowtie2_samtools.jst' import bowtie2_samtools_chunked with context %}
@@ -40,14 +42,19 @@
       {% set opt_dup_distance = 100 %}
     {% endif %}
 
-    {% if alignment_style == 'tgen' %}
-      {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
-    {% elif alignment_style == 'broad'  %}
-      {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk, opt_dup_distance) }}
-    {% elif alignment_style == 'ashion' %}
-      {{- bwa_mem_blaster_bamba(sample) }}
+    {# PCRfree will not have any pcr cycles #}
+    {% if sample.pcrCycles is defined and sample.pcrCycles == 0 %}
+      {{- bwa_mem2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
     {% else %}
-      {{ raise('Unknown dnaAlignmentStyle: {}'.format(dnaAlignmentStyle)) }}
+      {% if alignment_style == 'tgen' %}
+        {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
+      {% elif alignment_style == 'broad'  %}
+        {{- bwa_mem_gatk_picard_chunked(sample, reads_per_chunk, opt_dup_distance) }}
+      {% elif alignment_style == 'ashion' %}
+        {{- bwa_mem_blaster_bamba(sample) }}
+      {% else %}
+        {{ raise('Unknown dnaAlignmentStyle: {}'.format(dnaAlignmentStyle)) }}
+      {% endif %}
     {% endif %}
 
     {% if sample.gltype == 'genome' %}

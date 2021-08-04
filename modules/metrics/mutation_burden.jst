@@ -8,6 +8,14 @@
 {% set mutation_burden_output %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.txt{% endset %}
 {% set mutation_burden_json %}{{ results_dir }}/{{ pair.name }}.{{ annotate_flag }}.mutation_burden.json{% endset %}
 
+{% if pair.callers is defined and pair.callers|length > 1 %}
+  {% if pair.callers | length > 3 %}
+    {% set CC_filter %}INFO/CC>={{ pair.callers | length - 2 }}{% endset %}
+  {% else %}
+    {% set CC_filter %}INFO/CC>={{ pair.callers | length - 1 }}{% endset %}
+  {% endif %}
+{% endif %}
+
 - name: tgen_mutation_burden_{{ variant_caller }}_{{ pair.name }}_{{ aligner }}_{{ annotate_flag }}
   tags:
   input:
@@ -53,7 +61,7 @@
     {% endif %}
 
     bcftools filter \
-      --include 'INFO/CC>=3 && ({{ ns_list|join(' || ') }})' \
+      --include '{{ CC_filter }} && ({{ ns_list|join(' || ') }})' \
       --output {{ mutation_burden_temp }}/{{ input_vcf | basename }} \
       --output-type z \
       {{ input_vcf }}

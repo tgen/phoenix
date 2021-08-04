@@ -3,6 +3,7 @@
 {% from 'modules/somatic/rna_variant_check.jst' import add_rna_header_to_vcf with context %}
 {% from 'modules/somatic/rna_variant_check.jst' import add_matched_rna with context %}
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'utilities/vcf_stats.jst' import vcf_stats with context %}
 
 {% macro vcfmerger2(pair, aligner='bwa', taskPrefix='Genome') %}
 
@@ -155,5 +156,6 @@
   {{- add_rna_header_to_vcf(merged_vcf_gz, output_vcf, pair, aligner , temp_dir)  }}
 {% endif %}
   {{- annotate_vcfs(pair, temp_dir, results_dir, output_vcf, taskPrefix, aligner, 'merged', 'somatic', 'snp_indel_caller') }}
+  {{- vcf_stats(output_vcf, results_dir) }}
   {{- collect_somatic_metrics(pair, normal_bam, tumor_bam, results_dir, taskPrefix, aligner, 'merged') }}
 {% endmacro %}

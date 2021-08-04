@@ -1,4 +1,5 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'utilities/vcf_stats.jst' import vcf_stats with context %}
 
 {% macro lancet_tumor_only(pair, aligner='bwa') %}
 {% do pair.callers.append('lancet') %}
@@ -138,5 +139,8 @@
       > "{{ pass_vcf }}"
     
     bcftools index --tbi --force "{{ pass_vcf }}"
+
+{{- vcf_stats(pass_vcf, results_dir) }}
+{{- vcf_stats(all_vcf, results_dir) }}
 
 {% endmacro %}

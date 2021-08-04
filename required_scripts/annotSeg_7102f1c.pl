@@ -93,6 +93,7 @@ print OFILE "##INFO=<ID=IMPRECISE,Number=0,Type=Flag,Description=\"Imprecise str
 print OFILE "##INFO=<ID=END,Number=1,Type=Integer,Description=\"End position of the variant described in this record\">\n";
 print OFILE "##INFO=<ID=SVLEN,Number=.,Type=Integer,Description=\"Length between POS and END\">\n";
 print OFILE "##INFO=<ID=SVTYPE,Number=1,Type=String,Description=\"Type of structural variant\">\n";
+print OFILE "##INFO=<ID=MARKERS,Number=1,Type=String,Description=\"Number of markers defining segment\">\n";
 print OFILE "##INFO=<ID=LOG2FC,Number=.,Type=Float,Description=\"Log2 Fold Change\">\n";
 print OFILE "##INFO=<ID=GENE,Number=.,Type=String,Description=\"Gene name\">\n";
 print OFILE "##ALT=<ID=DEL,Description=\"Deletion\">\n";
@@ -119,7 +120,10 @@ LOOP: while (<FILE>) {
 
   $qual=abs($temp[5]);
 
-  if ($temp[0] =~/^\"ID\"/) {next LOOP;}
+  # Added ^Sample here to continue legacy support of this script with newer outputs
+  # since this is not a recommended script, we used a solution that required minimal
+  # development time.
+  if ($temp[0] =~/^\"ID\"/ || $temp[0] =~/^Sample/) {next LOOP;}
 
   $st=int($temp[2]/100);
   $en=int($temp[3]/100);
@@ -146,18 +150,20 @@ LOOP: while (<FILE>) {
   }
 
   if (@gns){
-	$vcfline="$temp[1]\t$temp[2]\t$temp[3]\tN\t$alt\t$qual\tPASS\tIMPRECISE;SVTYPE=$alt;END=$temp[3];SVLEN=$temp[4];LOG2FC=$temp[5]";
+  $svlen = $temp[3] - $temp[2];
+	$vcfline="$temp[1]\t$temp[2]\t$temp[3]\tN\t$alt\t$qual\tPASS\tIMPRECISE;SVTYPE=$alt;END=$temp[3];SVLEN=$svlen;MARKERS=$temp[4];LOG2FC=$temp[5]";
 	$genes=join(",",@gns);
 	print OFILE "$vcfline;GENE=$genes\n";
   }
   else{
-	print OFILE "$temp[1]\t$temp[2]\t$temp[3]\tN\t$alt\t$qual\tPASS\tIMPRECISE;SVTYPE=$alt;END=$temp[3];SVLEN=$temp[4];LOG2FC=$temp[5]\n";
+  $svlen = $temp[3] - $temp[2];
+	print OFILE "$temp[1]\t$temp[2]\t$temp[3]\tN\t$alt\t$qual\tPASS\tIMPRECISE;SVTYPE=$alt;END=$temp[3];SVLEN=$svlen;MARKERS=$temp[4];LOG2FC=$temp[5]\n";
   }
  }else{
-	print OFILE "$temp[1]\t$temp[2]\t$temp[3]\tN\t$alt\t$qual\t.\tIMPRECISE;SVTYPE=$alt;END=$temp[3];SVLEN=$temp[4];LOG2FC=$temp[5]\n";
+  $svlen = $temp[3] - $temp[2];
+	print OFILE "$temp[1]\t$temp[2]\t$temp[3]\tN\t$alt\t$qual\t.\tIMPRECISE;SVTYPE=$alt;END=$temp[3];SVLEN=$svlen;MARKERS=$temp[4];LOG2FC=$temp[5]\n";
  }
 }
 
 close(OFILE);
 close(FILE);
-

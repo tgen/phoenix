@@ -1,5 +1,6 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
 {% from 'modules/annotation/annot_seg.jst' import annot_seg with context %}
+{% from 'modules/metrics/thred.jst' import thred with context %}
 # The macros found in this template are used to generate the gatk4 somatic cnv workflow.
 
 {% macro gatk_cnv(pair, aligner='bwa') %}
@@ -710,6 +711,7 @@
 
     {% set final_seg %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.re_centered.cr.igv.seg{% endset %}
     {{- annot_seg(final_seg, pair.name) }}
+    {{- thred(pair, final_seg)}}
 
     {% set task %}gatk_call_cnv_step4_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}

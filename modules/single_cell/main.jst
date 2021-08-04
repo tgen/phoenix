@@ -15,6 +15,10 @@
       {% set rnaStrandType=file.rnaStrandType|default('unstranded')|lower %}
       {% set rnaStrandDirection=file.rnaStrandDirection|default('notapplicable')|lower %}
       {% set strandedness %}{{ readOrientation }}-{{ rnaStrandType }}-{{ rnaStrandDirection }}{% endset %}
+      {% if file.quantity is defined and file.quantitySource is defined and file.quantitySource|lower == 'cells' %}
+        {% set expectedCells=file.quantity %}
+        {% do file.update({'expectedCells': expectedCells}) %}
+      {% endif %}
       {% do file.update({'strandedness': strandedness}) %}
     {% endfor %}
 
