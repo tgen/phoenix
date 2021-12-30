@@ -1,0 +1,205 @@
+### Working code to start UMI process
+
+### Variables used in testing - see toolkit_jkeats for details on working code blocks
+#!/usr/bin/env bash
+
+# Load needed modules, set path to tools
+module load BWA/0.7.17-GCC-8.2.0-2.31.1
+module load GATK/4.1.8.0-GCCcore-8.3.0-Java-1.8
+
+FGBIO_JAR=/home/jkeats/downloads/fgbio-1.4.0.jar
+
+# Set Required Variables
+#R1=STAMINA_0020_1_BM_Whole_C1_TETC1_K27249_HWKFNDSX2_TCTCGTACTT_L003_R1_001.fastq.gz
+#R2=STAMINA_0020_1_BM_Whole_C1_TETC1_K27249_HWKFNDSX2_TCTCGTACTT_L003_R2_001.fastq.gz
+
+R1=STAMINA_0046_1_BM_Whole_C2_TETC1_K27308_HWKFNDSX2_AGCGGTCTTC_L003_R1_001.fastq.gz
+R2=STAMINA_0046_1_BM_Whole_C2_TETC1_K27308_HWKFNDSX2_AGCGGTCTTC_L003_R2_001.fastq.gz
+RG_SM=STAMINA_0020_1_BM_Whole_C1
+RG_LB=K27249
+RG_ID=HWKFNDSX2_3_TCTCGTACTT-TGCGAGGCAA
+RG_PL=ILLUMINA
+RG_PU=HWKFNDSX2_3
+RG_PM=NovaSeq6000
+RG_CN=TGen
+
+KNOWN_UMI=Twist_beta_known_umi.txt
+BWA_REF=/home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
+GATK_REF=/home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/genome_reference/GRCh38tgen_decoy_alts_hla.fa
+
+TARGETS=/home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits/TC1/TC1_hg38tgen_ensembl_v98.targets.interval_list
+BAITS=/home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/tool_resources/capture_kits/TC1/TC1_hg38tgen_ensembl_v98.baits.interval_list
+
+#### Best guess starting code for workflow
+
+{% for fastq in [r1fastq, r2fastq] %}
+- name: create_uBAM_{{ fastq.basename | replace(".", "_") }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
+  reset: predecessors
+  input:
+    - temp/fastqs/{{ fastq.basename }}
+  cpus: 10
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    {% if fastq.fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
+    rm -r "temp/{{ sample.gltype }}/alignment/fgbio_umi/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/fgbio_umi/{{ sample.name }}/{{ rgid }}/{{ fastq.basename }}/"
+
+    # Extract UMI from reads and create uBAM (Step 1 - One step with fgbio)
+    ## Need read structure to be dynamic by UMI kit and reads performed
+    java -jar ${FGBIO_JAR} FastqToBam \
+        --input ${R1} ${R2} \
+        --read-structure 5M2S+T 5M2S+T \
+        --umi-tag RX \
+        --sample ${RG_SM} \
+        --library ${RG_LB} \
+        --read-group-id ${RG_ID} \
+        --platform ${RG_PL} \
+        --platform-unit ${RG_PU} \
+        --platform-model ${RG_PM} \
+        --sequencing-center ${RG_CN} \
+        --sort true \
+        --output ${RG_SM}_UMI_uBAM.bam
+
+{% endfor %}
+
+## Need a process to merge uBAM together if there are multiple FASTQ
+## If uBAM are merged then we should have a chunk process to produce 50M chunks (uBAM interleaved so 100M) for alignment
+
+
+# Align reads
+## output is queryname file as it seems like this is needed for best optical duplicate determination by picard markdup
+## because fgbio ultimately sorts by UMI then location 5' and 3' not clear sorted output helps
+### All this should be tested in profiling optimization
+## For speed should move to bwa-mem2
+gatk SamToFastq \
+  --INPUT ${RG_SM}_UMI_uBAM.bam \
+  --FASTQ /dev/stdout \
+  --INTERLEAVE true \
+  | \
+  bwa mem -v 3 -Y -K 100000000 -p -t 10 ${BWA_REF} /dev/stdin \
+  | \
+  gatk MergeBamAlignment \
+    --ALIGNED_BAM /dev/stdin \
+    --UNMAPPED ${RG_SM}_UMI_uBAM.bam \
+    --REFERENCE_SEQUENCE ${GATK_REF} \
+    --EXPECTED_ORIENTATIONS FR \
+    --ALIGNER_PROPER_PAIR_FLAGS true \
+    --ADD_MATE_CIGAR true \
+    --CLIP_OVERLAPPING_READS true \
+    --MAX_INSERTIONS_OR_DELETIONS -1 \
+    --SORT_ORDER queryname \
+    --TMP_DIR /scratch/jkeats/tmp \
+    --OUTPUT ${RG_SM}_UMI_bwa.bam
+
+
+# Testing showed the expected increase in coverage using UMI aware duplicate marking by 7-20%
+# But that does not use the structured UMI, which is the only thing we should support
+# Doing correction using the structured UMI causes a slight reduction in coverage and produces a lossy BAM
+# As reads that are dropped as they can not be corrected are dropped from the BAM
+#### Maybe there are setting to prevent, needs investigation
+# Doing read collapsing on the single reads in testing allowed read correction on ~50% of reads
+### This is capture kit and depth dependent but was 800-2000x
+# This is very lossy so final reads are mix of collapsed and singletons
+### There are lots of options for collapsing needs and still could use a duplex workflow
+
+### Based on testing and getting most value from the approach I suggest using UMI correction with
+# single read family collapsing to maximize coverage and read accuracy
+
+#### This is the streamlined steps to produce such a result...
+
+
+## Correct the UMI sequences (those that don't match expected UMI after correction are removed)
+# the known umi would need to be dynamic by kit ultimately
+# need to test and optimize max-mismatches and min-distance by UMI format (this worked but need to know best for length and umi number)
+java -jar ${FGBIO_JAR} CorrectUmis \
+  --input ${RG_SM}_UMI_bwa.bam \
+  --umi-tag RX \
+  --umi-files ${KNOWN_UMI} \
+  --max-mismatches 2 \
+  --min-distance 1 \
+  --metrics ${RG_SM}_UMIcorr_bwa.txt \
+  --output ${RG_SM}_UMIcorr_bwa.bam
+
+
+##################################
+## Corrected UMIs - With Single Read Error Correction
+
+# Group Reads by UMI (This does not need to be sort, it sorts by UMI, then 5' end, then those with matching 3' are tagged)
+java -jar ${FGBIO_JAR} GroupReadsByUmi \
+  --input ${RG_SM}_UMIcorr_bwa.bam \
+  --strategy paired \
+  --family-size-histogram ${RG_SM}_UMIcorr_bwa_gd_hist.txt \
+  --raw-tag RX \
+  --assign-tag MI \
+  --edits 1 \
+  --min-map-q 20 \
+  --output ${RG_SM}_UMIcorr_bwa_gd.bam
+
+# Collapse single read families (review parameters)
+java -jar ${FGBIO_JAR} CallMolecularConsensusReads \
+  --input ${RG_SM}_UMIcorr_bwa_gd.bam \
+  --min-reads 1 \
+  --tag MI \
+  --error-rate-pre-umi 45 \
+  --error-rate-post-umi 40 \
+  --min-input-base-quality 10 \
+  --output ${RG_SM}_con_uBAM.bam
+
+# Used by IDT
+#--error-rate-post-umi 30 \
+
+# Align UMI collapsed single read families
+# This produces a final BAM that is ready for metrics and variant calling
+## DUPLICATE MARKING IS NOT REQUIRED, as they are removed in previous steps
+## For QC might want duplicate numbers on the original BAM (${RG_SM}_UMI_bwa.bam)
+## For speed should move to bwa-mem2
+gatk SamToFastq \
+  --INPUT ${RG_SM}_con_uBAM.bam \
+  --FASTQ /dev/stdout \
+  --INTERLEAVE true \
+  | \
+  bwa mem -v 3 -Y -K 100000000 -p -t 10 ${BWA_REF} /dev/stdin \
+  | \
+  gatk MergeBamAlignment \
+    --ALIGNED_BAM /dev/stdin \
+    --UNMAPPED ${RG_SM}_con_uBAM.bam \
+    --REFERENCE_SEQUENCE ${GATK_REF} \
+    --EXPECTED_ORIENTATIONS FR \
+    --ALIGNER_PROPER_PAIR_FLAGS true \
+    --ADD_MATE_CIGAR true \
+    --CLIP_OVERLAPPING_READS true \
+    --MAX_INSERTIONS_OR_DELETIONS -1 \
+    --SORT_ORDER coordinate \
+    --CREATE_INDEX true \
+    --TMP_DIR /scratch/jkeats/tmp \
+    --OUTPUT ${RG_SM}_con_bwa.bam
+
+# Determine the coverage metrics after correction
+# increased coverage cap as UMI method is for HIGH coverage
+gatk CollectHsMetrics \
+  --java-options "-Xmx14G" \
+  --METRIC_ACCUMULATION_LEVEL null \
+  --METRIC_ACCUMULATION_LEVEL ALL_READS \
+  --METRIC_ACCUMULATION_LEVEL LIBRARY \
+  --COVERAGE_CAP 10000 \
+  --INPUT ${RG_SM}_con_bwa.bam \
+  --OUTPUT ${RG_SM}_con_bwa_hsmetrics.txt \
+  --REFERENCE_SEQUENCE ${GATK_REF} \
+  --TARGET_INTERVALS ${TARGETS} \
+  --BAIT_INTERVALS ${BAITS}
+
+
+# Filter, not clear why you do this as is should be occuring
+# in CallMolecularConsensusReads but if you want to min-reads > 1
+# after the fact this would do it
