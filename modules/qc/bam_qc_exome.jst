@@ -31,7 +31,11 @@
       --METRIC_ACCUMULATION_LEVEL null \
       --METRIC_ACCUMULATION_LEVEL ALL_READS \
       --METRIC_ACCUMULATION_LEVEL LIBRARY \
+      {% if sample.umi | default(false) %}
+      --COVERAGE_CAP 10000 \
+      {% else %}
       --COVERAGE_CAP 2000 \
+      {% endif %}
       --INPUT {{ bam }} \
       --OUTPUT {{ output_file }} \
       --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }} \

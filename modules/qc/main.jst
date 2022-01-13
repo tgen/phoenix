@@ -73,7 +73,7 @@
     {% endif %}
 
     {# Tasks performed on dna bams #}
-    {% if sample.gltype not in ['rna', 'singlecellrna'] %}
+    {% if sample.gltype not in ['rna', 'singlecellrna'] and sample.umiType == "" | default(false) %}
       {{- bam_qc_samtools_markdup(sample, sample_lb, taskPrefix=taskPrefix, aligner=aligner) }}
     {% endif %}
 
