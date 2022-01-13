@@ -6,6 +6,7 @@
 {% from 'modules/constitutional/strelka2.jst' import strelka2_constitutional with context %}
 {% from 'modules/constitutional/deepvariant.jst' import deepvariant with context %}
 {% from 'modules/constitutional/octopus.jst' import octopus_constitutional with context %}
+{% from 'modules/constitutional/vardict.jst' import vardict_constitutional with context %}
 {% from 'modules/constitutional/ichorcna.jst' import ichorcna with context %}
 {% from 'modules/constitutional/gatk_cnv.jst' import gatk_cnv_constitutional with context %}
 {% from 'modules/constitutional/expansion_hunter.jst' import expansion_hunter with context %}
@@ -69,6 +70,9 @@
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_octopus"]|default(false) %}
             {{- octopus_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
+        {% endif %}
+        {%- if tasks[taskPrefix+"_constitutional_snp_indel_caller_vardict"]|default(true) %}
+            {{- vardict_constitutional(sample, aligner='bwa', taskPrefix=taskPrefix) }}
         {% endif %}
         {%- if tasks[taskPrefix+"_constitutional_cna_caller_gatk"]|default(true) %}
             {% for normal in normSamples.values() if normal.assayCode == sample.assayCode and normal.gatkCnvPon is defined %}
