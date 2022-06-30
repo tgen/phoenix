@@ -38,6 +38,8 @@
       --java-options "-Xmx7G" \
       -R {{ constants.phoenix.reference_fasta }} \
       -I {{ tumor_bam }} \
+      --read-filter MateOnSameContigOrNoMappedMateReadFilter \
+      --read-filter MateUnmappedAndUnmappedReadFilter \
       -L chrM \
       -O {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam\
 
@@ -45,6 +47,8 @@
       --java-options "-Xmx7G" \
       -R {{ constants.phoenix.reference_fasta }} \
       -I {{ normal_bam }} \
+      --read-filter MateOnSameContigOrNoMappedMateReadFilter \
+      --read-filter MateUnmappedAndUnmappedReadFilter \
       -L chrM \
       -O {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam \
 
