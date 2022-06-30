@@ -327,7 +327,7 @@
     gatk Mutect2 \
       --java-options "-Xmx14G" \
       --tmp-dir {{ temp_dir }}/temp_mutect2/ \
-      --reference {{ constants.phoenix.mt_ref_fasta }} \
+      --reference {{ constants.phoenix.reference_fasta }} \
       --input {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam \
       --normal-sample {{ pair.normal.rgsm }} \
       --input {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam \
@@ -419,7 +419,7 @@
       --java-options "-Xmx7G" \
       -INPUT {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz \
       -OUTPUT {{ temp_dir }}/{{ pair.name }}.shifted_back.vcf.gz \
-      -REFERENCE_SEQUENCE {{ constants.phoenix.mt_ref_fasta}} \
+      -REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }} \
       -CHAIN {{ constants.phoenix.mt_shifted_chain }} \
       -REJECT {{ pair.name }}.rejected.vcf.gz
 
