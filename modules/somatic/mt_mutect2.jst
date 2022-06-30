@@ -144,13 +144,51 @@
       -o {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam -
 
 
-- name: mt_align_and_markdups_{{ pair.name }}_{{ aligner }}
+- name: mt_samtools_sort_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
     - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam
     - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam
     - {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam
     - {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam
+  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.sorted.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.sorted.chrM.bam
+    - {{ temp_dir }}/{{ pair.tumor.name }}.realigned.sorted.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.realigned.sorted.bam
+  cpus: 4
+  mem: 16
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.samtools.module }}
+
+    samtools sort -@ 4 \
+      -n {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam \
+      -o {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.sorted.chrM.bam
+    
+    samtools sort -@ 4 \
+      -n {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam \
+      -o {{ temp_dir }}/{{ pair.normal.name }}.unmapped.sorted.chrM.bam
+    
+    samtools sort -@ 4 \
+      -n {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam \
+      -o {{ temp_dir }}/{{ pair.tumor.name }}.realigned.sorted.bam
+    
+    samtools sort -@ 4 \
+      -n {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam \
+      -o{{ temp_dir }}/{{ pair.normal.name }}.realigned.sorted.bam
+
+
+- name: mt_align_and_markdups_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.sorted.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.sorted.chrM.bam
+    - {{ temp_dir }}/{{ pair.tumor.name }}.realigned.sorted.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.realigned.sorted.bam
   output:
     - {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam
     - {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam
@@ -170,8 +208,8 @@
       -ATTRIBUTES_TO_RETAIN X0 \
       -ATTRIBUTES_TO_REMOVE NM \
       -ATTRIBUTES_TO_REMOVE MD \
-      -ALIGNED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam \
-      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam \
+      -ALIGNED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.realigned.sorted.bam \
+      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.sorted.chrM.bam \
       -OUTPUT {{ temp_dir }}/{{ pair.tumor.name }}.mba.bam \
       -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
       -PAIRED_RUN true \
@@ -221,8 +259,8 @@
       -ATTRIBUTES_TO_RETAIN X0 \
       -ATTRIBUTES_TO_REMOVE NM \
       -ATTRIBUTES_TO_REMOVE MD \
-      -ALIGNED_BAM {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam \
-      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam \
+      -ALIGNED_BAM {{ temp_dir }}/{{ pair.normal.name }}.realigned.sorted.bam \
+      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.normal.name }}.unmapped.sorted.chrM.bam \
       -OUTPUT {{ temp_dir }}/{{ pair.normal.name }}.mba.bam \
       -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
       -PAIRED_RUN true \
