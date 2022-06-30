@@ -484,6 +484,7 @@ constants:
       - /home/tgenref/homo_sapiens/grch38_hg38/public_databases/broad_resource_bundle/Mills_and_1000G_gold_standard.indels.hg38.vcf.gz
     mt_shifted_fa: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_mitochondrial/hg38_v0_chrM_Homo_sapiens_assembly38.chrM.shifted_by_8000_bases.fasta
     mt_shifted_chain: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_mitochondrial/hg38_v0_chrM_ShiftBack.chain
+    mt_ref_fasta: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/gatk_mitochondrial/hg38_v0_chrM_Homo_sapiens_assembly38.chrM.fasta
     bwa_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa_0.7.17/GRCh38tgen_decoy_alts_hla.fa
     bwa_mem2_index: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/tool_resources/bwa2_2.2.1/GRCh38tgen_decoy_alts_hla.fa
     gtf: /home/tgenref/homo_sapiens/grch38_hg38/hg38tgen/gene_model/ensembl_v98/Homo_sapiens.GRCh38.98.ucsc.gtf
