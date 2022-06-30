@@ -79,7 +79,7 @@
       -VALIDATION_STRINGENCY LENIENT \
       -ATTRIBUTE_TO_CLEAR FT \
       -ATTRIBUTE_TO_CLEAR CO \
-      -SORT_ORDER queryname \
+      -SORT_ORDER "queryname" \
       -RESTORE_ORIGINAL_QUALITIES false
     
     gatk RevertSam \
@@ -90,7 +90,7 @@
       -VALIDATION_STRINGENCY LENIENT \
       -ATTRIBUTE_TO_CLEAR FT \
       -ATTRIBUTE_TO_CLEAR CO \
-      -SORT_ORDER queryname \
+      -SORT_ORDER "queryname" \
       -RESTORE_ORIGINAL_QUALITIES false
 
 
@@ -175,7 +175,7 @@
       -OUTPUT {{ temp_dir }}/{{ pair.tumor.name }}.mba.bam \
       -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
       -PAIRED_RUN true \
-      -SORT_ORDER "queryname" \
+      -SORT_ORDER "unsorted" \
       -IS_BISULFITE_SEQUENCE false \
       -ALIGNED_READS_ONLY false \
       -CLIP_ADAPTERS false \
@@ -226,7 +226,7 @@
       -OUTPUT {{ temp_dir }}/{{ pair.normal.name }}.mba.bam \
       -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
       -PAIRED_RUN true \
-      -SORT_ORDER "queryname" \
+      -SORT_ORDER "unsorted" \
       -IS_BISULFITE_SEQUENCE false \
       -ALIGNED_READS_ONLY false \
       -CLIP_ADAPTERS false \
