@@ -419,7 +419,7 @@
       --java-options "-Xmx7G" \
       -INPUT {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz \
       -OUTPUT {{ temp_dir }}/{{ pair.name }}.shifted_back.vcf.gz \
-      -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
+      -REFERENCE_SEQUENCE {{ constants.phoenix.mt_ref_fasta}} \
       -CHAIN {{ constants.phoenix.mt_shifted_chain }} \
       -REJECT {{ pair.name }}.rejected.vcf.gz
 
