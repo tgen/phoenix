@@ -453,14 +453,13 @@
 
     gatk FilterMutectCalls \
       --java-options "-Xmx7G" \
-      --variant {{ temp_dir }}/{{ pair.name }}.raw.vcf.gz \
+      -V {{ temp_dir }}/{{ pair.name }}.raw.vcf.gz \
       -R {{ constants.phoenix.reference_fasta }} \
       -O {{ all_vcf }} \
-      --stats ${vcf:0:9}.combined.stats \
+      --stats {{ temp_dir }}/{{ pair.name }}.merged.stats \
       --max-alt-allele-count 4 \
       --mitochondria-mode \
       --min-allele-fraction 0.02 \
-      --stats {{ temp_dir }}/{{ pair.name }}.merged.stats \
       --filtering-stats {{ temp_dir }}/filtering.stats 
 
 
