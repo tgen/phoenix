@@ -143,7 +143,7 @@
     samtools view --output-fmt BAM \
       -o {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam -
 
-
+{#
 - name: mt_samtools_sort_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
@@ -180,7 +180,7 @@
     samtools sort -@ 4 \
       -n {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam \
       -o{{ temp_dir }}/{{ pair.normal.name }}.realigned.sorted.bam
-
+#}
 
 - name: mt_align_and_markdups_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
