@@ -141,7 +141,7 @@
       {{ constants.phoenix.mt_shifted_fa }} \
      {{ pair.tumor.name }}.fastq | \
     samtools view --output-fmt BAM \
-      -o {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam -
+      -o {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam -
 
 
 - name: mt_samtools_sort_{{ pair.name }}_{{ aligner }}
