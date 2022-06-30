@@ -147,8 +147,8 @@
 - name: mt_align_and_markdups_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
-    - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.bam
-    - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.bam
+    - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam
     - {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam
     - {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam
   output:
@@ -171,7 +171,7 @@
       -ATTRIBUTES_TO_REMOVE NM \
       -ATTRIBUTES_TO_REMOVE MD \
       -ALIGNED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam \
-      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.bam \
+      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam \
       -OUTPUT {{ temp_dir }}/{{ pair.tumor.name }}.mba.bam \
       -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
       -PAIRED_RUN true \
@@ -222,7 +222,7 @@
       -ATTRIBUTES_TO_REMOVE NM \
       -ATTRIBUTES_TO_REMOVE MD \
       -ALIGNED_BAM {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam \
-      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.normal.name }}.unmapped.bam \
+      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam \
       -OUTPUT {{ temp_dir }}/{{ pair.normal.name }}.mba.bam \
       -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
       -PAIRED_RUN true \
