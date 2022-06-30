@@ -364,7 +364,7 @@
       --java-options "-Xmx14G" \
       --tmp-dir {{ temp_dir }}/temp_shifted_mutect2/ \
       --reference {{ constants.phoenix.mt_shifted_fa }} \
-      --input {{ pair.normal.name }}.shifted.bam \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam \
       --normal-sample {{ pair.normal.rgsm }} \
       --input {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam \
       --tumor-sample {{ pair.tumor.rgsm }} \
