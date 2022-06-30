@@ -138,6 +138,10 @@
         {{- gatk_cnv(pair, aligner='bwa') }}
     {% endif %}
 
+    {% if tasks[taskPrefix+"_somatic_snp_indel_caller_gatk_mutect2"]|default(true) %}
+        {{- mt_mutect2(pair, aligner='bwa') }}
+    {% endif %}
+
 {% endfor %}
 
 {% endmacro %}
