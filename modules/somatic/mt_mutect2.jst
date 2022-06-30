@@ -163,7 +163,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.samtools.module }}
+    module load {{ constants.tools.samtools.module }}
 
     samtools sort -@ 4 \
       -n {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam \
