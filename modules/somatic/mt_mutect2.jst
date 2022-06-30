@@ -307,8 +307,8 @@
 - name: mt_mutect2_{{ pair.name }}_{{ aligner }}
   tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
   input:
-    - {{ normal_bam }}
-    - {{ tumor_bam }}
+    - {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam
   output:
     - {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz
     - {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz.stats
@@ -328,9 +328,9 @@
       --java-options "-Xmx14G" \
       --tmp-dir {{ temp_dir }}/temp_mutect2/ \
       --reference {{ constants.phoenix.reference_fasta }} \
-      --input {{ normal_bam }} \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam \
       --normal-sample {{ pair.normal.rgsm }} \
-      --input {{ tumor_bam }} \
+      --input {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam \
       --tumor-sample {{ pair.tumor.rgsm }} \
       -L chrM:576-16024 \
       --annotation StrandBiasBySample \
