@@ -154,8 +154,8 @@
   output:
     - {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam
     - {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam
-  cpus: 4
-  mem: 16G
+  cpus: 8
+  mem: 32G
   walltime: "24:00:00"
   cmd: |
     set -eu
