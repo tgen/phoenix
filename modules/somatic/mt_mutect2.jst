@@ -460,7 +460,7 @@
 
     {{- annotate_vcfs(pair, temp_dir, results_dir, all_vcf, 'Genome', aligner, 'mt_mutect2', 'somatic', 'snp_indel_caller') }}
     {% set task %}mt_mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
-    {% set directory %}{{ temp_dir }}{% endset %}
+    {% set directory %}{{ temp_dir }}/temp_filter{% endset %}
     {{- remove_files(directory,none,task) }}
 
 {% endmacro %}
