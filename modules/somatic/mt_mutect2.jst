@@ -1,4 +1,5 @@
 {% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
 
 {% macro mt_mutect2(pair, aligner='bwa') %}
 {% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
@@ -297,6 +298,10 @@
       -L chrM:576-16024 \
       --annotation StrandBiasBySample \
       --mitochondria-mode \
+      --initial-tumor-lod 0 \
+      --tumor-lod-to-emit 0 \
+      --af-of-alleles-not-in-resource 4e-3 \
+      --pruning-lod-threshold -4 \
       --output {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz \
       --max-reads-per-alignment-start 75 \
       --max-mnp-distance 0
@@ -333,6 +338,10 @@
       -L chrM:8025-9144 \
       --annotation StrandBiasBySample \
       --mitochondria-mode \
+      --initial-tumor-lod 0 \
+      --tumor-lod-to-emit 0 \
+      --af-of-alleles-not-in-resource 4e-3 \
+      --pruning-lod-threshold -4 \
       --output {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz \
       --max-reads-per-alignment-start 75 \
       --max-mnp-distance 0
@@ -449,6 +458,7 @@
 
     bcftools index --tbi --force {{ pass_vcf }}
 
+    {{- annotate_vcfs(pair, temp_dir, results_dir, all_vcf, 'Genome', aligner, 'mt_mutect2', 'somatic', 'snp_indel_caller') }}
     {% set task %}mt_mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
     {% set directory %}{{ temp_dir }}{% endset %}
     {{- remove_files(directory,none,task) }}
