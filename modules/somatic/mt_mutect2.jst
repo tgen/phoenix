@@ -392,7 +392,7 @@
       -OUTPUT {{ temp_dir }}/{{ pair.name }}.shifted_back.vcf.gz \
       -REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }} \
       -CHAIN {{ constants.phoenix.mt_shifted_chain }} \
-      -REJECT {{ pair.name }}.rejected.vcf.gz
+      -REJECT {{ temp_dir }}/{{ pair.name }}.rejected.vcf.gz
 
     gatk MergeVcfs \
       --java-options "-Xmx7G" \
