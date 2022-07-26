@@ -165,6 +165,7 @@
 
     module load {{ constants.tools.gatk.module }}
 
+    {# merging bams and realigning to shifted sequence #}
     gatk MergeBamAlignment \
       --java-options "-Xmx14G" \
       -VALIDATION_STRINGENCY SILENT \
@@ -215,7 +216,7 @@
       -O {{ temp_dir }}/{{ pair.tumor.name }}.metrics.txt \
       -R {{ constants.phoenix.mt_shifted_fa }}
 
-    {# repeating for normal #}
+    {# repeating for normal with standard mt genome #}
     gatk MergeBamAlignment \
       --java-options "-Xmx14G" \
       -VALIDATION_STRINGENCY SILENT \
@@ -287,6 +288,9 @@
 
     mkdir -p {{ temp_dir }}/temp_mutect2
 
+    {# Mutect2 mitochondrial mode on standard mt samples
+       region is all coding region, none of the d-loop
+     #}
     gatk Mutect2 \
       --java-options "-Xmx14G" \
       --tmp-dir {{ temp_dir }}/temp_mutect2/ \
@@ -327,6 +331,10 @@
 
     mkdir -p {{ temp_dir }}/temp_shifted_mutect2
 
+    {# Mutect2 mitochondrial mode on shifted mt samples
+       region is just the d-loop
+     #}
+
     gatk Mutect2 \
       --java-options "-Xmx14G" \
       --tmp-dir {{ temp_dir }}/temp_shifted_mutect2/ \
@@ -363,6 +371,7 @@
 
     module load {{ constants.tools.gatk.module }}
 
+    {# Merging stats for both standard and shifted mutect #}
     gatk MergeMutectStats \
       --java-options "-Xmx14G" \
       --stats {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz.stats \
