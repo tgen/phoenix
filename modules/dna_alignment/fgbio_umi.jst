@@ -42,7 +42,7 @@
 
     {# Extract UMI from reads and create uBAM (Step 1 - One step with fgbio)
     ## Need read structure to be dynamic by UMI kit and reads performed #}
-    java -jar $(which fgbio.jar) FastqToBam \
+    fgbio FastqToBam \
         --input {% for fastq in [r1fastq, r2fastq] %}temp/fastqs/{{ fastq.basename }} {% endfor %} \
         --read-structure 5M2S+T 5M2S+T \
         --umi-tag RX \
@@ -62,7 +62,7 @@
 
 # Align reads
 ## output is queryname file as it seems like this is needed for best optical duplicate determination by picard markdup
-## because java -jar $(which fgbio.jar) ultimately sorts by UMI then location 5' and 3' not clear sorted output helps
+## because fgbio ultimately sorts by UMI then location 5' and 3' not clear sorted output helps
 ### All this should be tested in profiling optimization
 ## For speed should move to bwa-mem2 #}
 
@@ -145,7 +145,7 @@
     # the known umi would need to be dynamic by kit ultimately
     # need to test and optimize max-mismatches and min-distance by UMI format (this worked but need to know best for length and umi number)
     #}
-    java -jar $(which fgbio.jar) CorrectUmis \
+    fgbio CorrectUmis \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam \
       --umi-tag RX \
       --umi-files ${KNOWN_UMI} \
@@ -174,7 +174,7 @@
     module load {{ constants.tools.fgbio.module }}
 
     {# Group Reads by UMI (This does not need to be sort, it sorts by UMI, then 5' end, then those with matching 3' are tagged) #}
-    java -jar $(which fgbio.jar) GroupReadsByUmi \
+    fgbio GroupReadsByUmi \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam \
       --strategy paired \
       --family-size-histogram {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt \
@@ -185,7 +185,7 @@
       --output {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam
 
     {# Collapse single read families (review parameters) #}
-    java -jar $(which fgbio.jar) CallMolecularConsensusReads \
+    fgbio CallMolecularConsensusReads \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam \
       --min-reads 1 \
       --tag MI \
