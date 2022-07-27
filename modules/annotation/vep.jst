@@ -112,4 +112,28 @@
 
     bcftools index --threads 4 --force --tbi "{{ final_vcf_prefix }}.vep.pick.vcf.gz"
 
+{% if study == "STAMINA" %}
+- name: vep_pick_STAMINA_table_{{ variant_caller }}_{{ sample_or_pair.name }}_{{ aligner }}
+  input:
+    - {{ final_vcf_prefix }}.vep.pick.vcf.gz
+  output:
+    - {{ final_vcf_prefix }}.vep.pick_STAMINA.tsv
+  cmd: |
+    set -euv
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+    
+    {## Make a table for filtering and summary in R
+    # Create a .tsv header #}
+    echo -e SAMPLE"\t"CHROM"\t"POS"\t"REF"\t"ALT"\t"QUAL"\t"ID"\t"TYPE"\t"DP"\t"VD"\t"AF"\t"BIAS"\t"REFBIAS"\t"VARBIAS"\t"PMEAN"\t"PSTD"\t"INFO_QUAL"\t"QSTD"\t"SBF"\t"ODDRATIO"\t"MQ"\t"SN"\t"HIAF"\t"MSI"\t"MSILEN"\t"LSEQ"\t"RSEQ"\t"HICNT"\t"HICOV"\t"FMT_DP"\t"FMT_VD"\t"FMT_AD_REF"\t"FMT_AD_ALT"\t"FMT_AF"\t"FMT_RD_FWD"\t"FMT_RD_REV"\t"FMT_ALD_FWD"\t"FMT_ALD_REV"\t"GNOMAD_GENOME"\t"GNOMAD_GENOME_AF"\t"TOPMED"\t"TOPMED_AF"\t"COSMIC_NC"\t"COSMIC_NC_CNT"\t"CLINVAR"\t"Allele"\t"Consequence"\t"IMPACT"\t"SYMBOL"\t"Gene"\t"Transcript"\t"HGVSg"\t"HGVSc"\t"HGVSp"\t"cDNA_position"\t"CDS_position"\t"Protein_position"\t"Amino_acids"\t"Codons"\t"STRAND"\t"CANONICAL > STAMINA_TEST.tsv
+
+    {# Extract fields from VCF into file with header #}
+    bcftools +split-vep \
+      --duplicate \
+      --format '%SAMPLE\t%CHROM\t%POS\t%REF\t%ALT\t%QUAL\t%ID\t%TYPE\t%DP\t%VD\t%AF\t%BIAS\t%REFBIAS\t%VARBIAS\t%PMEAN\t%PSTD\t%INFO/QUAL\t%QSTD\t%SBF\t%ODDRATIO\t%MQ\t%SN\t%HIAF\t%MSI\t%MSILEN\t%LSEQ\t%RSEQ\t%HICNT\t%HICOV[\t%DP\t%VD\t%AD{0}\t%AD{1}\t%AF\t%RD{0}\t%RD{1}\t%ALD{0}\t%ALD{1}]\t%GNOMAD_GENOME\t%GNOMAD_GENOME_AF\t%TOPMED\t%TOPMED_AF\t%COSMIC_NC\t%COSMIC_NC_CNT\t%CLINVAR\t%Allele\t%Consequence\t%IMPACT\t%SYMBOL\t%Gene\t%Feature\t%HGVSg\t%HGVSc\t%HGVSp\t%cDNA_position\t%CDS_position\t%Protein_position\t%Amino_acids\t%Codons\t%STRAND\t%CANONICAL\n' \
+      {{ final_vcf_prefix }}.vep.pick.vcf.gz >> {{ final_vcf_prefix }}.vep.pick_STAMINA.tsv
+
+{% endif %}
+
 {% endmacro %}
