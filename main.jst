@@ -105,7 +105,7 @@
 {# Setup calculated props for samples #}
 {% for sample in samples.values() if sample.gltype == 'exome' %}
     {% do sample.update({'library_code': sample.assayCode[0:2]|upper}) %}
-    {% do sample.update({'capture_kit_code': sample.assayCode[2:5]|upper}) %}
+    {% do sample.update({'capture_kit_code': sample.assayCode[-3:]|upper}) %}
 
     {% set targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.targets.interval_list{% endset %}
     {% set no_header_targets_interval_list %}{{ constants.phoenix.capture_kit_path }}/{{ sample.capture_kit_code }}/{{ sample.capture_kit_code }}_{{ constants.phoenix.genome_subversion_name }}_{{ constants.phoenix.gene_model_name }}.no.header.targets.interval_list{% endset %}
