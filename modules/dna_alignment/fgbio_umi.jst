@@ -1,0 +1,249 @@
+# This alignment command prefix is shared by all modules using bwa
+{% from 'utilities/read_group_line.jst' import read_group_line with context %}
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+
+# This macro splits large fastqs into chunks prior to aligning.
+# If fastq is less than reads_per_chunk (48000000) then one chunk is made.
+{% macro fgbio_bwa_mem(sample) %}
+{% for rgid, rg in sample.read_groups.items() %}
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
+
+{% set temp_dir %}temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}{% endset %}
+{% set results_dir %}{{ sample.gltype }}/alignment/bwa/{{ sample.name }}{% endset %}
+
+- name: create_uBAM_{{ r1fastq.basename | replace(".", "_") }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
+  reset: predecessors
+  input:
+    {% for fastq in [r1fastq, r2fastq] %}
+    - temp/fastqs/{{ fastq.basename }}
+    {% endfor %}
+  output: 
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam
+  cpus: 10
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.fgbio.module }}
+
+    {% if r1fastq.fileType == "fasterq" %}
+      export PetaLinkMode="{{ constants.tools.petagene.PetaLinkMode }}"
+      module load {{ constants.tools.petagene.module }}
+
+    {% endif %}
+    {#
+      This comment is here for protect render spacing, do not remove.
+    #}
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/"
+
+    {# Extract UMI from reads and create uBAM (Step 1 - One step with fgbio)
+    ## Need read structure to be dynamic by UMI kit and reads performed #}
+    fgbio FastqToBam \
+        --input {% for fastq in [r1fastq, r2fastq] %}temp/fastqs/{{ fastq.basename }} {% endfor %} \
+        --read-structure 5M2S+T 5M2S+T \
+        --umi-tag RX \
+        --sample {{ sample.rgsm }} \
+        --library {{ sample.rglb }} \
+        --read-group-id {{ sample.rgid }} \
+        --platform {{ sample.rgpl }} \
+        --platform-unit {{ sample.rgpu }} \
+        --platform-model {{ sample.rgpm }} \
+        --sequencing-center {{ sample.rgcn }} \
+        --sort true \
+        --output {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam
+
+{## Need a process to merge uBAM together if there are multiple FASTQ
+## If uBAM are merged then we should have a chunk process to produce 50M chunks (uBAM interleaved so 100M) for alignment
+
+
+# Align reads
+## output is queryname file as it seems like this is needed for best optical duplicate determination by picard markdup
+## because fgbio ultimately sorts by UMI then location 5' and 3' not clear sorted output helps
+### All this should be tested in profiling optimization
+## For speed should move to bwa-mem2 #}
+
+- name: bwa_mem_merge_umi_alignment_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam
+  output:
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam
+  cpus: 10
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.gatk.module }}
+
+    gatk SamToFastq \
+      --INPUT {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam \
+      --FASTQ /dev/stdout \
+      --INTERLEAVE true |\
+    bwa mem \
+      -v 3 \
+      -Y \
+      -K 100000000 \
+      -p \
+      -t 10 \
+      {{ constants.phoenix.bwa_index }} \
+      /dev/stdin |\
+    gatk MergeBamAlignment \
+      --ALIGNED_BAM /dev/stdin \
+      --UNMAPPED {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }} \
+      --EXPECTED_ORIENTATIONS FR \
+      --ALIGNER_PROPER_PAIR_FLAGS true \
+      --ADD_MATE_CIGAR true \
+      --CLIP_OVERLAPPING_READS true \
+      --MAX_INSERTIONS_OR_DELETIONS -1 \
+      --SORT_ORDER queryname \
+      --TMP_DIR {{ temp_dir }} \
+      --OUTPUT {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam
+
+
+{# Testing showed the expected increase in coverage using UMI aware duplicate marking by 7-20%
+# But that does not use the structured UMI, which is the only thing we should support
+# Doing correction using the structured UMI causes a slight reduction in coverage and produces a lossy BAM
+# As reads that are dropped as they can not be corrected are dropped from the BAM
+#### Maybe there are setting to prevent, needs investigation
+# Doing read collapsing on the single reads in testing allowed read correction on ~50% of reads
+### This is capture kit and depth dependent but was 800-2000x
+# This is very lossy so final reads are mix of collapsed and singletons
+### There are lots of options for collapsing needs and still could use a duplex workflow
+
+### Based on testing and getting most value from the approach I suggest using UMI correction with
+# single read family collapsing to maximize coverage and read accuracy
+
+#### This is the streamlined steps to produce such a result...#}
+
+- name: fgbio_correct_umi_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam
+  output:
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
+  cpus: 10
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.fgbio.module }}
+
+    KNOWN_UMI=/home/tgenref/assay_files/twist_umi_adaptor_system/known_umi_sequences.txt
+
+    {#
+    # Correct the UMI sequences (those that don't match expected UMI after correction are removed)
+    # the known umi would need to be dynamic by kit ultimately
+    # need to test and optimize max-mismatches and min-distance by UMI format (this worked but need to know best for length and umi number)
+    #}
+    fgbio CorrectUmis \
+      --input {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam \
+      --umi-tag RX \
+      --umi-files ${KNOWN_UMI} \
+      --max-mismatches 2 \
+      --min-distance 1 \
+      --metrics {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.txt \
+      --output {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
+
+
+{##################################
+## Corrected UMIs - With Single Read Error Correction #}
+
+- name: fgbio_consensus_reads_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
+  output:
+    - {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam
+  cpus: 10
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.fgbio.module }}
+
+    {# Group Reads by UMI (This does not need to be sort, it sorts by UMI, then 5' end, then those with matching 3' are tagged) #}
+    fgbio GroupReadsByUmi \
+      --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam \
+      --strategy paired \
+      --family-size-histogram {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt \
+      --raw-tag RX \
+      --assign-tag MI \
+      --edits 1 \
+      --min-map-q 20 \
+      --output {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam
+
+    {# Collapse single read families (review parameters) #}
+    fgbio CallMolecularConsensusReads \
+      --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam \
+      --min-reads 1 \
+      --tag MI \
+      --error-rate-pre-umi 45 \
+      --error-rate-post-umi 40 \
+      --min-input-base-quality 10 \
+      --output {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam
+
+    {# Used by IDT
+    #--error-rate-post-umi 30 \ #}
+
+- name: bwa_mem_umi_collapsed_{{ sample.name }}
+  tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam
+  output:
+    - {{ temp_dir }}/{{ sample.name }}.bwa.md.bam
+  cpus: 10
+  walltime: "4:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.gatk.module }}
+
+    {# Align UMI collapsed single read families
+    ## This produces a final BAM that is ready for metrics and variant calling
+    ## DUPLICATE MARKING IS NOT REQUIRED, as they are removed in previous steps
+    ## For QC might want duplicate numbers on the original BAM ({{ sample.rgsm }}_UMI_bwa.bam)
+    ## For speed should move to bwa-mem2 #}
+    gatk SamToFastq \
+      --INPUT {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam \
+      --FASTQ /dev/stdout \
+      --INTERLEAVE true |\
+    bwa mem \
+      -v 3 \
+      -Y \
+      -K 100000000 \
+      -p \
+      -t 10 \
+      {{ constants.phoenix.bwa_index }} \
+      /dev/stdin |\
+    gatk MergeBamAlignment \
+      --ALIGNED_BAM /dev/stdin \
+      --UNMAPPED {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam \
+      --REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }} \
+      --EXPECTED_ORIENTATIONS FR \
+      --ALIGNER_PROPER_PAIR_FLAGS true \
+      --ADD_MATE_CIGAR true \
+      --CLIP_OVERLAPPING_READS true \
+      --MAX_INSERTIONS_OR_DELETIONS -1 \
+      --SORT_ORDER coordinate \
+      --CREATE_INDEX true \
+      --TMP_DIR {{ temp_dir }} \
+      --OUTPUT {{ temp_dir }}/{{ sample.name }}.bwa.md.bam
+
+{% endfor %}
+
+{% endmacro %}

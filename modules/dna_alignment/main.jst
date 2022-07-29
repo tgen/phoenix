@@ -6,6 +6,7 @@
 {% from 'modules/dna_alignment/bwa_mem_gatk_picard.jst' import bwa_mem_gatk_picard_chunked with context %}
 {% from 'modules/dna_alignment/bwa_mem_samblaster_sambamba.jst' import bwa_mem_blaster_bamba with context %}
 {% from 'modules/dna_alignment/bowtie2_samtools.jst' import bowtie2_samtools_chunked with context %}
+{% from 'modules/dna_alignment/fgbio_umi.jst' import fgbio_bwa_mem with context %}
 {% from 'modules/dna_alignment/gatk_baserecalibration.jst' import baserecalibration, nobaserecalibration with context %}
 {% from 'utilities/bam_to_cram.jst' import bam_to_cram with context %}
 {% from 'utilities/read_group_line.jst' import read_group_line %}
@@ -45,6 +46,8 @@
     {# PCRfree will not have any pcr cycles #}
     {% if sample.pcrCycles is defined and sample.pcrCycles == 0 %}
       {{- bwa_mem2_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
+    {% elif sample.umiType != "" | default(false) %}
+      {{- fgbio_bwa_mem(sample) }}
     {% else %}
       {% if alignment_style == 'tgen' %}
         {{- bwa_mem_samtools_chunked(sample, reads_per_chunk, opt_dup_distance) }}
