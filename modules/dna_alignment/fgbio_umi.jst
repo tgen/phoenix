@@ -173,6 +173,8 @@
 
     KNOWN_UMI=/home/tgenref/assay_files/twist_umi_adaptor_system/known_umi_sequences.txt
 
+    mkdir -p {{ results_dir }}/stats
+
     {#
     # Correct the UMI sequences (those that don't match expected UMI after correction are removed)
     # the known umi would need to be dynamic by kit ultimately
@@ -184,7 +186,7 @@
       --umi-files ${KNOWN_UMI} \
       --max-mismatches 2 \
       --min-distance 1 \
-      --metrics {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.txt \
+      --metrics {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa.txt \
       --output {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
 
 
@@ -210,7 +212,7 @@
     fgbio GroupReadsByUmi \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam \
       --strategy paired \
-      --family-size-histogram {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt \
+      --family-size-histogram {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt \
       --raw-tag RX \
       --assign-tag MI \
       --edits 1 \
@@ -243,7 +245,7 @@
     set -eu
     set -o pipefail
 
-    module load {{ constants.tools.bwa.module }}
+    module load {{ constants.tools.bwa_mem2.module }}
     module load {{ constants.tools.gatk.module }}
 
     {# Align UMI collapsed single read families
@@ -255,13 +257,13 @@
       --INPUT {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam \
       --FASTQ /dev/stdout \
       --INTERLEAVE true |\
-    bwa mem \
+    bwa-mem2 mem \
       -v 3 \
       -Y \
       -K 100000000 \
       -p \
       -t 10 \
-      {{ constants.phoenix.bwa_index }} \
+      {{ constants.phoenix.bwa_mem2_index }} \
       /dev/stdin |\
     gatk MergeBamAlignment \
       --ALIGNED_BAM /dev/stdin \
