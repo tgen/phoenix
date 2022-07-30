@@ -70,7 +70,7 @@
     - {{ temp_dir }}/{{ rgid }}/{{ sample.rgid }}_UMI_uBAM.bam 
     {% endfor %}
   output:
-    - {{ temp_dir }}/{{ rgid }}/{{ sample.rgsm }}_UMI_uBAM.bam
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam
   cpus: 10
   walltime: "4:00:00"
   cmd: |
