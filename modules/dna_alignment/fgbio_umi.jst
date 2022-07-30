@@ -5,12 +5,13 @@
 # This macro splits large fastqs into chunks prior to aligning.
 # If fastq is less than reads_per_chunk (48000000) then one chunk is made.
 {% macro fgbio_bwa_mem(sample) %}
-{% for rgid, rg in sample.read_groups.items() %}
-{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
-{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
 {% set temp_dir %}temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}{% endset %}
 {% set results_dir %}{{ sample.gltype }}/alignment/bwa/{{ sample.name }}{% endset %}
+
+{% for rgid, rg in sample.read_groups.items() %}
+{% set r1fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R1')|first %}
+{% set r2fastq = rg.data_files|selectattr('fastqCode', 'eq', 'R2')|first %}
 
 - name: create_uBAM_{{ r1fastq.basename | replace(".", "_") }}
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
@@ -37,8 +38,8 @@
     {#
       This comment is here for protect render spacing, do not remove.
     #}
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/"
+    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}" || true
+    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}"
 
     {# Extract UMI from reads and create uBAM (Step 1 - One step with fgbio)
     ## Need read structure to be dynamic by UMI kit and reads performed #}
@@ -54,8 +55,7 @@
         --platform-model {{ sample.rgpm }} \
         --sequencing-center {{ sample.rgcn }} \
         --sort true \
-        --output {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam
-
+        --output {{ temp_dir }}/{{ rgid }}/{{ sample.rgid }}_UMI_uBAM.bam
 
 {% endfor %}
 
@@ -67,10 +67,10 @@
   reset: predecessors
   input:
     {% for rgid in sample.read_groups %}
-    - {{ temp_dir }}/{{ sample.rgid }}_UMI_uBAM.bam 
+    - {{ temp_dir }}/{{ rgid }}/{{ sample.rgid }}_UMI_uBAM.bam 
     {% endfor %}
   output:
-    - {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam
+    - {{ temp_dir }}/{{ rgid }}/{{ sample.rgsm }}_UMI_uBAM.bam
   cpus: 10
   walltime: "4:00:00"
   cmd: |
@@ -87,9 +87,9 @@
       {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam \
     {% for rgid in sample.read_groups %}
       {% if not loop.last %}
-      {{ temp_dir }}/{{ sample.rgid }}_UMI_uBAM.bam \
+      {{ temp_dir }}/{{ rgid }}/{{ sample.rgid }}_UMI_uBAM.bam \
       {% else %}
-      {{ temp_dir }}/{{ sample.rgid }}_UMI_uBAM.bam
+      {{ temp_dir }}/{{ rgid }}/{{ sample.rgid }}_UMI_uBAM.bam
       {% endif %}
     {% endfor %}
 
