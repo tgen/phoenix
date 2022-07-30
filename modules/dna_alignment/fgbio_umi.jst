@@ -163,6 +163,7 @@
     - {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam
   output:
     - {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
+    - {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa.txt
   cpus: 10
   walltime: "4:00:00"
   cmd: |
@@ -200,6 +201,7 @@
     - {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
   output:
     - {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam
+    - {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt
   cpus: 10
   walltime: "4:00:00"
   cmd: |
