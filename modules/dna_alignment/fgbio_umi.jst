@@ -39,12 +39,12 @@
     {#
       This comment is here for protect render spacing, do not remove.
     #}
-    rm -r "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}" || true
-    mkdir -p "temp/{{ sample.gltype }}/alignment/bwa/{{ sample.name }}/{{ rgid }}"
+    rm -r {{ temp_dir }}/{{ rgid }} || true
+    mkdir -p {{ temp_dir }}/{{ rgid }}
 
     {# Extract UMI from reads and create uBAM (Step 1 - One step with fgbio)
     ## Need read structure to be dynamic by UMI kit and reads performed #}
-    fgbio FastqToBam \
+    fgbio --tmp-dir {{ temp_dir }}/{{ rgid }}/fgbio_tmp FastqToBam \
         --input {% for fastq in [r1fastq, r2fastq] %}temp/fastqs/{{ fastq.basename }} {% endfor %} \
         --read-structure 5M2S+T 5M2S+T \
         --umi-tag RX \
@@ -185,7 +185,7 @@
     # the known umi would need to be dynamic by kit ultimately
     # need to test and optimize max-mismatches and min-distance by UMI format (this worked but need to know best for length and umi number)
     #}
-    fgbio CorrectUmis \
+    fgbio --tmp-dir {{ temp_dir }}/fgbio_tmp CorrectUmis \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam \
       --umi-tag RX \
       --umi-files ${KNOWN_UMI} \
@@ -216,7 +216,7 @@
     module load {{ constants.tools.fgbio.module }}
 
     {# Group Reads by UMI (This does not need to be sort, it sorts by UMI, then 5' end, then those with matching 3' are tagged) #}
-    fgbio GroupReadsByUmi \
+    fgbio --tmp-dir {{ temp_dir }}/fgbio_tmp GroupReadsByUmi \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam \
       --strategy paired \
       --family-size-histogram {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt \
@@ -227,7 +227,7 @@
       --output {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam
 
     {# Collapse single read families (review parameters) #}
-    fgbio CallMolecularConsensusReads \
+    fgbio --tmp-dir {{ temp_dir }}/fgbio_tmp CallMolecularConsensusReads \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam \
       --min-reads 1 \
       --tag MI \
