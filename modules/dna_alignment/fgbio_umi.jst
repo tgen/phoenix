@@ -22,7 +22,8 @@
     {% endfor %}
   output: 
     - {{ temp_dir }}/{{ rgid }}/{{ sample.rgid }}_UMI_uBAM.bam
-  cpus: 10
+  cpus: 4
+  mem: 32G
   walltime: "4:00:00"
   cmd: |
     set -eu
@@ -71,7 +72,8 @@
     {% endfor %}
   output:
     - {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam
-  cpus: 10
+  cpus: 8
+  mem: 16G
   walltime: "4:00:00"
   cmd: |
     set -eu
@@ -107,6 +109,7 @@
   output:
     - {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam
   cpus: 10
+  mem: 32G
   walltime: "4:00:00"
   cmd: |
     set -eu
@@ -164,7 +167,8 @@
   output:
     - {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
     - {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa.txt
-  cpus: 10
+  cpus: 4
+  mem: 32G
   walltime: "4:00:00"
   cmd: |
     set -eu
@@ -202,7 +206,8 @@
   output:
     - {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam
     - {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt
-  cpus: 10
+  cpus: 4
+  mem: 32G
   walltime: "4:00:00"
   cmd: |
     set -eu
@@ -242,6 +247,7 @@
   output:
     - {{ temp_dir }}/{{ sample.name }}.bwa.md.bam
   cpus: 10
+  mem: 32G
   walltime: "4:00:00"
   cmd: |
     set -eu
