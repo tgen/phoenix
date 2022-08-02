@@ -173,7 +173,7 @@
   tags: [{{ sample.gltype }}, alignment, dna_alignment, bwa, umi, {{ sample.name }}]
   reset: predecessors
   input:
-    - {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam
+    - {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam
   output:
     - {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam
     - {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt
@@ -190,7 +190,7 @@
     fgbio --tmp-dir {{ temp_dir }}/fgbio_tmp \
       --compression 1 --async-io \
       GroupReadsByUmi \
-      --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam \
+      --input {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam \
       --strategy paired \
       --allow-inter-contig true \
       --family-size-histogram {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt \
@@ -198,13 +198,13 @@
       --assign-tag MI \
       --edits 1 \
       --min-map-q 20 \
-      --output {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam
+      --output {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa_gd.bam
 
     {# Collapse single read families (review parameters) #}
     fgbio --tmp-dir {{ temp_dir }}/fgbio_tmp \
       --compression 1 \
       CallMolecularConsensusReads \
-      --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam \
+      --input {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa_gd.bam \
       --threads 4 \
       --min-reads 1 \
       --tag MI \
