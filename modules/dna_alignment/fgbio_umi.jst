@@ -49,7 +49,7 @@
     {# Extract UMI from reads and create uBAM (Step 1 - One step with fgbio)
     ## Need read structure to be dynamic by UMI kit and reads performed #}
     fgbio --tmp-dir {{ temp_dir }}/{{ rgid }}/fgbio_tmp \
-      -Xmx1g --compression 0 \
+      --compression 0 \
       FastqToBam \
         --input {% for fastq in [r1fastq, r2fastq] %}temp/fastqs/{{ fastq.basename }} {% endfor %} \
         --read-structure 5M2S+T 5M2S+T \
@@ -63,7 +63,7 @@
         --sequencing-center {{ sample.rgcn }} \
         --output /dev/stdout | \
       fgbio --tmp-dir {{ temp_dir }}/{{ rgid }}/fgbio_tmp \
-        -Xmx2g --compression 1 --async-io \
+        --compression 1 --async-io \
         CorrectUmis \
         --input /dev/stdin \
         --output {{ temp_dir }}/{{ rgid }}/{{ sample.rgid }}_UMI_uBAM.bam \
@@ -145,7 +145,7 @@
       -t 10 \
       {{ constants.phoenix.bwa_mem2_index }} \
       /dev/stdin |\
-    fgbio -Xmx4g --compression 1 --async-io ZipperBams \
+    fgbio --compression 1 --async-io ZipperBams \
       --unmapped {{ temp_dir }}/{{ sample.rgsm }}_UMI_uBAM.bam \
       --ref {{ constants.phoenix.reference_fasta }} \
       --output {{ temp_dir }}/{{ sample.rgsm }}_UMI_bwa.bam
@@ -188,10 +188,11 @@
 
     {# Group Reads by UMI (This does not need to be sort, it sorts by UMI, then 5' end, then those with matching 3' are tagged) #}
     fgbio --tmp-dir {{ temp_dir }}/fgbio_tmp \
-      -Xmx8g --compression 1 --async-io \
+      --compression 1 --async-io \
       GroupReadsByUmi \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa.bam \
       --strategy paired \
+      --allow-inter-contig true \
       --family-size-histogram {{ results_dir }}/stats/{{ sample.rgsm }}_UMIcorr_bwa_gd_hist.txt \
       --raw-tag RX \
       --assign-tag MI \
@@ -201,7 +202,7 @@
 
     {# Collapse single read families (review parameters) #}
     fgbio --tmp-dir {{ temp_dir }}/fgbio_tmp \
-      -Xmx4g --compression 1 \
+      --compression 1 \
       CallMolecularConsensusReads \
       --input {{ temp_dir }}/{{ sample.rgsm }}_UMIcorr_bwa_gd.bam \
       --threads 4 \
@@ -247,7 +248,7 @@
       -t 10 \
       {{ constants.phoenix.bwa_mem2_index }} \
       /dev/stdin |\
-    fgbio -Xmx4g --compression 1 --async-io ZipperBams \
+    fgbio --compression 1 --async-io ZipperBams \
       --unmapped  {{ temp_dir }}/{{ sample.rgsm }}_con_uBAM.bam \
       --ref {{ constants.phoenix.reference_fasta }} \
       --tags-to-reverse Consensus \
