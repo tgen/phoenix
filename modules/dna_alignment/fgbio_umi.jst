@@ -253,6 +253,12 @@
       --ref {{ constants.phoenix.reference_fasta }} \
       --tags-to-reverse Consensus \
       --tags-to-revcomp Consensus \
-      --output {{ temp_dir }}/{{ sample.name }}.bwa.md.bam
+      --output {{ temp_dir }}/{{ sample.name }}.bwa.uns.bam
+
+    samtools sort \
+      --threads 10 \
+      -o {{ temp_dir }}/{{ sample.name }}.bwa.md.bam \
+      --write-index \
+      {{ temp_dir }}/{{ sample.name }}.bwa.uns.bam
 
 {% endmacro %}
