@@ -79,7 +79,9 @@
 - name: discordant_loci_extraction_{{ tumor.name }}
   tags: [assembly,]
   input: {{ tumor_bam }}
-  output: {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+  output: 
+    - {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+    - {{ results_dir }}/{{ tumor.name }}_fastqs.tar.gz
   walltime: "12:00:00"
   cpus: 4
   mem: 8G
@@ -112,11 +114,16 @@
 
     {# Concatenating the list of fastqs to reduce downstream processing #}
     cat {{ results_dir }}/*_list_fastq_files.txt > {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
-    find {{ results_dir }}/ -name '*_list_fastq_files.txt' \! -name '{{ tumor.name }}_list_of_fastqs.txt' -delete
+    find {{ results_dir }}/ -name '*_list_fastq_*.txt' \! -name '{{ tumor.name }}_list_of_fastqs.txt' -delete
+
+    tar -czf {{ results_dir }}/{{ tumor.name }}_fastqs.tar.gz {{ results_dir }}/*.fastq.gz
+
 
 - name: trinity_assembly_{{ tumor.name }}
   tags: [assembly,]
-  input: {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+  input: 
+    - {{ results_dir }}/{{ tumor.name }}_list_of_fastqs.txt
+    - {{ results_dir }}/{{ tumor.name }}_fastqs.tar.gz
   output:
     - {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
     - {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
@@ -156,6 +163,9 @@
       rightfq=${fqr2arr[i]}
       chrRegion=$(echo ${leftfq#{{ results_dir }}/{{ tumor.name }}_} | cut -d'_' -f1-3)
       cluster=$(echo ${leftfq#{{ results_dir }}/{{ tumor.name }}_} | cut -d'_' -f4-6)
+      {# Pulling the needed fastqs out of the tar.gz #}
+      tar -xzf {{ results_dir }}/{{ tumor.name }}_fastqs.tar.gz ${leftfq}
+      tar -xzf {{ results_dir }}/{{ tumor.name }}_fastqs.tar.gz ${rightfq}
       Trinity \
         --seqType fq \
         --left $leftfq \
@@ -207,6 +217,7 @@
         samtools index {{ results_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/{{ tumor.name }}_${chrRegion}_${cluster}_ReadstoContigs.bam
 
         assemBam+=("{{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/{{ tumor.name }}_${chrRegion}_${cluster}_sorted.bam")
+        rm ${leftfq} ${rightfq}
       fi
       i=$(expr $i + 1)
     done
@@ -255,7 +266,7 @@
     touch {{ results_dir }}/{{ tumor.name }}_ContigResults.txt
     touch {{ results_dir }}/{{ tumor.name }}_FilteredContigResults.txt
     touch {{ results_dir }}/{{ tumor.name }}_Trinity_All_Clusters_sorted.bam
-    rm {{ results_dir }}/r1counts.txt || true
+
 
 {% endmacro %}
 
