@@ -179,6 +179,7 @@
       if [[ -v error ]]
       then
         assemErrors=$(expr $assemErrors + 1)
+        rm ${leftfq} ${rightfq}
         unset error
       else
         ${trin_path}/util/TrinityStats.pl {{ temp_dir }}/{{ tumor.name }}_${chrRegion}_${cluster}/trinity/Trinity.fasta
