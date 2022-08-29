@@ -475,6 +475,10 @@ constants:
         chemistry_name: SC5P-R2
         umi_length: 10
         cell_barcode_whitelist_file: /packages/easy-build/software/CellRanger/6.0.0/lib/python/cellranger/barcodes/737K-august-2016.txt
+      X5SC2:
+        chemistry_name: SC5P-R2
+        umi_length: 10
+        cell_barcode_whitelist_file: /packages/easy-build/software/CellRanger/6.0.0/lib/python/cellranger/barcodes/737K-august-2016.txt
       unknown:
         chemistry_name: auto
         umi_lenth: 10

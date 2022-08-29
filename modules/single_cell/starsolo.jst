@@ -16,6 +16,7 @@
 {% set temp_dir %}temp/{{ sample.gltype }}/expression_estimates/starSOLO/{{ sample.name }}{% endset %}
 {% set task %}starsolo_count_{{ sample.name }}{% endset %}
 {% set json %}{{ alignment_outdir }}/stats/{{ sample.name }}.starSOLO.bam.Barcodes.stats.json{% endset %}
+{% set chemistry = constants.phoenix.scrna_chemistry_options[sample.assayCode] | default(constants.phoenix.scrna_chemistry_options['unknown']) %}
 
 {# Local Temp Variables #}
 {% set cb_umi_list = [] %}
@@ -88,11 +89,11 @@
       --outSAMattributes NH HI AS nM CR CY UR UY CB UB sM \
       --outSAMattrRGline {{ rglinelist|join(' , ') }} \
       --soloType CB_UMI_Simple \
-      --soloCBwhitelist "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].cell_barcode_whitelist_file }}" \
+      --soloCBwhitelist "{{ chemistry.cell_barcode_whitelist_file }}" \
       --soloCBstart 1 \
       --soloCBlen 16 \
       --soloUMIstart 17 \
-      --soloUMIlen "{{ constants.phoenix.scrna_chemistry_options[sample.assayCode].umi_length }}" \
+      --soloUMIlen "{{ chemistry.umi_length }}" \
       --soloBarcodeReadLength 0 \
       --soloCBmatchWLtype 1MM_multi_pseudocounts \
       --soloStrand {{ sample.rnaStrandDirection }} \
