@@ -76,7 +76,8 @@
     mkdir -p "{{ outdir }}/stats"
 
     {% for fq in files %}
-      {% set fq_name %}{{ fq.name }}_{{ fq.rgpu[:-2] }}_{{ fq.rgbc }}{% endset %}
+      {% set fq_bc = fq.rgbc.split('-') %}
+      {% set fq_name %}{{ fq.name }}_{{ fq.rgpu[:-2] }}_{{ fq_bc[0] }}{% endset %}
       {% set fq_new %}{{ fq_name }}_S1{% endset %}
       {% do samples_list.append(fq_name) %}
       ln -rs "temp/fastqs/{{ fq.basename }}" "{{ temp_dir }}/{{ fq.basename | replace(fq_name, fq_new) }}"
