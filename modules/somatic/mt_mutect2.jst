@@ -1,0 +1,475 @@
+{% from 'utilities/remove_files.jst' import remove_files with context %}
+{% from 'modules/annotation/main.jst' import annotate_vcfs with context %}
+
+{% macro mt_mutect2(pair, aligner='bwa') %}
+{% set normal_bam %}{{ pair.normal.gltype }}/alignment/{{ aligner }}/{{ pair.normal.name }}/{{ pair.normal.name }}.{{ aligner }}.bam{% endset %}
+{% set tumor_bam %}{{ pair.tumor.gltype }}/alignment/{{ aligner }}/{{ pair.tumor.name }}/{{ pair.tumor.name }}.{{ aligner }}.bam{% endset %}
+{% set temp_dir %}temp/{{ pair.gltype }}/somatic_variant_calls/mt_mutect2/{{ pair.name }}_{{ aligner }}{% endset %}
+{% set results_dir %}{{ pair.gltype }}/somatic_variant_calls/mt_mutect2/{{ pair.name }}{% endset %}
+{% set all_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.mutect2.all.vcf.gz{% endset %}
+{% set pass_vcf %}{{ results_dir }}/{{ pair.name }}.{{ aligner }}.mutect2.pass.vcf.gz{% endset %}
+
+
+- name: mt_printreads_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ normal_bam }}
+    - {{ tumor_bam }}
+  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    rm -r {{ temp_dir }} || true
+
+    mkdir -p {{ temp_dir }}
+
+    module load {{ constants.tools.gatk.module }}
+
+    {#
+    # subset bams to mitochondrial region only
+    #}
+
+    gatk PrintReads \
+      --java-options "-Xmx7G" \
+      -R {{ constants.phoenix.reference_fasta }} \
+      -I {{ tumor_bam }} \
+      --read-filter MateOnSameContigOrNoMappedMateReadFilter \
+      --read-filter MateUnmappedAndUnmappedReadFilter \
+      -L chrM \
+      -O {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam\
+
+    gatk PrintReads \
+      --java-options "-Xmx7G" \
+      -R {{ constants.phoenix.reference_fasta }} \
+      -I {{ normal_bam }} \
+      --read-filter MateOnSameContigOrNoMappedMateReadFilter \
+      --read-filter MateUnmappedAndUnmappedReadFilter \
+      -L chrM \
+      -O {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam \
+
+
+- name: mt_revertsam_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, gatk_mutect2_mt, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam
+  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    {# Removing alignment inforamtion from subset bam #}
+    gatk RevertSam \
+      --java-options "-Xmx14G" \
+      -INPUT {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam \
+      -OUTPUT_BY_READGROUP false \
+      -OUTPUT {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam \
+      -VALIDATION_STRINGENCY LENIENT \
+      -ATTRIBUTE_TO_CLEAR FT \
+      -ATTRIBUTE_TO_CLEAR CO \
+      -SORT_ORDER "queryname" \
+      -RESTORE_ORIGINAL_QUALITIES false
+    
+    gatk RevertSam \
+      --java-options "-Xmx14G" \
+      -INPUT {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam \
+      -OUTPUT_BY_READGROUP false \
+      -OUTPUT {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam \
+      -VALIDATION_STRINGENCY LENIENT \
+      -ATTRIBUTE_TO_CLEAR FT \
+      -ATTRIBUTE_TO_CLEAR CO \
+      -SORT_ORDER "queryname" \
+      -RESTORE_ORIGINAL_QUALITIES false
+
+
+- name: mt_realignment_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam
+  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+    module load {{ constants.tools.samtools.module }}
+    module load {{ constants.tools.bwa_mem2.module }}
+
+    {# reverting bam to fastq and re-aligning #}
+    gatk SamToFastq \
+      --java-options "-Xmx14G" \
+      -I {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam \
+      -FASTQ {{ temp_dir }}/{{ pair.tumor.name }}.fastq \
+      -INTERLEAVE true \
+      -NON_PF true
+
+    {# Normal pileups #}
+    bwa-mem2 mem -K 100000000 -p -v 3 -t 2 -Y \
+      {{ constants.phoenix.mt_shifted_fa }} \
+     {{ temp_dir }}/{{ pair.tumor.name }}.fastq | \
+    samtools view --output-fmt BAM \
+      -o {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam -
+
+
+    {# repeating bam to fastq and re-alignment for normal  #}
+    gatk SamToFastq \
+      --java-options "-Xmx14G" \
+      -I {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam \
+      -FASTQ {{ temp_dir }}/{{ pair.normal.name }}.fastq \
+      -INTERLEAVE true \
+      -NON_PF true
+
+    {# Normal pileups #}
+    bwa-mem2 mem -K 100000000 -p -v 3 -t 2 -Y \
+      {{ constants.phoenix.mt_shifted_fa }} \
+     {{ temp_dir }}/{{ pair.normal.name }}.fastq | \
+    samtools view --output-fmt BAM \
+      -o {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam -
+
+
+- name: mt_align_and_markdups_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }},l somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam
+    - {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam
+  output:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam
+  cpus: 8
+  mem: 32G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    {# merging bams and realigning to shifted sequence #}
+    gatk MergeBamAlignment \
+      --java-options "-Xmx14G" \
+      -VALIDATION_STRINGENCY SILENT \
+      -EXPECTED_ORIENTATIONS FR \
+      -ATTRIBUTES_TO_RETAIN X0 \
+      -ATTRIBUTES_TO_REMOVE NM \
+      -ATTRIBUTES_TO_REMOVE MD \
+      -ALIGNED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.realigned.bam \
+      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.tumor.name }}.unmapped.chrM.bam \
+      -OUTPUT {{ temp_dir }}/{{ pair.tumor.name }}.mba.bam \
+      -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
+      -PAIRED_RUN true \
+      -SORT_ORDER "unsorted" \
+      -IS_BISULFITE_SEQUENCE false \
+      -ALIGNED_READS_ONLY false \
+      -CLIP_ADAPTERS false \
+      -MAX_RECORDS_IN_RAM 2000000 \
+      -ADD_MATE_CIGAR true \
+      -MAX_INSERTIONS_OR_DELETIONS -1 \
+      -PRIMARY_ALIGNMENT_STRATEGY MostDistant \
+      -UNMAPPED_READ_STRATEGY COPY_TO_TAG \
+      -ALIGNER_PROPER_PAIR_FLAGS true \
+      -UNMAP_CONTAMINANT_READS true \
+      -ADD_PG_TAG_TO_READS false
+    
+    gatk MarkDuplicates \
+      --java-options "-Xmx14G" \
+      -INPUT {{ temp_dir }}/{{ pair.tumor.name }}.mba.bam \
+      -OUTPUT {{ temp_dir }}/{{ pair.tumor.name }}.md.bam \
+      -METRICS_FILE {{ temp_dir }}/{{ pair.tumor.name }}.md.metrics \
+      -VALIDATION_STRINGENCY SILENT \
+      -OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
+      -ASSUME_SORT_ORDER "queryname" \
+      -CLEAR_DT "false" \
+      -ADD_PG_TAG_TO_READS false
+    
+    gatk SortSam \
+      --java-options "-Xmx14G" \
+      -INPUT {{ temp_dir }}/{{ pair.tumor.name }}.md.bam \
+      -OUTPUT {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam \
+      -SORT_ORDER "coordinate" \
+      -CREATE_INDEX true \
+      -MAX_RECORDS_IN_RAM 300000
+
+    gatk CollectWgsMetrics \
+      --java-options "-Xmx14G" \
+      -I {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam \
+      -O {{ temp_dir }}/{{ pair.tumor.name }}.metrics.txt \
+      -R {{ constants.phoenix.mt_shifted_fa }}
+
+    {# repeating for normal with standard mt genome #}
+    gatk MergeBamAlignment \
+      --java-options "-Xmx14G" \
+      -VALIDATION_STRINGENCY SILENT \
+      -EXPECTED_ORIENTATIONS FR \
+      -ATTRIBUTES_TO_RETAIN X0 \
+      -ATTRIBUTES_TO_REMOVE NM \
+      -ATTRIBUTES_TO_REMOVE MD \
+      -ALIGNED_BAM {{ temp_dir }}/{{ pair.normal.name }}.realigned.bam \
+      -UNMAPPED_BAM {{ temp_dir }}/{{ pair.normal.name }}.unmapped.chrM.bam \
+      -OUTPUT {{ temp_dir }}/{{ pair.normal.name }}.mba.bam \
+      -REFERENCE_SEQUENCE {{ constants.phoenix.mt_shifted_fa }} \
+      -PAIRED_RUN true \
+      -SORT_ORDER "unsorted" \
+      -IS_BISULFITE_SEQUENCE false \
+      -ALIGNED_READS_ONLY false \
+      -CLIP_ADAPTERS false \
+      -MAX_RECORDS_IN_RAM 2000000 \
+      -ADD_MATE_CIGAR true \
+      -MAX_INSERTIONS_OR_DELETIONS -1 \
+      -PRIMARY_ALIGNMENT_STRATEGY MostDistant \
+      -UNMAPPED_READ_STRATEGY COPY_TO_TAG \
+      -ALIGNER_PROPER_PAIR_FLAGS true \
+      -UNMAP_CONTAMINANT_READS true \
+      -ADD_PG_TAG_TO_READS false
+    
+    gatk MarkDuplicates \
+      --java-options "-Xmx14G" \
+      -INPUT {{ temp_dir }}/{{ pair.normal.name }}.mba.bam \
+      -OUTPUT {{ temp_dir }}/{{ pair.normal.name }}.md.bam \
+      -METRICS_FILE {{ temp_dir }}/{{ pair.normal.name }}.md.metrics \
+      -VALIDATION_STRINGENCY SILENT \
+      -OPTICAL_DUPLICATE_PIXEL_DISTANCE 2500 \
+      -ASSUME_SORT_ORDER "queryname" \
+      -CLEAR_DT "false" \
+      -ADD_PG_TAG_TO_READS false
+    
+    gatk SortSam \
+      --java-options "-Xmx14G" \
+      -INPUT {{ temp_dir }}/{{ pair.normal.name }}.md.bam \
+      -OUTPUT {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam \
+      -SORT_ORDER "coordinate" \
+      -CREATE_INDEX true \
+      -MAX_RECORDS_IN_RAM 300000
+
+    gatk CollectWgsMetrics \
+      --java-options "-Xmx14G" \
+      -I {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam \
+      -O {{ temp_dir }}/{{ pair.normal.name }}.metrics.txt \
+      -R {{ constants.phoenix.mt_shifted_fa }}
+
+
+- name: mt_mutect2_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam
+  output:
+    - {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz
+    - {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz.stats
+    - {{ temp_dir }}/{{ pair.name }}.f1r2.tar.gz
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p {{ temp_dir }}/temp_mutect2
+
+    {# Mutect2 mitochondrial mode on standard mt samples
+       region is all coding region, none of the d-loop
+     #}
+    gatk Mutect2 \
+      --java-options "-Xmx14G" \
+      --tmp-dir {{ temp_dir }}/temp_mutect2/ \
+      --reference {{ constants.phoenix.reference_fasta }} \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.chrM.bam \
+      --normal-sample {{ pair.normal.rgsm }} \
+      --input {{ temp_dir }}/{{ pair.tumor.name }}.chrM.bam \
+      --tumor-sample {{ pair.tumor.rgsm }} \
+      -L chrM:576-16024 \
+      --annotation StrandBiasBySample \
+      --mitochondria-mode \
+      --initial-tumor-lod 0 \
+      --tumor-lod-to-emit 0 \
+      --af-of-alleles-not-in-resource 4e-3 \
+      --pruning-lod-threshold -4 \
+      --output {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz \
+      --max-reads-per-alignment-start 75 \
+      --max-mnp-distance 0
+
+
+- name: mt_shifted_mutect2_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam
+    - {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam
+  output:
+    - {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz
+    - {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz.stats
+    - {{ temp_dir }}/{{ pair.name }}.shifted.f1r2.tar.gz
+  cpus: 4
+  mem: 16G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p {{ temp_dir }}/temp_shifted_mutect2
+
+    {# Mutect2 mitochondrial mode on shifted mt samples
+       region is just the d-loop
+     #}
+
+    gatk Mutect2 \
+      --java-options "-Xmx14G" \
+      --tmp-dir {{ temp_dir }}/temp_shifted_mutect2/ \
+      --reference {{ constants.phoenix.mt_shifted_fa }} \
+      --input {{ temp_dir }}/{{ pair.normal.name }}.shifted.bam \
+      --normal-sample {{ pair.normal.rgsm }} \
+      --input {{ temp_dir }}/{{ pair.tumor.name }}.shifted.bam \
+      --tumor-sample {{ pair.tumor.rgsm }} \
+      -L chrM:8025-9144 \
+      --annotation StrandBiasBySample \
+      --mitochondria-mode \
+      --initial-tumor-lod 0 \
+      --tumor-lod-to-emit 0 \
+      --af-of-alleles-not-in-resource 4e-3 \
+      --pruning-lod-threshold -4 \
+      --output {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz \
+      --max-reads-per-alignment-start 75 \
+      --max-mnp-distance 0
+
+
+- name: mt_merge_mutect_stats_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz.stats
+    - {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz.stats
+  output:
+    - {{ temp_dir }}/{{ pair.name }}.merged.stats
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    {# Merging stats for both standard and shifted mutect #}
+    gatk MergeMutectStats \
+      --java-options "-Xmx14G" \
+      --stats {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz.stats \
+      --stats {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz.stats \
+      -O {{ temp_dir }}/{{ pair.name }}.merged.stats \
+
+
+- name: mt_liftover_and_merge_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz
+    - {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz
+  output:
+    - {{ temp_dir }}/{{ pair.name }}.raw.vcf.gz
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    gatk LiftoverVcf \
+      --java-options "-Xmx7G" \
+      -INPUT {{ temp_dir }}/{{ pair.name }}.shifted.mutect2.vcf.gz \
+      -OUTPUT {{ temp_dir }}/{{ pair.name }}.shifted_back.vcf.gz \
+      -REFERENCE_SEQUENCE {{ constants.phoenix.reference_fasta }} \
+      -CHAIN {{ constants.phoenix.mt_shifted_chain }} \
+      -REJECT {{ temp_dir }}/{{ pair.name }}.rejected.vcf.gz
+
+    gatk MergeVcfs \
+      --java-options "-Xmx7G" \
+      -INPUT {{ temp_dir }}/{{ pair.name }}.shifted_back.vcf.gz \
+      -INPUT {{ temp_dir }}/{{ pair.name }}.mutect2.vcf.gz \
+      -OUTPUT {{ temp_dir }}/{{ pair.name }}.raw.vcf.gz
+  
+
+- name: mt_mutect2_filter_calls_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  reset: predecessors
+  input:
+    - {{ temp_dir }}/{{ pair.name }}.raw.vcf.gz
+    - {{ temp_dir }}/{{ pair.name }}.merged.stats
+  output:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+  cpus: 2
+  mem: 8G
+  walltime: "24:00:00"
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.gatk.module }}
+
+    mkdir -p {{ results_dir }}
+    mkdir -p {{ temp_dir }}/temp_filter
+
+    gatk FilterMutectCalls \
+      --java-options "-Xmx7G" \
+      -V {{ temp_dir }}/{{ pair.name }}.raw.vcf.gz \
+      -R {{ constants.phoenix.reference_fasta }} \
+      -O {{ all_vcf }} \
+      --stats {{ temp_dir }}/{{ pair.name }}.merged.stats \
+      --max-alt-allele-count 4 \
+      --mitochondria-mode \
+      --min-allele-fraction 0.02 \
+      --filtering-stats {{ temp_dir }}/filtering.stats 
+
+
+- name: mt_mutect2_filter_variants_{{ pair.name }}_{{ aligner }}
+  tags: [{{ pair.gltype }}, somatic, snp_indel_caller, gatk_mutect2, {{ pair.name }}]
+  input:
+    - {{ all_vcf }}
+    - {{ all_vcf }}.tbi
+  output:
+    - {{ pass_vcf }}
+    - {{ pass_vcf }}.tbi
+  cpu: 1
+  mem: 4G
+  cmd: |
+    set -eu
+    set -o pipefail
+
+    module load {{ constants.tools.bcftools.module }}
+
+    bcftools filter \
+      --output-type z \
+      --include 'FILTER == "PASS"' \
+      {{ all_vcf }} \
+      > {{ pass_vcf }}
+
+    bcftools index --tbi --force {{ pass_vcf }}
+
+    {{- annotate_vcfs(pair, temp_dir, results_dir, all_vcf, 'Genome', aligner, 'mt_mutect2', 'somatic', 'snp_indel_caller') }}
+    {% set task %}mt_mutect2_filter_calls_{{ pair.name }}_{{ aligner }}{% endset %}
+    {% set directory %}{{ temp_dir }}/temp_filter{% endset %}
+    {{- remove_files(directory,none,task) }}
+
+{% endmacro %}
