@@ -64,10 +64,13 @@ close(GTF);
 
 my %gene;
 foreach my $k (keys %geneA){
-	$st=int($loc{$k}/100);
-	$en=int($loc2{$k}/100);
+        $st1=int($loc{$k}-100);
+	$st=int($st1/100);
+	$en1=int($loc{$k}+100);
+	$en=int($en1/100);
+	
 	if ($st>$en) {$t=$en;$en=$st;$st=$t;}
-        for ($i=$st-100;$i<=$en+100;++$i*100) {
+        for ($i=$st;$i<=$en;++$i*100) {
 		if ($chr{$k} eq "X") {$chr{$k}=23;}
 		if ($chr{$k} eq "Y") {$chr{$k}=24;}
                 if (exists($gene{"$chr{$k}_$i"})) {
